@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import logod from '../assets/logod.png';
+import { MdMailOutline, MdLockOpen } from 'react-icons/md';
+import { FiEye, FiEyeOff } from 'react-icons/fi';
 
 const LoginPage = () => {
     const [email, setEmail] = useState('');
@@ -51,7 +53,7 @@ const LoginPage = () => {
                 <form onSubmit={handleSubmit} style={styles.form}>
                     <div style={styles.inputGroup}>
                         <div style={styles.inputWrapper}>
-                            <span style={styles.inputIcon}>📧</span>
+                        <span style={styles.inputIcon}><MdMailOutline /></span>
                             <input
                                 type="email"
                                 value={email}
@@ -67,7 +69,7 @@ const LoginPage = () => {
 
                     <div style={styles.inputGroup}>
                         <div style={styles.inputWrapper}>
-                            <span style={styles.inputIcon}>🔒</span>
+                        <span style={styles.inputIcon}><MdLockOpen /></span>
                             <input
                                 type={showPassword ? "text" : "password"}
                                 value={password}
@@ -83,7 +85,7 @@ const LoginPage = () => {
                                 onClick={() => setShowPassword(!showPassword)}
                                 style={styles.showPasswordButton}
                             >
-                                {showPassword ? "👁️" : "👁️‍🗨️"}
+                                {showPassword ? <FiEye /> : <FiEyeOff />}
                             </button>
                         </div>
                     </div>
@@ -142,9 +144,8 @@ const styles = {
         width: '100%',
         maxWidth: '400px',
         padding: 'clamp(20px, 5vw, 40px) clamp(15px, 4vw, 30px)',
-        backgroundColor: '#ffffff',
+        backgroundColor: '#f5f5f5',
         borderRadius: 'clamp(12px, 3vw, 20px)',
-        boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
@@ -180,8 +181,13 @@ const styles = {
     inputIcon: {
         position: 'absolute',
         left: '15px',
-        fontSize: 'clamp(16px, 4vw, 20px)',
+        top: '50%',
+        transform: 'translateY(-50%)',
         color: '#666',
+        fontSize: '20px',
+        display: 'flex',
+        fontSize: 'clamp(16px, 4vw, 20px)',
+        alignItems: 'center',
     },
     input: {
         width: '100%',
@@ -191,10 +197,11 @@ const styles = {
         borderRadius: '50px',
         backgroundColor: '#fff',
         transition: 'all 0.2s ease',
+        
+        boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
         outline: 'none',
         '&:focus': {
-            borderColor: '#ff8c00',
-            boxShadow: '0 0 0 2px rgba(255, 140, 0, 0.1)',
+            borderColor: '#rgba(103, 70, 30, 0.7)'
         },
     },
     showPasswordButton: {
@@ -227,6 +234,7 @@ const styles = {
         width: 'clamp(14px, 3.5vw, 16px)',
         height: 'clamp(14px, 3.5vw, 16px)',
         cursor: 'pointer',
+        boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
     },
     forgotPassword: {
         color: '#666',
@@ -248,6 +256,7 @@ const styles = {
         fontWeight: '600',
         marginTop: 'clamp(15px, 4vw, 20px)',
         cursor: 'pointer',
+        boxShadow: '0 4px 6px rgba(0, 0, 0, 0.3)',
         transition: 'all 0.3s ease',
         '&:hover': {
             backgroundColor: '#e67e00',

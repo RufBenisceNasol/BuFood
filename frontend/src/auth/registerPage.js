@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import { FiUser, FiMail, FiPhone, FiLock, FiBriefcase, FiEye, FiEyeOff } from 'react-icons/fi';
+import logod from '../assets/logod.png';
 
 const RegisterPage = () => {
     const [formData, setFormData] = useState({
@@ -8,11 +10,14 @@ const RegisterPage = () => {
         email: '',
         contactNumber: '',
         password: '',
+        confirmPassword: '',
         role: 'Customer'
     });
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
     const [loading, setLoading] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const navigate = useNavigate();
 
     const handleChange = (e) => {
@@ -26,10 +31,19 @@ const RegisterPage = () => {
         e.preventDefault();
         setError('');
         setSuccess('');
+
+        // Validate passwords match
+        if (formData.password !== formData.confirmPassword) {
+            setError('Passwords do not match');
+            return;
+        }
+
         setLoading(true);
 
         try {
-            const response = await axios.post('http://localhost:8000/api/auth/register', formData);
+            // Remove confirmPassword before sending to API
+            const { confirmPassword, ...dataToSend } = formData;
+            const response = await axios.post('http://localhost:8000/api/auth/register', dataToSend);
             setSuccess(response.data.message);
             setTimeout(() => {
                 navigate('/login');
@@ -44,12 +58,13 @@ const RegisterPage = () => {
     return (
         <div style={styles.container}>
             <div style={styles.formContainer}>
-                <h2 style={styles.title}>Register for BuFood</h2>
+                <img src={logod} alt="BuFood Logo" style={styles.logo} />
+                <h2 style={styles.title}>SIGN UP</h2>
                 {error && <div style={styles.error}>{error}</div>}
                 {success && <div style={styles.success}>{success}</div>}
                 <form onSubmit={handleSubmit} style={styles.form}>
                     <div style={styles.inputGroup}>
-                        <label htmlFor="name" style={styles.label}>Name:</label>
+                        <span style={styles.inputIcon}><FiUser /></span>
                         <input
                             type="text"
                             id="name"
@@ -60,11 +75,12 @@ const RegisterPage = () => {
                             style={styles.input}
                             disabled={loading}
                             autoComplete="name"
+                            placeholder="Full Name"
                         />
                     </div>
 
                     <div style={styles.inputGroup}>
-                        <label htmlFor="email" style={styles.label}>Email:</label>
+                        <span style={styles.inputIcon}><FiMail /></span>
                         <input
                             type="email"
                             id="email"
@@ -75,11 +91,64 @@ const RegisterPage = () => {
                             style={styles.input}
                             disabled={loading}
                             autoComplete="email"
+                            placeholder="Email"
                         />
                     </div>
 
                     <div style={styles.inputGroup}>
-                        <label htmlFor="contactNumber" style={styles.label}>Contact Number:</label>
+                        <div style={styles.inputWrapper}>
+                            <span style={styles.inputIcon}><FiLock /></span>
+                            <input
+                                type={showPassword ? "text" : "password"}
+                                id="password"
+                                name="password"
+                                value={formData.password}
+                                onChange={handleChange}
+                                required
+                                minLength={6}
+                                style={styles.input}
+                                disabled={loading}
+                                autoComplete="new-password"
+                                placeholder="Password"
+                            />
+                            <button 
+                                type="button"
+                                onClick={() => setShowPassword(!showPassword)}
+                                style={styles.showPasswordButton}
+                            >
+                                {showPassword ? <FiEye /> : <FiEyeOff />}
+                            </button>
+                        </div>
+                    </div>
+
+                    <div style={styles.inputGroup}>
+                        <div style={styles.inputWrapper}>
+                            <span style={styles.inputIcon}><FiLock /></span>
+                            <input
+                                type={showConfirmPassword ? "text" : "password"}
+                                id="confirmPassword"
+                                name="confirmPassword"
+                                value={formData.confirmPassword}
+                                onChange={handleChange}
+                                required
+                                minLength={6}
+                                style={styles.input}
+                                disabled={loading}
+                                autoComplete="new-password"
+                                placeholder="Confirm Password"
+                            />
+                            <button 
+                                type="button"
+                                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                style={styles.showPasswordButton}
+                            >
+                                {showConfirmPassword ? <FiEye /> : <FiEyeOff />}
+                            </button>
+                        </div>
+                    </div>
+
+                    <div style={styles.inputGroup}>
+                        <span style={styles.inputIcon}><FiPhone /></span>
                         <input
                             type="tel"
                             id="contactNumber"
@@ -90,27 +159,12 @@ const RegisterPage = () => {
                             style={styles.input}
                             disabled={loading}
                             autoComplete="tel"
+                            placeholder="Phone Number"
                         />
                     </div>
 
                     <div style={styles.inputGroup}>
-                        <label htmlFor="password" style={styles.label}>Password:</label>
-                        <input
-                            type="password"
-                            id="password"
-                            name="password"
-                            value={formData.password}
-                            onChange={handleChange}
-                            required
-                            minLength={6}
-                            style={styles.input}
-                            disabled={loading}
-                            autoComplete="new-password"
-                        />
-                    </div>
-
-                    <div style={styles.inputGroup}>
-                        <label htmlFor="role" style={styles.label}>Role:</label>
+                        <span style={styles.inputIcon}><FiBriefcase /></span>
                         <select
                             id="role"
                             name="role"
@@ -124,20 +178,30 @@ const RegisterPage = () => {
                         </select>
                     </div>
 
+                    <div style={styles.checkboxGroup}>
+                        <input
+                            type="checkbox"
+                            id="terms"
+                            required
+                            style={styles.checkbox}
+                        />
+                        <label htmlFor="terms" style={styles.checkboxLabel}>
+                            I agree to the Terms of Service and Privacy Policy
+                        </label>
+                    </div>
+
                     <button 
                         type="submit" 
-                        style={{
-                            ...styles.button,
-                            opacity: loading ? 0.7 : 1,
-                            cursor: loading ? 'not-allowed' : 'pointer'
-                        }}
+                        style={styles.button}
                         disabled={loading}
                     >
-                        {loading ? 'Registering...' : 'Register'}
+                        {loading ? 'Creating Account...' : 'CREATE ACCOUNT'}
                     </button>
                 </form>
                 <div style={styles.links}>
-                    <a href="/login" style={styles.link}>Already have an account? Login</a>
+                    <p style={styles.loginText}>
+                        Already have an account? <a href="/login" style={styles.loginLink}>Sign In</a>
+                    </p>
                 </div>
             </div>
         </div>
@@ -159,16 +223,23 @@ const styles = {
         width: '100%',
         maxWidth: '400px',
         padding: 'clamp(20px, 5vw, 40px) clamp(15px, 4vw, 30px)',
-        backgroundColor: '#ffffff',
+        backgroundColor: '#f5f5f5',
         borderRadius: 'clamp(12px, 3vw, 20px)',
-        boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
         margin: '0 auto',
     },
+    logo: {
+        width: 'clamp(60px, 15vw, 80px)',
+        height: 'auto',
+        marginBottom: 'clamp(15px, 4vw, 20px)',
+    },
     title: {
-        fontSize: 'clamp(20px, 5vw, 24px)',
-        fontWeight: '700',
+        fontSize: '24px',
+        fontWeight: 'bold',
         color: '#333',
-        marginBottom: 'clamp(20px, 5vw, 30px)',
+        marginBottom: '30px',
         textAlign: 'center',
     },
     form: {
@@ -178,29 +249,48 @@ const styles = {
         gap: 'clamp(15px, 4vw, 20px)',
     },
     inputGroup: {
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '8px',
+        position: 'relative',
+        width: '100%',
     },
-    label: {
-        fontSize: 'clamp(12px, 3vw, 14px)',
+    inputWrapper: {
+        position: 'relative',
+        display: 'flex',
+        alignItems: 'center',
+        width: '100%',
+    },
+    inputIcon: {
+        position: 'absolute',
+        left: '15px',
+        top: '50%',
+        transform: 'translateY(-50%)',
         color: '#666',
-        fontWeight: '500',
+        fontSize: '20px',
+        display: 'flex',
+        fontSize: 'clamp(16px, 4vw, 20px)',
+        alignItems: 'center',
     },
     input: {
         width: '100%',
-        padding: 'clamp(12px, 3vw, 15px) 16px',
-        fontSize: 'clamp(14px, 3.5vw, 16px)',
-        border: '1px solid #ddd',
+        border: '1px solid rgba(0, 0, 0, 0.1)',
         borderRadius: '50px',
-        backgroundColor: 'rgba(53, 6, 6, 0.26)',
-        transition: 'all 0.2s ease',
+        backgroundColor: '#ffffff',
+        transition: 'all 0.3s ease',
         outline: 'none',
         boxSizing: 'border-box',
-        '&:focus': {
-            borderColor: '#ff8c00',
-            boxShadow: '0 0 0 2px rgba(255, 140, 0, 0.1)',
-        },
+        padding: 'clamp(12px, 3vw, 15px) 45px',
+        fontSize: 'clamp(14px, 3.5vw, 16px)',
+        transition: 'all 0.2s ease',
+        boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+    },
+    checkbox: {
+        width: 'clamp(14px, 3.5vw, 16px)',
+        height: 'clamp(14px, 3.5vw, 16px)',
+        cursor: 'pointer',
+        boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+    },
+    checkboxLabel: {
+        fontSize: '14px',
+        color: '#666',
     },
     button: {
         width: '100%',
@@ -211,14 +301,14 @@ const styles = {
         borderRadius: '50px',
         fontSize: 'clamp(14px, 3.5vw, 16px)',
         fontWeight: '600',
-        cursor: 'pointer',
-        transition: 'all 0.3s ease',
         marginTop: 'clamp(15px, 4vw, 20px)',
-        boxShadow: '0 4px 15px rgba(36, 34, 33, 0.4)',
+        cursor: 'pointer',
+        boxShadow: '0 4px 6px rgba(0, 0, 0, 0.3)',
+        transition: 'all 0.3s ease',
         '&:hover': {
             backgroundColor: '#e67e00',
             transform: 'translateY(-2px)',
-            boxShadow: '0 6px 20px rgba(109, 71, 24, 0.4)',
+            boxShadow: '0 4px 15px rgba(255, 140, 0, 0.3)',
         },
         '&:active': {
             transform: 'translateY(0)',
@@ -227,45 +317,46 @@ const styles = {
     error: {
         color: '#dc3545',
         backgroundColor: '#ffe6e6',
-        padding: 'clamp(10px, 2.5vw, 12px)',
+        padding: '12px',
         borderRadius: '8px',
-        fontSize: 'clamp(12px, 3vw, 14px)',
-        marginBottom: 'clamp(15px, 4vw, 20px)',
+        fontSize: '14px',
+        marginBottom: '20px',
         textAlign: 'center',
         width: '100%',
     },
     success: {
         color: '#28a745',
         backgroundColor: '#e6ffe6',
-        padding: 'clamp(10px, 2.5vw, 12px)',
+        padding: '12px',
         borderRadius: '8px',
-        fontSize: 'clamp(12px, 3vw, 14px)',
-        marginBottom: 'clamp(15px, 4vw, 20px)',
+        fontSize: '14px',
+        marginBottom: '20px',
         textAlign: 'center',
         width: '100%',
     },
     links: {
-        marginTop: 'clamp(20px, 5vw, 30px)',
+        marginTop: '20px',
         textAlign: 'center',
     },
-    link: {
-        padding: 'clamp(8px, 2vw, 10px) clamp(20px, 5vw, 25px)',
-        backgroundColor: '#fff',
+    loginText: {
+        color: '#666',
+        fontSize: '14px',
+        margin: 0,
+    },
+    loginLink: {
         color: '#ff8c00',
-        border: '2px solid #ff8c00',
-        borderRadius: '50px',
-        fontSize: 'clamp(12px, 3vw, 14px)',
-        fontWeight: '600',
         textDecoration: 'none',
-        textAlign: 'center',
-        transition: 'all 0.3s ease',
-        boxShadow: '0 4px 15px rgba(36, 34, 33, 0.1)',
-        display: 'inline-block',
-        '&:hover': {
-            backgroundColor: '#fff8f0',
-            transform: 'translateY(-2px)',
-            boxShadow: '0 6px 20px rgba(255, 140, 0, 0.2)',
-        }
+        fontWeight: '600',
+    },
+    showPasswordButton: {
+        position: 'absolute',
+        right: '15px',
+        background: 'none',
+        border: 'none',
+        cursor: 'pointer',
+        padding: '0',
+        fontSize: '20px',
+        color: '#666',
     }
 }
 
