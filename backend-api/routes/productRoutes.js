@@ -22,9 +22,8 @@ const {
 
 // 🟢 Public routes
 router.get('/', getAllProducts);  // Fetch all products
-router.get('/:id', getProductById);  // Fetch a product by ID
 
-// 🆕 Get all products of the logged-in seller
+// 🆕 Get all products of the logged-in seller (This must come before /:id to avoid conflict)
 router.get(
   '/seller/products',
   authenticate,  // Ensure the user is authenticated
@@ -32,43 +31,45 @@ router.get(
   getSellerProducts  // Controller to fetch seller's products
 );
 
+// Product by ID route must come after specific routes
+router.get('/:id', getProductById);  // Fetch a product by ID
 
 // Create a new product
 router.post(
   '/',
-  authenticate,  // Ensure the user is authenticated
-  checkRole('Seller'),  // Ensure the user is a Seller
-  uploadProductImage.single('image'),  // Upload product image (optional)
-  createProductValidation,  // Validate product data
-  handleValidation,  // Handle validation errors
-  createProduct  // Create product
+  authenticate,
+  checkRole('Seller'),
+  uploadProductImage.single('image'),
+  createProductValidation,
+  handleValidation,
+  createProduct
 );
 
 // Update an existing product
 router.put(
   '/:id',
-  authenticate,  // Ensure the user is authenticated
-  checkProductOwnership,  // Ensure the user owns the product
-  uploadProductImage.single('image'),  // Upload product image (optional)
-  updateProductValidation,  // Validate updated product data
-  handleValidation,  // Handle validation errors
-  updateProduct  // Update product
+  authenticate,
+  checkProductOwnership,
+  uploadProductImage.single('image'),
+  updateProductValidation,
+  handleValidation,
+  updateProduct
 );
 
 // Delete a product
 router.delete(
   '/:id',
-  authenticate,  // Ensure the user is authenticated
-  checkRole('Seller'),  // Ensure the user is a Seller
-  deleteProduct  // Delete product
+  authenticate,
+  checkRole('Seller'),
+  deleteProduct
 );
 
 // 🧹 Route to delete all products in a store
 router.delete(
   '/store/:storeId/products',
-  authenticate,  // Ensure the user is authenticated
-  checkRole('Seller'),  // Ensure the user is a Seller
-  deleteAllProductsInStore  // Delete all products in a store
+  authenticate,
+  checkRole('Seller'),
+  deleteAllProductsInStore
 );
 
 module.exports = router;

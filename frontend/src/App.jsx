@@ -4,9 +4,7 @@ import RegisterPage from './auth/registerPage'
 import SplashScreen from './components/SplashScreen'
 import DashboardPage from './seller/DashboardPage'
 import AddProductPage from './seller/AddProductPage'
-// import ProductList from './seller/ProductList'
-// import StoreSettings from './seller/StoreSettings'
-// import ProfilePage from './seller/ProfilePage'
+import ProductList from './seller/ProductList'
 import './App.css'
 
 function App() {
@@ -21,9 +19,9 @@ function App() {
           {/* Seller Routes */}
           <Route path="/seller/dashboard" element={<DashboardPage />} />
           <Route path="/seller/add-product" element={<AddProductPage />} />
+          <Route path="/seller/product-list" element={<ProductList />} />
           {/* <Route path="/seller/manage-orders" element={<DashboardPage />} /> */}
           {/* <Route path="/seller/store-settings" element={<StoreSettings />} />
-          <Route path="/seller/product-list" element={<ProductList />} />
           <Route path="/seller/profile" element={<ProfilePage />} /> */}
         </Routes>
       </Router>
