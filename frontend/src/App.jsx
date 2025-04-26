@@ -6,6 +6,7 @@ import DashboardPage from './seller/DashboardPage'
 import AddProductPage from './seller/AddProductPage'
 import ProductList from './seller/ProductList'
 import StoreSettings from './seller/StoreSettings'
+import OrdersPage from './seller/OrdersPage'
 import './App.css'
 
 function App() {
@@ -22,7 +23,7 @@ function App() {
           <Route path="/seller/add-product" element={<AddProductPage />} />
           <Route path="/seller/product-list" element={<ProductList />} />
           <Route path="/seller/store-settings" element={<StoreSettings />} />
-          {/* <Route path="/seller/manage-orders" element={<DashboardPage />} /> */}
+          <Route path="/seller/manage-orders" element={<OrdersPage />} />
           {/* <Route path="/seller/profile" element={<ProfilePage />} /> */}
         </Routes>
       </Router>

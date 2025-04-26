@@ -211,7 +211,7 @@ const getOrderDetails = async (req, res) => {
   }
 };
 
-// Get all placed orders for a seller
+// Get all orders for a seller
 const getPlacedOrdersForSeller = async (req, res) => {
   try {
     const sellerId = req.user._id;
@@ -220,8 +220,8 @@ const getPlacedOrdersForSeller = async (req, res) => {
     const sellerProducts = await Product.find({ sellerId }).select('_id');
     const sellerProductIds = sellerProducts.map(product => product._id.toString());
 
-    // Step 2: Get all orders with status 'Placed' that include at least one of the seller's products
-    const orders = await Order.find({ status: 'Placed' })
+    // Step 2: Get all orders that include at least one of the seller's products
+    const orders = await Order.find({})
       .populate({
         path: 'items',
         populate: {
@@ -239,13 +239,13 @@ const getPlacedOrdersForSeller = async (req, res) => {
     );
 
     res.status(200).json({
-      message: 'Placed orders for seller fetched successfully.',
+      message: 'Orders for seller fetched successfully.',
       orders: filteredOrders,
     });
 
   } catch (error) {
-    console.error('Error fetching placed orders for seller:', error);
-    res.status(500).json({ message: 'Server error while fetching placed orders.' });
+    console.error('Error fetching orders for seller:', error);
+    res.status(500).json({ message: 'Server error while fetching orders.' });
   }
 };
 
