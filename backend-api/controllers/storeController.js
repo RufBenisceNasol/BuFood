@@ -23,8 +23,13 @@ const updateStore = async (req, res) => {
     updates.storeName = req.body.storeName;
   }
 
-  if (req.file) {
-    updates.image = req.file.path;
+  if (req.files) {
+    if (req.files['image']) {
+      updates.image = req.files['image'][0].path;
+    }
+    if (req.files['bannerImage']) {
+      updates.bannerImage = req.files['bannerImage'][0].path;
+    }
   }
 
   try {
@@ -33,14 +38,11 @@ const updateStore = async (req, res) => {
     if (!updatedStore) {
       return res.status(404).json({ message: 'Store not found' });
     }
-
     res.status(200).json(updatedStore);
   } catch (error) {
     res.status(500).json({ message: 'Failed to update store', error: error.message });
   }
 };
-
-
 
 // Delete store
 const deleteStore = async (req, res) => {

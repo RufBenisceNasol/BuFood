@@ -18,6 +18,10 @@ const storeSchema = new mongoose.Schema({
     image: {
         type: String,
         default: 'https://res.cloudinary.com/dflcnd7z3/image/upload/v1743873916/store-images/defaultStore.png'
+    },
+    bannerImage: {
+        type: String,
+        default: 'https://res.cloudinary.com/dflcnd7z3/image/upload/v1745655986/icrooeomu8t1tigzwgio.png'
     }
 }, { timestamps: true });
 
