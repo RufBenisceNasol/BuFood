@@ -68,7 +68,7 @@ const getSellerProducts = async (req, res) => {
       .populate('storeId', 'storeName')
       .populate('sellerId', 'name email');
 
-    res.status(200).json(products);
+    res.status(200).json(products); // Directly sending the products array
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Failed to fetch seller products' });

@@ -1,0 +1,98 @@
+import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import { store } from '../api';
+import '../styles/DashboardPage.css';
+
+const DashboardPage = () => {
+  const [storeData, setStoreData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    fetchStoreData();
+  }, []);
+
+  const fetchStoreData = async () => {
+    try {
+      setLoading(true);
+      const data = await store.getMyStore();
+      setStoreData(data);
+      setError(null);
+    } catch (err) {
+      setError(err.message || 'Failed to fetch store data');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return <div className="dashboard-container">Loading...</div>;
+  }
+
+  if (error) {
+    return <div className="dashboard-container">Error: {error}</div>;
+  }
+
+  return (
+    <div className="dashboard-container">
+      {/* Header Section */}
+      <div className="store-header">
+        <h1>{storeData?.storeName || 'My Store'}</h1>
+        <button className="menu-toggle">
+          <span className="hamburger-icon">☰</span>
+        </button>
+      </div>
+
+      {/* Summary Cards */}
+      <div className="summary-cards">
+        <div className="summary-card">
+          <h3>Completed Orders</h3>
+          <div className="count">
+            {storeData?.completedOrders || 0}
+          </div>
+        </div>
+        <div className="summary-card">
+          <h3>Total Earnings</h3>
+          <div className="count">
+            ₱ {storeData?.totalEarnings || 0}
+          </div>
+        </div>
+      </div>
+
+      {/* Dashboard Title */}
+      <h2 className="dashboard-title">DASHBOARD</h2>
+
+      {/* Dashboard Grid */}
+      <div className="dashboard-grid">
+        <Link to="/seller/manage-orders" className="grid-item">
+          <div className="icon">🔔</div>
+          <div className="count">{storeData?.pendingOrders || 0}</div>
+          <div className="label">Manage Orders</div>
+        </Link>
+
+        <Link to="/seller/store-settings" className="grid-item">
+          <div className="icon">🛍️</div>
+          <div className="count">{storeData?.products?.length || 0}</div>
+          <div className="label">Store Settings</div>
+        </Link>
+
+        <Link to="/seller/add-product" className="grid-item">
+          <div className="icon">➕</div>
+          <div className="label">Add Product</div>
+        </Link>
+
+        <Link to="/seller/product-list" className="grid-item">
+          <div className="icon">👁️</div>
+          <div className="label">Product List</div>
+        </Link>
+      </div>
+
+      {/* Profile Button */}
+      <Link to="/seller/profile">
+        <button className="profile-button">PROFILE</button>
+      </Link>
+    </div>
+  );
+};
+
+export default DashboardPage;

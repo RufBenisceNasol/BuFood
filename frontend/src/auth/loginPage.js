@@ -28,7 +28,7 @@ const LoginPage = () => {
             axios.defaults.headers.common['Authorization'] = `Bearer ${response.data.token}`;
 
             if (response.data.user.role === 'Seller') {
-                navigate('/seller-dashboard');
+                navigate('/seller/dashboard');
             } else {
                 navigate('/');
             }
