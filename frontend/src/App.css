@@ -40,3 +40,95 @@
 .read-the-docs {
   color: #888;
 }
+
+/* Splash Page Styles */
+.splash-container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding: 2rem;
+  background-color: #fff;
+}
+
+.splash-logo {
+  width: 150px;
+  margin-bottom: 2rem;
+}
+
+.splash-slider {
+  position: relative;
+  width: 100%;
+  height: 400px;
+  overflow: hidden;
+}
+
+.slide {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  transition: opacity 0.5s ease-in-out;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.slide.active {
+  opacity: 1;
+}
+
+.slide img {
+  width: 80%;
+  max-width: 300px;
+  height: auto;
+  margin-bottom: 1rem;
+  border-radius: 12px;
+}
+
+.slide h2 {
+  font-size: 1.8rem;
+  color: #333;
+  margin-bottom: 0.5rem;
+}
+
+.slide p {
+  font-size: 1.1rem;
+  color: #666;
+}
+
+.splash-indicators {
+  display: none; /* Hide the indicators */
+}
+
+.indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #ddd;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.indicator.active {
+  background-color: #ff8c00;
+}
+
+.get-started-btn {
+  background-color: #ff8c00;
+  color: white;
+  border: none;
+  padding: 1rem 3rem;
+  border-radius: 50px;
+  font-size: 1.2rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  margin-top: 2rem;
+}
+
+.get-started-btn:hover {
+  background-color: #ffda6c;
+}
