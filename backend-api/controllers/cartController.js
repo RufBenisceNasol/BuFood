@@ -10,36 +10,57 @@ const addToCart = async (req, res) => {
     const customerId = req.user._id;
     const { productId, quantity } = req.body;
 
+    if (!customerId) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+
     const product = await Product.findById(productId);
     if (!product) return res.status(404).json({ error: 'Product not found' });
+    
+    if (product.availability === 'Out of Stock') {
+      return res.status(400).json({ error: 'Product is out of stock' });
+    }
 
     const price = product.price;
-    const subtotal = price * quantity;
-
     let cart = await Cart.findOne({ customer: customerId });
 
     if (!cart) {
       cart = new Cart({
         customer: customerId,
-        items: [{ product: productId, quantity, subtotal }],
-        total: subtotal,
+        items: [{ 
+          product: productId, 
+          quantity, 
+          subtotal: price * quantity 
+        }],
+        total: price * quantity,
       });
     } else {
       const itemIndex = cart.items.findIndex(item => item.product.toString() === productId);
 
       if (itemIndex > -1) {
-        cart.items[itemIndex].quantity += quantity;
-        cart.items[itemIndex].subtotal += subtotal;
+        // Update existing item
+        cart.items[itemIndex].quantity = cart.items[itemIndex].quantity + quantity;
+        cart.items[itemIndex].subtotal = cart.items[itemIndex].quantity * price;
       } else {
-        cart.items.push({ product: productId, quantity, subtotal });
+        // Add new item
+        cart.items.push({ 
+          product: productId, 
+          quantity, 
+          subtotal: price * quantity 
+        });
       }
 
+      // Recalculate total
       cart.total = cart.items.reduce((acc, item) => acc + item.subtotal, 0);
     }
 
     await cart.save();
+    
+    // Populate product details before sending response
+    await cart.populate('items.product');
     res.status(200).json({ message: 'Product added to cart', cart });
   } catch (err) {
+    console.error('Error adding to cart:', err);
     res.status(500).json({ error: 'Failed to add to cart', details: err.message });
   }
 };
@@ -218,5 +239,6 @@ module.exports = {
   viewCart,
   removeItemFromCart,
   clearCart,
-  updateCartItem, // Correctly export the checkout function
+  updateCartItem,
+  getCartSummary
 };

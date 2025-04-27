@@ -26,13 +26,11 @@ api.interceptors.response.use(
     async (error) => {
         const originalRequest = error.config;
 
-        // If the error is not 401 or the request was for token refresh, reject the promise
         if (error.response?.status !== 401 || originalRequest.url === '/auth/refresh-token') {
             return Promise.reject(error);
         }
 
         try {
-            // Try to refresh the token
             const refreshToken = localStorage.getItem('refreshToken');
             if (!refreshToken) {
                 throw new Error('No refresh token available');
@@ -42,20 +40,18 @@ api.interceptors.response.use(
                 refreshToken
             });
 
-            const { accessToken, refreshToken: newRefreshToken } = response.data;
-
-            // Update stored tokens
-            localStorage.setItem('token', accessToken);
-            localStorage.setItem('refreshToken', newRefreshToken);
-
-            // Update the failed request's authorization header and retry it
-            originalRequest.headers.Authorization = `Bearer ${accessToken}`;
-            return axios(originalRequest);
-        } catch (refreshError) {
-            // If refresh fails, clear tokens and reject the promise
+            if (response.data.accessToken) {
+                localStorage.setItem('token', response.data.accessToken);
+                api.defaults.headers.common['Authorization'] = `Bearer ${response.data.accessToken}`;
+                originalRequest.headers['Authorization'] = `Bearer ${response.data.accessToken}`;
+                return api(originalRequest);
+            }
+        } catch (err) {
             localStorage.removeItem('token');
             localStorage.removeItem('refreshToken');
-            return Promise.reject(refreshError);
+            localStorage.removeItem('user');
+            window.location.href = '/login';
+            return Promise.reject(err);
         }
     }
 );
@@ -191,7 +187,7 @@ export const store = {
     // Get store by ID
     getStoreById: async (storeId) => {
         try {
-            const response = await api.get(`/store/${storeId}`);
+            const response = await api.get(`/store/view/${storeId}`);
             return response.data;
         } catch (error) {
             throw error.response?.data || error.message;

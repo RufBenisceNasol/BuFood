@@ -26,7 +26,7 @@ const {
   removeItemFromCart,
   clearCart,
   updateCartItem,
-  checkout,
+  getCartSummary
 } = require('../controllers/cartController');
 
 const { authenticate, checkRole } = require('../middlewares/authMiddleware');
@@ -66,16 +66,26 @@ router.post('/add', authenticate, checkRole('Customer'), addToCart);
  *     responses:
  *       200:
  *         description: Cart items retrieved successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: array
- *               items:
- *                 $ref: '#/components/schemas/CartItem'
  *       401:
  *         description: Unauthorized
  */
 router.get('/', authenticate, checkRole('Customer'), viewCart);
+
+/**
+ * @swagger
+ * /api/cart/summary:
+ *   get:
+ *     tags: [Cart]
+ *     summary: Get cart summary (total items and amount)
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Cart summary retrieved successfully
+ *       401:
+ *         description: Unauthorized
+ */
+router.get('/summary', authenticate, checkRole('Customer'), getCartSummary);
 
 /**
  * @swagger

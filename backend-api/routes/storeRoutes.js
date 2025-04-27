@@ -91,10 +91,10 @@ router.get(
 
 /**
  * @swagger
- * /api/store/{id}:
+ * /api/store/view/{id}:
  *   get:
  *     tags: [Stores]
- *     summary: Get store by ID
+ *     summary: View store details and products
  *     parameters:
  *       - in: path
  *         name: id
@@ -103,11 +103,31 @@ router.get(
  *           type: string
  *     responses:
  *       200:
- *         description: Store details
+ *         description: Store details with products
  *       404:
  *         description: Store not found
  */
-router.get('/:id', getStoreById);
+router.get('/view/:id', getStoreById);
+
+/**
+ * @swagger
+ * /api/store/{id}/products:
+ *   get:
+ *     tags: [Stores]
+ *     summary: Get all products in a store
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: List of products in the store
+ *       404:
+ *         description: Store not found
+ */
+router.get('/:id/products', getStoreProducts);
 
 /**
  * @swagger
@@ -169,25 +189,5 @@ router.put('/:id',
  *         description: Forbidden - Not store owner
  */
 router.delete('/:id', authenticate, checkStoreOwnership, deleteStore);
-
-/**
- * @swagger
- * /api/store/{id}/products:
- *   get:
- *     tags: [Stores]
- *     summary: Get all products in a store
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *     responses:
- *       200:
- *         description: List of products in the store
- *       404:
- *         description: Store not found
- */
-router.get('/:id/products', getStoreProducts);
 
 module.exports = router;
