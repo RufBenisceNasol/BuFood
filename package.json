@@ -1,0 +1,11 @@
+{
+  "name": "bufood",
+  "version": "1.0.0",
+  "description": "BuFood Application",
+  "scripts": {
+    "start": "concurrently \"cd backend-api && npm run dev\" \"cd frontend && npm run dev\""
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.0"
+  }
+}

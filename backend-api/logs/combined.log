@@ -1,0 +1,70 @@
+{"level":"info","message":"🚀 Server started on http://0.0.0.0:8000","timestamp":"2025-04-27T05:41:17.561Z"}
+{"level":"info","message":"📚 API Documentation available at http://0.0.0.0:8000/api-docs","timestamp":"2025-04-27T05:41:17.564Z"}
+{"level":"info","message":"✅ Successfully connected to MongoDB","timestamp":"2025-04-27T05:41:18.892Z"}
+{"level":"info","message":"Received shutdown signal, starting graceful shutdown...","timestamp":"2025-04-27T05:41:55.781Z"}
+{"level":"info","message":"Running with in-memory cache (Redis disabled)","timestamp":"2025-04-27T05:44:39.813Z"}
+{"level":"info","message":"🚀 Server started on http://0.0.0.0:8000","timestamp":"2025-04-27T05:44:39.837Z"}
+{"level":"info","message":"📚 API Documentation available at http://0.0.0.0:8000/api-docs","timestamp":"2025-04-27T05:44:39.839Z"}
+{"level":"info","message":"✅ Successfully connected to MongoDB","timestamp":"2025-04-27T05:44:40.924Z"}
+{"level":"info","message":"Received shutdown signal, starting graceful shutdown...","timestamp":"2025-04-27T05:46:46.463Z"}
+{"level":"info","message":"Running with in-memory cache (Redis disabled)","timestamp":"2025-04-27T05:48:07.951Z"}
+{"level":"info","message":"🚀 Server started on http://0.0.0.0:8000","timestamp":"2025-04-27T05:48:07.977Z"}
+{"level":"info","message":"📚 API Documentation available at http://0.0.0.0:8000/api-docs","timestamp":"2025-04-27T05:48:07.978Z"}
+{"level":"info","message":"✅ Successfully connected to MongoDB","timestamp":"2025-04-27T05:48:08.915Z"}
+{"level":"info","message":{"duration":"172ms","method":"POST","requestId":"f4b136b1-8d14-43d2-9e58-53654c759aaf","status":500,"url":"/login"},"timestamp":"2025-04-27T05:48:31.292Z"}
+{"level":"info","message":{"duration":"4ms","method":"GET","requestId":"c3cbc615-ef13-4335-918f-eadd94f9178f","status":404,"url":"/api/auth/login"},"timestamp":"2025-04-27T05:48:52.266Z"}
+{"level":"info","message":"Running with in-memory cache (Redis disabled)","timestamp":"2025-04-27T05:51:30.897Z"}
+{"level":"info","message":"🚀 Server started on http://0.0.0.0:8000","timestamp":"2025-04-27T05:51:30.923Z"}
+{"level":"info","message":"📚 API Documentation available at http://0.0.0.0:8000/api-docs","timestamp":"2025-04-27T05:51:30.924Z"}
+{"level":"info","message":"✅ Successfully connected to MongoDB","timestamp":"2025-04-27T05:51:31.671Z"}
+{"level":"info","message":"Running with in-memory cache (Redis disabled)","timestamp":"2025-04-27T05:51:59.458Z"}
+{"level":"info","message":"🚀 Server started on http://0.0.0.0:8000","timestamp":"2025-04-27T05:51:59.485Z"}
+{"level":"info","message":"📚 API Documentation available at http://0.0.0.0:8000/api-docs","timestamp":"2025-04-27T05:51:59.486Z"}
+{"level":"info","message":"✅ Successfully connected to MongoDB","timestamp":"2025-04-27T05:52:00.049Z"}
+{"level":"info","message":"Running with in-memory cache (Redis disabled)","timestamp":"2025-04-27T05:53:16.308Z"}
+{"level":"info","message":"🚀 Server started on http://0.0.0.0:8000","timestamp":"2025-04-27T05:53:16.329Z"}
+{"level":"info","message":"📚 API Documentation available at http://0.0.0.0:8000/api-docs","timestamp":"2025-04-27T05:53:16.329Z"}
+{"level":"info","message":"✅ Successfully connected to MongoDB","timestamp":"2025-04-27T05:53:17.255Z"}
+{"level":"info","message":"Running with in-memory cache (Redis disabled)","timestamp":"2025-04-27T05:53:41.315Z"}
+{"level":"info","message":"🚀 Server started on http://0.0.0.0:8000","timestamp":"2025-04-27T05:53:41.346Z"}
+{"level":"info","message":"📚 API Documentation available at http://0.0.0.0:8000/api-docs","timestamp":"2025-04-27T05:53:41.347Z"}
+{"level":"info","message":"✅ Successfully connected to MongoDB","timestamp":"2025-04-27T05:53:41.835Z"}
+{"level":"info","message":"Running with in-memory cache (Redis disabled)","timestamp":"2025-04-27T05:54:07.732Z"}
+{"level":"info","message":"🚀 Server started on http://0.0.0.0:8000","timestamp":"2025-04-27T05:54:07.756Z"}
+{"level":"info","message":"📚 API Documentation available at http://0.0.0.0:8000/api-docs","timestamp":"2025-04-27T05:54:07.757Z"}
+{"level":"info","message":"✅ Successfully connected to MongoDB","timestamp":"2025-04-27T05:54:08.377Z"}
+{"level":"info","message":"Running with in-memory cache (Redis disabled)","timestamp":"2025-04-27T05:57:27.558Z"}
+{"level":"info","message":"🚀 Server started on http://0.0.0.0:8000","timestamp":"2025-04-27T05:57:27.587Z"}
+{"level":"info","message":"📚 API Documentation available at http://0.0.0.0:8000/api-docs","timestamp":"2025-04-27T05:57:27.588Z"}
+{"level":"info","message":"✅ Successfully connected to MongoDB","timestamp":"2025-04-27T05:57:28.603Z"}
+{"level":"info","message":{"duration":"260ms","method":"POST","requestId":"eaa04169-85cb-4a85-8e67-6e475b736180","status":200,"url":"/login"},"timestamp":"2025-04-27T05:57:41.121Z"}
+{"level":"info","message":{"duration":"4ms","method":"GET","requestId":"1dbea546-2c27-4a49-b95b-5d8734d18bc4","status":401,"url":"/my-store"},"timestamp":"2025-04-27T05:57:41.148Z"}
+{"level":"info","message":{"duration":"1ms","method":"GET","requestId":"07e10299-8307-41a2-a62f-ac882d97ee55","status":401,"url":"/my-store"},"timestamp":"2025-04-27T05:57:41.153Z"}
+{"level":"info","message":"Running with in-memory cache (Redis disabled)","timestamp":"2025-04-27T06:01:47.654Z"}
+{"level":"info","message":"🚀 Server started on http://0.0.0.0:8000","timestamp":"2025-04-27T06:01:47.681Z"}
+{"level":"info","message":"📚 API Documentation available at http://0.0.0.0:8000/api-docs","timestamp":"2025-04-27T06:01:47.682Z"}
+{"level":"info","message":"✅ Successfully connected to MongoDB","timestamp":"2025-04-27T06:01:48.654Z"}
+{"level":"info","message":"Running with in-memory cache (Redis disabled)","timestamp":"2025-04-27T06:02:03.249Z"}
+{"level":"info","message":"🚀 Server started on http://0.0.0.0:8000","timestamp":"2025-04-27T06:02:03.276Z"}
+{"level":"info","message":"📚 API Documentation available at http://0.0.0.0:8000/api-docs","timestamp":"2025-04-27T06:02:03.277Z"}
+{"level":"info","message":"✅ Successfully connected to MongoDB","timestamp":"2025-04-27T06:02:03.745Z"}
+{"level":"info","message":"Running with in-memory cache (Redis disabled)","timestamp":"2025-04-27T06:04:14.705Z"}
+{"level":"info","message":"🚀 Server started on http://0.0.0.0:8000","timestamp":"2025-04-27T06:04:14.739Z"}
+{"level":"info","message":"📚 API Documentation available at http://0.0.0.0:8000/api-docs","timestamp":"2025-04-27T06:04:14.739Z"}
+{"level":"info","message":"✅ Successfully connected to MongoDB","timestamp":"2025-04-27T06:04:15.583Z"}
+{"level":"info","message":{"duration":"8ms","method":"GET","requestId":"99c69a13-8661-4727-a82b-ad7598472047","status":401,"url":"/my-store"},"timestamp":"2025-04-27T06:04:45.061Z"}
+{"level":"info","message":{"duration":"1ms","method":"GET","requestId":"e7d8c4c2-b565-410f-b4c5-7535dfc0012f","status":401,"url":"/my-store"},"timestamp":"2025-04-27T06:04:45.077Z"}
+{"level":"info","message":"Running with in-memory cache (Redis disabled)","timestamp":"2025-04-27T06:04:57.005Z"}
+{"level":"info","message":"🚀 Server started on http://0.0.0.0:8000","timestamp":"2025-04-27T06:04:57.025Z"}
+{"level":"info","message":"📚 API Documentation available at http://0.0.0.0:8000/api-docs","timestamp":"2025-04-27T06:04:57.026Z"}
+{"level":"info","message":"✅ Successfully connected to MongoDB","timestamp":"2025-04-27T06:04:57.663Z"}
+{"level":"info","message":{"duration":"9ms","method":"GET","requestId":"5d965eae-f547-4f91-8c3b-89ddebb67c8d","status":401,"url":"/my-store"},"timestamp":"2025-04-27T06:07:20.649Z"}
+{"level":"info","message":{"duration":"1ms","method":"GET","requestId":"834c5b76-a66e-4673-8167-4aec1d8768c4","status":401,"url":"/my-store"},"timestamp":"2025-04-27T06:07:20.652Z"}
+{"level":"info","message":"Received shutdown signal, starting graceful shutdown...","timestamp":"2025-04-27T06:09:41.329Z"}
+{"level":"info","message":"Running with in-memory cache (Redis disabled)","timestamp":"2025-04-27T06:10:02.475Z"}
+{"level":"info","message":"🚀 Server started on http://0.0.0.0:8000","timestamp":"2025-04-27T06:10:02.501Z"}
+{"level":"info","message":"📚 API Documentation available at http://0.0.0.0:8000/api-docs","timestamp":"2025-04-27T06:10:02.501Z"}
+{"level":"info","message":"✅ Successfully connected to MongoDB","timestamp":"2025-04-27T06:10:03.775Z"}
+{"level":"info","message":{"duration":"232ms","method":"POST","requestId":"5eefc426-4d4e-4951-a42f-de6fa38a3785","status":200,"url":"/login"},"timestamp":"2025-04-27T06:10:27.914Z"}
+{"level":"info","message":{"duration":"109ms","method":"GET","requestId":"aa072372-36da-4c44-b66d-0c5b8ccc9dd1","status":200,"url":"/my-store"},"timestamp":"2025-04-27T06:10:28.045Z"}
+{"level":"info","message":{"duration":"105ms","method":"GET","requestId":"ee37e77f-a06d-4d8f-8813-bf3083321cad","status":200,"url":"/seller/products"},"timestamp":"2025-04-27T06:10:31.655Z"}

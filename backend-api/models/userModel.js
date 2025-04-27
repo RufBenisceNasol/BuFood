@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const crypto = require('crypto');
 
 const userSchema = new mongoose.Schema({
     name: {
@@ -34,8 +35,29 @@ const userSchema = new mongoose.Schema({
         storeName: String,
         storeId: mongoose.Schema.Types.ObjectId,
         owner: mongoose.Schema.Types.ObjectId,
+    },
+    refreshToken: {
+        type: String
+    },
+    passwordResetToken: {
+        type: String
+    },
+    passwordResetExpires: {
+        type: Date
     }
 }, { timestamps: true });
+
+// Add method to generate password reset token
+userSchema.methods.createPasswordResetToken = function() {
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    this.passwordResetToken = crypto
+        .createHash('sha256')
+        .update(resetToken)
+        .digest('hex');
+    
+    this.passwordResetExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
+    return resetToken;
+};
 
 const User = mongoose.model('User', userSchema);
 

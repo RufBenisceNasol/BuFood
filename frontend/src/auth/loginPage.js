@@ -25,9 +25,13 @@ const LoginPage = () => {
                 password
             });
 
-            localStorage.setItem('token', response.data.token);
+            // Store both tokens
+            localStorage.setItem('token', response.data.accessToken);
+            localStorage.setItem('refreshToken', response.data.refreshToken);
             localStorage.setItem('user', JSON.stringify(response.data.user));
-            axios.defaults.headers.common['Authorization'] = `Bearer ${response.data.token}`;
+
+            // Set authorization header
+            axios.defaults.headers.common['Authorization'] = `Bearer ${response.data.accessToken}`;
 
             if (response.data.user.role === 'Seller') {
                 navigate('/seller/dashboard');
@@ -184,9 +188,8 @@ const styles = {
         top: '50%',
         transform: 'translateY(-50%)',
         color: '#666',
-        fontSize: '20px',
-        display: 'flex',
         fontSize: 'clamp(16px, 4vw, 20px)',
+        display: 'flex',
         alignItems: 'center',
     },
     input: {
@@ -196,10 +199,9 @@ const styles = {
         border: '1px solid #ddd',
         borderRadius: '50px',
         backgroundColor: '#fff',
-        transition: 'all 0.2s ease',
-        
         boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
         outline: 'none',
+        transition: 'all 0.2s ease',
         '&:focus': {
             borderColor: '#rgba(103, 70, 30, 0.7)'
         },

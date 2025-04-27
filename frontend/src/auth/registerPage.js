@@ -41,9 +41,16 @@ const RegisterPage = () => {
         setLoading(true);
 
         try {
-            // Remove confirmPassword before sending to API
-            const { confirmPassword, ...dataToSend } = formData;
+            // Remove confirmPassword and create dataToSend in one step
+            const { confirmPassword: _, ...dataToSend } = formData;
             const response = await axios.post('http://localhost:8000/api/auth/register', dataToSend);
+
+            if (response.data.accessToken && response.data.refreshToken) {
+                localStorage.setItem('token', response.data.accessToken);
+                localStorage.setItem('refreshToken', response.data.refreshToken);
+                localStorage.setItem('user', JSON.stringify(response.data.user));
+            }
+
             setSuccess(response.data.message);
             setTimeout(() => {
                 navigate('/login');
@@ -264,9 +271,8 @@ const styles = {
         top: '50%',
         transform: 'translateY(-50%)',
         color: '#666',
-        fontSize: '20px',
-        display: 'flex',
         fontSize: 'clamp(16px, 4vw, 20px)',
+        display: 'flex',
         alignItems: 'center',
     },
     input: {
@@ -274,13 +280,19 @@ const styles = {
         border: '1px solid rgba(0, 0, 0, 0.1)',
         borderRadius: '50px',
         backgroundColor: '#ffffff',
-        transition: 'all 0.3s ease',
         outline: 'none',
         boxSizing: 'border-box',
         padding: 'clamp(12px, 3vw, 15px) 45px',
         fontSize: 'clamp(14px, 3.5vw, 16px)',
-        transition: 'all 0.2s ease',
         boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+        transition: 'all 0.3s ease',
+        '&:hover': {
+            borderColor: '#ff8c00',
+        },
+        '&:focus': {
+            borderColor: '#ff8c00',
+            boxShadow: '0 4px 15px rgba(255, 140, 0, 0.1)',
+        },
     },
     checkbox: {
         width: 'clamp(14px, 3.5vw, 16px)',

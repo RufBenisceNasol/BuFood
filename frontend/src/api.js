@@ -19,14 +19,55 @@ api.interceptors.request.use((config) => {
     return config;
 });
 
+// Add response interceptor for token refresh
+api.interceptors.response.use(
+    (response) => response,
+    async (error) => {
+        const originalRequest = error.config;
+
+        // If the error is not 401 or the request was for token refresh, reject the promise
+        if (error.response?.status !== 401 || originalRequest.url === '/auth/refresh-token') {
+            return Promise.reject(error);
+        }
+
+        try {
+            // Try to refresh the token
+            const refreshToken = localStorage.getItem('refreshToken');
+            if (!refreshToken) {
+                throw new Error('No refresh token available');
+            }
+
+            const response = await axios.post(`${API_BASE_URL}/auth/refresh-token`, {
+                refreshToken
+            });
+
+            const { accessToken, refreshToken: newRefreshToken } = response.data;
+
+            // Update stored tokens
+            localStorage.setItem('token', accessToken);
+            localStorage.setItem('refreshToken', newRefreshToken);
+
+            // Update the failed request's authorization header and retry it
+            originalRequest.headers.Authorization = `Bearer ${accessToken}`;
+            return axios(originalRequest);
+        } catch (refreshError) {
+            // If refresh fails, clear tokens and reject the promise
+            localStorage.removeItem('token');
+            localStorage.removeItem('refreshToken');
+            return Promise.reject(refreshError);
+        }
+    }
+);
+
 // Auth API endpoints
 export const auth = {
     // Register new user
     register: async (userData) => {
         try {
             const response = await api.post('/auth/register', userData);
-            if (response.data.token) {
-                localStorage.setItem('token', response.data.token);
+            if (response.data.accessToken) {
+                localStorage.setItem('token', response.data.accessToken);
+                localStorage.setItem('refreshToken', response.data.refreshToken);
             }
             return response.data;
         } catch (error) {
@@ -38,8 +79,9 @@ export const auth = {
     login: async (email, password) => {
         try {
             const response = await api.post('/auth/login', { email, password });
-            if (response.data.token) {
-                localStorage.setItem('token', response.data.token);
+            if (response.data.accessToken) {
+                localStorage.setItem('token', response.data.accessToken);
+                localStorage.setItem('refreshToken', response.data.refreshToken);
             }
             return response.data;
         } catch (error) {
@@ -92,9 +134,10 @@ export const auth = {
         return !!localStorage.getItem('token');
     },
 
-    // Utility function to logout (clear token)
+    // Utility function to logout (clear tokens)
     logout: () => {
         localStorage.removeItem('token');
+        localStorage.removeItem('refreshToken');
     }
 };
 
