@@ -1,6 +1,20 @@
 import axios from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api'; // Fallback to localhost
+// Try to get the API URL from different sources with fallbacks
+const API_BASE_URL = (() => {
+    // First try environment variable
+    if (import.meta.env.VITE_API_URL) {
+        return `${import.meta.env.VITE_API_URL}/api`;
+    }
+    
+    // If running on mobile/different device, try to detect the server IP
+    if (window.location.hostname !== 'localhost') {
+        return `${window.location.protocol}//${window.location.hostname}:8000/api`;
+    }
+    
+    // Fallback to localhost
+    return 'http://localhost:8000/api';
+})();
 
 // Create axios instance with default config
 const api = axios.create({

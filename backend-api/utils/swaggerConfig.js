@@ -10,9 +10,21 @@ const options = {
         },
         servers: [
             {
-                url: process.env.API_URL || 'http://localhost:8000',
-                description: 'Development server',
-            },
+                url: '{protocol}://{hostname}:{port}',
+                description: 'Dynamic server',
+                variables: {
+                    protocol: {
+                        enum: ['http', 'https'],
+                        default: 'http'
+                    },
+                    hostname: {
+                        default: 'localhost'
+                    },
+                    port: {
+                        default: '8000'
+                    }
+                }
+            }
         ],
         components: {
             securitySchemes: {

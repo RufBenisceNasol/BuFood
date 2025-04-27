@@ -1,6 +1,35 @@
 const express = require('express');
 const router = express.Router();
 
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     Product:
+ *       type: object
+ *       required:
+ *         - name
+ *         - price
+ *         - description
+ *       properties:
+ *         name:
+ *           type: string
+ *           description: Name of the product
+ *         price:
+ *           type: number
+ *           description: Price of the product
+ *         description:
+ *           type: string
+ *           description: Product description
+ *         image:
+ *           type: string
+ *           format: binary
+ *           description: Product image
+ *         storeId:
+ *           type: string
+ *           description: ID of the store this product belongs to
+ */
+
 const {
   createProduct,
   getAllProducts,
@@ -20,10 +49,40 @@ const {
   updateProductValidation
 } = require('../middlewares/validators/productValidation');
 
-// 🟢 Public routes
+/**
+ * @swagger
+ * /api/products:
+ *   get:
+ *     tags: [Products]
+ *     summary: Get all products
+ *     responses:
+ *       200:
+ *         description: List of products
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Product'
+ */
 router.get('/', getAllProducts);  // Fetch all products
 
-// 🆕 Get all products of the logged-in seller (This must come before /:id to avoid conflict)
+/**
+ * @swagger
+ * /api/products/seller/products:
+ *   get:
+ *     tags: [Products]
+ *     summary: Get all products of logged-in seller
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: List of seller's products
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - Not a seller
+ */
 router.get(
   '/seller/products',
   authenticate,  // Ensure the user is authenticated
@@ -31,10 +90,48 @@ router.get(
   getSellerProducts  // Controller to fetch seller's products
 );
 
-// Product by ID route must come after specific routes
+/**
+ * @swagger
+ * /api/products/{id}:
+ *   get:
+ *     tags: [Products]
+ *     summary: Get product by ID
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Product details
+ *       404:
+ *         description: Product not found
+ */
 router.get('/:id', getProductById);  // Fetch a product by ID
 
-// Create a new product
+/**
+ * @swagger
+ * /api/products:
+ *   post:
+ *     tags: [Products]
+ *     summary: Create a new product
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             $ref: '#/components/schemas/Product'
+ *     responses:
+ *       201:
+ *         description: Product created successfully
+ *       400:
+ *         description: Invalid input
+ *       401:
+ *         description: Unauthorized
+ */
 router.post(
   '/',
   authenticate,
@@ -45,7 +142,33 @@ router.post(
   createProduct
 );
 
-// Update an existing product
+/**
+ * @swagger
+ * /api/products/{id}:
+ *   put:
+ *     tags: [Products]
+ *     summary: Update a product
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             $ref: '#/components/schemas/Product'
+ *     responses:
+ *       200:
+ *         description: Product updated successfully
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: Product not found
+ */
 router.put(
   '/:id',
   authenticate,
@@ -56,7 +179,28 @@ router.put(
   updateProduct
 );
 
-// Delete a product
+/**
+ * @swagger
+ * /api/products/{id}:
+ *   delete:
+ *     tags: [Products]
+ *     summary: Delete a product
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Product deleted successfully
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: Product not found
+ */
 router.delete(
   '/:id',
   authenticate,
@@ -64,7 +208,28 @@ router.delete(
   deleteProduct
 );
 
-// 🧹 Route to delete all products in a store
+/**
+ * @swagger
+ * /api/products/store/{storeId}/products:
+ *   delete:
+ *     tags: [Products]
+ *     summary: Delete all products in a store
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: storeId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: All products deleted successfully
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - Not store owner
+ */
 router.delete(
   '/store/:storeId/products',
   authenticate,

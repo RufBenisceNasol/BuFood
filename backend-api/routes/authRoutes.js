@@ -26,29 +26,82 @@ const router = express.Router();
 
 /**
  * @swagger
+ * components:
+ *   schemas:
+ *     UserRegistration:
+ *       type: object
+ *       required:
+ *         - name
+ *         - email
+ *         - password
+ *         - contactNumber
+ *         - role
+ *       properties:
+ *         name:
+ *           type: string
+ *           description: User's full name
+ *         email:
+ *           type: string
+ *           format: email
+ *           description: User's email address
+ *         password:
+ *           type: string
+ *           format: password
+ *           description: User's password
+ *         contactNumber:
+ *           type: string
+ *           description: User's contact number
+ *         role:
+ *           type: string
+ *           enum: [Customer, Seller]
+ *           description: User's role in the system
+ *     LoginCredentials:
+ *       type: object
+ *       required:
+ *         - email
+ *         - password
+ *       properties:
+ *         email:
+ *           type: string
+ *           format: email
+ *         password:
+ *           type: string
+ *           format: password
+ *     UserProfile:
+ *       type: object
+ *       properties:
+ *         name:
+ *           type: string
+ *         email:
+ *           type: string
+ *         contactNumber:
+ *           type: string
+ *         role:
+ *           type: string
+ *         isVerified:
+ *           type: boolean
+ */
+
+/**
+ * @swagger
  * /api/auth/register:
  *   post:
  *     tags: [Authentication]
  *     summary: Register a new user
+ *     description: Create a new user account with email verification
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
- *             type: object
- *             required: [name, email, password, contactNumber]
- *             properties:
- *               name:
- *                 type: string
- *               email:
- *                 type: string
- *               password:
- *                 type: string
- *               contactNumber:
- *                 type: string
- *               role:
- *                 type: string
- *                 enum: [Customer, Seller]
+ *             $ref: '#/components/schemas/UserRegistration'
+ *     responses:
+ *       201:
+ *         description: User registered successfully. Verification email sent.
+ *       400:
+ *         description: Invalid input or validation error
+ *       409:
+ *         description: Email already exists
  */
 router.post('/register', registerValidation, handleValidation, register);
 
@@ -58,6 +111,29 @@ router.post('/register', registerValidation, handleValidation, register);
  *   post:
  *     tags: [Authentication]
  *     summary: Login user
+ *     description: Authenticate user and return JWT tokens
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/LoginCredentials'
+ *     responses:
+ *       200:
+ *         description: Login successful
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 token:
+ *                   type: string
+ *                 refreshToken:
+ *                   type: string
+ *       400:
+ *         description: Invalid credentials
+ *       401:
+ *         description: Email not verified
  */
 router.post('/login', loginValidation, handleValidation, login);
 
@@ -67,14 +143,115 @@ router.post('/login', loginValidation, handleValidation, login);
  *   post:
  *     tags: [Authentication]
  *     summary: Logout user
+ *     description: Invalidate user's refresh token
  *     security:
  *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Logged out successfully
+ *       401:
+ *         description: Unauthorized
  */
 router.post('/logout', authenticate, logout);
 
+/**
+ * @swagger
+ * /api/auth/verify/{token}:
+ *   get:
+ *     tags: [Authentication]
+ *     summary: Verify email
+ *     description: Verify user's email address using verification token
+ *     parameters:
+ *       - in: path
+ *         name: token
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Email verified successfully
+ *       400:
+ *         description: Invalid or expired token
+ */
 router.get('/verify/:token', verifyEmail);
+
+/**
+ * @swagger
+ * /api/auth/me:
+ *   get:
+ *     tags: [Authentication]
+ *     summary: Get current user profile
+ *     description: Get the profile of the currently logged-in user
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: User profile retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/UserProfile'
+ *       401:
+ *         description: Unauthorized
+ */
 router.get('/me', authenticate, getMe);
+
+/**
+ * @swagger
+ * /api/auth/resend-verification:
+ *   post:
+ *     tags: [Authentication]
+ *     summary: Resend verification email
+ *     description: Resend email verification link to user's email
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *     responses:
+ *       200:
+ *         description: Verification email sent successfully
+ *       400:
+ *         description: Invalid email or user already verified
+ */
 router.post('/resend-verification', resendVerificationValidation, handleValidation, resendVerificationEmail);
+
+/**
+ * @swagger
+ * /api/auth/check-verification:
+ *   post:
+ *     tags: [Authentication]
+ *     summary: Check email verification status
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *     responses:
+ *       200:
+ *         description: Verification status retrieved
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 isVerified:
+ *                   type: boolean
+ */
 router.post('/check-verification', checkVerificationValidation, handleValidation, checkEmailVerificationStatus);
 
 /**
@@ -83,6 +260,24 @@ router.post('/check-verification', checkVerificationValidation, handleValidation
  *   post:
  *     tags: [Authentication]
  *     summary: Request password reset
+ *     description: Send password reset link to user's email
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *     responses:
+ *       200:
+ *         description: Password reset email sent successfully
+ *       404:
+ *         description: User not found
  */
 router.post('/forgot-password', forgotPasswordValidation, handleValidation, forgotPassword);
 
@@ -91,7 +286,28 @@ router.post('/forgot-password', forgotPasswordValidation, handleValidation, forg
  * /api/auth/reset-password:
  *   post:
  *     tags: [Authentication]
- *     summary: Reset password with token
+ *     summary: Reset password
+ *     description: Reset user's password using reset token
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - token
+ *               - password
+ *             properties:
+ *               token:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *                 format: password
+ *     responses:
+ *       200:
+ *         description: Password reset successful
+ *       400:
+ *         description: Invalid or expired token
  */
 router.post('/reset-password', resetPasswordValidation, handleValidation, resetPassword);
 
@@ -100,7 +316,31 @@ router.post('/reset-password', resetPasswordValidation, handleValidation, resetP
  * /api/auth/refresh-token:
  *   post:
  *     tags: [Authentication]
- *     summary: Get new access token using refresh token
+ *     summary: Refresh access token
+ *     description: Get new access token using refresh token
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - refreshToken
+ *             properties:
+ *               refreshToken:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: New access token generated
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 token:
+ *                   type: string
+ *       401:
+ *         description: Invalid refresh token
  */
 router.post('/refresh-token', refreshToken);
 

@@ -173,7 +173,7 @@ process.on('SIGTERM', gracefulShutdown);
 process.on('SIGINT', gracefulShutdown);
 
 // Start server
-app.listen(port, () => {
-    logger.info(`🚀 Server started on http://0.0.0.0:${port}`);
-    logger.info(`📚 API Documentation available at http://0.0.0.0:${port}/api-docs`);
+app.listen(port, '0.0.0.0', () => {
+    logger.info(`🚀 Server started on port ${port}`);
+    logger.info(`📚 API Documentation available at http://[YOUR_IP]:${port}/api-docs`);
 });
