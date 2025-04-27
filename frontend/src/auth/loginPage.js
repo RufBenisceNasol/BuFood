@@ -242,13 +242,13 @@ const styles = {
         fontSize: 'clamp(12px, 3vw, 14px)',
         '&:hover': {
             textDecoration: 'underline',
-            color: '#ff8c00',
+            color: '#ff8c00e0',
         },
     },
     button: {
         width: '100%',
         padding: 'clamp(12px, 3vw, 15px)',
-        backgroundColor: '#ff8c00',
+        backgroundColor: '#ff8c00e0',
         color: 'white',
         border: 'none',
         borderRadius: '50px',
@@ -274,7 +274,7 @@ const styles = {
         fontSize: 'clamp(12px, 3vw, 14px)',
     },
     signUpLink: {
-        color: '#ff8c00',
+        color: '#ff8c00e0',
         textDecoration: 'none',
         fontWeight: '600',
         '&:hover': {

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { store } from '../api';
 import '../styles/DashboardPage.css';
+import { MdMenuOpen } from "react-icons/md";
 
 const DashboardPage = () => {
   const [storeData, setStoreData] = useState(null);
@@ -36,13 +37,23 @@ const DashboardPage = () => {
   return (
     <div className="dashboard-container">
       {/* Header Section */}
-      <div className="store-header">
+      <div 
+        className="store-header"
+        style={{
+          backgroundImage: storeData?.bannerImage ? `url(${storeData.bannerImage})` : 'none',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          position: 'relative',
+        }}
+      >
+        <div className="header-overlay"></div>
         <h1>{storeData?.storeName || 'My Store'}</h1>
         <button className="menu-toggle">
-          <span className="hamburger-icon">☰</span>
+          <span className="hamburger-icon"><MdMenuOpen /></span>
         </button>
       </div>
 
+      <div className="scrollable-section">
       {/* Summary Cards */}
       <div className="summary-cards">
         <div className="summary-card">
@@ -72,25 +83,28 @@ const DashboardPage = () => {
 
         <Link to="/seller/store-settings" className="grid-item">
           <div className="icon">🛍️</div>
-          <div className="count">{storeData?.products?.length || 0}</div>
+          <div className="space">0</div>
           <div className="label">Store Settings</div>
         </Link>
 
         <Link to="/seller/add-product" className="grid-item">
           <div className="icon">➕</div>
+          <div className="space">0</div>
           <div className="label">Add Product</div>
         </Link>
 
         <Link to="/seller/product-list" className="grid-item">
           <div className="icon">👁️</div>
+          <div className="count">{storeData?.products?.length || 0}</div>
           <div className="label">Product List</div>
         </Link>
       </div>
-
+      
       {/* Profile Button */}
       <Link to="/seller/profile">
         <button className="profile-button">PROFILE</button>
       </Link>
+    </div>
     </div>
   );
 };

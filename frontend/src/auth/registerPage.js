@@ -3,6 +3,7 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { FiUser, FiMail, FiPhone, FiLock, FiBriefcase, FiEye, FiEyeOff } from 'react-icons/fi';
 import logod from '../assets/logod.png';
+import { Box } from '@mui/material';
 
 const RegisterPage = () => {
     const [formData, setFormData] = useState({
@@ -170,11 +171,11 @@ const RegisterPage = () => {
                             name="role"
                             value={formData.role}
                             onChange={handleChange}
-                            style={styles.input}
+                            style={styles.select}
                             disabled={loading}
                         >
-                            <option value="Customer">Customer</option>
-                            <option value="Seller">Seller</option>
+                            <option value="Customer" style={styles.selectOption}>Customer</option>
+                            <option value="Seller" style={styles.selectOption}>Seller</option>
                         </select>
                     </div>
 
@@ -220,6 +221,7 @@ const styles = {
         boxSizing: 'border-box',
     },
     formContainer: {
+        display: 'flex',
         width: '100%',
         maxWidth: '400px',
         padding: 'clamp(20px, 5vw, 40px) clamp(15px, 4vw, 30px)',
@@ -231,26 +233,50 @@ const styles = {
         margin: '0 auto',
     },
     logo: {
-        width: 'clamp(60px, 15vw, 80px)',
-        height: 'auto',
-        marginBottom: 'clamp(15px, 4vw, 20px)',
+        width: '60px',
+        height: '60px',
+        aspectRatio: '1/1',
+        marginBottom: '10px',
     },
     title: {
-        fontSize: '24px',
+        fontSize: '22px',
         fontWeight: 'bold',
         color: '#333',
-        marginBottom: '30px',
+        marginBottom: '10px',
+        marginTop: '0px',
         textAlign: 'center',
     },
     form: {
         width: '100%',
         display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
         flexDirection: 'column',
         gap: 'clamp(15px, 4vw, 20px)',
     },
     inputGroup: {
         position: 'relative',
         width: '100%',
+    },
+    select: {
+        width: '100%',
+        border: '1px solid rgba(0, 0, 0, 0.1)',
+        borderRadius: '50px',
+        backgroundColor: '#ffffff',
+        justifyContent: 'center',
+        alignItems: 'center',
+        transition: 'all 0.3s ease',
+        outline: 'none',
+        boxSizing: 'border-box',
+        padding: 'clamp(12px, 3vw, 15px) 45px',
+        fontSize: '14px',
+        color: 'rgb(136, 134, 134)',
+        transition: 'all 0.2s ease',
+        boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+        paddingRight: '30px',
+    },
+    selectOption: {
+        color: 'rgb(81, 79, 79)',
     },
     inputWrapper: {
         position: 'relative',
@@ -263,7 +289,7 @@ const styles = {
         left: '15px',
         top: '50%',
         transform: 'translateY(-50%)',
-        color: '#666',
+        color: 'rgb(102, 102, 102)',
         fontSize: '20px',
         display: 'flex',
         fontSize: 'clamp(16px, 4vw, 20px)',
@@ -295,7 +321,7 @@ const styles = {
     button: {
         width: '100%',
         padding: 'clamp(12px, 3vw, 15px)',
-        backgroundColor: '#ff8c00',
+        backgroundColor: '#ff8c00e0',
         color: 'white',
         border: 'none',
         borderRadius: '50px',
@@ -344,7 +370,7 @@ const styles = {
         margin: 0,
     },
     loginLink: {
-        color: '#ff8c00',
+        color: '#ff8c00e0',
         textDecoration: 'none',
         fontWeight: '600',
     },

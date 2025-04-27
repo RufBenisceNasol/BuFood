@@ -190,7 +190,7 @@ const styles = {
     },
     editButton: {
         padding: '10px 20px',
-        backgroundColor: '#ff8c00',
+        backgroundColor: '#ff8c00e0',
         color: 'white',
         border: 'none',
         borderRadius: '5px',

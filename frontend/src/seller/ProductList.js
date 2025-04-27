@@ -205,7 +205,7 @@ const styles = {
     },
     addButton: {
         padding: '10px 20px',
-        backgroundColor: '#ff8c00',
+        backgroundColor: '#ff8c00e0',
         color: 'white',
         border: 'none',
         borderRadius: '5px',
@@ -261,7 +261,7 @@ const styles = {
     productPrice: {
         margin: '0 0 5px 0',
         fontSize: '20px',
-        color: '#ff8c00',
+        color: '#ff8c00e0',
         fontWeight: 'bold'
     },
     productCategory: {
@@ -360,7 +360,7 @@ const styles = {
     addFirstButton: {
         marginTop: '20px',
         padding: '12px 30px',
-        backgroundColor: '#ff8c00',
+        backgroundColor: '#ff8c00e0',
         color: 'white',
         border: 'none',
         borderRadius: '5px',
