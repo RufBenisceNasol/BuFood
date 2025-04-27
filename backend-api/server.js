@@ -77,8 +77,8 @@ app.use((req, res, next) => {
 });
 
 // Apply rate limiting
-app.use('/api/', limiter);
-app.use('/api/', speedLimiter);
+app.use('/api', limiter);
+app.use('/api', speedLimiter);
 
 // Initialize Redis connection if enabled
 if (process.env.USE_REDIS === 'true' && redisClient) {
