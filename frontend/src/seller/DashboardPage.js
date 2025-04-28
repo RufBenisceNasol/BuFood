@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { store } from '../api';
 import '../styles/DashboardPage.css';
-import { MdMenuOpen } from "react-icons/md";
+import { MdMenuOpen, MdNotificationAdd, MdStore, MdAddCircle,MdListAlt } from "react-icons/md";
 
 const DashboardPage = () => {
   const [storeData, setStoreData] = useState(null);
@@ -76,25 +76,25 @@ const DashboardPage = () => {
       {/* Dashboard Grid */}
       <div className="dashboard-grid">
         <Link to="/seller/manage-orders" className="grid-item">
-          <div className="icon">🔔</div>
+          <div className="icon"><MdNotificationAdd /></div>
           <div className="count">{storeData?.pendingOrders || 0}</div>
           <div className="label">Manage Orders</div>
         </Link>
 
         <Link to="/seller/store-settings" className="grid-item">
-          <div className="icon">🛍️</div>
+          <div className="icon"><MdStore /></div>
           <div className="space">0</div>
           <div className="label">Store Settings</div>
         </Link>
 
         <Link to="/seller/add-product" className="grid-item">
-          <div className="icon">➕</div>
+          <div className="icon"><MdAddCircle /></div>
           <div className="space">0</div>
           <div className="label">Add Product</div>
         </Link>
 
         <Link to="/seller/product-list" className="grid-item">
-          <div className="icon">👁️</div>
+          <div className="icon"><MdListAlt /></div>
           <div className="count">{storeData?.products?.length || 0}</div>
           <div className="label">Product List</div>
         </Link>

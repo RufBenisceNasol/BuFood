@@ -117,7 +117,8 @@
   margin: 20px;
   display: flex;
   gap: 15px;
-  font-size: 12px;
+  font-size: 9px;
+  color: #4b4949bb;
   flex-wrap: wrap;
 }
 
@@ -130,13 +131,13 @@
   text-align: center;
 }
 .count {
-  font-size: 20px;
+  font-size: 18px;
   font-weight: bold;
-  color: #4b4949bb;
+  color: #FF7400;
 }
 
 .dashboard-title {
-  margin: 15px 0;
+  margin: 10px 0;
   font-weight: bold;
 }
 
@@ -152,8 +153,8 @@
 
 .grid-item {
   background: white;
-  padding: 20px;
-  border-radius: 15px;
+  padding: 10px;
+  border-radius: 10px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.3);
   text-align: center;
   text-decoration: none;
@@ -167,20 +168,22 @@
 
 .grid-item .icon {
   font-size: 24px;
-  margin-bottom: 10px;
+  color: #ff7300bf;
+  margin-bottom: 1px;
 }
 
 .grid-item .count {
-  font-size: 24px;
+  font-size: 18px;
   font-weight: bold;
-  margin-bottom: 5px;
+  color: #4b4949c7;
+  margin-bottom: 3px;
 }
 
 .grid-item .space {
-  font-size: 24px;
+  font-size: 18px;
   font-weight: bold;
   color: #ffffff00;
-  margin-bottom: 5px;
+  margin-bottom: 3px;
 }
 
 .grid-item .label {
@@ -224,7 +227,7 @@
 }
 
 .scrollable-section {
-  max-height: 510px;   /* Adjust as needed */
+  max-height: 450px;   /* Adjust as needed */
   overflow-y: auto;
-  padding-right: 8px;  /* Optional, for scrollbar space */
+  padding-right: 0;  /* Optional, for scrollbar space */
 }
