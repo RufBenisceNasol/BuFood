@@ -321,7 +321,7 @@ const styles = {
     button: {
         width: '100%',
         padding: 'clamp(12px, 3vw, 15px)',
-        backgroundColor: '#ff8c00e0',
+        background: 'linear-gradient(135deg, #fbaa39, #fc753b)',
         color: 'white',
         border: 'none',
         borderRadius: '50px',

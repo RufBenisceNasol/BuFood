@@ -22,7 +22,7 @@
 }
 
 .store-header {
-  background-color: #ff8c00e0;
+  background-color: #ff5500;
   padding: 20px 10px;
   display: flex;
   justify-content: center;
@@ -55,7 +55,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(rgba(255, 140, 0, 0.093), rgb(255, 140, 0));
+  background: linear-gradient(rgba(255, 140, 0, 0.093), #ff9500);
   z-index: 1;
 }
 
@@ -198,7 +198,8 @@
   width: 90%;
   max-width: 400px;
   padding: 15px;
-  background-color: #ff8c00db;
+  background: linear-gradient(135deg, #fbaa39, #fc753b);
+  box-shadow: 0 2px 5px rgba(51, 50, 48, 0.5);
   color: white;
   border: none;
   border-radius: 10px;
@@ -223,7 +224,7 @@
 }
 
 .profile-button:hover {
-  background-color: #FF7400;
+  background-color: #FD9507;
 }
 
 .scrollable-section {

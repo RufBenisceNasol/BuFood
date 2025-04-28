@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { store } from '../api';
+import { auth, store } from '../api';
 import { useNavigate } from 'react-router-dom';
 
 const StoreSettings = () => {
@@ -24,37 +24,35 @@ const StoreSettings = () => {
   const [validationErrors, setValidationErrors] = useState({});
 
   useEffect(() => {
-    fetchStoreDetails();
+    fetchAllDetails();
   }, []);
 
-  const fetchStoreDetails = async () => {
+  // Fetch both store and profile details
+  const fetchAllDetails = async () => {
     setLoading(true);
     setError('');
     try {
-      // Get store data which includes email and phone from registration
+      // Fetch store data
       const data = await store.getMyStore();
       setStoreData(data);
-      
-      // Set the form data with user registration info
+
+      // Fetch seller profile
+      const profile = await auth.getMe();
+      // Use profile for email, name, contact number
       setFormData({
         storeName: data.storeName || '',
-        sellerName: data.sellerName || '',
-        email: data.email || '', // Email from registration
-        contactNumber: data.contactNumber || '', // Phone from registration
+        sellerName: profile.name || '',
+        email: profile.email || '',
+        contactNumber: profile.contactNumber || '',
         description: data.description || '',
         shippingFee: data.shippingFee || '',
         openTime: data.openTime || '',
         profileImage: data.profileImage || '',
         bannerImage: data.bannerImage || '',
       });
-
-      console.log('Fetched registration data:', {
-        email: data.email,
-        contactNumber: data.contactNumber
-      });
     } catch (err) {
-      setError(err.message || 'Failed to fetch store details');
-      console.error('Error fetching store data:', err);
+      setError(err.message || 'Failed to fetch store/profile details');
+      console.error('Error fetching store/profile data:', err);
     } finally {
       setLoading(false);
     }
@@ -138,13 +136,13 @@ const StoreSettings = () => {
         submitData.append('bannerImage', formData.bannerImage);
       }
       if (formData.profileImage && formData.profileImage instanceof File) {
-        submitData.append('profileImage', formData.profileImage);
+        submitData.append('image', formData.profileImage); // Changed from 'profileImage' to 'image'
       }
       const updated = await store.updateStore(storeData._id, submitData);
       setStoreData(updated);
       setEditMode(false);
       setSuccess('Store details updated successfully!');
-      fetchStoreDetails();
+      fetchAllDetails();
     } catch (err) {
       setError(err.message || 'Failed to update store');
     } finally {
@@ -272,11 +270,14 @@ const StoreSettings = () => {
                 type="email"
                 name="email"
                 value={formData.email}
-                onChange={handleInputChange}
-                disabled={!editMode}
+                // Always disabled, not editable
+                disabled={true}
                 style={{
                   ...styles.input,
-                  borderColor: validationErrors.email ? '#e53e3e' : '#ddd'
+                  borderColor: validationErrors.email ? '#e53e3e' : '#ddd',
+                  backgroundColor: '#f3f3f3',
+                  color: '#888',
+                  cursor: 'not-allowed',
                 }}
                 className="store-settings-input"
                 required
@@ -292,11 +293,14 @@ const StoreSettings = () => {
                 type="text"
                 name="contactNumber"
                 value={formData.contactNumber}
-                onChange={handleInputChange}
-                disabled={!editMode}
+                // Always disabled, not editable
+                disabled={true}
                 style={{
                   ...styles.input,
-                  borderColor: validationErrors.contactNumber ? '#e53e3e' : '#ddd'
+                  borderColor: validationErrors.contactNumber ? '#e53e3e' : '#ddd',
+                  backgroundColor: '#f3f3f3',
+                  color: '#888',
+                  cursor: 'not-allowed',
                 }}
                 className="store-settings-input"
                 required
@@ -380,7 +384,7 @@ const StoreSettings = () => {
 
 const styles = {
   mainContainer: {
-    backgroundColor: '#f7f7f7',
+    backgroundColor: ' #f7f7f7',
     minHeight: '100vh',
     width: '100%',
     position: 'relative',
@@ -406,15 +410,15 @@ const styles = {
     scrollBehavior: 'smooth',
   },
   header: {
-    padding: '16px 20px',
+    padding: '7px 10px',
     display: 'flex',
     alignItems: 'center',
-    backgroundColor: '#ff8c00e0',
+    backgroundColor: ' #ff8c00e0',
     color: 'white',
     position: 'sticky',
     top: 0,
     zIndex: 10,
-    boxShadow: '0 3px 10px rgba(0, 0, 0, 0.1)',
+    boxShadow: '0 3px 10px rgba(0, 0, 0, 0.4)',
   },
   backButton: {
     display: 'flex',
@@ -423,15 +427,15 @@ const styles = {
     transition: 'transform 0.2s',
   },
   backArrow: {
-    fontSize: '22px',
+    fontSize: '20px',
     marginRight: '10px',
     color: 'white',
   },
   headerText: {
-    fontSize: '20px',
+    fontSize: '15px',
     fontWeight: '600',
     color: 'white',
-    textShadow: '0 1px 2px rgba(0, 0, 0, 0.1)',
+    textShadow: '0 1px 2px rgba(0, 0, 0, 0.2)',
   },
   formContainer: {
     backgroundColor: 'white',
@@ -444,7 +448,7 @@ const styles = {
   form: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '20px',
+    gap: '10px',
     width: '100%',
     padding: '25px 24px',
     maxWidth: '600px',
@@ -453,7 +457,7 @@ const styles = {
   inputGroup: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '10px',
+    gap: '1px',
     width: '100%',
   },
   label: {
@@ -510,7 +514,7 @@ const styles = {
     fontSize: '16px',
     fontWeight: '500',
     cursor: 'pointer',
-    background: 'linear-gradient(135deg, #ff8c00e0, #ff6a00)',
+    background: 'linear-gradient(135deg, #fbaa39, #fc753b)',
     color: 'white',
     width: '100%',
     maxWidth: '150px',
@@ -524,7 +528,7 @@ const styles = {
     fontSize: '16px',
     fontWeight: '500',
     cursor: 'pointer',
-    background: 'linear-gradient(135deg, #28a745, #218838)',
+    background: 'linear-gradient(135deg, #fbaa39, #fc753b)',
     color: 'white',
     opacity: (props) => (props.saving ? 0.7 : 1),
     cursor: (props) => (props.saving ? 'not-allowed' : 'pointer'),
@@ -577,12 +581,11 @@ const styles = {
     borderRadius: '50%',
     border: '4px solid white',
     objectFit: 'cover',
-    boxShadow: '0 4px 15px rgba(0, 0, 0, 0.2)',
+    boxShadow: '0 4px 15px rgba(0, 0, 0, 0.4)',
     transition: 'transform 0.3s',
   },
   blackBar: {
-    backgroundColor: 'rgba(0, 0, 0, 0.85)',
-    padding: '12px 20px 12px 115px',
+    background: 'linear-gradient(135deg,rgba(252, 147, 0, 0.64),rgba(56, 19, 3, 0.51))',
     position: 'absolute',
     bottom: 0,
     width: '100%',
@@ -592,7 +595,7 @@ const styles = {
     color: 'white',
     fontSize: '18px',
     fontWeight: 'bold',
-    textShadow: '0 1px 2px rgba(0, 0, 0, 0.2)',
+    textShadow: '0 3px 2px rgba(0, 0, 0, 0.5)',
   },
   sellerName: {
     color: 'rgba(255, 255, 255, 0.8)',

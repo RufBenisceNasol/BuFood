@@ -19,10 +19,13 @@ const updateStore = async (req, res) => {
   const storeId = req.params.id;
   const updates = {};
 
-  if (req.body.storeName) {
-    updates.storeName = req.body.storeName;
-  }
+  // Handle basic text fields
+  if (req.body.storeName) updates.storeName = req.body.storeName;
+  if (req.body.description) updates.description = req.body.description;
+  if (req.body.shippingFee) updates.shippingFee = req.body.shippingFee;
+  if (req.body.openTime) updates.openTime = req.body.openTime;
 
+  // Handle file uploads
   if (req.files) {
     if (req.files['image']) {
       updates.image = req.files['image'][0].path;

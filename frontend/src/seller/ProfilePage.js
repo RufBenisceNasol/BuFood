@@ -385,7 +385,7 @@ const ProfilePage = () => {
           display: flex;
           align-items: center;
           justify-content: center;
-          background: linear-gradient(135deg, #ff8c00e0, #ff6a00);
+          background: linear-gradient(135deg, #fbaa39, #fc753b);
           color: white;
           font-size: 42px;
           font-weight: bold;
@@ -399,7 +399,7 @@ const ProfilePage = () => {
         }
         
         .role-badge {
-          background: linear-gradient(135deg, #ff8c00e0, #ff6a00);
+          background: linear-gradient(135deg, #fbaa39, #fc753b);
           color: white;
           padding: 6px 16px;
           border-radius: 50px;
@@ -456,22 +456,22 @@ const ProfilePage = () => {
         }
         
         .edit-profile-button {
-          background: linear-gradient(135deg, #ff8c00e0, #ff6a00);
+          background: linear-gradient(135deg,#fbaa39, #fc753b);
           color: white;
           border: none;
-          border-radius: 10px;
+          border-radius: 50px;
           padding: 14px 28px;
           font-size: 16px;
           font-weight: 500;
           cursor: pointer;
           display: flex;
           align-items: center;
-          box-shadow: 0 4px 12px rgba(255, 140, 0, 0.25);
+          box-shadow: 0 2px 5px rgba(51, 50, 48, 0.5);
           transition: all 0.3s ease;
         }
         
         .edit-profile-button:hover {
-          background: linear-gradient(135deg, #ff7600, #ff5500);
+          background: linear-gradient(135deg,#fbaa39, #fc753b);
           transform: translateY(-3px);
           box-shadow: 0 6px 15px rgba(255, 140, 0, 0.35);
         }
@@ -544,7 +544,7 @@ const ProfilePage = () => {
         }
         
         .save-button {
-          background: linear-gradient(135deg, #ff8c00e0, #ff6a00);
+          background: linear-gradient(135deg, #fbaa39, #fc753b);
           color: white;
           border: none;
           border-radius: 10px;
@@ -557,7 +557,7 @@ const ProfilePage = () => {
         }
         
         .save-button:hover {
-          background: linear-gradient(135deg, #ff7600, #ff5500);
+          background: linear-gradient(135deg, #fbaa39, #fc753b);
           transform: translateY(-2px);
           box-shadow: 0 6px 15px rgba(255, 140, 0, 0.35);
         }
