@@ -290,3 +290,58 @@
 {"level":"info","message":{"duration":"67ms","method":"GET","requestId":"ab3e4a66-df2d-4017-a33a-c948e2913ac4","status":304,"url":"/"},"timestamp":"2025-04-28T05:56:23.787Z"}
 {"level":"info","message":{"duration":"3ms","method":"GET","requestId":"2ce1204a-f043-4911-9a19-af7a15b9f4ca","status":404,"url":"/api/cart"},"timestamp":"2025-04-28T05:56:51.142Z"}
 {"level":"info","message":{"duration":"3ms","method":"GET","requestId":"26711bbf-9a47-4a40-bb03-80fed37b50ee","status":404,"url":"/api/cart"},"timestamp":"2025-04-28T05:56:51.153Z"}
+{"level":"info","message":"Running with in-memory cache (Redis disabled)","timestamp":"2025-04-28T06:16:36.438Z"}
+{"level":"info","message":"🚀 Server started on port 8000","timestamp":"2025-04-28T06:16:36.469Z"}
+{"level":"info","message":"📚 API Documentation available at http://[YOUR_IP]:8000/api-docs","timestamp":"2025-04-28T06:16:36.470Z"}
+{"level":"info","message":"✅ Successfully connected to MongoDB","timestamp":"2025-04-28T06:16:37.735Z"}
+{"level":"info","message":"Received shutdown signal, starting graceful shutdown...","timestamp":"2025-04-28T06:24:09.163Z"}
+{"level":"info","message":"Running with in-memory cache (Redis disabled)","timestamp":"2025-04-28T06:24:43.109Z"}
+{"level":"info","message":"🚀 Server started on port 8000","timestamp":"2025-04-28T06:24:43.174Z"}
+{"level":"info","message":"📚 API Documentation available at http://[YOUR_IP]:8000/api-docs","timestamp":"2025-04-28T06:24:43.177Z"}
+{"level":"info","message":"✅ Successfully connected to MongoDB","timestamp":"2025-04-28T06:24:44.491Z"}
+{"level":"info","message":{"duration":"216ms","method":"POST","requestId":"691306b3-8598-4c5e-9647-7f50426cbcdb","status":200,"url":"/login"},"timestamp":"2025-04-28T06:25:08.929Z"}
+{"level":"info","message":{"duration":"5ms","method":"GET","requestId":"e8c3910d-700b-4279-a8b3-d1ebd6bf2bc7","status":404,"url":"/api/cart"},"timestamp":"2025-04-28T06:25:09.067Z"}
+{"level":"info","message":{"duration":"4ms","method":"GET","requestId":"598d1059-c71a-465a-b4fd-826ffd58458c","status":404,"url":"/api/cart"},"timestamp":"2025-04-28T06:25:09.080Z"}
+{"level":"info","message":{"duration":"80ms","method":"GET","requestId":"e6da4cac-466a-44cb-9ce1-c2f4d97b2c45","status":304,"url":"/"},"timestamp":"2025-04-28T06:25:09.148Z"}
+{"level":"info","message":{"duration":"1ms","method":"GET","requestId":"4d2a6fea-ce87-493b-b4d1-2cf40d9a8abe","status":404,"url":"/api/cart"},"timestamp":"2025-04-28T06:29:45.836Z"}
+{"level":"info","message":{"duration":"2ms","method":"GET","requestId":"9e82dd5e-b15c-4f0e-8bce-ad8f00f28be1","status":404,"url":"/api/cart"},"timestamp":"2025-04-28T06:29:45.840Z"}
+{"level":"info","message":{"duration":"2ms","method":"GET","requestId":"cd537e5a-460f-49ea-bb79-0233449d11b4","status":404,"url":"/api/cart"},"timestamp":"2025-04-28T06:29:45.844Z"}
+{"level":"info","message":{"duration":"115ms","method":"GET","requestId":"ebd0ea85-a43e-4e65-819c-c358af540cbc","status":200,"url":"/view"},"timestamp":"2025-04-28T06:36:50.619Z"}
+{"level":"info","message":{"duration":"96ms","method":"GET","requestId":"d85921a8-47bd-4da4-8f57-edcabced76de","status":304,"url":"/view"},"timestamp":"2025-04-28T06:36:50.723Z"}
+{"level":"info","message":{"duration":"103ms","method":"GET","requestId":"6c8b8288-d34a-4192-ae96-81482b15c586","status":304,"url":"/view"},"timestamp":"2025-04-28T06:36:50.832Z"}
+{"level":"info","message":{"duration":"90ms","method":"GET","requestId":"ce1e8469-87f3-4504-b121-2ec6e399b1c9","status":304,"url":"/view"},"timestamp":"2025-04-28T06:36:50.926Z"}
+{"level":"info","message":{"duration":"135ms","method":"GET","requestId":"052e77ef-e1e5-4260-a31f-751469a1cce7","status":304,"url":"/view"},"timestamp":"2025-04-28T06:37:28.387Z"}
+{"level":"info","message":{"duration":"88ms","method":"GET","requestId":"5cc31b76-541b-4509-918c-f7613afe0d73","status":304,"url":"/view"},"timestamp":"2025-04-28T06:37:28.561Z"}
+{"level":"info","message":{"duration":"97ms","method":"GET","requestId":"3428fc38-3ab0-4934-af1e-c2b4617adc12","status":304,"url":"/view"},"timestamp":"2025-04-28T06:37:28.662Z"}
+{"level":"info","message":{"duration":"89ms","method":"GET","requestId":"6eb1cb75-3bc4-41cc-aef6-97fed9a40752","status":304,"url":"/view"},"timestamp":"2025-04-28T06:37:28.754Z"}
+{"level":"info","message":{"duration":"94ms","method":"GET","requestId":"c9564336-bae7-42df-b5a0-245678bfd454","status":304,"url":"/view"},"timestamp":"2025-04-28T06:38:56.232Z"}
+{"level":"info","message":{"duration":"87ms","method":"GET","requestId":"fc43ea12-ba64-43c8-a23e-5cac9a2f0f8d","status":304,"url":"/view"},"timestamp":"2025-04-28T06:38:56.321Z"}
+{"level":"info","message":{"duration":"95ms","method":"GET","requestId":"9454ebae-ed19-4b3f-b840-2f3486c5624d","status":304,"url":"/view"},"timestamp":"2025-04-28T06:38:56.419Z"}
+{"level":"info","message":{"duration":"92ms","method":"GET","requestId":"09b48935-b42e-44b1-bb0d-1e5f09564094","status":304,"url":"/view"},"timestamp":"2025-04-28T06:38:56.514Z"}
+{"level":"info","message":{"duration":"89ms","method":"GET","requestId":"3fb888ef-8c62-43e2-a7b0-4636f9b4d74c","status":304,"url":"/view"},"timestamp":"2025-04-28T06:39:14.293Z"}
+{"level":"info","message":{"duration":"333ms","method":"GET","requestId":"760f581f-834b-4431-afff-1a72370a9f5b","status":304,"url":"/view"},"timestamp":"2025-04-28T06:39:14.628Z"}
+{"level":"info","message":{"duration":"101ms","method":"GET","requestId":"6ca51793-0c09-415b-9c69-8a1480cf37d9","status":304,"url":"/view"},"timestamp":"2025-04-28T06:39:14.740Z"}
+{"level":"info","message":{"duration":"95ms","method":"GET","requestId":"48ee31d0-84a2-4974-9990-cd7c5e9c7768","status":304,"url":"/view"},"timestamp":"2025-04-28T06:39:14.844Z"}
+{"level":"info","message":{"duration":"159ms","method":"PUT","requestId":"6d110a3a-7f1d-40e5-a84c-84b50474cfb8","status":200,"url":"/update"},"timestamp":"2025-04-28T06:39:24.020Z"}
+{"level":"info","message":{"duration":"90ms","method":"GET","requestId":"71074a96-caed-4fe0-ad23-3fb695270708","status":200,"url":"/view"},"timestamp":"2025-04-28T06:39:24.116Z"}
+{"level":"info","message":{"duration":"140ms","method":"PUT","requestId":"25a6ffce-a269-4359-b85f-a28134ddbea0","status":200,"url":"/update"},"timestamp":"2025-04-28T06:39:24.260Z"}
+{"level":"info","message":{"duration":"92ms","method":"GET","requestId":"836f43a7-b3cf-4585-87e6-a1531f4a0b48","status":304,"url":"/view"},"timestamp":"2025-04-28T06:39:24.356Z"}
+{"level":"info","message":{"duration":"152ms","method":"PUT","requestId":"bea4f2cf-a881-4b26-a3ba-9806fc8a98b8","status":200,"url":"/update"},"timestamp":"2025-04-28T06:39:24.917Z"}
+{"level":"info","message":{"duration":"88ms","method":"GET","requestId":"3193866f-98d5-4c54-bcb2-32cbcba400bf","status":200,"url":"/view"},"timestamp":"2025-04-28T06:39:25.010Z"}
+{"level":"info","message":{"duration":"143ms","method":"PUT","requestId":"d3d6798c-33a9-4d52-a41a-63fa33fd5790","status":200,"url":"/update"},"timestamp":"2025-04-28T06:39:26.053Z"}
+{"level":"info","message":{"duration":"87ms","method":"GET","requestId":"c97b8924-5c71-4f37-9ea9-92dee26cd007","status":200,"url":"/view"},"timestamp":"2025-04-28T06:39:26.143Z"}
+{"level":"info","message":{"duration":"146ms","method":"PUT","requestId":"8252c9d5-b93d-41b0-92e8-5b36890cf292","status":200,"url":"/update"},"timestamp":"2025-04-28T06:39:26.706Z"}
+{"level":"info","message":{"duration":"88ms","method":"GET","requestId":"f223c45f-2b37-4373-bc40-c84d5eae1cf6","status":200,"url":"/view"},"timestamp":"2025-04-28T06:39:26.798Z"}
+{"level":"info","message":{"duration":"186ms","method":"PUT","requestId":"444196e3-ed7e-42f2-a080-c3bbf1268389","status":200,"url":"/update"},"timestamp":"2025-04-28T06:39:27.763Z"}
+{"level":"info","message":{"duration":"119ms","method":"GET","requestId":"460b6176-0d31-4766-9684-7f5c6867c86f","status":200,"url":"/view"},"timestamp":"2025-04-28T06:39:27.885Z"}
+{"level":"info","message":{"duration":"85ms","method":"GET","requestId":"40a3bfd1-0183-481e-86a1-a436e7d3988f","status":304,"url":"/view"},"timestamp":"2025-04-28T06:39:53.343Z"}
+{"level":"info","message":{"duration":"61ms","method":"GET","requestId":"a30da681-8775-47c0-ba0f-e0654df1c799","status":304,"url":"/"},"timestamp":"2025-04-28T06:39:53.405Z"}
+{"level":"info","message":{"duration":"83ms","method":"GET","requestId":"ab9516a0-cf86-4d67-99d6-cf5d66917f2f","status":304,"url":"/view"},"timestamp":"2025-04-28T06:42:13.586Z"}
+{"level":"info","message":{"duration":"83ms","method":"GET","requestId":"46880256-9b17-420d-a578-e4492ae368e3","status":304,"url":"/view"},"timestamp":"2025-04-28T06:42:13.671Z"}
+{"level":"info","message":{"duration":"85ms","method":"GET","requestId":"5e27d623-a654-461b-9e30-2698ab0ebf85","status":304,"url":"/view"},"timestamp":"2025-04-28T06:43:37.992Z"}
+{"level":"info","message":{"duration":"83ms","method":"GET","requestId":"beadd1e3-6107-446f-be89-6a8ed18bb7ca","status":304,"url":"/view"},"timestamp":"2025-04-28T06:43:38.077Z"}
+{"level":"info","message":{"duration":"88ms","method":"GET","requestId":"2f3849a2-f289-41cb-aaac-eb73ed6bc8b5","status":304,"url":"/view"},"timestamp":"2025-04-28T06:48:45.623Z"}
+{"level":"info","message":{"duration":"117ms","method":"GET","requestId":"277bfde1-a2fa-470e-9a9d-88ed873b6874","status":304,"url":"/view"},"timestamp":"2025-04-28T06:48:45.744Z"}
+{"level":"info","message":{"duration":"101ms","method":"GET","requestId":"c4b31527-677e-4494-8f9d-21077cad19d7","status":304,"url":"/view"},"timestamp":"2025-04-28T06:48:45.863Z"}
+{"level":"info","message":{"duration":"66ms","method":"GET","requestId":"03a7e55f-e91a-4141-9bc2-e6b3c7458844","status":304,"url":"/"},"timestamp":"2025-04-28T06:48:47.190Z"}
+{"level":"info","message":{"duration":"98ms","method":"GET","requestId":"0b6d5245-ff59-47e2-b676-4a1a69c1aa5d","status":304,"url":"/view"},"timestamp":"2025-04-28T06:48:47.217Z"}

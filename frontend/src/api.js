@@ -58,27 +58,22 @@ api.interceptors.response.use(
 
 // Auth API endpoints
 export const auth = {
-    // Register new user
     register: async (userData) => {
         try {
             const response = await api.post('/auth/register', userData);
-            if (response.data.accessToken) {
-                localStorage.setItem('token', response.data.accessToken);
-                localStorage.setItem('refreshToken', response.data.refreshToken);
-            }
             return response.data;
         } catch (error) {
             throw error.response?.data || error.message;
         }
     },
 
-    // Login user
     login: async (email, password) => {
         try {
             const response = await api.post('/auth/login', { email, password });
             if (response.data.accessToken) {
                 localStorage.setItem('token', response.data.accessToken);
                 localStorage.setItem('refreshToken', response.data.refreshToken);
+                localStorage.setItem('user', JSON.stringify(response.data.user));
             }
             return response.data;
         } catch (error) {
@@ -86,7 +81,17 @@ export const auth = {
         }
     },
 
-    // Verify email with token
+    logout: async () => {
+        try {
+            await api.post('/auth/logout');
+            localStorage.removeItem('token');
+            localStorage.removeItem('refreshToken');
+            localStorage.removeItem('user');
+        } catch (error) {
+            throw error.response?.data || error.message;
+        }
+    },
+
     verifyEmail: async (token) => {
         try {
             const response = await api.get(`/auth/verify/${token}`);
@@ -96,7 +101,45 @@ export const auth = {
         }
     },
 
-    // Get current user profile
+    resendVerification: async (email) => {
+        try {
+            const response = await api.post('/auth/resend-verification', { email });
+            return response.data;
+        } catch (error) {
+            throw error.response?.data || error.message;
+        }
+    },
+
+    checkEmailVerification: async (email) => {
+        try {
+            const response = await api.post('/auth/check-verification', { email });
+            return response.data;
+        } catch (error) {
+            throw error.response?.data || error.message;
+        }
+    },
+
+    forgotPassword: async (email) => {
+        try {
+            const response = await api.post('/auth/forgot-password', { email });
+            return response.data;
+        } catch (error) {
+            throw error.response?.data || error.message;
+        }
+    },
+
+    resetPassword: async (token, newPassword) => {
+        try {
+            const response = await api.post('/auth/reset-password', { 
+                token, 
+                newPassword 
+            });
+            return response.data;
+        } catch (error) {
+            throw error.response?.data || error.message;
+        }
+    },
+
     getMe: async () => {
         try {
             const response = await api.get('/auth/me');
@@ -104,37 +147,6 @@ export const auth = {
         } catch (error) {
             throw error.response?.data || error.message;
         }
-    },
-
-    // Resend verification email
-    resendVerification: async () => {
-        try {
-            const response = await api.post('/auth/resend-verification');
-            return response.data;
-        } catch (error) {
-            throw error.response?.data || error.message;
-        }
-    },
-
-    // Check email verification status
-    checkVerification: async () => {
-        try {
-            const response = await api.post('/auth/check-verification');
-            return response.data;
-        } catch (error) {
-            throw error.response?.data || error.message;
-        }
-    },
-
-    // Utility function to check if user is authenticated
-    isAuthenticated: () => {
-        return !!localStorage.getItem('token');
-    },
-
-    // Utility function to logout (clear tokens)
-    logout: () => {
-        localStorage.removeItem('token');
-        localStorage.removeItem('refreshToken');
     }
 };
 
@@ -288,7 +300,7 @@ export const cart = {
     addToCart: async (productId, quantity) => {
         try {
             const response = await api.post('/cart/add', { productId, quantity });
-            return response.data;
+            return response.data.data.cart;
         } catch (error) {
             throw error.response?.data || error.message;
         }
@@ -297,7 +309,17 @@ export const cart = {
     // View cart
     viewCart: async () => {
         try {
-            const response = await api.get('/cart');
+            const response = await api.get('/cart/view');
+            return response.data.data.cart;
+        } catch (error) {
+            throw error.response?.data || error.message;
+        }
+    },
+
+    // Get cart summary
+    getCartSummary: async () => {
+        try {
+            const response = await api.get('/cart/summary');
             return response.data;
         } catch (error) {
             throw error.response?.data || error.message;
@@ -307,8 +329,8 @@ export const cart = {
     // Remove item from cart
     removeFromCart: async (productId) => {
         try {
-            const response = await api.delete('/cart/remove', { data: { productId } });
-            return response.data;
+            const response = await api.post('/cart/remove', { productId });
+            return response.data.data.cart;
         } catch (error) {
             throw error.response?.data || error.message;
         }
@@ -318,7 +340,7 @@ export const cart = {
     clearCart: async () => {
         try {
             const response = await api.delete('/cart/clear');
-            return response.data;
+            return response.data.data.cart;
         } catch (error) {
             throw error.response?.data || error.message;
         }
@@ -327,8 +349,8 @@ export const cart = {
     // Update cart item quantity
     updateCartItem: async (productId, quantity) => {
         try {
-            const response = await api.patch('/cart/update', { productId, quantity });
-            return response.data;
+            const response = await api.put('/cart/update', { productId, quantity });
+            return response.data.data.cart;
         } catch (error) {
             throw error.response?.data || error.message;
         }

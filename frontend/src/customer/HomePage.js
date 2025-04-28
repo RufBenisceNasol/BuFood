@@ -119,7 +119,7 @@ const HomePage = () => {
                                     }
                                 }}
                             >
-                                <Box sx={{ position: 'relative' }}>
+                                <Box sx={{ position: '' }}>
                                     <CardMedia
                                         component="img"
                                         height="200"
