@@ -7,7 +7,7 @@ import AddProductPage from './seller/AddProductPage'
 import ProductList from './seller/ProductList'
 import StoreSettings from './seller/StoreSettings'
 import OrdersPage from './seller/OrdersPage'
-import SellerProfilePage from './seller/SellerProfilePage'
+import ProfilePage from './seller/ProfilePage'
 import './App.css'
 
 function App() {
@@ -18,6 +18,7 @@ function App() {
           <Route path="/" element={<SplashScreen />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
+          <Route path="/profile" element={<ProfilePage />} />
           
           {/* Seller Routes */}
           <Route path="/seller/dashboard" element={<DashboardPage />} />
@@ -25,7 +26,10 @@ function App() {
           <Route path="/seller/product-list" element={<ProductList />} />
           <Route path="/seller/store-settings" element={<StoreSettings />} />
           <Route path="/seller/manage-orders" element={<OrdersPage />} />
-          { <Route path="/seller/profile" element={<SellerProfilePage />} />}
+          <Route path="/seller/profile" element={<ProfilePage />} />
+
+          {/* Customer Routes */}
+          <Route path="/customer/profile" element={<ProfilePage />} />
         </Routes>
       </Router>
     </div>

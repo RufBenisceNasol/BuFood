@@ -61,7 +61,8 @@ export const auth = {
     getMe: async () => {
         try {
             const response = await api.get('/auth/me');
-            return response.data;
+            // Handle different response formats by always returning user data consistently
+            return response.data.user || response.data;
         } catch (error) {
             throw error.response?.data || error.message;
         }

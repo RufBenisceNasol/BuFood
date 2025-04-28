@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { store } from '../api';
+import { useNavigate } from 'react-router-dom';
 
 const StoreSettings = () => {
+  const navigate = useNavigate();
   const [storeData, setStoreData] = useState(null);
   const [formData, setFormData] = useState({
     storeName: '',
@@ -158,6 +160,10 @@ const StoreSettings = () => {
     document.getElementById('profile-input').click();
   };
 
+  const handleBack = () => {
+    navigate(-1); // Navigate to previous page
+  };
+
   if (loading) {
     return <div style={styles.loadingContainer}>Loading...</div>;
   }
@@ -168,23 +174,23 @@ const StoreSettings = () => {
   return (
     <div style={styles.mainContainer}>
       <div style={styles.header}>
-        <div style={styles.backButton}>
+        <div style={styles.backButton} onClick={handleBack}>
           <span style={styles.backArrow}>←</span>
           <span style={styles.headerText}>Store Settings</span>
         </div>
       </div>
       
       <div style={styles.contentContainer}>
-        <div style={styles.bannerWrapper}>
-          <img
-            src={
-              formData.bannerImage && typeof formData.bannerImage !== 'string'
-                ? URL.createObjectURL(formData.bannerImage)
-                : formData.bannerImage || '/default-banner.jpg'
-            }
-            alt="Banner"
-            style={styles.bannerImg}
-          />
+      <div style={styles.bannerWrapper}>
+        <img
+          src={
+            formData.bannerImage && typeof formData.bannerImage !== 'string'
+              ? URL.createObjectURL(formData.bannerImage)
+              : formData.bannerImage || '/default-banner.jpg'
+          }
+          alt="Banner"
+          style={styles.bannerImg}
+        />
           {editMode && (
             <div style={styles.changeBanner} onClick={changeBanner}>
               <span>Change Banner</span>
@@ -198,16 +204,32 @@ const StoreSettings = () => {
             </div>
           )}
           
-          <div style={styles.profileAvatarWrapper}>
+        <div style={styles.profileAvatarWrapper}>
+          {formData.profileImage && typeof formData.profileImage !== 'string' ? (
             <img
-              src={
-                formData.profileImage && typeof formData.profileImage !== 'string'
-                  ? URL.createObjectURL(formData.profileImage)
-                  : formData.profileImage || '/default-profile.jpg'
-              }
+              src={URL.createObjectURL(formData.profileImage)}
               alt="Profile"
               style={styles.profileAvatar}
             />
+          ) : formData.profileImage ? (
+            <img
+              src={formData.profileImage}
+              alt="Profile"
+              style={styles.profileAvatar}
+            />
+          ) : (
+            <div style={{
+              ...styles.profileAvatar,
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              backgroundColor: '#ff8c00e0',
+              fontSize: '32px',
+              fontWeight: 'bold',
+            }}>
+              {(formData.storeName || formData.sellerName || 'S').charAt(0).toUpperCase()}
+            </div>
+          )}
             {editMode && (
               <div style={styles.changeProfile} onClick={changeProfile}>
                 <span>Change</span>
@@ -220,29 +242,29 @@ const StoreSettings = () => {
                 />
               </div>
             )}
-          </div>
-          
-          <div style={styles.blackBar}>
-            <div style={styles.storeName}>{formData.storeName || 'Store Name'}</div>
-            <div style={styles.sellerName}>{formData.sellerName || 'Seller Name'}</div>
-          </div>
         </div>
+          
+        <div style={styles.blackBar}>
+          <div style={styles.storeName}>{formData.storeName || 'Store Name'}</div>
+          <div style={styles.sellerName}>{formData.sellerName || 'Seller Name'}</div>
+        </div>
+      </div>
         
         <div style={styles.formContainer}>
-          <form onSubmit={handleSave} style={styles.form} className="store-settings-form">
-            <div style={styles.inputGroup}>
+      <form onSubmit={handleSave} style={styles.form} className="store-settings-form">
+        <div style={styles.inputGroup}>
               <label style={styles.label}>Store Name</label>
-              <input
-                type="text"
+          <input
+            type="text"
                 name="storeName"
                 value={formData.storeName}
-                onChange={handleInputChange}
-                disabled={!editMode}
-                style={styles.input}
-                className="store-settings-input"
-                required
-              />
-            </div>
+            onChange={handleInputChange}
+            disabled={!editMode}
+            style={styles.input}
+            className="store-settings-input"
+            required
+          />
+        </div>
             
             <div style={styles.inputGroup}>
               <label style={styles.label}>Email <span style={styles.registeredLabel}>(Registered Email)</span></label>
@@ -284,71 +306,71 @@ const StoreSettings = () => {
               )}
             </div>
             
-            <div style={styles.inputGroup}>
-              <label style={styles.label}>Description</label>
-              <textarea
-                name="description"
-                value={formData.description}
-                onChange={handleInputChange}
-                disabled={!editMode}
-                style={styles.textarea}
-                className="store-settings-textarea"
-                required
-              />
-            </div>
+        <div style={styles.inputGroup}>
+          <label style={styles.label}>Description</label>
+          <textarea
+            name="description"
+            value={formData.description}
+            onChange={handleInputChange}
+            disabled={!editMode}
+            style={styles.textarea}
+            className="store-settings-textarea"
+            required
+          />
+        </div>
             
-            <div style={styles.inputGroup}>
-              <label style={styles.label}>Set Shipping Fee</label>
-              <input
-                type="number"
-                name="shippingFee"
-                value={formData.shippingFee}
-                onChange={handleInputChange}
-                disabled={!editMode}
-                style={styles.input}
-                className="store-settings-input"
-                required
-              />
-            </div>
+        <div style={styles.inputGroup}>
+          <label style={styles.label}>Set Shipping Fee</label>
+          <input
+            type="number"
+            name="shippingFee"
+            value={formData.shippingFee}
+            onChange={handleInputChange}
+            disabled={!editMode}
+            style={styles.input}
+            className="store-settings-input"
+            required
+          />
+        </div>
             
-            <div style={styles.inputGroup}>
-              <label style={styles.label}>Open Time</label>
-              <input
-                type="text"
-                name="openTime"
-                value={formData.openTime}
-                onChange={handleInputChange}
-                disabled={!editMode}
-                style={styles.input}
-                className="store-settings-input"
-                required
-              />
-            </div>
+        <div style={styles.inputGroup}>
+          <label style={styles.label}>Open Time</label>
+          <input
+            type="text"
+            name="openTime"
+            value={formData.openTime}
+            onChange={handleInputChange}
+            disabled={!editMode}
+            style={styles.input}
+            className="store-settings-input"
+            required
+          />
+        </div>
             
-            <div style={styles.buttonRow}>
-              {!editMode ? (
-                <button
-                  type="button"
+        <div style={styles.buttonRow}>
+          {!editMode ? (
+            <button
+              type="button"
                   style={styles.editButton}
-                  className="store-settings-button"
-                  onClick={handleEdit}
-                >
-                  Edit
-                </button>
-              ) : (
-                <button
-                  type="submit"
+              className="store-settings-button"
+              onClick={handleEdit}
+            >
+              Edit
+            </button>
+          ) : (
+            <button
+              type="submit"
                   style={styles.saveButton}
-                  className="store-settings-button"
-                  disabled={saving}
-                >
-                  {saving ? 'Saving...' : 'Save'}
-                </button>
-              )}
-            </div>
-            {error && <div style={styles.error}>{error}</div>}
-            {success && <div style={styles.success}>{success}</div>}
-          </form>
+              className="store-settings-button"
+              disabled={saving}
+            >
+              {saving ? 'Saving...' : 'Save'}
+            </button>
+          )}
+        </div>
+        {error && <div style={styles.error}>{error}</div>}
+        {success && <div style={styles.success}>{success}</div>}
+      </form>
         </div>
       </div>
       <ResponsiveStyle />
@@ -358,7 +380,7 @@ const StoreSettings = () => {
 
 const styles = {
   mainContainer: {
-    backgroundColor: '#f9f9f9',
+    backgroundColor: '#f7f7f7',
     minHeight: '100vh',
     width: '100%',
     position: 'relative',
@@ -367,89 +389,96 @@ const styles = {
   },
   loadingContainer: {
     display: 'flex',
+    flexDirection: 'column',
     justifyContent: 'center',
     alignItems: 'center',
     height: '100vh',
     width: '100%',
     fontSize: '16px',
     color: '#666',
+    fontWeight: '500',
   },
   contentContainer: {
     overflow: 'auto',
-    maxHeight: 'calc(100vh - 60px)', // Subtract header height
+    maxHeight: 'calc(100vh - 60px)',
     paddingBottom: '30px',
+    WebkitOverflowScrolling: 'touch',
+    scrollBehavior: 'smooth',
   },
   header: {
-    padding: '15px 20px',
+    padding: '16px 20px',
     display: 'flex',
     alignItems: 'center',
-    backgroundColor: 'white',
+    backgroundColor: '#ff8c00e0',
+    color: 'white',
     position: 'sticky',
     top: 0,
     zIndex: 10,
-    boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+    boxShadow: '0 3px 10px rgba(0, 0, 0, 0.1)',
   },
   backButton: {
     display: 'flex',
     alignItems: 'center',
     cursor: 'pointer',
+    transition: 'transform 0.2s',
   },
   backArrow: {
-    fontSize: '20px',
+    fontSize: '22px',
     marginRight: '10px',
-    color: '#333',
+    color: 'white',
   },
   headerText: {
-    fontSize: '17px',
+    fontSize: '20px',
     fontWeight: '600',
-    color: '#333',
+    color: 'white',
+    textShadow: '0 1px 2px rgba(0, 0, 0, 0.1)',
   },
   formContainer: {
     backgroundColor: 'white',
-    borderRadius: '8px',
-    margin: '0 15px',
-    boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+    borderRadius: '16px',
+    margin: '20px 15px',
+    boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
     overflow: 'hidden',
+    transition: 'transform 0.3s, box-shadow 0.3s',
   },
   form: {
     display: 'flex',
     flexDirection: 'column',
     gap: '20px',
     width: '100%',
-    padding: '25px 20px',
+    padding: '25px 24px',
     maxWidth: '600px',
     margin: '0 auto',
   },
   inputGroup: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '8px',
+    gap: '10px',
     width: '100%',
   },
   label: {
     color: '#555',
     fontSize: '15px',
     fontWeight: '500',
+    display: 'flex',
+    alignItems: 'center',
   },
   registeredLabel: {
     color: '#888',
     fontSize: '13px',
     fontWeight: '400',
     fontStyle: 'italic',
+    marginLeft: '5px',
   },
   input: {
-    padding: '12px 15px',
-    borderRadius: '6px',
+    padding: '12px 16px',
+    borderRadius: '10px',
     border: '1px solid #ddd',
-    fontSize: '15px',
+    fontSize: '16px',
     width: '100%',
     boxSizing: 'border-box',
-    backgroundColor: 'white',
-    transition: 'border 0.2s',
-    ':focus': {
-      border: '1px solid #666',
-      outline: 'none',
-    }
+    backgroundColor: '#f9f9f9',
+    transition: 'all 0.2s',
   },
   fieldError: {
     color: '#e53e3e',
@@ -457,50 +486,52 @@ const styles = {
     marginTop: '4px',
   },
   textarea: {
-    padding: '12px 15px',
-    borderRadius: '6px',
+    padding: '12px 16px',
+    borderRadius: '10px',
     border: '1px solid #ddd',
-    fontSize: '15px',
-    minHeight: '100px',
+    fontSize: '16px',
+    minHeight: '120px',
     width: '100%',
     boxSizing: 'border-box',
     resize: 'vertical',
-    backgroundColor: 'white',
-    transition: 'border 0.2s',
+    backgroundColor: '#f9f9f9',
+    transition: 'all 0.2s',
   },
   buttonRow: {
     display: 'flex',
     justifyContent: 'center',
     width: '100%',
-    marginTop: '10px',
+    marginTop: '20px',
   },
   editButton: {
-    padding: '12px 0',
+    padding: '14px 28px',
     border: 'none',
-    borderRadius: '6px',
+    borderRadius: '10px',
     fontSize: '16px',
     fontWeight: '500',
     cursor: 'pointer',
-    backgroundColor: '#FF8A00',
+    background: 'linear-gradient(135deg, #ff8c00e0, #ff6a00)',
     color: 'white',
     width: '100%',
-    maxWidth: '120px',
-    transition: 'background-color 0.2s',
+    maxWidth: '150px',
+    transition: 'all 0.3s ease',
+    boxShadow: '0 4px 12px rgba(255, 140, 0, 0.25)',
   },
   saveButton: {
-    padding: '12px 0',
+    padding: '14px 28px',
     border: 'none',
-    borderRadius: '6px',
+    borderRadius: '10px',
     fontSize: '16px',
     fontWeight: '500',
     cursor: 'pointer',
-    backgroundColor: '#28a745',
+    background: 'linear-gradient(135deg, #28a745, #218838)',
     color: 'white',
     opacity: (props) => (props.saving ? 0.7 : 1),
     cursor: (props) => (props.saving ? 'not-allowed' : 'pointer'),
     width: '100%',
-    maxWidth: '120px',
-    transition: 'background-color 0.2s',
+    maxWidth: '150px',
+    transition: 'all 0.3s ease',
+    boxShadow: '0 4px 12px rgba(40, 167, 69, 0.25)',
   },
   error: {
     backgroundColor: '#fde8e8',
@@ -508,8 +539,9 @@ const styles = {
     padding: '12px',
     marginTop: '15px',
     textAlign: 'center',
-    borderRadius: '6px',
+    borderRadius: '10px',
     fontSize: '14px',
+    boxShadow: '0 2px 4px rgba(229, 62, 62, 0.1)',
   },
   success: {
     backgroundColor: '#e6ffed',
@@ -517,38 +549,40 @@ const styles = {
     padding: '12px',
     marginTop: '15px',
     textAlign: 'center',
-    borderRadius: '6px',
+    borderRadius: '10px',
     fontSize: '14px',
+    boxShadow: '0 2px 4px rgba(34, 84, 61, 0.1)',
   },
   bannerWrapper: {
     position: 'relative',
     width: '100%',
-    marginBottom: '40px',
-    boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+    marginBottom: '50px',
+    boxShadow: '0 4px 15px rgba(0, 0, 0, 0.1)',
   },
   bannerImg: {
     width: '100%',
-    height: '180px',
+    height: '200px',
     objectFit: 'cover',
     display: 'block',
   },
   profileAvatarWrapper: {
     position: 'absolute',
-    bottom: '-35px',
+    bottom: '-38px',
     left: '20px',
     zIndex: 2,
   },
   profileAvatar: {
-    width: '75px',
-    height: '75px',
+    width: '80px',
+    height: '80px',
     borderRadius: '50%',
     border: '4px solid white',
     objectFit: 'cover',
-    boxShadow: '0 2px 5px rgba(0,0,0,0.2)',
+    boxShadow: '0 4px 15px rgba(0, 0, 0, 0.2)',
+    transition: 'transform 0.3s',
   },
   blackBar: {
-    backgroundColor: 'rgba(0,0,0,0.85)',
-    padding: '12px 20px 12px 110px',
+    backgroundColor: 'rgba(0, 0, 0, 0.85)',
+    padding: '12px 20px 12px 115px',
     position: 'absolute',
     bottom: 0,
     width: '100%',
@@ -558,9 +592,10 @@ const styles = {
     color: 'white',
     fontSize: '18px',
     fontWeight: 'bold',
+    textShadow: '0 1px 2px rgba(0, 0, 0, 0.2)',
   },
   sellerName: {
-    color: 'rgba(255,255,255,0.8)',
+    color: 'rgba(255, 255, 255, 0.8)',
     fontSize: '14px',
     marginTop: '3px',
   },
@@ -569,25 +604,29 @@ const styles = {
   },
   changeBanner: {
     position: 'absolute',
-    top: '10px',
-    right: '10px',
-    backgroundColor: 'rgba(0,0,0,0.6)',
+    top: '12px',
+    right: '12px',
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
     color: 'white',
-    padding: '6px 12px',
-    borderRadius: '6px',
+    padding: '8px 15px',
+    borderRadius: '10px',
     cursor: 'pointer',
-    fontSize: '13px',
+    fontSize: '14px',
+    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)',
+    transition: 'all 0.2s',
   },
   changeProfile: {
     position: 'absolute',
     bottom: '-5px',
-    right: '-10px',
-    backgroundColor: 'rgba(0,0,0,0.6)',
+    right: '-12px',
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
     color: 'white',
-    padding: '4px 8px',
-    borderRadius: '6px',
+    padding: '6px 10px',
+    borderRadius: '10px',
     cursor: 'pointer',
     fontSize: '12px',
+    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)',
+    transition: 'all 0.2s',
   },
 };
 
@@ -605,12 +644,49 @@ const ResponsiveStyle = () => (
     }
     
     .store-settings-button:hover {
-      opacity: 0.9;
+      transform: translateY(-3px);
+      box-shadow: 0 6px 15px rgba(255, 140, 0, 0.35);
     }
     
     .store-settings-input:focus, .store-settings-textarea:focus {
-      border-color: #777;
+      border-color: #ff8c00e0;
       outline: none;
+      box-shadow: 0 0 0 3px rgba(255, 140, 0, 0.15);
+      background-color: #fff;
+    }
+    
+    /* Scrollbar styling */
+    .contentContainer::-webkit-scrollbar {
+      width: 6px;
+    }
+    
+    .contentContainer::-webkit-scrollbar-track {
+      background: rgba(0, 0, 0, 0.05);
+      border-radius: 10px;
+    }
+    
+    .contentContainer::-webkit-scrollbar-thumb {
+      background: rgba(255, 140, 0, 0.3);
+      border-radius: 10px;
+      transition: background 0.3s;
+    }
+    
+    .contentContainer::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 140, 0, 0.5);
+    }
+    
+    .formContainer:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 25px rgba(0, 0, 0, 0.1);
+    }
+    
+    .backButton:hover {
+      transform: translateX(-3px);
+    }
+    
+    .changeBanner:hover, .changeProfile:hover {
+      background-color: rgba(0, 0, 0, 0.85);
+      transform: translateY(-2px);
     }
     
     @media (max-width: 768px) {
@@ -637,14 +713,20 @@ const ResponsiveStyle = () => (
         overflow-x: hidden;
       }
       .profileAvatar {
-        width: 65px !important;
-        height: 65px !important;
+        width: 70px !important;
+        height: 70px !important;
       }
       .blackBar {
-        padding-left: 95px !important;
+        padding-left: 100px !important;
       }
       .formContainer {
-        margin: 0 10px !important;
+        margin: 15px 10px !important;
+      }
+      .form {
+        padding: 20px !important;
+      }
+      .header {
+        padding: 14px 15px !important;
       }
     }
     
@@ -656,7 +738,7 @@ const ResponsiveStyle = () => (
         font-size: 18px !important;
       }
       .headerText {
-        font-size: 16px !important;
+        font-size: 18px !important;
       }
       .label {
         font-size: 14px !important;
@@ -666,11 +748,18 @@ const ResponsiveStyle = () => (
         font-size: 14px !important;
       }
       .profileAvatar {
-        width: 60px !important;
-        height: 60px !important;
+        width: 65px !important;
+        height: 65px !important;
       }
       .blackBar {
-        padding-left: 90px !important;
+        padding-left: 95px !important;
+      }
+    }
+    
+    /* Fix for iOS momentum scrolling issues */
+    @supports (-webkit-overflow-scrolling: touch) {
+      .contentContainer {
+        -webkit-overflow-scrolling: touch;
       }
     }
   `}</style>

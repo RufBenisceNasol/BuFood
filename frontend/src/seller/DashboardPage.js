@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { store } from '../api';
 import '../styles/DashboardPage.css';
-import { MdMenuOpen, MdNotificationAdd, MdStore, MdAddCircle,MdListAlt } from "react-icons/md";
+import { MdMenuOpen, MdNotificationAdd, MdStore, MdAddCircle, MdListAlt, MdSettings, MdLogout, MdPerson } from "react-icons/md";
 
 const DashboardPage = () => {
   const [storeData, setStoreData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchStoreData();
@@ -24,6 +26,13 @@ const DashboardPage = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleLogout = () => {
+    // Clear any stored tokens or user data
+    localStorage.removeItem('token');
+    // Redirect to login page
+    navigate('/login');
   };
 
   if (loading) {
@@ -48,9 +57,25 @@ const DashboardPage = () => {
       >
         <div className="header-overlay"></div>
         <h1>{storeData?.storeName || 'My Store'}</h1>
-        <button className="menu-toggle">
+        <button className="menu-toggle" onClick={() => setIsMenuOpen(!isMenuOpen)}>
           <span className="hamburger-icon"><MdMenuOpen /></span>
         </button>
+        {isMenuOpen && (
+          <div className="popup-menu">
+            <Link to="/profile" className="menu-item">
+              <MdPerson className="menu-icon" />
+              My Profile
+            </Link>
+            <Link to="/seller/store-settings" className="menu-item">
+              <MdSettings className="menu-icon" />
+              Settings
+            </Link>
+            <button onClick={handleLogout} className="menu-item">
+              <MdLogout className="menu-icon" />
+              Logout
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="scrollable-section">
