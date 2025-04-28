@@ -1,39 +1,60 @@
-const { body, param } = require('express-validator');
+const { body } = require('express-validator');
+const rateLimit = require('express-rate-limit');
+const handleValidation = require('./handleValidation');
+
+// Create and initialize rate limiter middleware
+const cartLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  message: {
+    success: false,
+    error: 'Too many cart operations. Please try again later.'
+  }
+});
 
 // Validation for adding a product to the cart
-const addToCartValidation = [
+const addToCartValidator = [
   body('productId')
-    .isMongoId().withMessage('Invalid product ID')
-    .notEmpty().withMessage('Product ID is required'),
+    .notEmpty()
+    .withMessage('Product ID is required')
+    .isMongoId()
+    .withMessage('Invalid product ID format'),
   body('quantity')
-    .isInt({ min: 1 }).withMessage('Quantity must be a positive integer')
-    .notEmpty().withMessage('Quantity is required'),
+    .notEmpty()
+    .withMessage('Quantity is required')
+    .isInt({ min: 1 })
+    .withMessage('Quantity must be a positive number'),
+  handleValidation
 ];
 
-// Validation for removing an item from the cart
-const removeItemFromCartValidation = [
+// Validation for updating cart item
+const updateCartValidator = [
   body('productId')
-    .isMongoId().withMessage('Invalid product ID')
-    .notEmpty().withMessage('Product ID is required'),
-];
-
-// Validation for updating the quantity of an item in the cart
-const updateCartItemQuantityValidation = [
-  body('productId')
-    .isMongoId().withMessage('Invalid product ID')
-    .notEmpty().withMessage('Product ID is required'),
+    .notEmpty()
+    .withMessage('Product ID is required')
+    .isMongoId()
+    .withMessage('Invalid product ID format'),
   body('quantity')
-    .isInt({ min: 1 }).withMessage('Quantity must be a positive integer')
-    .notEmpty().withMessage('Quantity is required'),
+    .notEmpty()
+    .withMessage('Quantity is required')
+    .isInt({ min: 1 })
+    .withMessage('Quantity must be a positive number'),
+  handleValidation
 ];
 
-// Validation for clearing the cart (no additional body data needed)
-const clearCartValidation = [];
+// Validation for removing cart item
+const removeItemValidator = [
+  body('productId')
+    .notEmpty()
+    .withMessage('Product ID is required')
+    .isMongoId()
+    .withMessage('Invalid product ID format'),
+  handleValidation
+];
 
-// Export validations
 module.exports = {
-  addToCartValidation,
-  removeItemFromCartValidation,
-  updateCartItemQuantityValidation,
-  clearCartValidation,
+  cartLimiter,
+  addToCartValidator,
+  updateCartValidator,
+  removeItemValidator
 };

@@ -1,6 +1,21 @@
 // routes/cartRoutes.js
 const express = require('express');
 const router = express.Router();
+const { authenticate } = require('../middlewares/authMiddleware');
+const { 
+  cartLimiter,
+  addToCartValidator,
+  updateCartValidator,
+  removeItemValidator 
+} = require('../middlewares/validators/cartValidator');
+const {
+  addToCart,
+  viewCart,
+  removeItemFromCart,
+  clearCart,
+  updateCartItem,
+  getCartSummary
+} = require('../controllers/cartController');
 
 /**
  * @swagger
@@ -20,17 +35,7 @@ const router = express.Router();
  *           description: Quantity of the product
  */
 
-const {
-  addToCart,
-  viewCart,
-  removeItemFromCart,
-  clearCart,
-  updateCartItem,
-  getCartSummary
-} = require('../controllers/cartController');
-
-const { authenticate, checkRole } = require('../middlewares/authMiddleware');
-
+// Cart routes
 /**
  * @swagger
  * /api/cart/add:
@@ -53,7 +58,7 @@ const { authenticate, checkRole } = require('../middlewares/authMiddleware');
  *       401:
  *         description: Unauthorized
  */
-router.post('/add', authenticate, checkRole('Customer'), addToCart);
+router.post('/add', authenticate, cartLimiter, addToCartValidator, addToCart);
 
 /**
  * @swagger
@@ -69,7 +74,7 @@ router.post('/add', authenticate, checkRole('Customer'), addToCart);
  *       401:
  *         description: Unauthorized
  */
-router.get('/', authenticate, checkRole('Customer'), viewCart);
+router.get('/view', authenticate, cartLimiter, viewCart);
 
 /**
  * @swagger
@@ -85,12 +90,12 @@ router.get('/', authenticate, checkRole('Customer'), viewCart);
  *       401:
  *         description: Unauthorized
  */
-router.get('/summary', authenticate, checkRole('Customer'), getCartSummary);
+router.get('/summary', authenticate, cartLimiter, getCartSummary);
 
 /**
  * @swagger
  * /api/cart/remove:
- *   delete:
+ *   post:
  *     tags: [Cart]
  *     summary: Remove item from cart
  *     security:
@@ -112,7 +117,7 @@ router.get('/summary', authenticate, checkRole('Customer'), getCartSummary);
  *       401:
  *         description: Unauthorized
  */
-router.delete('/remove', authenticate, checkRole('Customer'), removeItemFromCart);
+router.post('/remove', authenticate, cartLimiter, removeItemValidator, removeItemFromCart);
 
 /**
  * @swagger
@@ -128,12 +133,12 @@ router.delete('/remove', authenticate, checkRole('Customer'), removeItemFromCart
  *       401:
  *         description: Unauthorized
  */
-router.delete('/clear', authenticate, checkRole('Customer'), clearCart);
+router.delete('/clear', authenticate, cartLimiter, clearCart);
 
 /**
  * @swagger
  * /api/cart/update:
- *   patch:
+ *   put:
  *     tags: [Cart]
  *     summary: Update cart item quantity
  *     security:
@@ -152,6 +157,6 @@ router.delete('/clear', authenticate, checkRole('Customer'), clearCart);
  *       401:
  *         description: Unauthorized
  */
-router.patch('/update', authenticate, checkRole('Customer'), updateCartItem);
+router.put('/update', authenticate, cartLimiter, updateCartValidator, updateCartItem);
 
 module.exports = router;
