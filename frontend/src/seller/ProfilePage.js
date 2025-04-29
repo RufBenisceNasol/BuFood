@@ -135,7 +135,7 @@ const ProfilePage = () => {
         contactNumber: updatedUser.contactNumber
       });
       
-      setEditMode(false);
+    setEditMode(false);
       setSuccess('Profile updated successfully!');
     } catch (err) {
       console.error('Profile update error:', err);
@@ -165,11 +165,11 @@ const ProfilePage = () => {
           <span style={styles.headerText}>My Profile</span>
         </div>
       </div>
-      
+
       <div style={styles.contentContainer}>
         <div style={styles.avatarSection}>
           <div style={styles.profileAvatarWrapper}>
-            {userData.profileImage ? (
+              {userData.profileImage ? (
               <img
                 src={userData.profileImage}
                 alt="Profile"
@@ -186,15 +186,15 @@ const ProfilePage = () => {
                 fontWeight: 'bold',
               }}>
                 {userData.name ? userData.name.charAt(0).toUpperCase() : 'U'}
-              </div>
-            )}
-          </div>
+                </div>
+              )}
+            </div>
           <div style={styles.userInfo}>
             <h2 style={styles.userName}>{userData.name}</h2>
             <div style={styles.roleBadge}>{userData.role}</div>
           </div>
-        </div>
-        
+          </div>
+
         <div style={styles.formContainer}>
           {!editMode ? (
             <div style={styles.profileDetails}>
@@ -270,22 +270,22 @@ const ProfilePage = () => {
             <form onSubmit={handleSubmit} style={styles.form}>
               <div style={styles.inputGroup}>
                 <label style={styles.label}>Full Name</label>
-                <input
-                  type="text"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleInputChange}
+                  <input
+                    type="text"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleInputChange}
                   style={styles.input}
-                  required
-                />
-              </div>
-              
+                    required
+                  />
+                </div>
+                
               <div style={styles.inputGroup}>
                 <label style={styles.label}>Email <span style={styles.registeredLabel}>(Registered Email)</span></label>
-                <input
-                  type="email"
-                  name="email"
-                  value={formData.email}
+                  <input
+                    type="email"
+                    name="email"
+                    value={formData.email}
                   disabled={true}
                   style={{
                     ...styles.input,
@@ -293,38 +293,38 @@ const ProfilePage = () => {
                     color: '#888',
                     cursor: 'not-allowed',
                   }}
-                  required
-                />
-              </div>
-              
+                    required
+                  />
+                </div>
+                
               <div style={styles.inputGroup}>
                 <label style={styles.label}>Contact Number</label>
-                <input
-                  type="tel"
-                  name="contactNumber"
-                  value={formData.contactNumber}
-                  onChange={handleInputChange}
+                  <input
+                    type="tel"
+                    name="contactNumber"
+                    value={formData.contactNumber}
+                    onChange={handleInputChange}
                   style={styles.input}
-                />
-              </div>
-              
+                  />
+                </div>
+                
               <div style={styles.buttonRow}>
                 <button
                   type="button"
                   style={styles.cancelButton}
                   onClick={handleCancel}
                 >
-                  Cancel
-                </button>
+                    Cancel
+                  </button>
                 <button
                   type="submit"
                   style={styles.saveButton}
                   disabled={saving}
                 >
                   {saving ? 'Saving...' : 'Save'}
-                </button>
-              </div>
-            </form>
+                  </button>
+                </div>
+              </form>
           )}
           
           {error && <div style={styles.error}>{error}</div>}
@@ -580,7 +580,7 @@ const styles = {
 
 // Responsive media queries using a style tag
 const ResponsiveStyle = () => (
-  <style>{`
+      <style>{`
     * {
       box-sizing: border-box;
     }
@@ -592,7 +592,7 @@ const ResponsiveStyle = () => (
     }
     
     button {
-      cursor: pointer;
+          cursor: pointer;
     }
     
     button:hover {
@@ -611,33 +611,33 @@ const ResponsiveStyle = () => (
       outline: none;
       box-shadow: 0 0 0 3px rgba(255, 140, 0, 0.15);
       background-color: #fff;
-    }
-    
-    /* Scrollbar styling */
+        }
+        
+        /* Scrollbar styling */
     .contentContainer::-webkit-scrollbar {
-      width: 6px;
-    }
-    
+          width: 6px;
+        }
+        
     .contentContainer::-webkit-scrollbar-track {
-      background: rgba(0, 0, 0, 0.05);
-      border-radius: 10px;
-    }
-    
+          background: rgba(0, 0, 0, 0.05);
+          border-radius: 10px;
+        }
+        
     .contentContainer::-webkit-scrollbar-thumb {
-      background: rgba(255, 140, 0, 0.3);
-      border-radius: 10px;
-      transition: background 0.3s;
-    }
-    
+          background: rgba(255, 140, 0, 0.3);
+          border-radius: 10px;
+          transition: background 0.3s;
+        }
+        
     .contentContainer::-webkit-scrollbar-thumb:hover {
-      background: rgba(255, 140, 0, 0.5);
-    }
-    
+          background: rgba(255, 140, 0, 0.5);
+        }
+        
     .formContainer:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 25px rgba(0, 0, 0, 0.1);
-    }
-    
+          transform: translateY(-2px);
+          box-shadow: 0 6px 25px rgba(0, 0, 0, 0.1);
+        }
+        
     .backButton:hover {
       transform: translateX(-3px);
     }
@@ -704,15 +704,15 @@ const ResponsiveStyle = () => (
         padding: 10px 12px !important;
         font-size: 14px !important;
       }
-    }
-    
-    /* Fix for iOS momentum scrolling issues */
-    @supports (-webkit-overflow-scrolling: touch) {
+        }
+        
+        /* Fix for iOS momentum scrolling issues */
+        @supports (-webkit-overflow-scrolling: touch) {
       .contentContainer {
-        -webkit-overflow-scrolling: touch;
-      }
-    }
-  `}</style>
-);
+            -webkit-overflow-scrolling: touch;
+          }
+        }
+      `}</style>
+  );
 
-export default ProfilePage; 
+export default ProfilePage;
