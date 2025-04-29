@@ -236,6 +236,38 @@ const getMe = async (req, res) => {
   }
 };
 
+// Update user profile
+const updateProfile = async (req, res) => {
+  try {
+    const user = req.user; // Comes from `authenticate` middleware
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    const { name, contactNumber } = req.body;
+    
+    // Update user fields
+    if (name) user.name = name;
+    if (contactNumber) user.contactNumber = contactNumber;
+    
+    // Save updated user
+    await user.save();
+    
+    res.status(200).json({
+      message: 'Profile updated successfully',
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        contactNumber: user.contactNumber,
+        role: user.role,
+        store: user.role === 'Seller' ? user.store : null,
+      }
+    });
+  } catch (error) {
+    console.error('Error updating profile:', error.message);
+    res.status(500).json({ message: 'Failed to update profile', error: error.message });
+  }
+};
+
 module.exports = {
   register,
   login,
@@ -244,4 +276,5 @@ module.exports = {
   getMe,
   resendVerificationEmail,
   checkEmailVerificationStatus,
+  updateProfile,
 };

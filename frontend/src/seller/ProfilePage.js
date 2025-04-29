@@ -13,6 +13,8 @@ const ProfilePage = () => {
     email: '',
     contactNumber: ''
   });
+  const [success, setSuccess] = useState('');
+  const [saving, setSaving] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -74,108 +76,176 @@ const ProfilePage = () => {
     });
   };
 
+  const handleEdit = () => {
+    setEditMode(true);
+    setSaving(false);
+    setSuccess('');
+    setError('');
+  };
+
+  const handleCancel = () => {
+    setEditMode(false);
+    // Reset form data to original values
+    if (userData) {
+      setFormData({
+        name: userData.name || '',
+        email: userData.email || '',
+        contactNumber: userData.contactNumber || userData.phone || ''
+      });
+    }
+    setSuccess('');
+    setError('');
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    // This would be implemented with an API call to update profile
-    console.log('Update profile with:', formData);
-    // After update is successful:
-    setEditMode(false);
-    // Refresh user data
-    fetchUserProfile();
+    setSaving(true);
+    setError('');
+    try {
+      console.log('Submitting form data:', formData);
+      
+      // Try a direct API call instead of using the auth module
+      const token = localStorage.getItem('token');
+      const response = await fetch('http://localhost:8000/api/auth/profile', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          name: formData.name,
+          contactNumber: formData.contactNumber
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      console.log('API response:', data);
+      
+      // Handle both possible response structures
+      const updatedUser = data.user || data;
+      
+      // Update the local userData state
+      setUserData({
+        ...userData,
+        name: updatedUser.name,
+        contactNumber: updatedUser.contactNumber
+      });
+      
+      setEditMode(false);
+      setSuccess('Profile updated successfully!');
+    } catch (err) {
+      console.error('Profile update error:', err);
+      setError(err.message || 'Failed to update profile');
+    } finally {
+      setSaving(false);
+    }
   };
 
   if (loading) {
-    return (
-      <div className="loading-container">
-        <div className="spinner"></div>
-        <div className="loading-text">Loading...</div>
-      </div>
-    );
+    return <div style={styles.loadingContainer}>Loading...</div>;
   }
 
   if (error && !userData) {
-    return <div className="error-container">{error}</div>;
+    return <div style={styles.error}>{error}</div>;
   }
 
   if (!userData) {
-    return <div className="error-container">No user data found</div>;
+    return <div style={styles.error}>No user data found</div>;
   }
 
   return (
-    <div className="profile-container">
-      <div className="profile-header">
-        <button className="back-button" onClick={handleGoBack}>
-          <MdArrowBack className="back-icon" />
-        </button>
-        <h1 className="header-title">My Profile</h1>
+    <div style={styles.mainContainer}>
+      <div style={styles.header}>
+        <div style={styles.backButton} onClick={handleGoBack}>
+          <span style={styles.backArrow}>←</span>
+          <span style={styles.headerText}>My Profile</span>
+        </div>
       </div>
-
-      <div className="profile-content">
-        <div className="profile-card">
-          <div className="profile-avatar-section">
-            <div className="profile-avatar">
-              {userData.profileImage ? (
-                <img src={userData.profileImage} alt="Profile" className="avatar-image" />
-              ) : (
-                <div className="avatar-placeholder">
-                  {userData.name && userData.name.trim() ? userData.name.charAt(0).toUpperCase() : '?'}
-                </div>
-              )}
-            </div>
-            <h2 className="user-name">{userData.name || 'User'}</h2>
-            <div className="role-badge">{userData.role}</div>
+      
+      <div style={styles.contentContainer}>
+        <div style={styles.avatarSection}>
+          <div style={styles.profileAvatarWrapper}>
+            {userData.profileImage ? (
+              <img
+                src={userData.profileImage}
+                alt="Profile"
+                style={styles.profileAvatar}
+              />
+            ) : (
+              <div style={{
+                ...styles.profileAvatar,
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                backgroundColor: '#ff8c00e0',
+                fontSize: '32px',
+                fontWeight: 'bold',
+              }}>
+                {userData.name ? userData.name.charAt(0).toUpperCase() : 'U'}
+              </div>
+            )}
           </div>
-
+          <div style={styles.userInfo}>
+            <h2 style={styles.userName}>{userData.name}</h2>
+            <div style={styles.roleBadge}>{userData.role}</div>
+          </div>
+        </div>
+        
+        <div style={styles.formContainer}>
           {!editMode ? (
-            <div className="profile-details">
-              <div className="detail-item">
-                <div className="detail-label">
-                  <MdPerson className="detail-icon" />
+            <div style={styles.profileDetails}>
+              <div style={styles.detailItem}>
+                <div style={styles.detailLabel}>
+                  <MdPerson style={styles.detailIcon} />
                   Full Name
                 </div>
-                <div className="detail-value">{userData.name}</div>
+                <div style={styles.detailValue}>{userData.name || '—'}</div>
               </div>
 
-              <div className="detail-item">
-                <div className="detail-label">
-                  <MdEmail className="detail-icon" />
+              <div style={styles.detailItem}>
+                <div style={styles.detailLabel}>
+                  <MdEmail style={styles.detailIcon} />
                   Email
                 </div>
-                <div className="detail-value">{userData.email || '—'}</div>
+                <div style={styles.detailValue}>{userData.email || '—'}</div>
               </div>
 
-              <div className="detail-item">
-                <div className="detail-label">
-                  <MdPhone className="detail-icon" />
+              <div style={styles.detailItem}>
+                <div style={styles.detailLabel}>
+                  <MdPhone style={styles.detailIcon} />
                   Contact Number
                 </div>
-                <div className="detail-value">{userData.contactNumber || '—'}</div>
+                <div style={styles.detailValue}>{userData.contactNumber || '—'}</div>
               </div>
 
-              <div className="detail-item">
-                <div className="detail-label">
-                  <MdBusiness className="detail-icon" />
+              <div style={styles.detailItem}>
+                <div style={styles.detailLabel}>
+                  <MdBusiness style={styles.detailIcon} />
                   Role
                 </div>
-                <div className="detail-value">{userData.role}</div>
+                <div style={styles.detailValue}>{userData.role}</div>
               </div>
 
               {userData.role === 'Seller' && userData.store && (
-                <div className="detail-item">
-                  <div className="detail-label">
-                    <MdBusiness className="detail-icon" />
+                <div style={styles.detailItem}>
+                  <div style={styles.detailLabel}>
+                    <MdBusiness style={styles.detailIcon} />
                     Store Name
                   </div>
-                  <div className="detail-value">{userData.store.storeName || userData.storeName || '—'}</div>
+                  <div style={styles.detailValue}>{userData.store.storeName || userData.storeName || '—'}</div>
                 </div>
               )}
 
-              <div className="detail-item">
-                <div className="detail-label">
-                  <MdDateRange className="detail-icon" />
+              <div style={styles.detailItem}>
+                <div style={styles.detailLabel}>
+                  <MdDateRange style={styles.detailIcon} />
                   Member Since
                 </div>
-                <div className="detail-value">
+                <div style={styles.detailValue}>
                   {userData.createdAt || userData.memberSince
                     ? new Date(userData.createdAt || userData.memberSince).toLocaleDateString('en-US', {
                         year: 'numeric',
@@ -185,474 +255,464 @@ const ProfilePage = () => {
                     : '—'}
                 </div>
               </div>
+              
+              <div style={styles.buttonRow}>
+                <button
+                  type="button"
+                  style={styles.editButton}
+                  onClick={handleEdit}
+                >
+                  Edit Profile
+                </button>
+              </div>
             </div>
           ) : (
-            <div className="profile-edit-form">
-              <form onSubmit={handleSubmit}>
-                <div className="form-group">
-                  <label htmlFor="name">Full Name</label>
-                  <input
-                    type="text"
-                    id="name"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleInputChange}
-                    required
-                  />
-                </div>
-                
-                <div className="form-group">
-                  <label htmlFor="email">Email</label>
-                  <input
-                    type="email"
-                    id="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleInputChange}
-                    required
-                  />
-                </div>
-                
-                <div className="form-group">
-                  <label htmlFor="contactNumber">Contact Number</label>
-                  <input
-                    type="tel"
-                    id="contactNumber"
-                    name="contactNumber"
-                    value={formData.contactNumber}
-                    onChange={handleInputChange}
-                  />
-                </div>
-                
-                <div className="form-buttons">
-                  <button type="button" className="cancel-button" onClick={() => setEditMode(false)}>
-                    Cancel
-                  </button>
-                  <button type="submit" className="save-button">
-                    Save Changes
-                  </button>
-                </div>
-              </form>
-            </div>
+            <form onSubmit={handleSubmit} style={styles.form}>
+              <div style={styles.inputGroup}>
+                <label style={styles.label}>Full Name</label>
+                <input
+                  type="text"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleInputChange}
+                  style={styles.input}
+                  required
+                />
+              </div>
+              
+              <div style={styles.inputGroup}>
+                <label style={styles.label}>Email <span style={styles.registeredLabel}>(Registered Email)</span></label>
+                <input
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  disabled={true}
+                  style={{
+                    ...styles.input,
+                    backgroundColor: '#f3f3f3',
+                    color: '#888',
+                    cursor: 'not-allowed',
+                  }}
+                  required
+                />
+              </div>
+              
+              <div style={styles.inputGroup}>
+                <label style={styles.label}>Contact Number</label>
+                <input
+                  type="tel"
+                  name="contactNumber"
+                  value={formData.contactNumber}
+                  onChange={handleInputChange}
+                  style={styles.input}
+                />
+              </div>
+              
+              <div style={styles.buttonRow}>
+                <button
+                  type="button"
+                  style={styles.cancelButton}
+                  onClick={handleCancel}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  style={styles.saveButton}
+                  disabled={saving}
+                >
+                  {saving ? 'Saving...' : 'Save'}
+                </button>
+              </div>
+            </form>
           )}
-
-          <div className="profile-actions">
-            <button 
-              className="edit-profile-button" 
-              onClick={() => setEditMode(!editMode)}
-            >
-              <MdEdit className="edit-icon" />
-              {editMode ? 'Cancel Edit' : 'Edit Profile'}
-            </button>
-          </div>
+          
+          {error && <div style={styles.error}>{error}</div>}
+          {success && <div style={styles.success}>{success}</div>}
         </div>
       </div>
-
-      <style>{`
-        .profile-container {
-          max-width: 600px;
-          width: 100%;
-          height: 100vh;
-          margin: 0 auto;
-          background-color: #f7f7f7;
-          position: relative;
-          display: flex;
-          flex-direction: column;
-          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-          overflow: hidden; /* Prevent outer scrolling */
-        }
-        
-        .profile-header {
-          background-color: #ff8c00e0;
-          padding: 16px;
-          display: flex;
-          align-items: center;
-          color: white;
-          position: sticky;
-          top: 0;
-          box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
-          z-index: 10;
-        }
-        
-        .back-button {
-          background: none;
-          border: none;
-          color: white;
-          font-size: 24px;
-          cursor: pointer;
-          padding: 0;
-          margin-right: 15px;
-          display: flex;
-          align-items: center;
-          transition: transform 0.2s;
-        }
-        
-        .back-button:hover {
-          transform: translateX(-3px);
-        }
-        
-        .back-icon {
-          font-size: 22px;
-        }
-        
-        .header-title {
-          font-size: 20px;
-          font-weight: 600;
-          margin: 0;
-          flex-grow: 1;
-          text-align: center;
-          margin-right: 22px;
-          text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-        }
-        
-        .profile-content {
-          flex: 1;
-          padding: 24px;
-          overflow-y: auto;
-          -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
-          scroll-behavior: smooth; /* Smooth scrolling on all browsers */
-          height: calc(100vh - 60px); /* Subtract header height */
-          padding-bottom: 40px; /* Extra padding at bottom for better scrolling */
-        }
-        
-        /* Scrollbar styling */
-        .profile-content::-webkit-scrollbar {
-          width: 6px;
-        }
-        
-        .profile-content::-webkit-scrollbar-track {
-          background: rgba(0, 0, 0, 0.05);
-          border-radius: 10px;
-        }
-        
-        .profile-content::-webkit-scrollbar-thumb {
-          background: rgba(255, 140, 0, 0.3);
-          border-radius: 10px;
-          transition: background 0.3s;
-        }
-        
-        .profile-content::-webkit-scrollbar-thumb:hover {
-          background: rgba(255, 140, 0, 0.5);
-        }
-        
-        .profile-card {
-          max-width: 100%;
-          overflow: hidden;
-          background-color: white;
-          border-radius: 16px;
-          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-          transition: transform 0.3s, box-shadow 0.3s;
-        }
-        
-        .profile-card:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 6px 25px rgba(0, 0, 0, 0.1);
-        }
-        
-        .profile-avatar-section {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          padding: 36px 20px 28px;
-          background: linear-gradient(to bottom, #f9f9f9, #ffffff);
-          border-bottom: 1px solid #f0f0f0;
-        }
-        
-        .profile-avatar {
-          width: 110px;
-          height: 110px;
-          border-radius: 50%;
-          overflow: hidden;
-          margin-bottom: 18px;
-          border: 4px solid white;
-          box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-          transition: transform 0.3s;
-        }
-        
-        .profile-avatar:hover {
-          transform: scale(1.05);
-        }
-        
-        .avatar-image {
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-        }
-        
-        .avatar-placeholder {
-          width: 100%;
-          height: 100%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          background: linear-gradient(135deg, #fbaa39, #fc753b);
-          color: white;
-          font-size: 42px;
-          font-weight: bold;
-        }
-        
-        .user-name {
-          font-size: 24px;
-          font-weight: 600;
-          margin: 0 0 10px 0;
-          color: #333;
-        }
-        
-        .role-badge {
-          background: linear-gradient(135deg, #fbaa39, #fc753b);
-          color: white;
-          padding: 6px 16px;
-          border-radius: 50px;
-          font-size: 13px;
-          font-weight: 500;
-          letter-spacing: 0.5px;
-          box-shadow: 0 2px 8px rgba(255, 140, 0, 0.3);
-        }
-        
-        .profile-details {
-          padding: 20px 24px;
-        }
-        
-        .detail-item {
-          padding: 16px 0;
-          border-bottom: 1px solid #f0f0f0;
-          transition: background-color 0.2s;
-        }
-        
-        .detail-item:hover {
-          background-color: #fafafa;
-        }
-        
-        .detail-item:last-child {
-          border-bottom: none;
-        }
-        
-        .detail-label {
-          font-size: 14px;
-          color: #888;
-          margin-bottom: 8px;
-          display: flex;
-          align-items: center;
-        }
-        
-        .detail-icon {
-          margin-right: 10px;
-          font-size: 18px;
-          color: #ff8c00e0;
-        }
-        
-        .detail-value {
-          font-size: 16px;
-          color: #333;
-          word-break: break-word;
-          font-weight: 500;
-          padding-left: 28px;
-        }
-        
-        .profile-actions {
-          padding: 8px 24px 28px;
-          display: flex;
-          justify-content: center;
-        }
-        
-        .edit-profile-button {
-          background: linear-gradient(135deg,#fbaa39, #fc753b);
-          color: white;
-          border: none;
-          border-radius: 50px;
-          padding: 14px 28px;
-          font-size: 16px;
-          font-weight: 500;
-          cursor: pointer;
-          display: flex;
-          align-items: center;
-          box-shadow: 0 2px 5px rgba(51, 50, 48, 0.5);
-          transition: all 0.3s ease;
-        }
-        
-        .edit-profile-button:hover {
-          background: linear-gradient(135deg,#fbaa39, #fc753b);
-          transform: translateY(-3px);
-          box-shadow: 0 6px 15px rgba(255, 140, 0, 0.35);
-        }
-        
-        .edit-profile-button:active {
-          transform: translateY(-1px);
-        }
-        
-        .edit-icon {
-          margin-right: 10px;
-          font-size: 18px;
-        }
-        
-        /* Form styles */
-        .profile-edit-form {
-          padding: 24px;
-        }
-        
-        .form-group {
-          margin-bottom: 24px;
-        }
-        
-        .form-group label {
-          display: block;
-          margin-bottom: 10px;
-          font-size: 14px;
-          color: #666;
-          font-weight: 500;
-        }
-        
-        .form-group input {
-          width: 100%;
-          padding: 12px 16px;
-          border: 1px solid #ddd;
-          border-radius: 10px;
-          font-size: 16px;
-          transition: all 0.2s;
-          background-color: #f9f9f9;
-        }
-        
-        .form-group input:focus {
-          border-color: #ff8c00e0;
-          outline: none;
-          box-shadow: 0 0 0 3px rgba(255, 140, 0, 0.15);
-          background-color: #fff;
-        }
-        
-        .form-buttons {
-          display: flex;
-          justify-content: space-between;
-          margin-top: 32px;
-        }
-        
-        .cancel-button {
-          background-color: #f3f3f3;
-          color: #555;
-          border: none;
-          border-radius: 10px;
-          padding: 12px 24px;
-          font-size: 16px;
-          font-weight: 500;
-          cursor: pointer;
-          transition: all 0.2s;
-          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-        }
-        
-        .cancel-button:hover {
-          background-color: #eaeaea;
-          box-shadow: 0 3px 10px rgba(0, 0, 0, 0.15);
-        }
-        
-        .save-button {
-          background: linear-gradient(135deg, #fbaa39, #fc753b);
-          color: white;
-          border: none;
-          border-radius: 10px;
-          padding: 12px 30px;
-          font-size: 16px;
-          font-weight: 500;
-          cursor: pointer;
-          transition: all 0.2s;
-          box-shadow: 0 4px 12px rgba(255, 140, 0, 0.25);
-        }
-        
-        .save-button:hover {
-          background: linear-gradient(135deg, #fbaa39, #fc753b);
-          transform: translateY(-2px);
-          box-shadow: 0 6px 15px rgba(255, 140, 0, 0.35);
-        }
-        
-        /* Loading and error states */
-        .loading-container {
-          display: flex;
-          flex-direction: column;
-          justify-content: center;
-          align-items: center;
-          height: 100vh;
-          width: 100%;
-          background-color: #f7f7f7;
-        }
-        
-        .spinner {
-          width: 50px;
-          height: 50px;
-          border: 4px solid rgba(255, 140, 0, 0.1);
-          border-radius: 50%;
-          border-top: 4px solid #ff8c00e0;
-          animation: spin 1s linear infinite;
-          margin-bottom: 20px;
-        }
-        
-        @keyframes spin {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
-        }
-        
-        .loading-text {
-          font-size: 16px;
-          color: #666;
-          font-weight: 500;
-        }
-        
-        .error-container {
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          height: 100vh;
-          width: 100%;
-          font-size: 16px;
-          color: #e53e3e;
-          padding: 0 20px;
-          text-align: center;
-          background-color: #f7f7f7;
-        }
-        
-        /* Fix for iOS momentum scrolling issues */
-        @supports (-webkit-overflow-scrolling: touch) {
-          .profile-container {
-            -webkit-overflow-scrolling: touch;
-          }
-          
-          .profile-content {
-            -webkit-overflow-scrolling: touch;
-          }
-        }
-        
-        /* Responsive styles */
-        @media (max-width: 480px) {
-          .profile-avatar {
-            width: 90px;
-            height: 90px;
-          }
-          
-          .user-name {
-            font-size: 20px;
-          }
-          
-          .header-title {
-            font-size: 18px;
-          }
-          
-          .detail-value {
-            font-size: 15px;
-          }
-          
-          .edit-profile-button {
-            padding: 12px 20px;
-            font-size: 15px;
-          }
-          
-          .profile-content {
-            padding: 16px 16px 32px;
-          }
-          
-          .profile-details {
-            padding: 16px 20px;
-          }
-        }
-      `}</style>
+      <ResponsiveStyle />
     </div>
   );
 };
 
-export default ProfilePage;
+const styles = {
+  mainContainer: {
+    backgroundColor: '#f7f7f7',
+    minHeight: '100vh',
+    width: '100%',
+    position: 'relative',
+    overflow: 'hidden',
+    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
+  },
+  loadingContainer: {
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'center',
+    height: '100vh',
+    width: '100%',
+    fontSize: '16px',
+    color: '#666',
+    fontWeight: '500',
+  },
+  contentContainer: {
+    overflow: 'auto',
+    maxHeight: 'calc(100vh - 60px)',
+    paddingBottom: '30px',
+    WebkitOverflowScrolling: 'touch',
+    scrollBehavior: 'smooth',
+  },
+  header: {
+    padding: '7px 10px',
+    display: 'flex',
+    alignItems: 'center',
+    backgroundColor: '#ff8c00e0',
+    color: 'white',
+    position: 'sticky',
+    top: 0,
+    zIndex: 10,
+    boxShadow: '0 3px 10px rgba(0, 0, 0, 0.4)',
+  },
+  backButton: {
+    display: 'flex',
+    alignItems: 'center',
+    cursor: 'pointer',
+    transition: 'transform 0.2s',
+  },
+  backArrow: {
+    fontSize: '20px',
+    marginRight: '10px',
+    color: 'white',
+  },
+  headerText: {
+    fontSize: '15px',
+    fontWeight: '600',
+    color: 'white',
+    textShadow: '0 1px 2px rgba(0, 0, 0, 0.2)',
+  },
+  avatarSection: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    padding: '30px 0 20px',
+    textAlign: 'center',
+  },
+  profileAvatarWrapper: {
+    position: 'relative',
+    marginBottom: '15px',
+  },
+  profileAvatar: {
+    width: '100px',
+    height: '100px',
+    borderRadius: '50%',
+    border: '4px solid white',
+    objectFit: 'cover',
+    boxShadow: '0 4px 15px rgba(0, 0, 0, 0.2)',
+    transition: 'transform 0.3s',
+  },
+  userInfo: {
+    textAlign: 'center',
+  },
+  userName: {
+    margin: '5px 0',
+    fontSize: '22px',
+    fontWeight: '600',
+    color: '#333',
+  },
+  roleBadge: {
+    background: 'linear-gradient(135deg, #fbaa39, #fc753b)',
+    color: 'white',
+    padding: '5px 12px',
+    borderRadius: '20px',
+    fontSize: '12px',
+    fontWeight: '500',
+    display: 'inline-block',
+    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)',
+  },
+  formContainer: {
+    backgroundColor: 'white',
+    borderRadius: '16px',
+    margin: '0 15px 20px',
+    boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
+    overflow: 'hidden',
+    transition: 'transform 0.3s, box-shadow 0.3s',
+  },
+  profileDetails: {
+    padding: '20px',
+  },
+  detailItem: {
+    padding: '10px 0',
+    borderBottom: '1px solid #f0f0f0',
+  },
+  detailLabel: {
+    fontSize: '14px',
+    color: 'rgb(0, 0, 0)',
+    marginBottom: '8px',
+    display: 'flex',
+    alignItems: 'center',
+    textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)',
+  },
+  detailIcon: {
+    marginRight: '10px',
+    fontSize: '18px',
+    color: ' #ff8c00e0',
+  },
+  detailValue: {
+    fontSize: '15px',
+    color: 'rgb(142, 142, 142)',
+    fontWeight: '500',
+  },
+  form: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '10px',
+    width: '100%',
+    padding: '25px 24px',
+    maxWidth: '600px',
+    margin: '0 auto',
+  },
+  inputGroup: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '1px',
+    width: '100%',
+    marginBottom: '16px',
+  },
+  label: {
+    color: '#555',
+    fontSize: '15px',
+    fontWeight: '500',
+    display: 'flex',
+    alignItems: 'center',
+    marginBottom: '8px',
+  },
+  registeredLabel: {
+    color: '#888',
+    fontSize: '13px',
+    fontWeight: '400',
+    fontStyle: 'italic',
+    marginLeft: '5px',
+  },
+  input: {
+    padding: '12px 16px',
+    borderRadius: '10px',
+    border: '1px solid #ddd',
+    fontSize: '16px',
+    width: '100%',
+    boxSizing: 'border-box',
+    backgroundColor: '#f9f9f9',
+    transition: 'all 0.2s',
+  },
+  buttonRow: {
+    display: 'flex',
+    justifyContent: 'center',
+    width: '100%',
+    marginTop: '20px',
+    gap: '10px',
+  },
+  editButton: {
+    padding: '14px 28px',
+    border: 'none',
+    borderRadius: '10px',
+    fontSize: '16px',
+    fontWeight: '500',
+    cursor: 'pointer',
+    background: 'linear-gradient(135deg, #fbaa39, #fc753b)',
+    color: 'white',
+    width: '100%',
+    maxWidth: '150px',
+    transition: 'all 0.3s ease',
+    boxShadow: '0 4px 12px rgba(255, 140, 0, 0.25)',
+  },
+  saveButton: {
+    padding: '14px 28px',
+    border: 'none',
+    borderRadius: '10px',
+    fontSize: '16px',
+    fontWeight: '500',
+    cursor: 'pointer',
+    background: 'linear-gradient(135deg, #fbaa39, #fc753b)',
+    color: 'white',
+    width: '100%',
+    maxWidth: '150px',
+    transition: 'all 0.3s ease',
+    boxShadow: '0 4px 12px rgba(255, 140, 0, 0.25)',
+  },
+  cancelButton: {
+    padding: '14px 28px',
+    border: 'none',
+    borderRadius: '10px',
+    fontSize: '16px',
+    fontWeight: '500',
+    cursor: 'pointer',
+    background: '#f0f0f0',
+    color: '#555',
+    width: '100%',
+    maxWidth: '150px',
+    marginRight: '10px',
+    transition: 'all 0.3s ease',
+    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+  },
+  error: {
+    backgroundColor: '#fde8e8',
+    color: '#e53e3e',
+    padding: '12px',
+    marginTop: '15px',
+    textAlign: 'center',
+    borderRadius: '10px',
+    fontSize: '14px',
+    boxShadow: '0 2px 4px rgba(229, 62, 62, 0.1)',
+    margin: '15px 24px',
+  },
+  success: {
+    backgroundColor: '#e6ffed',
+    color: '#22543d',
+    padding: '12px',
+    marginTop: '15px',
+    textAlign: 'center',
+    borderRadius: '10px',
+    fontSize: '14px',
+    boxShadow: '0 2px 4px rgba(34, 84, 61, 0.1)',
+    margin: '15px 24px',
+  },
+};
+
+// Responsive media queries using a style tag
+const ResponsiveStyle = () => (
+  <style>{`
+    * {
+      box-sizing: border-box;
+    }
+    
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+    
+    button {
+      cursor: pointer;
+    }
+    
+    button:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 6px 15px rgba(255, 140, 0, 0.35);
+    }
+    
+    button[style*="cancelButton"]:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
+      background: #e5e5e5;
+    }
+    
+    input:focus {
+      border-color: #ff8c00e0;
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(255, 140, 0, 0.15);
+      background-color: #fff;
+    }
+    
+    /* Scrollbar styling */
+    .contentContainer::-webkit-scrollbar {
+      width: 6px;
+    }
+    
+    .contentContainer::-webkit-scrollbar-track {
+      background: rgba(0, 0, 0, 0.05);
+      border-radius: 10px;
+    }
+    
+    .contentContainer::-webkit-scrollbar-thumb {
+      background: rgba(255, 140, 0, 0.3);
+      border-radius: 10px;
+      transition: background 0.3s;
+    }
+    
+    .contentContainer::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 140, 0, 0.5);
+    }
+    
+    .formContainer:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 25px rgba(0, 0, 0, 0.1);
+    }
+    
+    .backButton:hover {
+      transform: translateX(-3px);
+    }
+    
+    @media (max-width: 768px) {
+      .form {
+        padding: 20px 15px;
+      }
+    }
+    
+    @media (max-width: 600px) {
+      .buttonRow {
+        flex-direction: column !important;
+        gap: 10px !important;
+      }
+      
+      .cancelButton, .saveButton, .editButton {
+        max-width: none !important;
+        margin-right: 0 !important;
+      }
+    }
+    
+    @media (max-width: 480px) {
+      .contentContainer {
+        overflow-x: hidden;
+      }
+      
+      .profileAvatar {
+        width: 80px !important;
+        height: 80px !important;
+      }
+      
+      .formContainer {
+        margin: 15px 10px !important;
+      }
+      
+      .form {
+        padding: 20px !important;
+      }
+      
+      .header {
+        padding: 14px 15px !important;
+      }
+    }
+    
+    @media (max-width: 400px) {
+      .header {
+        padding: 12px 15px !important;
+      }
+      
+      .backArrow {
+        font-size: 18px !important;
+      }
+      
+      .headerText {
+        font-size: 16px !important;
+      }
+      
+      .label {
+        font-size: 14px !important;
+      }
+      
+      .input {
+        padding: 10px 12px !important;
+        font-size: 14px !important;
+      }
+    }
+    
+    /* Fix for iOS momentum scrolling issues */
+    @supports (-webkit-overflow-scrolling: touch) {
+      .contentContainer {
+        -webkit-overflow-scrolling: touch;
+      }
+    }
+  `}</style>
+);
+
+export default ProfilePage; 

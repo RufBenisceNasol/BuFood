@@ -11,7 +11,6 @@ const StoreSettings = () => {
     email: '',
     contactNumber: '',
     description: '',
-    shippingFee: '',
     openTime: '',
     profileImage: '',
     bannerImage: '',
@@ -45,7 +44,6 @@ const StoreSettings = () => {
         email: profile.email || '',
         contactNumber: profile.contactNumber || '',
         description: data.description || '',
-        shippingFee: data.shippingFee || '',
         openTime: data.openTime || '',
         profileImage: data.profileImage || '',
         bannerImage: data.bannerImage || '',
@@ -106,6 +104,7 @@ const StoreSettings = () => {
 
   const handleEdit = () => {
     setEditMode(true);
+    setSaving(false);
     setSuccess('');
     setError('');
     setValidationErrors({});
@@ -116,6 +115,7 @@ const StoreSettings = () => {
     
     // Validate inputs before submission
     if (!validateInputs()) {
+      setSaving(false); // Reset saving if validation fails
       return;
     }
     
@@ -130,13 +130,12 @@ const StoreSettings = () => {
       submitData.append('email', formData.email);
       submitData.append('contactNumber', formData.contactNumber);
       submitData.append('description', formData.description);
-      submitData.append('shippingFee', formData.shippingFee);
       submitData.append('openTime', formData.openTime);
       if (formData.bannerImage && formData.bannerImage instanceof File) {
         submitData.append('bannerImage', formData.bannerImage);
       }
       if (formData.profileImage && formData.profileImage instanceof File) {
-        submitData.append('image', formData.profileImage); // Changed from 'profileImage' to 'image'
+        submitData.append('image', formData.profileImage);
       }
       const updated = await store.updateStore(storeData._id, submitData);
       setStoreData(updated);
@@ -146,8 +145,17 @@ const StoreSettings = () => {
     } catch (err) {
       setError(err.message || 'Failed to update store');
     } finally {
-      setSaving(false);
+      setSaving(false); // This ensures saving state is always reset
     }
+  };
+
+  const handleCancel = () => {
+    // Reset form to original data
+    fetchAllDetails();
+    setEditMode(false);
+    setError('');
+    setSuccess('');
+    setValidationErrors({});
   };
 
   const changeBanner = () => {
@@ -324,20 +332,6 @@ const StoreSettings = () => {
         </div>
             
         <div style={styles.inputGroup}>
-          <label style={styles.label}>Set Shipping Fee</label>
-          <input
-            type="number"
-            name="shippingFee"
-            value={formData.shippingFee}
-            onChange={handleInputChange}
-            disabled={!editMode}
-            style={styles.input}
-            className="store-settings-input"
-            required
-          />
-        </div>
-            
-        <div style={styles.inputGroup}>
           <label style={styles.label}>Open Time</label>
           <input
             type="text"
@@ -355,21 +349,31 @@ const StoreSettings = () => {
           {!editMode ? (
             <button
               type="button"
-                  style={styles.editButton}
+              style={styles.editButton}
               className="store-settings-button"
               onClick={handleEdit}
             >
               Edit
             </button>
           ) : (
-            <button
-              type="submit"
-                  style={styles.saveButton}
-              className="store-settings-button"
-              disabled={saving}
-            >
-              {saving ? 'Saving...' : 'Save'}
-            </button>
+            <>
+              <button
+                type="button"
+                style={styles.cancelButton}
+                className="store-settings-button"
+                onClick={handleCancel}
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                style={styles.saveButton}
+                className="store-settings-button"
+                disabled={saving}
+              >
+                {saving ? 'Saving...' : 'Save'}
+              </button>
+            </>
           )}
         </div>
         {error && <div style={styles.error}>{error}</div>}
@@ -506,6 +510,7 @@ const styles = {
     justifyContent: 'center',
     width: '100%',
     marginTop: '20px',
+    gap: '10px',
   },
   editButton: {
     padding: '14px 28px',
@@ -631,6 +636,21 @@ const styles = {
     boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)',
     transition: 'all 0.2s',
   },
+  cancelButton: {
+    padding: '14px 28px',
+    border: 'none',
+    borderRadius: '10px',
+    fontSize: '16px',
+    fontWeight: '500',
+    cursor: 'pointer',
+    background: '#f0f0f0',
+    color: '#555',
+    width: '100%',
+    maxWidth: '150px',
+    marginRight: '10px',
+    transition: 'all 0.3s ease',
+    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+  },
 };
 
 // Responsive media queries using a style tag
@@ -649,6 +669,12 @@ const ResponsiveStyle = () => (
     .store-settings-button:hover {
       transform: translateY(-3px);
       box-shadow: 0 6px 15px rgba(255, 140, 0, 0.35);
+    }
+    
+    button[style*="cancelButton"]:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
+      background: #e5e5e5;
     }
     
     .store-settings-input:focus, .store-settings-textarea:focus {
@@ -708,6 +734,14 @@ const ResponsiveStyle = () => (
       .store-settings-button {
         width: 100% !important;
         max-width: none !important;
+      }
+      .buttonRow {
+        flex-direction: column !important;
+        gap: 10px !important;
+      }
+      .cancelButton, .saveButton {
+        max-width: none !important;
+        margin-right: 0 !important;
       }
     }
     

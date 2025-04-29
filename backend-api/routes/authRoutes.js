@@ -1,5 +1,5 @@
 const express = require('express');
-const { register, login, verifyEmail, getMe, resendVerificationEmail, checkEmailVerificationStatus } = require('../controllers/authController');
+const { register, login, verifyEmail, getMe, resendVerificationEmail, checkEmailVerificationStatus, updateProfile } = require('../controllers/authController');
 const { registerValidation, loginValidation, resendVerificationValidation, checkVerificationValidation } = require('../middlewares/validators/authValidator');
 const handleValidation = require('../middlewares/validators/handleValidation');
 const { authenticate } = require('../middlewares/authMiddleware');
@@ -17,6 +17,9 @@ router.get('/verify/:token', verifyEmail);
 
 // 🔐 Protected route to get the current logged-in user
 router.get('/me', authenticate, getMe);
+
+// 🔐 Protected route to update user profile
+router.put('/profile', authenticate, updateProfile);
 
 // Route for resending the verification email (with validation)
 router.post('/resend-verification', resendVerificationValidation, handleValidation, resendVerificationEmail);

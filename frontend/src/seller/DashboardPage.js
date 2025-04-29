@@ -62,10 +62,6 @@ const DashboardPage = () => {
         </button>
         {isMenuOpen && (
           <div className="popup-menu">
-            <Link to="/profile" className="menu-item">
-              <MdPerson className="menu-icon" />
-              My Profile
-            </Link>
             <Link to="/seller/store-settings" className="menu-item">
               <MdSettings className="menu-icon" />
               Settings

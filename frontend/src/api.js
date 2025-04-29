@@ -68,6 +68,22 @@ export const auth = {
         }
     },
 
+    // Update user profile
+    updateProfile: async (userData) => {
+        try {
+            console.log('API URL:', API_BASE_URL);
+            console.log('Sending data to:', `${API_BASE_URL}/auth/profile`);
+            console.log('User data being sent:', userData);
+            
+            const response = await api.put('/auth/profile', userData);
+            console.log('API response:', response);
+            return response.data;
+        } catch (error) {
+            console.error('Error updating profile:', error);
+            throw error.response?.data || error.message;
+        }
+    },
+
     // Resend verification email
     resendVerification: async () => {
         try {
