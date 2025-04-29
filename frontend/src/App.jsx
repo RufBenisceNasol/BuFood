@@ -10,6 +10,7 @@ import AddProductPage from './seller/AddProductPage'
 import ProductList from './seller/ProductList'
 import StoreSettings from './seller/StoreSettings'
 import OrdersPage from './seller/OrdersPage'
+import ProfilePage from './seller/ProfilePage'
 // Customer imports
 import HomePage from './customer/HomePage'
 import ProductPage from './customer/ProductPage'
@@ -36,27 +37,24 @@ function App() {
           <Route path="/" element={<SplashScreen />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
-          
-          {/* Seller Routes - with Navbar */}
-          <Route path="/seller/*" element={
-            <>
-              <Navbar />
-              <Routes>
-                <Route path="dashboard" element={<DashboardPage />} />
-                <Route path="add-product" element={<AddProductPage />} />
-                <Route path="product-list" element={<ProductList />} />
-                <Route path="store-settings" element={<StoreSettings />} />
-                <Route path="manage-orders" element={<OrdersPage />} />
-              </Routes>
-            </>
-          } />
 
-          {/* Customer Routes - with CustomerNavbar */}
-          <Route path="/home" element={<CustomerLayout><HomePage /></CustomerLayout>} />
-          <Route path="/store/:id" element={<CustomerLayout><ProductPage /></CustomerLayout>} />
-          <Route path="/cart" element={<CustomerLayout><CartPage /></CustomerLayout>} />
-          <Route path="/orders" element={<CustomerLayout><CustomerOrdersPage /></CustomerLayout>} />
-          <Route path="/product/:id" element={<CustomerLayout><ProductPage /></CustomerLayout>} />
+
+          {/* Seller Routes - without Navbar */}
+          <Route path="/seller/dashboard" element={<DashboardPage />} />
+          <Route path="/seller/add-product" element={<AddProductPage />} />
+          <Route path="/seller/product-list" element={<ProductList />} />
+          <Route path="/seller/store-settings" element={<StoreSettings />} />
+          <Route path="/seller/manage-orders" element={<OrdersPage />} />
+          <Route path="/seller/profile" element={<ProfilePage />} />
+
+          {/* Customer Routes - with Navbar */}
+          <Route path="/customer" element={<CustomerLayout />}>
+            <Route path="home" element={<HomePage />} />
+            <Route path="product/:id" element={<ProductPage />} />
+            <Route path="cart" element={<CartPage />} />
+            <Route path="orders" element={<CustomerOrdersPage />} />
+          </Route>
+          
         </Routes>
       </Router>
     </div>

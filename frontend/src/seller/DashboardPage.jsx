@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { store } from '../api';
 import '../styles/DashboardPage.css';
+import { MdMenuOpen, MdNotificationAdd, MdStore, MdAddCircle, MdListAlt, MdSettings, MdLogout, MdPerson } from "react-icons/md";
 
 const DashboardPage = () => {
   const [storeData, setStoreData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchStoreData();
@@ -25,6 +28,13 @@ const DashboardPage = () => {
     }
   };
 
+  const handleLogout = () => {
+    // Clear any stored tokens or user data
+    localStorage.removeItem('token');
+    // Redirect to login page
+    navigate('/login');
+  };
+
   if (loading) {
     return <div className="dashboard-container">Loading...</div>;
   }
@@ -37,12 +47,41 @@ const DashboardPage = () => {
     <div className="dashboard-container">
       {/* Header Section */}
       <div className="store-header">
-        <h1>{storeData?.storeName || 'My Store'}</h1>
-        <button className="menu-toggle">
-          <span className="hamburger-icon">☰</span>
+        <div className="banner-container">
+          <img 
+            src={storeData?.bannerImage} 
+            alt="Store Banner" 
+            className="banner-image"
+          />
+          <div className="banner-overlay">
+            <h1 className="store-name">{storeData?.storeName || 'My Store'}</h1>
+            <div className="store-logo-container">
+              <img 
+                src={storeData?.image} 
+                alt="Store Logo" 
+                className="store-logo"
+              />
+            </div>
+          </div>
+        </div>
+        <button className="menu-toggle" onClick={() => setIsMenuOpen(!isMenuOpen)}>
+          <span className="hamburger-icon"><MdMenuOpen /></span>
         </button>
+        {isMenuOpen && (
+          <div className="popup-menu">
+            <Link to="/seller/store-settings" className="menu-item">
+              <MdSettings className="menu-icon" />
+              Settings
+            </Link>
+            <button onClick={handleLogout} className="menu-item">
+              <MdLogout className="menu-icon" />
+              Logout
+            </button>
+          </div>
+        )}
       </div>
 
+      <div className="scrollable-section">
       {/* Summary Cards */}
       <div className="summary-cards">
         <div className="summary-card">
@@ -65,32 +104,35 @@ const DashboardPage = () => {
       {/* Dashboard Grid */}
       <div className="dashboard-grid">
         <Link to="/seller/manage-orders" className="grid-item">
-          <div className="icon">🔔</div>
+          <div className="icon"><MdNotificationAdd /></div>
           <div className="count">{storeData?.pendingOrders || 0}</div>
           <div className="label">Manage Orders</div>
         </Link>
 
         <Link to="/seller/store-settings" className="grid-item">
-          <div className="icon">🛍️</div>
-          <div className="count">{storeData?.products?.length || 0}</div>
+          <div className="icon"><MdStore /></div>
+          <div className="space">0</div>
           <div className="label">Store Settings</div>
         </Link>
 
         <Link to="/seller/add-product" className="grid-item">
-          <div className="icon">➕</div>
+          <div className="icon"><MdAddCircle /></div>
+          <div className="space">0</div>
           <div className="label">Add Product</div>
         </Link>
 
         <Link to="/seller/product-list" className="grid-item">
-          <div className="icon">👁️</div>
+          <div className="icon"><MdListAlt /></div>
+          <div className="count">{storeData?.products?.length || 0}</div>
           <div className="label">Product List</div>
         </Link>
       </div>
-
+      
       {/* Profile Button */}
       <Link to="/seller/profile">
         <button className="profile-button">PROFILE</button>
       </Link>
+    </div>
     </div>
   );
 };
