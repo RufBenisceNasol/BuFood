@@ -46,17 +46,24 @@ const DashboardPage = () => {
   return (
     <div className="dashboard-container">
       {/* Header Section */}
-      <div 
-        className="store-header"
-        style={{
-          backgroundImage: storeData?.bannerImage ? `url(${storeData.bannerImage})` : 'none',
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          position: 'relative',
-        }}
-      >
-        <div className="header-overlay"></div>
-        <h1>{storeData?.storeName || 'My Store'}</h1>
+      <div className="store-header">
+        <div className="banner-container">
+          <img 
+            src={storeData?.bannerImage} 
+            alt="Store Banner" 
+            className="banner-image"
+          />
+          <div className="banner-overlay">
+            <h1 className="store-name">{storeData?.storeName || 'My Store'}</h1>
+            <div className="store-logo-container">
+              <img 
+                src={storeData?.image} 
+                alt="Store Logo" 
+                className="store-logo"
+              />
+            </div>
+          </div>
+        </div>
         <button className="menu-toggle" onClick={() => setIsMenuOpen(!isMenuOpen)}>
           <span className="hamburger-icon"><MdMenuOpen /></span>
         </button>

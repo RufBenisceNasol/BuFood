@@ -25,14 +25,18 @@ const LoginPage = () => {
                 password
             });
 
-            localStorage.setItem('token', response.data.token);
+            // Store both tokens
+            localStorage.setItem('token', response.data.accessToken);
+            localStorage.setItem('refreshToken', response.data.refreshToken);
             localStorage.setItem('user', JSON.stringify(response.data.user));
-            axios.defaults.headers.common['Authorization'] = `Bearer ${response.data.token}`;
+
+            // Set authorization header
+            axios.defaults.headers.common['Authorization'] = `Bearer ${response.data.accessToken}`;
 
             if (response.data.user.role === 'Seller') {
                 navigate('/seller/dashboard');
             } else {
-                navigate('/');
+                navigate('/home');
             }
         } catch (err) {
             const errorMessage = err.response?.data?.message || 'An error occurred during login';
@@ -184,9 +188,8 @@ const styles = {
         top: '50%',
         transform: 'translateY(-50%)',
         color: '#666',
-        fontSize: '20px',
-        display: 'flex',
         fontSize: 'clamp(16px, 4vw, 20px)',
+        display: 'flex',
         alignItems: 'center',
     },
     input: {
@@ -196,10 +199,9 @@ const styles = {
         border: '1px solid #ddd',
         borderRadius: '50px',
         backgroundColor: '#fff',
-        transition: 'all 0.2s ease',
-        
         boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
         outline: 'none',
+        transition: 'all 0.2s ease',
         '&:focus': {
             borderColor: '#rgba(103, 70, 30, 0.7)'
         },
@@ -242,13 +244,13 @@ const styles = {
         fontSize: 'clamp(12px, 3vw, 14px)',
         '&:hover': {
             textDecoration: 'underline',
-            color: '#ff8c00e0',
+            color: '#ff8c00',
         },
     },
     button: {
         width: '100%',
         padding: 'clamp(12px, 3vw, 15px)',
-        background: 'linear-gradient(135deg, #fbaa39, #fc753b)',
+        backgroundColor: '#ff8c00',
         color: 'white',
         border: 'none',
         borderRadius: '50px',
@@ -274,7 +276,7 @@ const styles = {
         fontSize: 'clamp(12px, 3vw, 14px)',
     },
     signUpLink: {
-        color: '#ff8c00e0',
+        color: '#ff8c00',
         textDecoration: 'none',
         fontWeight: '600',
         '&:hover': {

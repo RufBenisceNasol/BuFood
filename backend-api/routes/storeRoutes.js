@@ -1,6 +1,34 @@
 const express = require('express');
 const router = express.Router();
 
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     Store:
+ *       type: object
+ *       required:
+ *         - storeName
+ *       properties:
+ *         storeName:
+ *           type: string
+ *           description: Name of the store
+ *         description:
+ *           type: string
+ *           description: Store description
+ *         image:
+ *           type: string
+ *           format: binary
+ *           description: Store profile image
+ *         bannerImage:
+ *           type: string
+ *           format: binary
+ *           description: Store banner image
+ *         owner:
+ *           type: string
+ *           description: Store owner's user ID
+ */
+
 const {
   updateStore,
   deleteStore,
@@ -14,10 +42,46 @@ const { authenticate, checkRole } = require('../middlewares/authMiddleware');
 const checkStoreOwnership = require('../utils/checkOwnership');
 const uploadStoreImage = require('../middlewares/uploadStoreMiddleware'); 
 
-// 🔍 Get all stores (with optional search)
+/**
+ * @swagger
+ * /api/store:
+ *   get:
+ *     tags: [Stores]
+ *     summary: Get all stores
+ *     parameters:
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *         description: Search stores by name
+ *     responses:
+ *       200:
+ *         description: List of stores
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Store'
+ */
 router.get('/', getAllStores);
 
-// 👤 Get store by logged-in owner
+/**
+ * @swagger
+ * /api/store/my-store:
+ *   get:
+ *     tags: [Stores]
+ *     summary: Get store by logged-in owner
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Store details
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - Not a seller
+ */
 router.get(
   '/my-store',
   authenticate,
@@ -25,10 +89,73 @@ router.get(
   getMyStore
 );
 
-// 📍 Get a specific store by ID (for customers)
-router.get('/:id', getStoreById);
+/**
+ * @swagger
+ * /api/store/view/{id}:
+ *   get:
+ *     tags: [Stores]
+ *     summary: View store details and products
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Store details with products
+ *       404:
+ *         description: Store not found
+ */
+router.get('/view/:id', getStoreById);
 
-// ✏️ Update store - only by owner with validation
+/**
+ * @swagger
+ * /api/store/{id}/products:
+ *   get:
+ *     tags: [Stores]
+ *     summary: Get all products in a store
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: List of products in the store
+ *       404:
+ *         description: Store not found
+ */
+router.get('/:id/products', getStoreProducts);
+
+/**
+ * @swagger
+ * /api/store/{id}:
+ *   put:
+ *     tags: [Stores]
+ *     summary: Update store
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             $ref: '#/components/schemas/Store'
+ *     responses:
+ *       200:
+ *         description: Store updated successfully
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - Not store owner
+ */
 router.put('/:id', 
   authenticate, 
   checkStoreOwnership, 
@@ -39,10 +166,28 @@ router.put('/:id',
   updateStore
 );
 
-// ❌ Delete store - only by owner
+/**
+ * @swagger
+ * /api/store/{id}:
+ *   delete:
+ *     tags: [Stores]
+ *     summary: Delete store
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Store deleted successfully
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - Not store owner
+ */
 router.delete('/:id', authenticate, checkStoreOwnership, deleteStore);
-
-// 🛒 Get all products in a store by store ID (for customers)
-router.get('/:id/products', getStoreProducts);
 
 module.exports = router;

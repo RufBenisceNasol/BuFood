@@ -121,5 +121,22 @@
 }
 
 .indicator.active {
-  background-color: #ff8c00e0;
+  background-color: #ff8c00;
+}
+
+.get-started-btn {
+  background-color: #ff8c00;
+  color: white;
+  border: none;
+  padding: 1rem 3rem;
+  border-radius: 50px;
+  font-size: 1.2rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  margin-top: 2rem;
+}
+
+.get-started-btn:hover {
+  background-color: #ffda6c;
 }

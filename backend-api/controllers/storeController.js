@@ -19,13 +19,10 @@ const updateStore = async (req, res) => {
   const storeId = req.params.id;
   const updates = {};
 
-  // Handle basic text fields
-  if (req.body.storeName) updates.storeName = req.body.storeName;
-  if (req.body.description) updates.description = req.body.description;
-  if (req.body.shippingFee) updates.shippingFee = req.body.shippingFee;
-  if (req.body.openTime) updates.openTime = req.body.openTime;
+  if (req.body.storeName) {
+    updates.storeName = req.body.storeName;
+  }
 
-  // Handle file uploads
   if (req.files) {
     if (req.files['image']) {
       updates.image = req.files['image'][0].path;
@@ -89,7 +86,7 @@ const getMyStore = async (req, res) => {
   }
 };
 
-// 🔥 NEW: Get all stores (for customers)
+// Get all stores (for customers)
 const getAllStores = async (req, res) => {
   try {
     const stores = await Store.find().populate('owner', 'name email');
@@ -99,12 +96,13 @@ const getAllStores = async (req, res) => {
   }
 };
 
-// 🔥 NEW: Get single store by ID (for customers)
+// Get single store by ID (for customers)
 const getStoreById = async (req, res) => {
-  const storeId = req.params.id;
-
   try {
-    const store = await Store.findById(storeId).populate('owner', 'name email').populate('products');
+    const store = await Store.findById(req.params.id)
+      .populate('owner', 'name email')
+      .populate('products');
+      
     if (!store) {
       return res.status(404).json({ message: 'Store not found' });
     }
@@ -114,19 +112,17 @@ const getStoreById = async (req, res) => {
   }
 };
 
-// 🔥 NEW: Get products by store ID (for customers)
+// Get products by store ID (for customers)
 const getStoreProducts = async (req, res) => {
-  const storeId = req.params.id; // Get store ID from request parameters
+  const storeId = req.params.id;
 
   try {
-    // Fetch the store by its ID and populate the products field
     const store = await Store.findById(storeId).populate('products');
     
     if (!store) {
       return res.status(404).json({ message: 'Store not found' });
     }
 
-    // If the store exists, return the products array
     res.status(200).json({
       storeId: store._id,
       storeName: store.storeName,

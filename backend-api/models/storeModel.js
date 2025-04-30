@@ -11,18 +11,6 @@ const storeSchema = new mongoose.Schema({
         required: true,
         unique: true, // One store per seller
     },
-    description: {
-        type: String,
-        default: ''
-    },
-    shippingFee: {
-        type: Number,
-        default: 0
-    },
-    openTime: {
-        type: String,
-        default: ''
-    },
     products: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Product',

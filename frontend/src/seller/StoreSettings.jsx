@@ -98,7 +98,7 @@ const StoreSettings = () => {
   const handleProfileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      setFormData((prev) => ({ ...prev, profileImage: file }));
+      setFormData((prev) => ({ ...prev, image: file }));
     }
   };
 
@@ -532,7 +532,6 @@ const styles = {
     borderRadius: '10px',
     fontSize: '16px',
     fontWeight: '500',
-    cursor: 'pointer',
     background: 'linear-gradient(135deg, #fbaa39, #fc753b)',
     color: 'white',
     opacity: (props) => (props.saving ? 0.7 : 1),

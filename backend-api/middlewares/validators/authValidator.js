@@ -40,9 +40,26 @@ const checkVerificationValidation = [
         .notEmpty().withMessage('Email is required'),
 ];
 
+const forgotPasswordValidation = [
+    body('email')
+        .isEmail().withMessage('Please enter a valid email')
+        .notEmpty().withMessage('Email is required'),
+];
+
+const resetPasswordValidation = [
+    body('token')
+        .notEmpty().withMessage('Reset token is required'),
+    body('newPassword')
+        .isLength({ min: 6 }).withMessage('Password must be at least 6 characters long')
+        .matches(/\d/).withMessage('Password must contain a number')
+        .matches(/[A-Z]/).withMessage('Password must contain an uppercase letter')
+];
+
 module.exports = {
     registerValidation,
     loginValidation,
     resendVerificationValidation,
     checkVerificationValidation,
+    forgotPasswordValidation,
+    resetPasswordValidation
 };

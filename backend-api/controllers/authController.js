@@ -52,6 +52,12 @@ const sendVerificationEmail = async (email, verificationLink) => {
   }
 };
 
+const generateTokens = (userId) => {
+  const accessToken = jwt.sign({ id: userId }, process.env.JWT_SECRET, { expiresIn: '1h' });
+  const refreshToken = jwt.sign({ id: userId }, process.env.REFRESH_TOKEN_SECRET, { expiresIn: '7d' });
+  return { accessToken, refreshToken };
+};
+
 // Register
 const register = async (req, res) => {
   const { name, email, contactNumber, password, role } = req.body;
@@ -108,7 +114,6 @@ const register = async (req, res) => {
   }
 };
 
-
 // Login
 const login = async (req, res) => {
   const { email, password } = req.body;
@@ -124,11 +129,15 @@ const login = async (req, res) => {
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(400).json({ message: 'Invalid credentials' });
 
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
+    const { accessToken, refreshToken } = generateTokens(user._id);
+
+    user.refreshToken = refreshToken;
+    await user.save();
 
     res.status(200).json({
       message: 'Login successful',
-      token,
+      accessToken,
+      refreshToken,
       user: {
         id: user._id,
         name: user.name,
@@ -144,6 +153,20 @@ const login = async (req, res) => {
   }
 };
 
+// Logout
+const logout = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+    if (user) {
+      user.refreshToken = undefined;
+      await user.save();
+    }
+    res.status(200).json({ message: 'Logged out successfully' });
+  } catch (error) {
+    console.error('Logout error:', error);
+    res.status(500).json({ message: 'Error during logout' });
+  }
+};
 
 // Email verification
 const verifyEmail = async (req, res) => {
@@ -236,45 +259,115 @@ const getMe = async (req, res) => {
   }
 };
 
-// Update user profile
-const updateProfile = async (req, res) => {
+// Request password reset
+const forgotPassword = async (req, res) => {
   try {
-    const user = req.user; // Comes from `authenticate` middleware
-    if (!user) return res.status(404).json({ message: 'User not found' });
+    const { email } = req.body;
+    const user = await User.findOne({ email });
+    
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
 
-    const { name, contactNumber } = req.body;
-    
-    // Update user fields
-    if (name) user.name = name;
-    if (contactNumber) user.contactNumber = contactNumber;
-    
-    // Save updated user
+    const resetToken = user.createPasswordResetToken();
     await user.save();
+
+    const resetUrl = `${process.env.FRONTEND_URL}/reset-password/${resetToken}`;
     
+    await transporter.sendMail({
+      to: user.email,
+      subject: 'Password Reset Request - BuFood',
+      html: `
+        <div style="font-family: Arial, sans-serif; background-color: #f9f9f9; padding: 20px;">
+          <h2>Reset Your Password</h2>
+          <p>Click the button below to reset your password. This link is valid for 10 minutes.</p>
+          <a href="${resetUrl}" style="background-color: #28a745; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">
+            Reset Password
+          </a>
+          <p>If you didn't request this, please ignore this email.</p>
+        </div>
+      `
+    });
+
+    res.status(200).json({ message: 'Password reset email sent' });
+  } catch (error) {
+    console.error('Password reset error:', error);
+    res.status(500).json({ message: 'Error sending password reset email' });
+  }
+};
+
+// Reset password
+const resetPassword = async (req, res) => {
+  try {
+    const { token, newPassword } = req.body;
+    
+    const hashedToken = crypto
+      .createHash('sha256')
+      .update(token)
+      .digest('hex');
+
+    const user = await User.findOne({
+      passwordResetToken: hashedToken,
+      passwordResetExpires: { $gt: Date.now() }
+    });
+
+    if (!user) {
+      return res.status(400).json({ message: 'Invalid or expired reset token' });
+    }
+
+    user.password = await bcrypt.hash(newPassword, 10);
+    user.passwordResetToken = undefined;
+    user.passwordResetExpires = undefined;
+    await user.save();
+
+    res.status(200).json({ message: 'Password reset successful' });
+  } catch (error) {
+    console.error('Reset password error:', error);
+    res.status(500).json({ message: 'Error resetting password' });
+  }
+};
+
+// Refresh access token
+const refreshToken = async (req, res) => {
+  try {
+    const { refreshToken } = req.body;
+    
+    if (!refreshToken) {
+      return res.status(401).json({ message: 'Refresh token required' });
+    }
+
+    const decoded = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
+    const user = await User.findById(decoded.id);
+
+    if (!user || user.refreshToken !== refreshToken) {
+      return res.status(401).json({ message: 'Invalid refresh token' });
+    }
+
+    const { accessToken, refreshToken: newRefreshToken } = generateTokens(user._id);
+    
+    user.refreshToken = newRefreshToken;
+    await user.save();
+
     res.status(200).json({
-      message: 'Profile updated successfully',
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        contactNumber: user.contactNumber,
-        role: user.role,
-        store: user.role === 'Seller' ? user.store : null,
-      }
+      accessToken,
+      refreshToken: newRefreshToken
     });
   } catch (error) {
-    console.error('Error updating profile:', error.message);
-    res.status(500).json({ message: 'Failed to update profile', error: error.message });
+    console.error('Token refresh error:', error);
+    res.status(401).json({ message: 'Invalid refresh token' });
   }
 };
 
 module.exports = {
   register,
   login,
+  logout,
   verifyEmail,
   sendVerificationEmail,
   getMe,
   resendVerificationEmail,
   checkEmailVerificationStatus,
-  updateProfile,
+  forgotPassword,
+  resetPassword,
+  refreshToken,
 };

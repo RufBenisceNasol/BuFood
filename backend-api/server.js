@@ -1,71 +1,179 @@
+require('dotenv').config();
+
+// Validate required environment variables
+const requiredEnvVars = ['JWT_SECRET', 'MONGODB_URI'];
+const missingEnvVars = requiredEnvVars.filter(envVar => !process.env[envVar]);
+
+if (missingEnvVars.length > 0) {
+    console.error('Missing required environment variables:', missingEnvVars.join(', '));
+    process.exit(1);
+}
+
 const express = require('express');
 const mongoose = require('mongoose');
+const rateLimit = require('express-rate-limit');
+const slowDown = require('express-slow-down');
+const swaggerUi = require('swagger-ui-express');
+const swaggerSpecs = require('./utils/swaggerConfig');
+const { redisClient, cache } = require('./utils/cacheConfig');
+const { logger, requestLogger, errorLogger } = require('./utils/logger');
+const crypto = require('crypto');
+const cors = require('cors');
+const helmet = require('helmet');
+const compression = require('compression');
+const { authenticate } = require('./middlewares/authMiddleware');
+
+// Import routes
 const authRoutes = require('./routes/authRoutes');
 const storeRoutes = require('./routes/storeRoutes');
 const productRoutes = require('./routes/productRoutes');
 const customerRoutes = require('./routes/customerRoutes');
 const sellerRoutes = require('./routes/sellerRoutes');
 const cartRoutes = require('./routes/cartRoutes');
-const orderRoutes = require('./routes/orderRoutes');  // Import the new order routes
-const dotenv = require('dotenv');
-const morgan = require('morgan');
-const helmet = require('helmet');
-const cors = require('cors');
-
-// Load environment variables from .env file
-dotenv.config();
+const orderRoutes = require('./routes/orderRoutes');
 
 const app = express();
-const port = process.env.PORT || 8000; // Use PORT from environment variables or default to 8000
+const port = process.env.PORT || 8000;
+
+// Security middleware
+app.use(helmet({
+    contentSecurityPolicy: {
+        directives: {
+            defaultSrc: ["'self'"],
+            scriptSrc: ["'self'", "'unsafe-inline'"],
+            styleSrc: ["'self'", "'unsafe-inline'"],
+            imgSrc: ["'self'", "data:", "https:", "http:"],
+            connectSrc: ["'self'", "https:", "http:"]
+        }
+    },
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+    crossOriginOpenerPolicy: { policy: "same-origin" }
+}));
+
+// Rate limiting configuration
+const limiter = rateLimit({
+    windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000,
+    max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 100,
+    message: { error: 'Too many requests, please try again later.' }
+});
+
+const speedLimiter = slowDown({
+    windowMs: 15 * 60 * 1000,
+    delayAfter: 50,
+    delayMs: 500
+});
 
 // Middleware
-app.use(morgan('tiny')); // HTTP request logging
-app.use(helmet()); // Secure HTTP headers
-app.use(cors()); // Enable CORS
-app.use(express.json()); // Parse JSON request bodies
+app.use(compression()); // Compress responses
+app.use(cors());
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+app.use(requestLogger); // Add request logging
 
-// MongoDB connection (🚫 Removed deprecated options)
+// Add request ID to each request
+app.use((req, res, next) => {
+    req.id = crypto.randomUUID();
+    next();
+});
+
+// Apply rate limiting
+app.use('/api', limiter);
+app.use('/api', speedLimiter);
+
+// Initialize Redis connection if enabled
+if (process.env.USE_REDIS === 'true' && redisClient) {
+    (async () => {
+        try {
+            await redisClient.connect();
+            logger.info('Redis connected successfully');
+        } catch (error) {
+            logger.error('Redis connection error:', error);
+            logger.info('Continuing with in-memory cache');
+        }
+    })();
+} else {
+    logger.info('Running with in-memory cache (Redis disabled)');
+}
+
+// MongoDB connection
 mongoose.connect(process.env.MONGODB_URI)
-    .then(() => console.log('✅ Successfully connected to MongoDB'))
+    .then(() => logger.info('✅ Successfully connected to MongoDB'))
     .catch(err => {
-        console.error('❌ Error connecting to MongoDB:', err);
-        process.exit(1); // Exit the process with failure
+        logger.error('❌ Error connecting to MongoDB:', err);
+        process.exit(1);
     });
 
-// Routes
+// API Documentation
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpecs));
+
+// Health check endpoint
+app.get('/health', (req, res) => {
+    res.status(200).json({
+        status: 'healthy',
+        timestamp: new Date().toISOString(),
+        uptime: process.uptime()
+    });
+});
+
+// Routes with caching where appropriate
 app.use('/api/auth', authRoutes);
-app.use('/api/store', storeRoutes);
-app.use('/api/products', productRoutes);
+app.use('/api/products', cache('10 minutes'), productRoutes);
+app.use('/api/store', cache('15 minutes'), storeRoutes);
 app.use('/api/customers', customerRoutes);
 app.use('/api/seller', sellerRoutes);
 app.use('/api/cart', cartRoutes);
-app.use('/api/orders', orderRoutes);  // Add the order routes
+app.use('/api/orders', orderRoutes);
 
-// Error handling middleware
+// Error handling
+app.use(errorLogger);
 app.use((err, req, res, next) => {
-    console.error(err.stack); // Log the error stack
-    res.status(500).json({ message: 'Something went wrong!' }); // Send a generic error response
-});
+    logger.error(`[Error] [${req.id}] ${err.stack}`);
+    
+    if (err.name === 'ValidationError') {
+        return res.status(400).json({
+            error: 'Validation Error',
+            details: err.message,
+            requestId: req.id
+        });
+    }
+    
+    if (err.name === 'UnauthorizedError') {
+        return res.status(401).json({
+            error: 'Authentication Error',
+            details: err.message,
+            requestId: req.id
+        });
+    }
 
-// Test endpoint
-app.get('/api/test-endpoint', (req, res) => {
-    res.json({ message: 'API is working!', status: 'success' });
-  });
+    res.status(err.status || 500).json({
+        error: 'Internal Server Error',
+        message: process.env.NODE_ENV === 'production' ? 'Something went wrong' : err.message,
+        requestId: req.id
+    });
+});
 
 // Graceful shutdown
-process.on('SIGINT', async () => {
-    console.log('SIGINT received, shutting down gracefully...');
+const gracefulShutdown = async () => {
+    logger.info('Received shutdown signal, starting graceful shutdown...');
     try {
+        if (process.env.USE_REDIS === 'true' && redisClient) {
+            await redisClient.quit();
+            logger.info('Redis connection closed');
+        }
         await mongoose.connection.close();
-        console.log('MongoDB connection closed.');
+        logger.info('MongoDB connection closed');
         process.exit(0);
     } catch (err) {
-        console.error('Error closing MongoDB connection:', err);
+        logger.error('Error during shutdown:', err);
         process.exit(1);
     }
-});
+};
 
-// Start the server
-app.listen(port, () => {
-    console.log(`🚀 Server started on http://0.0.0.0:${port}`);
+process.on('SIGTERM', gracefulShutdown);
+process.on('SIGINT', gracefulShutdown);
+
+// Start server
+app.listen(port, '0.0.0.0', () => {
+    logger.info(`🚀 Server started on port ${port}`);
+    logger.info(`📚 API Documentation available at http://[YOUR_IP]:${port}/api-docs`);
 });

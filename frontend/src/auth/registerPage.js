@@ -3,7 +3,6 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { FiUser, FiMail, FiPhone, FiLock, FiBriefcase, FiEye, FiEyeOff } from 'react-icons/fi';
 import logod from '../assets/logod.png';
-import { Box } from '@mui/material';
 
 const RegisterPage = () => {
     const [formData, setFormData] = useState({
@@ -42,9 +41,16 @@ const RegisterPage = () => {
         setLoading(true);
 
         try {
-            // Remove confirmPassword before sending to API
-            const { confirmPassword, ...dataToSend } = formData;
+            // Remove confirmPassword and create dataToSend in one step
+            const { confirmPassword: _, ...dataToSend } = formData;
             const response = await axios.post('http://localhost:8000/api/auth/register', dataToSend);
+
+            if (response.data.accessToken && response.data.refreshToken) {
+                localStorage.setItem('token', response.data.accessToken);
+                localStorage.setItem('refreshToken', response.data.refreshToken);
+                localStorage.setItem('user', JSON.stringify(response.data.user));
+            }
+
             setSuccess(response.data.message);
             setTimeout(() => {
                 navigate('/login');
@@ -171,11 +177,11 @@ const RegisterPage = () => {
                             name="role"
                             value={formData.role}
                             onChange={handleChange}
-                            style={styles.select}
+                            style={styles.input}
                             disabled={loading}
                         >
-                            <option value="Customer" style={styles.selectOption}>Customer</option>
-                            <option value="Seller" style={styles.selectOption}>Seller</option>
+                            <option value="Customer">Customer</option>
+                            <option value="Seller">Seller</option>
                         </select>
                     </div>
 
@@ -221,7 +227,6 @@ const styles = {
         boxSizing: 'border-box',
     },
     formContainer: {
-        display: 'flex',
         width: '100%',
         maxWidth: '400px',
         padding: 'clamp(20px, 5vw, 40px) clamp(15px, 4vw, 30px)',
@@ -233,50 +238,26 @@ const styles = {
         margin: '0 auto',
     },
     logo: {
-        width: '60px',
-        height: '60px',
-        aspectRatio: '1/1',
-        marginBottom: '10px',
+        width: 'clamp(60px, 15vw, 80px)',
+        height: 'auto',
+        marginBottom: 'clamp(15px, 4vw, 20px)',
     },
     title: {
-        fontSize: '22px',
+        fontSize: '24px',
         fontWeight: 'bold',
         color: '#333',
-        marginBottom: '10px',
-        marginTop: '0px',
+        marginBottom: '30px',
         textAlign: 'center',
     },
     form: {
         width: '100%',
         display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
         flexDirection: 'column',
         gap: 'clamp(15px, 4vw, 20px)',
     },
     inputGroup: {
         position: 'relative',
         width: '100%',
-    },
-    select: {
-        width: '100%',
-        border: '1px solid rgba(0, 0, 0, 0.1)',
-        borderRadius: '50px',
-        backgroundColor: '#ffffff',
-        justifyContent: 'center',
-        alignItems: 'center',
-        transition: 'all 0.3s ease',
-        outline: 'none',
-        boxSizing: 'border-box',
-        padding: 'clamp(12px, 3vw, 15px) 45px',
-        fontSize: '14px',
-        color: 'rgb(136, 134, 134)',
-        transition: 'all 0.2s ease',
-        boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-        paddingRight: '30px',
-    },
-    selectOption: {
-        color: 'rgb(81, 79, 79)',
     },
     inputWrapper: {
         position: 'relative',
@@ -289,10 +270,9 @@ const styles = {
         left: '15px',
         top: '50%',
         transform: 'translateY(-50%)',
-        color: 'rgb(102, 102, 102)',
-        fontSize: '20px',
-        display: 'flex',
+        color: '#666',
         fontSize: 'clamp(16px, 4vw, 20px)',
+        display: 'flex',
         alignItems: 'center',
     },
     input: {
@@ -300,13 +280,19 @@ const styles = {
         border: '1px solid rgba(0, 0, 0, 0.1)',
         borderRadius: '50px',
         backgroundColor: '#ffffff',
-        transition: 'all 0.3s ease',
         outline: 'none',
         boxSizing: 'border-box',
         padding: 'clamp(12px, 3vw, 15px) 45px',
         fontSize: 'clamp(14px, 3.5vw, 16px)',
-        transition: 'all 0.2s ease',
         boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+        transition: 'all 0.3s ease',
+        '&:hover': {
+            borderColor: '#ff8c00',
+        },
+        '&:focus': {
+            borderColor: '#ff8c00',
+            boxShadow: '0 4px 15px rgba(255, 140, 0, 0.1)',
+        },
     },
     checkbox: {
         width: 'clamp(14px, 3.5vw, 16px)',
@@ -321,7 +307,7 @@ const styles = {
     button: {
         width: '100%',
         padding: 'clamp(12px, 3vw, 15px)',
-        background: 'linear-gradient(135deg, #fbaa39, #fc753b)',
+        backgroundColor: '#ff8c00',
         color: 'white',
         border: 'none',
         borderRadius: '50px',
@@ -370,7 +356,7 @@ const styles = {
         margin: 0,
     },
     loginLink: {
-        color: '#ff8c00e0',
+        color: '#ff8c00',
         textDecoration: 'none',
         fontWeight: '600',
     },
