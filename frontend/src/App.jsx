@@ -11,11 +11,14 @@ import ProductList from './seller/ProductList'
 import StoreSettings from './seller/StoreSettings'
 import OrdersPage from './seller/OrdersPage'
 import ProfilePage from './seller/ProfilePage'
+import SellerProductDetailPage from './seller/SellerProductDetailPage'
+import EditProductPage from './seller/EditProductPage'
 // Customer imports
 import HomePage from './customer/HomePage'
 import ProductPage from './customer/ProductPage'
 import CartPage from './customer/CartPage'
 import CustomerOrdersPage from './customer/OrdersPage'
+import SingleProductPage from './customer/SingleProductPage'
 import { Box } from '@mui/material'
 import './App.css'
 
@@ -46,6 +49,8 @@ function App() {
           <Route path="/seller/store-settings" element={<StoreSettings />} />
           <Route path="/seller/manage-orders" element={<OrdersPage />} />
           <Route path="/seller/profile" element={<ProfilePage />} />
+          <Route path="/seller/product/:productId" element={<SellerProductDetailPage />} />
+          <Route path="/seller/edit-product/:productId" element={<EditProductPage />} />
 
           {/* Customer Routes - with Navbar */}
           <Route path="/customer" element={<CustomerLayout />}>
@@ -54,6 +59,9 @@ function App() {
             <Route path="cart" element={<CartPage />} />
             <Route path="orders" element={<CustomerOrdersPage />} />
           </Route>
+
+          {/* Single Product Route */}
+          <Route path="/product/:productId" element={<SingleProductPage />} />
           
         </Routes>
       </Router>
