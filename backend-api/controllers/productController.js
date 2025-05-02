@@ -109,23 +109,106 @@ const updateProduct = async (req, res) => {
       return res.status(403).json({ message: 'Unauthorized' });
     }
 
-    // Handle image upload if provided
-    if (req.file) {
-      const result = await uploadToCloudinary(req.file.path, 'product-images');
-      req.body.image = result.secure_url;
+    // Only allow updating specific fields
+    const updates = {};
+    const allowedUpdates = ['name', 'description', 'price', 'category'];
+    
+    allowedUpdates.forEach(field => {
+      if (req.body[field] !== undefined) {
+        updates[field] = req.body[field];
+      }
+    });
 
-      // Delete the file after uploading to Cloudinary
-      await deleteFile(req.file.path);
-    }
+    // Update the product with only the allowed fields
+    const updatedProduct = await Product.findByIdAndUpdate(
+      req.params.id,
+      updates,
+      { new: true, runValidators: true }
+    );
 
-    // Apply updates to the product
-    Object.assign(product, req.body);
-
-    const updatedProduct = await product.save();
     res.json(updatedProduct);
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// Update product image only
+const updateProductImage = async (req, res) => {
+  try {
+    const product = await Product.findById(req.params.id);
+    if (!product) return res.status(404).json({ message: 'Product not found' });
+
+    // Check ownership
+    if (product.sellerId.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: 'Unauthorized' });
+    }
+
+    // Check if file is uploaded
+    if (!req.file) {
+      return res.status(400).json({ message: 'No image file provided' });
+    }
+
+    // Upload new image to Cloudinary
+    const result = await uploadToCloudinary(req.file.path, 'product-images');
+    
+    // Delete the local file after upload
+    await deleteFile(req.file.path);
+
+    // Only update the image URL, keeping all other fields unchanged
+    const updatedProduct = await Product.findByIdAndUpdate(
+      req.params.id,
+      { image: result.secure_url },
+      { new: true }
+    );
+
+    res.json(updatedProduct);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+const toggleProductAvailability = async (req, res) => {
+  try {
+    // Get the current product state
+    const product = await Product.findById(req.params.id);
+    if (!product) {
+      return res.status(404).json({ message: 'Product not found' });
+    }
+
+    // Check ownership
+    if (product.sellerId.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: 'Unauthorized' });
+    }
+
+    // Normalize current availability
+    const currentAvailability = product.availability?.trim().toLowerCase();
+
+    let newAvailability;
+    if (currentAvailability === 'available') {
+      newAvailability = 'Out of Stock';
+    } else {
+      newAvailability = 'Available';
+    }
+
+    // Update and get the new product state
+    const updatedProduct = await Product.findByIdAndUpdate(
+      req.params.id,
+      { availability: newAvailability },
+      { new: true, runValidators: true }
+    )
+      .populate('storeId', 'storeName')
+      .populate('sellerId', 'name email');
+
+    res.json({
+      success: true,
+      message: `Product availability changed to ${updatedProduct.availability}`,
+      product: updatedProduct
+    });
+  } catch (err) {
+    console.error('Toggle error:', err);
+    res.status(500).json({ success: false, message: 'Server error', error: err.message });
   }
 };
 
@@ -182,5 +265,7 @@ module.exports = {
   getProductById,
   updateProduct,
   deleteProduct,
-  deleteAllProductsInStore
+  deleteAllProductsInStore,
+  updateProductImage,
+  toggleProductAvailability,
 };

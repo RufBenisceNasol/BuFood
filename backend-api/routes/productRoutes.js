@@ -37,7 +37,9 @@ const {
   updateProduct,
   deleteProduct,
   deleteAllProductsInStore,
-  getSellerProducts
+  getSellerProducts,
+  updateProductImage,
+  toggleProductAvailability
 } = require('../controllers/productController');
 
 const { authenticate, checkRole } = require('../middlewares/authMiddleware');
@@ -144,10 +146,10 @@ router.post(
 
 /**
  * @swagger
- * /api/products/{id}:
- *   put:
+ * /api/products/{id}/image:
+ *   patch:
  *     tags: [Products]
- *     summary: Update a product
+ *     summary: Update product image
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -157,23 +159,86 @@ router.post(
  *         schema:
  *           type: string
  *     requestBody:
+ *       required: true
  *       content:
  *         multipart/form-data:
  *           schema:
- *             $ref: '#/components/schemas/Product'
+ *             type: object
+ *             properties:
+ *               image:
+ *                 type: string
+ *                 format: binary
+ *     responses:
+ *       200:
+ *         description: Product image updated successfully
+ */
+router.patch('/:id/image', authenticate, uploadProductImage.single('image'), updateProductImage);
+
+/**
+ * @swagger
+ * /api/products/{id}/toggle-availability:
+ *   patch:
+ *     tags: [Products]
+ *     summary: Toggle product availability
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Product availability toggled successfully
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - Not product owner
+ */
+router.patch('/:id/toggle-availability', authenticate, checkRole('Seller'), toggleProductAvailability);
+
+/**
+ * @swagger
+ * /api/products/{id}:
+ *   patch:
+ *     tags: [Products]
+ *     summary: Edit product details
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *               description:
+ *                 type: string
+ *               price:
+ *                 type: number
+ *               category:
+ *                 type: string
  *     responses:
  *       200:
  *         description: Product updated successfully
  *       401:
  *         description: Unauthorized
- *       404:
- *         description: Product not found
+ *       403:
+ *         description: Forbidden - Not product owner
  */
-router.put(
-  '/:id',
+router.patch('/:id',
   authenticate,
+  checkRole('Seller'),
   checkProductOwnership,
-  uploadProductImage.single('image'),
   updateProductValidation,
   handleValidation,
   updateProduct

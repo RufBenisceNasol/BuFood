@@ -194,7 +194,7 @@ router.get('/products', authenticate, checkRole('Seller'), getSellerProducts);
 /**
  * @swagger
  * /api/seller/products/{id}:
- *   put:
+ *   patch:
  *     tags: [Sellers]
  *     summary: Update product
  *     security:
@@ -218,7 +218,7 @@ router.get('/products', authenticate, checkRole('Seller'), getSellerProducts);
  *       403:
  *         description: Forbidden - Not product owner
  */
-router.put(
+router.patch(
   '/products/:id',
   authenticate,
   checkRole('Seller'),
