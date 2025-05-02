@@ -306,7 +306,6 @@ export const product = {
 
 // Cart API endpoints
 export const cart = {
-    // Add to cart
     addToCart: async (productId, quantity) => {
         try {
             const response = await api.post('/cart/add', { productId, quantity });
@@ -316,7 +315,6 @@ export const cart = {
         }
     },
 
-    // View cart
     viewCart: async () => {
         try {
             const response = await api.get('/cart/view');
@@ -326,7 +324,6 @@ export const cart = {
         }
     },
 
-    // Get cart summary
     getCartSummary: async () => {
         try {
             const response = await api.get('/cart/summary');
@@ -336,7 +333,6 @@ export const cart = {
         }
     },
 
-    // Remove item from cart
     removeFromCart: async (productId) => {
         try {
             const response = await api.post('/cart/remove', { productId });
@@ -346,7 +342,6 @@ export const cart = {
         }
     },
 
-    // Clear cart
     clearCart: async () => {
         try {
             const response = await api.delete('/cart/clear');
@@ -356,7 +351,6 @@ export const cart = {
         }
     },
 
-    // Update cart item quantity
     updateCartItem: async (productId, quantity) => {
         try {
             const response = await api.put('/cart/update', { productId, quantity });
@@ -369,7 +363,6 @@ export const cart = {
 
 // Order API endpoints
 export const order = {
-    // Checkout from cart
     checkoutFromCart: async () => {
         try {
             const response = await api.post('/orders/checkout-cart');
@@ -379,7 +372,6 @@ export const order = {
         }
     },
 
-    // Checkout from product (direct purchase)
     checkoutFromProduct: async (productId, quantity) => {
         try {
             const response = await api.post('/orders/checkout-from-product', {
@@ -392,7 +384,6 @@ export const order = {
         }
     },
 
-    // Place order
     placeOrder: async (orderId, orderData) => {
         try {
             const response = await api.post(`/orders/place-order/${orderId}`, orderData);
@@ -402,7 +393,6 @@ export const order = {
         }
     },
 
-    // Get customer orders
     getCustomerOrders: async () => {
         try {
             const response = await api.get('/orders/customer');
@@ -412,7 +402,6 @@ export const order = {
         }
     },
 
-    // Get seller's placed orders
     getSellerOrders: async () => {
         try {
             const response = await api.get('/orders/seller/placed');
@@ -422,7 +411,6 @@ export const order = {
         }
     },
 
-    // Get order details
     getOrderDetails: async (orderId) => {
         try {
             const response = await api.get(`/orders/${orderId}`);
@@ -432,7 +420,6 @@ export const order = {
         }
     },
 
-    // Cancel order (customer)
     cancelOrderByCustomer: async (orderId) => {
         try {
             const response = await api.patch(`/orders/cancel-by-customer/${orderId}`);
@@ -442,7 +429,6 @@ export const order = {
         }
     },
 
-    // Update order status (seller)
     updateOrderStatus: async (orderId, action, status) => {
         try {
             const response = await api.patch(`/orders/seller/manage/${orderId}`, {
@@ -458,7 +444,6 @@ export const order = {
 
 // Customer API endpoints
 export const customer = {
-    // Get customer profile
     getProfile: async () => {
         try {
             const response = await api.get('/customers/profile');
@@ -468,7 +453,6 @@ export const customer = {
         }
     },
 
-    // Get all stores
     getAllStores: async () => {
         try {
             const response = await api.get('/customers/stores');
@@ -478,7 +462,6 @@ export const customer = {
         }
     },
 
-    // View specific store
     viewStore: async (storeId) => {
         try {
             const response = await api.get(`/customers/store/${storeId}`);

@@ -101,8 +101,8 @@ const ProductList = () => {
                                         alt={prod.name}
                                         style={styles.productImage}
                                     />
-                                    <div style={styles.availabilityBadge(prod.isAvailable)}>
-                                        {prod.isAvailable ? 'Available' : 'Out of Stock'}
+                                    <div style={styles.availabilityBadge(prod.availability)}>
+                                        {styles.availabilityBadge(prod.availability).label}
                                     </div>
                                 </div>
                                 <div style={styles.productInfo}>
@@ -311,17 +311,29 @@ const styles = {
         height: '100%',
         objectFit: 'cover',
     },
-    availabilityBadge: (isAvailable) => ({
-        position: 'absolute',
-        top: '10px',
-        right: '10px',
-        padding: '4px 8px',
-        borderRadius: '4px',
-        fontSize: '12px',
-        fontWeight: '500',
-        backgroundColor: isAvailable ? 'rgba(46, 204, 113, 0.9)' : 'rgba(231, 76, 60, 0.9)',
-        color: 'white',
-    }),
+    availabilityBadge: (availability) => {
+        let bgColor = 'rgba(231, 76, 60, 0.9)';
+        let label = 'Out of Stock';
+        if (availability === 'Available') {
+            bgColor = 'rgba(46, 204, 113, 0.9)';
+            label = 'Available';
+        } else if (availability === 'Pending') {
+            bgColor = 'rgba(255, 140, 0, 0.9)';
+            label = 'Pending';
+        }
+        return {
+            position: 'absolute',
+            top: '10px',
+            right: '10px',
+            padding: '4px 8px',
+            borderRadius: '4px',
+            fontSize: '12px',
+            fontWeight: '500',
+            backgroundColor: bgColor,
+            color: 'white',
+            label: label
+        };
+    },
     productInfo: {
         padding: '15px',
     },

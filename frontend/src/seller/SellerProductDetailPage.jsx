@@ -4,6 +4,7 @@ import { product } from '../api';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { MdArrowBack, MdEdit, MdDelete, MdMoreVert } from 'react-icons/md';
+import { Modal, Button } from '@mui/material';
 
 const SellerProductDetailPage = () => {
     const { productId } = useParams();
@@ -12,6 +13,8 @@ const SellerProductDetailPage = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [showDropdown, setShowDropdown] = useState(false);
+    const [showConfirmModal, setShowConfirmModal] = useState(false);
+    const [pendingToggle, setPendingToggle] = useState(false);
 
     const fetchProductDetails = React.useCallback(async () => {
         try {
@@ -41,19 +44,26 @@ const SellerProductDetailPage = () => {
         }
     };
 
-    const handleToggleAvailability = async () => {
+    const handleToggleAvailabilityClick = () => {
+        setShowConfirmModal(true);
+    };
+
+    const handleConfirmToggle = async () => {
+        setPendingToggle(true);
         try {
-            await product.updateProduct(productId, { 
-                isAvailable: !productData.isAvailable 
-            });
-            setProductData(prev => ({
-                ...prev,
-                isAvailable: !prev.isAvailable
-            }));
+            await product.toggleAvailability(productId);
+            await fetchProductDetails();
             toast.success('Product availability updated');
         } catch (err) {
             toast.error(err.message || 'Failed to update product availability');
+        } finally {
+            setPendingToggle(false);
+            setShowConfirmModal(false);
         }
+    };
+
+    const handleCancelToggle = () => {
+        setShowConfirmModal(false);
     };
 
     const toggleDropdown = () => {
@@ -100,8 +110,8 @@ const SellerProductDetailPage = () => {
                             alt={productData.name}
                             style={styles.productImage}
                         />
-                        <div style={styles.availabilityBadge(productData.isAvailable)}>
-                            {productData.isAvailable ? 'Available' : 'Out of Stock'}
+                        <div style={styles.availabilityBadge(productData.availability)}>
+                            {productData.availability === 'Available' ? 'Available' : productData.availability === 'Pending' ? 'Pending' : 'Out of Stock'}
                         </div>
                     </div>
 
@@ -146,16 +156,39 @@ const SellerProductDetailPage = () => {
                                 <label className="switch">
                                     <input
                                         type="checkbox"
-                                        checked={productData.isAvailable}
-                                        onChange={handleToggleAvailability}
+                                        checked={productData.availability === 'Available'}
+                                        onChange={handleToggleAvailabilityClick}
                                     />
                                     <span className="slider round"></span>
                                 </label>
                                 <span style={styles.availabilityLabel}>
-                                    {productData.isAvailable ? 'Product is Available' : 'Product is Out of Stock'}
+                                    {productData.availability === 'Available' ? 'Product is Available' : 'Product is Out of Stock'}
                                 </span>
                             </div>
                         </div>
+                        <Modal open={showConfirmModal} onClose={handleCancelToggle}>
+                            <div style={{
+                                position: 'absolute',
+                                top: '50%',
+                                left: '50%',
+                                transform: 'translate(-50%, -50%)',
+                                background: 'white',
+                                padding: 32,
+                                borderRadius: 12,
+                                boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+                                minWidth: 300,
+                                textAlign: 'center',
+                            }}>
+                                <h2>Change Availability</h2>
+                                <p>Do you want to change the availability?</p>
+                                <div style={{ marginTop: 24, display: 'flex', justifyContent: 'center', gap: 16 }}>
+                                    <Button variant="outlined" onClick={handleCancelToggle} disabled={pendingToggle}>Cancel</Button>
+                                    <Button variant="contained" color="primary" onClick={handleConfirmToggle} disabled={pendingToggle}>
+                                        {pendingToggle ? 'Updating...' : 'Yes, Change'}
+                                    </Button>
+                                </div>
+                            </div>
+                        </Modal>
                     </div>
                 </div>
             </div>
@@ -269,11 +302,16 @@ const styles = {
         height: '100%',
         objectFit: 'cover',
     },
-    availabilityBadge: (isAvailable) => ({
+    availabilityBadge: (availability) => ({
         position: 'absolute',
         top: '10px',
         right: '10px',
-        backgroundColor: isAvailable ? 'rgba(46, 204, 113, 0.9)' : 'rgba(231, 76, 60, 0.9)',
+        backgroundColor:
+            availability === 'Available'
+                ? 'rgba(46, 204, 113, 0.9)'
+                : availability === 'Pending'
+                ? 'rgba(255, 140, 0, 0.9)'
+                : 'rgba(231, 76, 60, 0.9)',
         color: 'white',
         padding: '8px 16px',
         borderRadius: '4px',
