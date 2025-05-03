@@ -63,7 +63,10 @@ const updateProductValidation = [
     .isIn(['Available', 'Out of Stock'])
     .withMessage('Availability must be either "Available" or "Out of Stock"'),
 
-  
+  body('image')
+    .optional()
+    .isURL()
+    .withMessage('Image must be a valid URL'),
 ];
 
 module.exports = { 

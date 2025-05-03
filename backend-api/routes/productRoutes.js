@@ -207,6 +207,10 @@ router.patch('/:id/image', authenticate, uploadProductImage.single('image'), upd
  *               availability:
  *                 type: string
  *                 enum: [Available, Out of Stock]
+ *               image:  
+ *                 type: string
+ *                 format: uri
+ * 
  *     responses:
  *       200:
  *         description: Product updated successfully

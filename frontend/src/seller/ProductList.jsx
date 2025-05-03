@@ -10,7 +10,7 @@ const ProductList = () => {
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
-    const [activeDropdown, setActiveDropdown] = useState(null);
+
 
     useEffect(() => {
         fetchProducts();
@@ -28,27 +28,7 @@ const ProductList = () => {
         }
     };
 
-    const handleDelete = async (productId) => {
-        if (window.confirm('Are you sure you want to delete this product?')) {
-            try {
-                await product.deleteProduct(productId);
-                toast.success('Product deleted successfully');
-                fetchProducts(); // Refresh the list
-            } catch (err) {
-                toast.error(err.message || 'Failed to delete product');
-            }
-        }
-    };
 
-    const toggleAvailability = async (productId, currentStatus) => {
-        try {
-            await product.updateProduct(productId, { isAvailable: !currentStatus });
-            toast.success('Product availability updated');
-            fetchProducts(); // Refresh the list
-        } catch (err) {
-            toast.error(err.message || 'Failed to update product availability');
-        }
-    };
 
     const handleProductClick = (prod) => {
         navigate(`/seller/product/${prod._id}`);
@@ -108,51 +88,6 @@ const ProductList = () => {
                                 <div style={styles.productInfo}>
                                     <h3 style={styles.productName}>{prod.name}</h3>
                                     <div style={styles.productActions}>
-                                        <div style={styles.switchContainer}>
-                                            <label className="switch">
-                                                <input
-                                                    type="checkbox"
-                                                    checked={prod.isAvailable}
-                                                    onChange={() => toggleAvailability(prod._id, prod.isAvailable)}
-                                                />
-                                                <span className="slider round"></span>
-                                            </label>
-                                        </div>
-                                        <div style={styles.dropdownContainer}>
-                                            <button 
-                                                style={styles.moreButton}
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    setActiveDropdown(activeDropdown === prod._id ? null : prod._id);
-                                                }}
-                                            >
-                                                <MdMoreVert size={20} />
-                                            </button>
-                                            {activeDropdown === prod._id && (
-                                                <div style={styles.dropdown}>
-                                                    <button 
-                                                        style={styles.dropdownItem}
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            navigate(`/seller/edit-product/${prod._id}`);
-                                                        }}
-                                                    >
-                                                        <MdEdit size={16} />
-                                                        Edit
-                                                    </button>
-                                                    <button 
-                                                        style={styles.dropdownItem}
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            handleDelete(prod._id);
-                                                        }}
-                                                    >
-                                                        <MdDelete size={16} />
-                                                        Delete
-                                                    </button>
-                                                </div>
-                                            )}
-                                        </div>
                                     </div>
                                 </div>
                             </div>

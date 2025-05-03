@@ -119,7 +119,14 @@ const updateProduct = async (req, res) => {
       }
     });
 
-    // Update the product with only the allowed fields
+    // Handle image upload if file is present
+    if (req.file) {
+      // When using CloudinaryStorage, the file is automatically uploaded to Cloudinary
+      // and req.file contains the Cloudinary result
+      updates.image = req.file.path;
+    }
+
+    // Update the product with the allowed fields
     const updatedProduct = await Product.findByIdAndUpdate(
       req.params.id,
       updates,

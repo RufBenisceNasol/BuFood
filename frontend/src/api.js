@@ -222,7 +222,7 @@ export const product = {
     // Create a new product
     createProduct: async (formData) => {
         try {
-            const response = await api.post('/products', formData, {
+            const response = await api.post('/seller/products', formData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
             return response.data;
@@ -234,7 +234,7 @@ export const product = {
     // Get seller's products
     getSellerProducts: async () => {
         try {
-            const response = await api.get('/products/seller/products');
+            const response = await api.get('/seller/products');
             return response.data;
         } catch (error) {
             throw error.response?.data || error.message;
@@ -274,7 +274,7 @@ export const product = {
                 });
             }
             
-            const response = await api.patch(`/products/${productId}`, formData, {
+            const response = await api.patch(`/seller/products/${productId}`, formData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
             return response.data;
@@ -286,7 +286,7 @@ export const product = {
     // Delete product
     deleteProduct: async (productId) => {
         try {
-            const response = await api.delete(`/products/${productId}`);
+            const response = await api.delete(`/seller/products/${productId}`);
             return response.data;
         } catch (error) {
             throw error.response?.data || error.message;

@@ -1,7 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { product } from '../api';
-import { MdArrowBack } from 'react-icons/md';
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import { MdArrowBack, MdEdit } from 'react-icons/md';
+import { Modal } from '@mui/material';
 
 const EditProductPage = () => {
     const { productId } = useParams();
@@ -20,6 +23,7 @@ const EditProductPage = () => {
     });
     const [selectedImage, setSelectedImage] = useState(null);
     const [previewUrl, setPreviewUrl] = useState('');
+    const [isModalOpen, setIsModalOpen] = useState(false);
 
     useEffect(() => {
         const fetchProduct = async () => {
@@ -67,29 +71,41 @@ const EditProductPage = () => {
         try {
             const submitData = new FormData();
             Object.keys(formData).forEach(key => {
-                if (key === 'availability') {
-                    submitData.append('isAvailable', formData[key] === 'Available');
-                } else {
-                    submitData.append(key, formData[key]);
-                }
+                submitData.append(key, formData[key]);
             });
             if (selectedImage) {
                 submitData.append('image', selectedImage);
             }
 
             await product.updateProduct(productId, submitData);
-            setSuccess('Product updated successfully!');
             
-            // Navigate after success
+            // Refresh the product data after successful update
+            const updatedProduct = await product.getProductById(productId);
+            setFormData({
+                name: updatedProduct.name,
+                description: updatedProduct.description,
+                price: updatedProduct.price,
+                category: updatedProduct.category,
+                availability: updatedProduct.isAvailable ? 'Available' : 'Out of Stock',
+            });
+            setPreviewUrl(updatedProduct.image);
+            
+            setSuccess('Product updated successfully!');
+            toast.success('Product updated successfully!');
+            
             setTimeout(() => {
                 navigate('/seller/product-list');
             }, 2000);
         } catch (err) {
             setError(err.message || 'Failed to update product');
+            toast.error(err.message || 'Failed to update product');
         } finally {
             setSaving(false);
         }
     };
+
+    const handleModalOpen = () => setIsModalOpen(true);
+    const handleModalClose = () => setIsModalOpen(false);
 
     if (loading) {
         return <div style={styles.loadingContainer}>Loading...</div>;
@@ -97,6 +113,7 @@ const EditProductPage = () => {
 
     return (
         <div style={styles.mainContainer}>
+            <ToastContainer />
             <div style={styles.header}>
                 <div style={styles.backButton} onClick={() => navigate(-1)}>
                     <span style={styles.backArrow}>←</span>
@@ -112,7 +129,19 @@ const EditProductPage = () => {
                     <form onSubmit={handleSubmit} style={styles.form} className="product-form">
                         <div style={styles.imagePreviewContainer}>
                             {previewUrl ? (
-                                <img src={previewUrl} alt="Preview" style={styles.imagePreview} />
+                                <>
+                                    <img
+                                        src={previewUrl}
+                                        alt="Preview"
+                                        style={styles.imagePreview}
+                                        onClick={handleModalOpen}
+                                    />
+                                    <Modal open={isModalOpen} onClose={handleModalClose}>
+                                        <div style={styles.modalContent}>
+                                            <img src={previewUrl} alt="Full Preview" style={styles.modalImage} />
+                                        </div>
+                                    </Modal>
+                                </>
                             ) : (
                                 <div style={styles.placeholderImage}>
                                     📷 Upload Image
@@ -311,6 +340,7 @@ const styles = {
         borderRadius: '12px',
         border: '2px solid #eee',
         boxShadow: '0 4px 15px rgba(0, 0, 0, 0.2)',
+        cursor: 'pointer',
     },
     placeholderImage: {
         width: '100%',
@@ -418,6 +448,18 @@ const styles = {
         borderRadius: '10px',
         fontSize: '14px',
         boxShadow: '0 2px 4px rgba(34, 84, 61, 0.1)',
+    },
+    modalContent: {
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        height: '100%',
+        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    },
+    modalImage: {
+        maxWidth: '90%',
+        maxHeight: '90%',
+        borderRadius: '10px',
     },
 };
 
