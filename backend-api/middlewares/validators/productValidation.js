@@ -56,6 +56,14 @@ const updateProductValidation = [
     .notEmpty()
     .withMessage('Category cannot be empty if provided')
     .trim(),
+
+  // Validate availability if provided
+  body('availability')
+    .optional()
+    .isIn(['Available', 'Out of Stock'])
+    .withMessage('Availability must be either "Available" or "Out of Stock"'),
+
+  
 ];
 
 module.exports = { 

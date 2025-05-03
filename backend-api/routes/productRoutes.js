@@ -174,29 +174,6 @@ router.post(
  */
 router.patch('/:id/image', authenticate, uploadProductImage.single('image'), updateProductImage);
 
-/**
- * @swagger
- * /api/products/{id}/toggle-availability:
- *   patch:
- *     tags: [Products]
- *     summary: Toggle product availability
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *     responses:
- *       200:
- *         description: Product availability toggled successfully
- *       401:
- *         description: Unauthorized
- *       403:
- *         description: Forbidden - Not product owner
- */
-router.patch('/:id/toggle-availability', authenticate, checkRole('Seller'), toggleProductAvailability);
 
 /**
  * @swagger
@@ -227,13 +204,20 @@ router.patch('/:id/toggle-availability', authenticate, checkRole('Seller'), togg
  *                 type: number
  *               category:
  *                 type: string
+ *               availability:
+ *                 type: string
+ *                 enum: [Available, Out of Stock]
  *     responses:
  *       200:
  *         description: Product updated successfully
+ *       400:
+ *         description: Invalid input
  *       401:
  *         description: Unauthorized
  *       403:
  *         description: Forbidden - Not product owner
+ *       404:
+ *         description: Product not found
  */
 router.patch('/:id',
   authenticate,

@@ -1114,3 +1114,40 @@
 {"level":"info","message":{"duration":"2ms","method":"GET","requestId":"1ad48587-b1ad-41a8-a69b-deb15fa6f377","status":200,"url":"/68060185f88fc04549e05f29"},"timestamp":"2025-05-02T06:30:55.205Z"}
 {"level":"info","message":{"duration":"1ms","method":"PATCH","requestId":"77ed06c8-0dc6-4c02-8aab-19d747f130d7","status":200,"url":"/68060185f88fc04549e05f29"},"timestamp":"2025-05-02T06:30:58.394Z"}
 {"level":"info","message":{"duration":"0ms","method":"GET","requestId":"911e852e-7b97-43d9-8801-456f1039d67a","status":200,"url":"/68060185f88fc04549e05f29"},"timestamp":"2025-05-02T06:30:59.294Z"}
+{"level":"info","message":"Running with in-memory cache (Redis disabled)","timestamp":"2025-05-02T06:31:58.815Z"}
+{"level":"info","message":"🚀 Server started on port 8000","timestamp":"2025-05-02T06:31:58.862Z"}
+{"level":"info","message":"📚 API Documentation available at http://[YOUR_IP]:8000/api-docs","timestamp":"2025-05-02T06:31:58.866Z"}
+{"level":"info","message":"✅ Successfully connected to MongoDB","timestamp":"2025-05-02T06:31:59.939Z"}
+{"level":"info","message":"Running with in-memory cache (Redis disabled)","timestamp":"2025-05-03T06:28:45.790Z"}
+{"level":"info","message":"🚀 Server started on port 8000","timestamp":"2025-05-03T06:28:45.822Z"}
+{"level":"info","message":"📚 API Documentation available at http://[YOUR_IP]:8000/api-docs","timestamp":"2025-05-03T06:28:45.823Z"}
+{"level":"info","message":"✅ Successfully connected to MongoDB","timestamp":"2025-05-03T06:28:47.215Z"}
+{"level":"info","message":{"duration":"14ms","method":"GET","requestId":"e0b895c4-61cf-4930-8144-cf72ccdff7d0","status":304,"url":"/"},"timestamp":"2025-05-03T06:28:52.550Z"}
+{"level":"info","message":{"duration":"2ms","method":"GET","requestId":"5b8f22b2-bd27-41fd-b03f-a39d0bf89cef","status":304,"url":"/swagger-ui.css"},"timestamp":"2025-05-03T06:28:52.619Z"}
+{"level":"info","message":{"duration":"9ms","method":"GET","requestId":"4eb2f52e-7810-4c88-a9f2-66c64c950c4e","status":200,"url":"/swagger-ui-init.js"},"timestamp":"2025-05-03T06:28:52.631Z"}
+{"level":"info","message":{"duration":"3ms","method":"GET","requestId":"648d9a3b-05c1-4571-a795-ab650d120860","status":304,"url":"/swagger-ui-standalone-preset.js"},"timestamp":"2025-05-03T06:28:52.639Z"}
+{"level":"info","message":{"duration":"4ms","method":"GET","requestId":"0f3c79b8-578c-4b6c-a5b0-7895b7d52686","status":304,"url":"/swagger-ui-bundle.js"},"timestamp":"2025-05-03T06:28:52.642Z"}
+{"level":"info","message":{"duration":"226ms","method":"POST","requestId":"22cc87e7-82c1-4fd5-afb6-53945baeeb5d","status":200,"url":"/login"},"timestamp":"2025-05-03T06:29:24.346Z"}
+{"level":"info","message":{"duration":"120ms","method":"GET","requestId":"e489313a-68cf-4673-898d-288caec7fdc8","status":200,"url":"/seller/products"},"timestamp":"2025-05-03T06:29:55.079Z"}
+{"level":"error","message":{"error":"Unexpected token ''', ...\"ability\": 'Available\"... is not valid JSON","method":"PATCH","stack":"SyntaxError: Unexpected token ''', ...\"ability\": 'Available\"... is not valid JSON\n    at JSON.parse (<anonymous>)\n    at parse (C:\\Users\\USER\\Desktop\\pushFolder\\BuFood\\backend-api\\node_modules\\body-parser\\lib\\types\\json.js:92:19)\n    at C:\\Users\\USER\\Desktop\\pushFolder\\BuFood\\backend-api\\node_modules\\body-parser\\lib\\read.js:128:18\n    at AsyncResource.runInAsyncScope (node:async_hooks:211:14)\n    at invokeCallback (C:\\Users\\USER\\Desktop\\pushFolder\\BuFood\\backend-api\\node_modules\\raw-body\\index.js:238:16)\n    at done (C:\\Users\\USER\\Desktop\\pushFolder\\BuFood\\backend-api\\node_modules\\raw-body\\index.js:227:7)\n    at IncomingMessage.onEnd (C:\\Users\\USER\\Desktop\\pushFolder\\BuFood\\backend-api\\node_modules\\raw-body\\index.js:287:7)\n    at IncomingMessage.emit (node:events:518:28)\n    at endReadableNT (node:internal/streams/readable:1698:12)\n    at process.processTicksAndRejections (node:internal/process/task_queues:90:21)","url":"/api/products/68060185f88fc04549e05f29"},"timestamp":"2025-05-03T06:31:40.518Z"}
+{"level":"error","message":"[Error] [undefined] SyntaxError: Unexpected token ''', ...\"ability\": 'Available\"... is not valid JSON\n    at JSON.parse (<anonymous>)\n    at parse (C:\\Users\\USER\\Desktop\\pushFolder\\BuFood\\backend-api\\node_modules\\body-parser\\lib\\types\\json.js:92:19)\n    at C:\\Users\\USER\\Desktop\\pushFolder\\BuFood\\backend-api\\node_modules\\body-parser\\lib\\read.js:128:18\n    at AsyncResource.runInAsyncScope (node:async_hooks:211:14)\n    at invokeCallback (C:\\Users\\USER\\Desktop\\pushFolder\\BuFood\\backend-api\\node_modules\\raw-body\\index.js:238:16)\n    at done (C:\\Users\\USER\\Desktop\\pushFolder\\BuFood\\backend-api\\node_modules\\raw-body\\index.js:227:7)\n    at IncomingMessage.onEnd (C:\\Users\\USER\\Desktop\\pushFolder\\BuFood\\backend-api\\node_modules\\raw-body\\index.js:287:7)\n    at IncomingMessage.emit (node:events:518:28)\n    at endReadableNT (node:internal/streams/readable:1698:12)\n    at process.processTicksAndRejections (node:internal/process/task_queues:90:21)","timestamp":"2025-05-03T06:31:40.519Z"}
+{"level":"info","message":{"duration":"67ms","method":"PATCH","requestId":"0220f8e4-9f22-4b2e-9088-0e2523a6d715","status":400,"url":"/68060185f88fc04549e05f29"},"timestamp":"2025-05-03T06:31:57.737Z"}
+{"level":"info","message":{"duration":"140ms","method":"PATCH","requestId":"7a4b410b-05fb-42f7-8465-735315942f73","status":200,"url":"/68060185f88fc04549e05f29"},"timestamp":"2025-05-03T06:32:10.115Z"}
+{"level":"info","message":"Running with in-memory cache (Redis disabled)","timestamp":"2025-05-03T06:33:02.573Z"}
+{"level":"info","message":"🚀 Server started on port 8000","timestamp":"2025-05-03T06:33:02.603Z"}
+{"level":"info","message":"📚 API Documentation available at http://[YOUR_IP]:8000/api-docs","timestamp":"2025-05-03T06:33:02.604Z"}
+{"level":"info","message":"✅ Successfully connected to MongoDB","timestamp":"2025-05-03T06:33:04.037Z"}
+{"level":"info","message":{"duration":"14ms","method":"GET","requestId":"c7d08fe6-cb0f-4b6d-836f-6c6d8a90814c","status":304,"url":"/"},"timestamp":"2025-05-03T06:33:05.177Z"}
+{"level":"info","message":{"duration":"5ms","method":"GET","requestId":"e88e9e64-db90-403b-a7e8-dba98ef82178","status":304,"url":"/swagger-ui.css"},"timestamp":"2025-05-03T06:33:05.203Z"}
+{"level":"info","message":{"duration":"1ms","method":"GET","requestId":"8a2fa93f-0dd7-40b4-8d00-c131cdadb2c9","status":304,"url":"/swagger-ui-standalone-preset.js"},"timestamp":"2025-05-03T06:33:05.210Z"}
+{"level":"info","message":{"duration":"8ms","method":"GET","requestId":"2f31ddf3-37e5-49a5-a877-27b8f847f941","status":304,"url":"/swagger-ui-bundle.js"},"timestamp":"2025-05-03T06:33:05.215Z"}
+{"level":"info","message":{"duration":"24ms","method":"GET","requestId":"ec9564bc-542a-48f2-aeff-9c7f1ecf1010","status":200,"url":"/swagger-ui-init.js"},"timestamp":"2025-05-03T06:33:05.244Z"}
+{"level":"info","message":{"duration":"11ms","method":"GET","requestId":"7bf73b6c-8b61-4ec3-aa4b-71e83bba7ab8","status":200,"url":"/favicon-32x32.png"},"timestamp":"2025-05-03T06:33:05.785Z"}
+{"level":"info","message":"Running with in-memory cache (Redis disabled)","timestamp":"2025-05-03T06:33:52.034Z"}
+{"level":"info","message":"🚀 Server started on port 8000","timestamp":"2025-05-03T06:33:52.067Z"}
+{"level":"info","message":"📚 API Documentation available at http://[YOUR_IP]:8000/api-docs","timestamp":"2025-05-03T06:33:52.068Z"}
+{"level":"info","message":"✅ Successfully connected to MongoDB","timestamp":"2025-05-03T06:33:52.899Z"}
+{"level":"info","message":"Running with in-memory cache (Redis disabled)","timestamp":"2025-05-03T06:34:07.863Z"}
+{"level":"info","message":"🚀 Server started on port 8000","timestamp":"2025-05-03T06:34:07.896Z"}
+{"level":"info","message":"📚 API Documentation available at http://[YOUR_IP]:8000/api-docs","timestamp":"2025-05-03T06:34:07.898Z"}
+{"level":"info","message":"✅ Successfully connected to MongoDB","timestamp":"2025-05-03T06:34:09.400Z"}

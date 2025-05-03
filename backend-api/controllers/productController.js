@@ -111,7 +111,7 @@ const updateProduct = async (req, res) => {
 
     // Only allow updating specific fields
     const updates = {};
-    const allowedUpdates = ['name', 'description', 'price', 'category'];
+    const allowedUpdates = ['name', 'description', 'price', 'category', 'availability'];
     
     allowedUpdates.forEach(field => {
       if (req.body[field] !== undefined) {
@@ -169,48 +169,7 @@ const updateProductImage = async (req, res) => {
   }
 };
 
-const toggleProductAvailability = async (req, res) => {
-  try {
-    // Get the current product state
-    const product = await Product.findById(req.params.id);
-    if (!product) {
-      return res.status(404).json({ message: 'Product not found' });
-    }
 
-    // Check ownership
-    if (product.sellerId.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ message: 'Unauthorized' });
-    }
-
-    // Normalize current availability
-    const currentAvailability = product.availability?.trim().toLowerCase();
-
-    let newAvailability;
-    if (currentAvailability === 'available') {
-      newAvailability = 'Out of Stock';
-    } else {
-      newAvailability = 'Available';
-    }
-
-    // Update and get the new product state
-    const updatedProduct = await Product.findByIdAndUpdate(
-      req.params.id,
-      { availability: newAvailability },
-      { new: true, runValidators: true }
-    )
-      .populate('storeId', 'storeName')
-      .populate('sellerId', 'name email');
-
-    res.json({
-      success: true,
-      message: `Product availability changed to ${updatedProduct.availability}`,
-      product: updatedProduct
-    });
-  } catch (err) {
-    console.error('Toggle error:', err);
-    res.status(500).json({ success: false, message: 'Server error', error: err.message });
-  }
-};
 
 // Delete a product
 const deleteProduct = async (req, res) => {
@@ -267,5 +226,5 @@ module.exports = {
   deleteProduct,
   deleteAllProductsInStore,
   updateProductImage,
-  toggleProductAvailability,
+
 };
