@@ -19,7 +19,7 @@ const EditProductPage = () => {
         description: '',
         price: '',
         category: '',
-        availability: '',
+        availability: 'Available', // Set default value to 'Available'
     });
     const [selectedImage, setSelectedImage] = useState(null);
     const [previewUrl, setPreviewUrl] = useState('');
@@ -34,7 +34,7 @@ const EditProductPage = () => {
                     description: data.description,
                     price: data.price,
                     category: data.category,
-                    availability: data.isAvailable ? 'Available' : 'Out of Stock',
+                    availability: data.availability, // Use availability directly
                 });
                 setPreviewUrl(data.image);
                 setLoading(false);
@@ -86,7 +86,7 @@ const EditProductPage = () => {
                 description: updatedProduct.description,
                 price: updatedProduct.price,
                 category: updatedProduct.category,
-                availability: updatedProduct.isAvailable ? 'Available' : 'Out of Stock',
+                availability: updatedProduct.availability, // Use availability directly
             });
             setPreviewUrl(updatedProduct.image);
             

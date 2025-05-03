@@ -14,7 +14,7 @@ const AddProductPage = () => {
     description: '',
     price: '',
     category: '',
-    availability: 'Available',
+    availability: 'Available', // Default to Available
   });
   const [selectedImage, setSelectedImage] = useState(null);
   const [previewUrl, setPreviewUrl] = useState('');
