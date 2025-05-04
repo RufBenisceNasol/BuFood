@@ -254,7 +254,10 @@ export const product = {
     // Get product by ID
     getProductById: async (productId) => {
         try {
-            const response = await api.get(`/products/${productId}`);
+            // Add cache-busting timestamp
+            const cacheBuster = `?t=${Date.now()}`;
+            const productIdWithoutParams = productId.split('?')[0]; // Remove any existing query params
+            const response = await api.get(`/products/${productIdWithoutParams}${cacheBuster}`);
             return response.data;
         } catch (error) {
             throw error.response?.data || error.message;

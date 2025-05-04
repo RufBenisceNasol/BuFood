@@ -77,25 +77,83 @@ const EditProductPage = () => {
                 submitData.append('image', selectedImage);
             }
 
+            // Update the product
             await product.updateProduct(productId, submitData);
             
-            // Refresh the product data after successful update
-            const updatedProduct = await product.getProductById(productId);
-            setFormData({
-                name: updatedProduct.name,
-                description: updatedProduct.description,
-                price: updatedProduct.price,
-                category: updatedProduct.category,
-                availability: updatedProduct.availability, // Use availability directly
-            });
-            setPreviewUrl(updatedProduct.image);
+            // Delay before verifying update to allow server processing
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            // Refresh the product data after successful update with cache-busting
+            let updatedProduct;
+            let retryCount = 0;
+            const maxRetries = 3;
+            
+            while (retryCount < maxRetries) {
+                try {
+                    // Add timestamp to prevent caching
+                    updatedProduct = await product.getProductById(productId);
+                    
+                    // Verify if image was updated by checking the timestamp in URL
+                    let imageUpdated = true;
+                    if (selectedImage && updatedProduct.image) {
+                        // Simple check - if image URL doesn't contain timestamp parameter yet
+                        // this means the server might not have processed the update fully
+                        const imageHasTimestamp = updatedProduct.image.includes('?') || 
+                                                 updatedProduct.image.includes('&t=') || 
+                                                 updatedProduct.image.includes('&_t=');
+                        
+                        if (!imageHasTimestamp) {
+                            // If no timestamp in image URL, it might be server cache
+                            imageUpdated = false;
+                        }
+                    }
+                    
+                    // If name and other fields are updated and image is updated (if applicable),
+                    // we consider the update successful
+                    if (updatedProduct.name === formData.name && 
+                        updatedProduct.price.toString() === formData.price.toString() &&
+                        (selectedImage ? imageUpdated : true)) {
+                        break;  // Exit the retry loop if everything is verified
+                    }
+                    
+                    // If update not fully processed, wait and retry
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                    retryCount++;
+                } catch (err) {
+                    retryCount++;
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                }
+            }
+            
+            // Update local form data with the fetched data
+            if (updatedProduct) {
+                setFormData({
+                    name: updatedProduct.name,
+                    description: updatedProduct.description,
+                    price: updatedProduct.price,
+                    category: updatedProduct.category,
+                    availability: updatedProduct.availability,
+                });
+                
+                // Add timestamp to image URL to prevent browser caching
+                const imageWithTimestamp = `${updatedProduct.image}${updatedProduct.image.includes('?') ? '&' : '?'}_t=${Date.now()}`;
+                setPreviewUrl(imageWithTimestamp);
+            }
             
             setSuccess('Product updated successfully!');
             toast.success('Product updated successfully!');
             
+            // Increase timeout to ensure server processes the update
             setTimeout(() => {
-                navigate('/seller/product-list');
-            }, 2000);
+                // Navigate with state to inform detail page of the update
+                navigate(`/seller/product/${productId}`, {
+                    state: { 
+                        fromEdit: true,
+                        timestamp: Date.now(),
+                        imageUpdated: selectedImage ? true : false
+                    }
+                });
+            }, 3000); // Increase timeout to 3 seconds
         } catch (err) {
             setError(err.message || 'Failed to update product');
             toast.error(err.message || 'Failed to update product');

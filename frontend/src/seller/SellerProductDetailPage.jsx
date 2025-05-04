@@ -75,8 +75,20 @@ const SellerProductDetailPage = () => {
     
     // Refresh data when location pathname changes and we come back to this page
     useEffect(() => {
-        fetchProductDetails(true);
-    }, [location.pathname, fetchProductDetails]);
+        // Check if we're coming from the edit page with updated product info
+        if (location.state && location.state.fromEdit) {
+            // Force a fresh fetch with the updated timestamp
+            const editTimestamp = location.state.timestamp || Date.now();
+            setTimestamp(editTimestamp);
+            fetchProductDetails(true);
+            
+            // Remove the state after handling to prevent repeated refreshes
+            // on subsequent navigation events
+            navigate(location.pathname, { replace: true, state: {} });
+        } else {
+            fetchProductDetails(true);
+        }
+    }, [location.pathname, location.state, fetchProductDetails, navigate]);
 
     const handleDelete = async () => {
         if (window.confirm('Are you sure you want to delete this product? This action cannot be undone.')) {
@@ -139,7 +151,7 @@ const SellerProductDetailPage = () => {
                     <div style={styles.productCard}>
                         <div style={styles.imageContainer}>
                             <img 
-                                src={`${productData.image}${productData.image.includes('?') ? '&' : '?'}t=${timestamp}`}
+                                src={`${productData.image}${productData.image.includes('?') ? '&' : '?'}t=${timestamp}&nocache=${Math.random()}`}
                                 alt={productData.name}
                                 style={styles.productImage}
                                 onError={(e) => {
