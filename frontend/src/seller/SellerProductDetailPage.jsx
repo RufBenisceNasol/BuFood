@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { product } from '../api';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -9,26 +9,74 @@ import { Modal, Button } from '@mui/material';
 const SellerProductDetailPage = () => {
     const { productId } = useParams();
     const navigate = useNavigate();
+    const location = useLocation();
     const [productData, setProductData] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
     const [error, setError] = useState('');
     const [showDropdown, setShowDropdown] = useState(false);
+    const [timestamp, setTimestamp] = useState(Date.now());
 
-    const fetchProductDetails = React.useCallback(async () => {
+    const fetchProductDetails = useCallback(async (isRefresh = false) => {
+        if (isRefresh) {
+            setRefreshing(true);
+        } else {
+            setLoading(true);
+        }
+        
+        setError('');
+        
         try {
-            const data = await product.getProductById(productId);
-            setProductData(data);
+            // Add timestamp to prevent browser caching
+            const cacheBuster = `?t=${Date.now()}`;
+            const data = await product.getProductById(productId + cacheBuster);
+            
+            // Process the data to ensure proper format
+            const processedData = {
+                ...data,
+                // Ensure image URL has cache-busting parameter if it's not a blob or data URL
+                image: data.image && !data.image.startsWith('blob:') && !data.image.startsWith('data:') 
+                    ? `${data.image}${data.image.includes('?') ? '&' : '?'}t=${Date.now()}`
+                    : data.image,
+                // Ensure price is a number
+                price: typeof data.price === 'string' ? parseFloat(data.price) : data.price
+            };
+            
+            setProductData(processedData);
+            setTimestamp(Date.now());
         } catch (err) {
             setError(err.message || 'Failed to fetch product details');
             toast.error(err.message || 'Failed to fetch product details');
         } finally {
             setLoading(false);
+            setRefreshing(false);
         }
     }, [productId]);
 
+    // Initial fetch on component mount
     useEffect(() => {
         fetchProductDetails();
     }, [fetchProductDetails]);
+    
+    // Refresh data when the page is revisited
+    useEffect(() => {
+        const handleVisibilityChange = () => {
+            if (document.visibilityState === 'visible') {
+                fetchProductDetails(true);
+            }
+        };
+        
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+        
+        return () => {
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
+        };
+    }, [fetchProductDetails]);
+    
+    // Refresh data when location pathname changes and we come back to this page
+    useEffect(() => {
+        fetchProductDetails(true);
+    }, [location.pathname, fetchProductDetails]);
 
     const handleDelete = async () => {
         if (window.confirm('Are you sure you want to delete this product? This action cannot be undone.')) {
@@ -45,6 +93,10 @@ const SellerProductDetailPage = () => {
     const toggleDropdown = () => {
         setShowDropdown(!showDropdown);
     };
+    
+    const handleRefresh = () => {
+        fetchProductDetails(true);
+    };
 
     useEffect(() => {
         const handleClickOutside = (event) => {
@@ -59,11 +111,11 @@ const SellerProductDetailPage = () => {
         };
     }, []);
 
-    if (loading) {
+    if (loading && !refreshing) {
         return <div style={styles.loadingContainer}>Loading...</div>;
     }
 
-    if (error || !productData) {
+    if (error && !productData) {
         return <div style={styles.errorContainer}>{error || 'Product not found'}</div>;
     }
 
@@ -79,54 +131,67 @@ const SellerProductDetailPage = () => {
             </div>
 
             <div style={styles.contentContainer}>
-                <div style={styles.productCard}>
-                    <div style={styles.imageContainer}>
-                        <img 
-                            src={productData.image} 
-                            alt={productData.name}
-                            style={styles.productImage}
-                        />
-                        <div style={styles.availabilityBadge(productData.availability)}>
-                            {productData.availability === 'Available' ? 'Available' : productData.availability === 'Pending' ? 'Pending' : 'Out of Stock'}
-                        </div>
-                    </div>
-
-                    <div style={styles.productInfo}>
-                        <div style={styles.productHeader}>
-                            <h2 style={styles.productName}>{productData.name}</h2>
-                            <div className="dropdown-container" style={styles.dropdownContainer}>
-                                <button style={styles.dropdownButton} onClick={toggleDropdown}>
-                                    <MdMoreVert size={24} />
-                                </button>
-                                {showDropdown && (
-                                    <div style={styles.dropdownMenu}>
-                                        <button 
-                                            style={styles.dropdownItem}
-                                            onClick={() => navigate(`/seller/edit-product/${productId}`)}
-                                        >
-                                            <MdEdit size={20} />
-                                            Edit
-                                        </button>
-                                        <button 
-                                            style={{...styles.dropdownItem, color: '#dc3545'}}
-                                            onClick={handleDelete}
-                                        >
-                                            <MdDelete size={20} />
-                                            Delete
-                                        </button>
-                                    </div>
-                                )}
+                {refreshing && (
+                    <div style={styles.refreshingIndicator}>Refreshing...</div>
+                )}
+                
+                {productData && (
+                    <div style={styles.productCard}>
+                        <div style={styles.imageContainer}>
+                            <img 
+                                src={`${productData.image}${productData.image.includes('?') ? '&' : '?'}t=${timestamp}`}
+                                alt={productData.name}
+                                style={styles.productImage}
+                                onError={(e) => {
+                                    // If image fails to load, try without cache busting
+                                    if (!e.target.dataset.retried) {
+                                        e.target.dataset.retried = true;
+                                        e.target.src = productData.image;
+                                    }
+                                }}
+                            />
+                            <div style={styles.availabilityBadge(productData.availability)}>
+                                {productData.availability === 'Available' ? 'Available' : productData.availability === 'Pending' ? 'Pending' : 'Out of Stock'}
                             </div>
                         </div>
-                        
-                        <p style={styles.price}>₱{productData.price.toFixed(2)}</p>
-                        
-                        <div style={styles.description}>
-                            <h3 style={styles.sectionTitle}>Description</h3>
-                            <p style={styles.descriptionText}>{productData.description}</p>
+
+                        <div style={styles.productInfo}>
+                            <div style={styles.productHeader}>
+                                <h2 style={styles.productName}>{productData.name}</h2>
+                                <div className="dropdown-container" style={styles.dropdownContainer}>
+                                    <button style={styles.dropdownButton} onClick={toggleDropdown}>
+                                        <MdMoreVert size={24} />
+                                    </button>
+                                    {showDropdown && (
+                                        <div style={styles.dropdownMenu}>
+                                            <button 
+                                                style={styles.dropdownItem}
+                                                onClick={() => navigate(`/seller/edit-product/${productId}`)}
+                                            >
+                                                <MdEdit size={20} />
+                                                Edit
+                                            </button>
+                                            <button 
+                                                style={{...styles.dropdownItem, color: '#dc3545'}}
+                                                onClick={handleDelete}
+                                            >
+                                                <MdDelete size={20} />
+                                                Delete
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                            
+                            <p style={styles.price}>₱{parseFloat(productData.price).toFixed(2)}</p>
+                            
+                            <div style={styles.description}>
+                                <h3 style={styles.sectionTitle}>Description</h3>
+                                <p style={styles.descriptionText}>{productData.description}</p>
+                            </div>
                         </div>
                     </div>
-                </div>
+                )}
             </div>
 
             <style>{`
@@ -239,6 +304,15 @@ const styles = {
         height: '100%',
         objectFit: 'cover',
         transition: 'transform 0.3s ease',
+    },
+    refreshingIndicator: {
+        textAlign: 'center',
+        padding: '10px',
+        backgroundColor: 'rgba(255, 140, 0, 0.1)',
+        borderRadius: '8px',
+        marginBottom: '10px',
+        color: '#ff8c00',
+        fontWeight: '500',
     },
     editImageButton: {
         position: 'absolute',
