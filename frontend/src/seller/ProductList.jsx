@@ -8,25 +8,25 @@ import { MdAdd, MdMoreVert, MdEdit, MdDelete } from 'react-icons/md';
 const ProductList = () => {
     const navigate = useNavigate();
     const [products, setProducts] = useState([]);
-    const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
 
 
-    useEffect(() => {
-        fetchProducts();
-    }, []);
+  useEffect(() => {
+    fetchProducts();
+  }, []);
 
-    const fetchProducts = async () => {
-        try {
+  const fetchProducts = async () => {
+    try {
             const data = await product.getSellerProducts();
             setProducts(data || []);
-        } catch (err) {
-            setError(err.message || 'Failed to fetch products');
+    } catch (err) {
+      setError(err.message || 'Failed to fetch products');
             toast.error(err.message || 'Failed to fetch products');
-        } finally {
-            setLoading(false);
-        }
-    };
+    } finally {
+      setLoading(false);
+    }
+  };
 
 
 
@@ -34,11 +34,11 @@ const ProductList = () => {
         navigate(`/seller/product/${prod._id}`);
     };
 
-    if (loading) {
+  if (loading) {
         return <div style={styles.loadingContainer}>Loading...</div>;
-    }
+  }
 
-    return (
+  return (
         <div style={styles.mainContainer}>
             <ToastContainer position="top-right" autoClose={3000} />
             
@@ -53,7 +53,7 @@ const ProductList = () => {
                 >
                     <MdAdd size={18} /> Add Product
                 </button>
-            </div>
+      </div>
 
             <div style={styles.contentContainer}>
                 {error && <div style={styles.error}>{error}</div>}
@@ -67,7 +67,7 @@ const ProductList = () => {
                         >
                             Add Your First Product
                         </button>
-                    </div>
+              </div>
                 ) : (
                     <div style={styles.productGrid}>
                         {products.map(prod => (
@@ -90,7 +90,7 @@ const ProductList = () => {
                                     <div style={styles.productActions}>
                                     </div>
                                 </div>
-                            </div>
+                        </div>
                         ))}
                     </div>
                 )}
@@ -152,8 +152,8 @@ const ProductList = () => {
                     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
                 }
             `}</style>
-        </div>
-    );
+    </div>
+  );
 };
 
 const styles = {

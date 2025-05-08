@@ -142,7 +142,7 @@ const CartPage = () => {
                     <Typography variant="h6" gutterBottom>Your cart is empty</Typography>
                     <Button
                         variant="contained"
-                        onClick={() => navigate('/home')}
+                        onClick={() => navigate('/customer/home')}
                         sx={{
                             mt: 2,
                             bgcolor: '#FF8C00',

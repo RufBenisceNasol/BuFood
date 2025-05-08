@@ -36,7 +36,7 @@ const LoginPage = () => {
             if (response.data.user.role === 'Seller') {
                 navigate('/seller/dashboard');
             } else {
-                navigate('/home');
+                navigate('/customer/home');
             }
         } catch (err) {
             const errorMessage = err.response?.data?.message || 'An error occurred during login';

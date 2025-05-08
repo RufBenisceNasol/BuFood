@@ -1,248 +1,504 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { product } from '../api';
-import {
-    Container,
-    Typography,
-    Box,
-    Card,
-    CardMedia,
-    CardContent,
-    Grid,
-    Chip,
-    CircularProgress,
-    Alert,
-    Button
-} from '@mui/material';
-import { ShoppingCart, Star } from '@mui/icons-material';
+import { useNavigate } from 'react-router-dom';
+import { MdSearch, MdHome, MdFavoriteBorder, MdShoppingCart, MdReceipt, MdPerson, MdFilterList, MdClose, MdMenuOpen, MdSettings, MdLogout, MdStore } from 'react-icons/md';
+import Slider from 'react-slick';
+import 'slick-carousel/slick/slick.css';
+import 'slick-carousel/slick/slick-theme.css';
+import { store as storeApi, product as productApi, auth } from '../api';
+import '../styles/HomePage.css';
 
 const HomePage = () => {
-    const [products, setProducts] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState('');
-    const [user, setUser] = useState(null);
-    const navigate = useNavigate();
+  const navigate = useNavigate();
+  const [stores, setStores] = useState([]);
+  const [allProducts, setAllProducts] = useState([]);
+  const [filteredProducts, setFilteredProducts] = useState([]);
+  const [popularProducts, setPopularProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [userName, setUserName] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showFilters, setShowFilters] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [filters, setFilters] = useState({
+    category: 'all',
+    priceRange: 'all', 
+    availability: 'all'
+  });
+  const [categories, setCategories] = useState(['All']);
 
-    useEffect(() => {
-        const userStr = localStorage.getItem('user');
-        if (userStr) {
-            setUser(JSON.parse(userStr));
-        }
-        fetchData();
-    }, []);
+  useEffect(() => {
+    fetchData();
+  }, []);
 
-    const fetchData = async () => {
-        try {
-            setLoading(true);
-            const productsData = await product.getAllProducts();
-            setProducts(productsData);
-            setError('');
-        } catch (err) {
-            setError(err.message || 'Failed to fetch products');
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const getFeaturedProducts = () => {
-        return products.slice(0, 3); // Get first 3 products as featured
-    };
-
-    const handleLogout = () => {
-        localStorage.removeItem('token');
-        localStorage.removeItem('refreshToken');
-        localStorage.removeItem('user');
-        navigate('/login');
-    };
-
-    if (loading) {
-        return (
-            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-                <CircularProgress sx={{ color: '#FF8C00' }} />
-            </Box>
-        );
+  // Apply filters and search
+  useEffect(() => {
+    let result = [...allProducts];
+    
+    // Apply search
+    if (searchQuery.trim() !== '') {
+      result = result.filter(product => 
+        product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        product.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        product.storeName?.toLowerCase().includes(searchQuery.toLowerCase())
+      );
     }
+    
+    // Apply category filter
+    if (filters.category !== 'all') {
+      result = result.filter(product => 
+        product.category?.toLowerCase() === filters.category.toLowerCase()
+      );
+    }
+    
+    // Apply price range filter
+    if (filters.priceRange !== 'all') {
+      switch(filters.priceRange) {
+        case 'under50':
+          result = result.filter(product => product.price < 50);
+          break;
+        case '50to100':
+          result = result.filter(product => product.price >= 50 && product.price <= 100);
+          break;
+        case 'over100':
+          result = result.filter(product => product.price > 100);
+          break;
+        default:
+          break;
+      }
+    }
+    
+    // Apply availability filter
+    if (filters.availability !== 'all') {
+      result = result.filter(product => 
+        product.availability === filters.availability
+      );
+    }
+    
+    setFilteredProducts(result);
+  }, [searchQuery, filters, allProducts]);
 
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      
+      // Fetch current user information
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      setUserName(user.name || 'Sample User');
+      
+      // Fetch all stores
+      try {
+        const storesData = await storeApi.getAllStores();
+        setStores(storesData || []);
+      } catch (storeErr) {
+        console.error('Error fetching stores:', storeErr);
+        setStores([]);
+      }
+
+      // Fetch all products
+      try {
+        const allProductsData = await productApi.getAllProducts();
+        setAllProducts(allProductsData || []);
+        setFilteredProducts(allProductsData || []);
+        
+        // For popular products, we'll use the same list for now
+        // In a real implementation, you would have a dedicated endpoint for popular products
+        setPopularProducts(allProductsData?.slice(0, 4) || []);
+
+        // Extract unique categories
+        if (allProductsData && allProductsData.length > 0) {
+          const uniqueCategories = ['All', ...new Set(allProductsData
+            .filter(product => product.category)
+            .map(product => product.category))];
+          setCategories(uniqueCategories);
+        }
+      } catch (productErr) {
+        console.error('Error fetching products:', productErr);
+        setAllProducts([]);
+        setFilteredProducts([]);
+        setPopularProducts([]);
+      }
+
+      setError(null);
+    } catch (err) {
+      console.error('Error fetching data:', err);
+      setError('Failed to load data. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAddToCart = (product) => {
+    try {
+      // Get existing cart from localStorage
+      const existingCart = JSON.parse(localStorage.getItem('cart') || '[]');
+      
+      // Check if product is already in cart
+      const existingItemIndex = existingCart.findIndex(item => item.id === product._id);
+      
+      if (existingItemIndex >= 0) {
+        // If product exists, increment quantity
+        existingCart[existingItemIndex].quantity += 1;
+      } else {
+        // Otherwise add new product to cart
+        existingCart.push({
+          id: product._id,
+          name: product.name,
+          price: product.price,
+          image: product.image,
+          storeName: product.storeName,
+          quantity: 1
+        });
+      }
+      
+      // Save updated cart to localStorage
+      localStorage.setItem('cart', JSON.stringify(existingCart));
+      
+      // Provide feedback to user
+      alert(`${product.name} added to cart!`);
+    } catch (error) {
+      console.error('Error adding product to cart:', error);
+      alert('Failed to add product to cart. Please try again.');
+    }
+  };
+
+  const sliderSettings = {
+    dots: true,
+    infinite: true,
+    speed: 500,
+    slidesToShow: 1,
+    slidesToScroll: 1,
+    autoplay: true,
+    autoplaySpeed: 3000,
+    arrows: false
+  };
+
+  const handleSearch = (e) => {
+    setSearchQuery(e.target.value);
+  };
+
+  const clearSearch = () => {
+    setSearchQuery('');
+  };
+
+  const toggleFilters = () => {
+    setShowFilters(!showFilters);
+  };
+
+  const handleFilterChange = (filterType, value) => {
+    setFilters({
+      ...filters,
+      [filterType]: value
+    });
+  };
+
+  const navigateTo = (path) => {
+    navigate(path);
+  };
+
+  const handleLogout = () => {
+    auth.logout();
+    navigate('/login');
+  };
+
+  if (loading) {
+    return <div className="loading-container">Loading...</div>;
+  }
+
+  if (error) {
     return (
-        <Container maxWidth="lg" sx={{ py: 4 }}>
-            {/* Welcome Section */}
-            <Box sx={{ mb: 6, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Box>
-                    <Typography variant="h4" component="h1" 
-                        sx={{ 
-                            fontWeight: 'bold',
-                            background: 'linear-gradient(45deg, #FF8C00 30%, #FF6B00 90%)',
-                            WebkitBackgroundClip: 'text',
-                            WebkitTextFillColor: 'transparent'
-                        }}
-                    >
-                        Welcome to BuFood{user?.name ? `, ${user.name}` : ''}! 🍽️
-                    </Typography>
-                    <Typography variant="subtitle1" color="text.secondary" sx={{ mt: 1 }}>
-                        Discover delicious food from local sellers
-                    </Typography>
-                </Box>
-                <Button 
-                    variant="contained"
-                    onClick={handleLogout}
-                    sx={{
-                        bgcolor: '#FF8C00',
-                        '&:hover': { bgcolor: '#FF6B00' },
-                        height: 'fit-content'
-                    }}
-                >
-                    Logout
-                </Button>
-            </Box>
-
-            {error && (
-                <Alert severity="error" sx={{ mb: 4 }}>{error}</Alert>
-            )}
-
-            {/* Featured Products Section */}
-            <Box sx={{ mb: 6 }}>
-                <Typography variant="h5" sx={{ mb: 3, fontWeight: 'bold' }}>
-                    Featured Items
-                </Typography>
-                <Grid container spacing={3}>
-                    {getFeaturedProducts().map((product) => (
-                        <Grid item xs={12} sm={6} md={4} key={product._id}>
-                            <Card 
-                                sx={{
-                                    height: '100%',
-                                    display: 'flex',
-                                    flexDirection: 'column',
-                                    transition: 'transform 0.3s, box-shadow 0.3s',
-                                    '&:hover': {
-                                        transform: 'translateY(-8px)',
-                                        boxShadow: '0 8px 20px rgba(255, 140, 0, 0.2)'
-                                    }
-                                }}
-                            >
-                                <Box sx={{ position: '' }}>
-                                    <CardMedia
-                                        component="img"
-                                        height="200"
-                                        image={product.image}
-                                        alt={product.name}
-                                    />
-                                    <Box
-                                        sx={{
-                                            position: 'absolute',
-                                            top: 16,
-                                            left: 16,
-                                            display: 'flex',
-                                            gap: 1
-                                        }}
-                                    >
-                                        <Chip
-                                            icon={<Star sx={{ color: '#FFD700 !important' }} />}
-                                            label="Featured"
-                                            sx={{
-                                                bgcolor: 'rgba(0, 0, 0, 0.7)',
-                                                color: '#fff',
-                                                '& .MuiChip-icon': { color: '#fff' }
-                                            }}
-                                        />
-                                    </Box>
-                                </Box>
-                                <CardContent sx={{ flexGrow: 1 }}>
-                                    <Typography gutterBottom variant="h6" component="h2">
-                                        {product.name}
-                                    </Typography>
-                                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                                        {product.description?.substring(0, 100)}...
-                                    </Typography>
-                                    <Typography variant="h6" color="primary" gutterBottom>
-                                        ₱{product.price.toFixed(2)}
-                                    </Typography>
-                                </CardContent>
-                                <Button
-                                    variant="contained"
-                                    component={Link}
-                                    to={`/product/${product._id}`}
-                                    sx={{
-                                        m: 2,
-                                        bgcolor: '#FF8C00',
-                                        '&:hover': {
-                                            bgcolor: '#FF6B00'
-                                        }
-                                    }}
-                                    startIcon={<ShoppingCart />}
-                                >
-                                    View Details
-                                </Button>
-                            </Card>
-                        </Grid>
-                    ))}
-                </Grid>
-            </Box>
-
-            {/* All Products Section */}
-            <Box>
-                <Typography variant="h5" sx={{ mb: 3, fontWeight: 'bold' }}>
-                    All Products
-                </Typography>
-                <Grid container spacing={3}>
-                    {products.map((product) => (
-                        <Grid item xs={12} sm={6} md={3} key={product._id}>
-                            <Card 
-                                sx={{
-                                    height: '100%',
-                                    display: 'flex',
-                                    flexDirection: 'column',
-                                    transition: 'transform 0.3s, box-shadow 0.3s',
-                                    '&:hover': {
-                                        transform: 'translateY(-8px)',
-                                        boxShadow: '0 8px 20px rgba(255, 140, 0, 0.2)'
-                                    }
-                                }}
-                            >
-                                <CardMedia
-                                    component="img"
-                                    height="160"
-                                    image={product.image}
-                                    alt={product.name}
-                                />
-                                <CardContent sx={{ flexGrow: 1 }}>
-                                    <Typography gutterBottom variant="h6" component="h2">
-                                        {product.name}
-                                    </Typography>
-                                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                                        {product.description?.substring(0, 60)}...
-                                    </Typography>
-                                    <Typography variant="h6" color="primary" gutterBottom>
-                                        ₱{product.price.toFixed(2)}
-                                    </Typography>
-                                    <Chip
-                                        label={product.availability}
-                                        color={product.availability === 'Available' ? 'success' : 'error'}
-                                        size="small"
-                                        sx={{ mb: 1 }}
-                                    />
-                                </CardContent>
-                                <Button
-                                    variant="contained"
-                                    component={Link}
-                                    to={`/product/${product._id}`}
-                                    sx={{
-                                        m: 2,
-                                        bgcolor: '#FF8C00',
-                                        '&:hover': {
-                                            bgcolor: '#FF6B00'
-                                        }
-                                    }}
-                                    startIcon={<ShoppingCart />}
-                                >
-                                    View Details
-                                </Button>
-                            </Card>
-                        </Grid>
-                    ))}
-                </Grid>
-            </Box>
-        </Container>
+      <div className="errorContainer">
+        <h2>Oops! Something went wrong</h2>
+        <p>{error}</p>
+        <button 
+          className="retryButton"
+          onClick={fetchData}
+        >
+          Try Again
+        </button>
+      </div>
     );
+  }
+
+  return (
+    <div className="pageContainer">
+      <div className="mainContainer">
+        {/* Header */}
+        <div className="header">
+          <div>
+            <h1 className="greeting">Hello, {userName}</h1>
+            <p className="subGreeting">What do you want to eat today?</p>
+          </div>
+          <button 
+            className="menuToggle" 
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+          >
+            <MdMenuOpen size={24} />
+          </button>
+          
+          {isMenuOpen && (
+            <div className="popupMenu">
+              <div className="menuItem" onClick={() => navigateTo('/customer/profile')}>
+                <MdPerson className="menuIcon" />
+                Profile
+              </div>
+              <div className="menuItem" onClick={() => navigateTo('/stores')}>
+                <MdStore className="menuIcon" />
+                Stores
+              </div>
+              <div className="menuItem" onClick={() => navigateTo('/settings')}>
+                <MdSettings className="menuIcon" />
+                Settings
+              </div>
+              <div className="menuItem" onClick={handleLogout}>
+                <MdLogout className="menuIcon" />
+                Logout
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Search Bar */}
+        <div className="searchContainer">
+          <div className="searchBar">
+            <MdSearch size={24} color="#999" />
+            <input 
+              type="text" 
+              placeholder="Search" 
+              className="searchInput"
+              value={searchQuery}
+              onChange={handleSearch}
+            />
+            {searchQuery && (
+              <MdClose 
+                size={20} 
+                color="#999" 
+                onClick={clearSearch}
+                className="clearSearchIcon"
+              />
+            )}
+          </div>
+          <div className="filterButton" onClick={toggleFilters}>
+            <MdFilterList size={24} color="#fff" />
+          </div>
+        </div>
+
+        {/* Scrollable Content */}
+        <div className="scrollableContent">
+          {/* Filter Panel */}
+          {showFilters && (
+            <div className="filterPanel">
+              <div className="filterSection">
+                <h3 className="filterTitle">Category</h3>
+                <div className="categoryFilters">
+                  {categories.map(category => (
+                    <button 
+                      key={category}
+                      className={
+                        `categoryButton${filters.category === category.toLowerCase() ? ' activeCategory' : ''}`
+                      }
+                      style={{
+                        backgroundColor: filters.category === category.toLowerCase() ? '#ff8c00' : '#f0f0f0',
+                        color: filters.category === category.toLowerCase() ? 'white' : '#333'
+                      }}
+                      onClick={() => handleFilterChange('category', category.toLowerCase())}
+                    >
+                      {category}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              
+              <div className="filterSection">
+                <h3 className="filterTitle">Price Range</h3>
+                <select 
+                  className="filterSelect"
+                  value={filters.priceRange}
+                  onChange={(e) => handleFilterChange('priceRange', e.target.value)}
+                >
+                  <option value="all">All Prices</option>
+                  <option value="under50">Under ₱50</option>
+                  <option value="50to100">₱50 - ₱100</option>
+                  <option value="over100">Over ₱100</option>
+                </select>
+              </div>
+              
+              <div className="filterSection">
+                <h3 className="filterTitle">Availability</h3>
+                <select 
+                  className="filterSelect"
+                  value={filters.availability}
+                  onChange={(e) => handleFilterChange('availability', e.target.value)}
+                >
+                  <option value="all">All</option>
+                  <option value="Available">Available</option>
+                  <option value="Out of Stock">Out of Stock</option>
+                </select>
+              </div>
+            </div>
+          )}
+
+          {/* Banner/Promotional Slider */}
+          <div className="bannerContainer">
+            {stores.length > 0 ? (
+              <Slider {...sliderSettings}>
+                {stores.map(store => (
+                  <div key={store._id} className="slide">
+                    <div 
+                      className="banner"
+                      onClick={() => navigate(`/store/${store._id}`)}
+                    >
+                      <img 
+                        src={store.bannerImage || 'https://i.ibb.co/qkGWKQX/pizza-promotion.jpg'} 
+                        alt={store.storeName} 
+                        className="bannerImage"
+                      />
+                    </div>
+                  </div>
+                ))}
+              </Slider>
+            ) : (
+              <div className="placeholderBanner">
+                <img 
+                  src="https://i.ibb.co/qkGWKQX/pizza-promotion.jpg" 
+                  alt="Promotion" 
+                  className="bannerImage"
+                />
+              </div>
+            )}
+          </div>
+
+          {/* Popular Section */}
+          <div className="sectionContainer">
+            <h2 className="sectionTitle">Popular</h2>
+            
+            <div className="productsGrid">
+              {popularProducts.length > 0 ? (
+                popularProducts.slice(0, 4).map(product => (
+                  <div key={product._id || Math.random()} className="productCard">
+                    <div className="productImageContainer">
+                      <img 
+                        src={product.image || 'https://i.ibb.co/YZDGnfr/chicken-rice.jpg'} 
+                        alt={product.name || 'Chicken With Rice'} 
+                        className="productImage"
+                      />
+                    </div>
+                    <div className="productInfo">
+                      <h3 className="productName">{product.name || 'Chicken With Rice'}</h3>
+                      <p className="storeName">{product.storeName || 'Store Name'}</p>
+                      <div className="productPriceRow">
+                        <p className="productPrice">₱{product.price || '49'}</p>
+                        <button 
+                          className="addButton"
+                          onClick={() => handleAddToCart(product)}
+                        >
+                          Add to Cart
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                // Fallback sample products if API data is not available
+                [
+                  { id: 1, name: 'Chicken With Rice', storeName: 'Store Name', price: 49, image: 'https://i.ibb.co/YZDGnfr/chicken-rice.jpg' },
+                  { id: 2, name: 'Fries Buy 1 Take 2', storeName: 'Store Name', price: 50, image: 'https://i.ibb.co/4PYspP4/fries.jpg' },
+                  { id: 3, name: 'Milktea Medium', storeName: 'Store Name', price: 69, image: 'https://i.ibb.co/S7qRBBz/milktea.jpg' },
+                  { id: 4, name: 'Beef Cheesy Burger', storeName: 'Store Name', price: 49, image: 'https://i.ibb.co/GFqYQZg/burger.jpg' }
+                ].map(product => (
+                  <div key={product.id} className="productCard">
+                    <div className="productImageContainer">
+                      <img 
+                        src={product.image} 
+                        alt={product.name} 
+                        className="productImage"
+                      />
+                    </div>
+                    <div className="productInfo">
+                      <h3 className="productName">{product.name}</h3>
+                      <p className="storeName">{product.storeName}</p>
+                      <div className="productPriceRow">
+                        <p className="productPrice">₱{product.price}</p>
+                        <button 
+                          className="addButton"
+                          onClick={() => handleAddToCart(product)}
+                        >
+                          Add to Cart
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+
+          {/* All Products Section */}
+          <div className="sectionContainer">
+            <h2 className="sectionTitle">
+              {searchQuery ? `Results for "${searchQuery}"` : "All Foods"}
+            </h2>
+            
+            {filteredProducts.length > 0 ? (
+              <div className="productsGrid">
+                {filteredProducts.map(product => (
+                  <div key={product._id || Math.random()} className="productCard">
+                    <div className="productImageContainer">
+                      <img 
+                        src={product.image || 'https://i.ibb.co/YZDGnfr/chicken-rice.jpg'} 
+                        alt={product.name || 'Product'} 
+                        className="productImage"
+                      />
+                    </div>
+                    <div className="productInfo">
+                      <h3 className="productName">{product.name || 'Product Name'}</h3>
+                      <p className="storeName">{product.storeName || 'Store Name'}</p>
+                      <div className="productPriceRow">
+                        <p className="productPrice">₱{product.price || '0'}</p>
+                        <button 
+                          className="addButton"
+                          onClick={() => handleAddToCart(product)}
+                        >
+                          Add to Cart
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="noResults">
+                <p>No products found. Try a different search or filter.</p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Bottom Navigation */}
+      <div className="bottomNav">
+        <div className={"navItem activeNavItem"} onClick={() => navigateTo('/customer/home')}>
+          <MdHome size={24} className="activeNavIcon" />
+          <span className="navText">Home</span>
+        </div>
+        <div className="navItem" onClick={() => navigateTo('/favorites')}>
+          <MdFavoriteBorder size={24} />
+          <span className="navText">Favorites</span>
+        </div>
+        <div className="navItem" onClick={() => navigateTo('/customer/cart')}>
+          <MdShoppingCart size={24} />
+          <span className="navText">Cart</span>
+        </div>
+        <div className="navItem" onClick={() => navigateTo('/stores')}>
+          <MdStore size={24} />
+          <span className="navText">Stores</span>
+        </div>
+        <div className="navItem" onClick={() => navigateTo('/customer/profile')}>
+          <MdPerson size={24} />
+          <span className="navText">Profile</span>
+        </div>
+      </div>
+    </div>
+  );
 };
 
 export default HomePage;
