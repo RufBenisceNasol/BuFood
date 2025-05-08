@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { product, cart } from '../api';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { MdArrowBack, MdShoppingCart } from 'react-icons/md';
+import { MdArrowBack, MdShoppingCart, MdAdd, MdRemove } from 'react-icons/md';
 
 const SingleProductPage = () => {
     const { productId } = useParams();
@@ -13,25 +13,24 @@ const SingleProductPage = () => {
     const [error, setError] = useState('');
     const [quantity, setQuantity] = useState(1);
 
-    const fetchProductDetails = React.useCallback(async () => {
-        try {
-            const data = await product.getProductById(productId);
-            setProductData(data);
-        } catch (err) {
-            setError(err.message || 'Failed to fetch product details');
-            toast.error(err.message || 'Failed to fetch product details');
-        } finally {
-            setLoading(false);
-        }
-    }, [productId]);
-
     useEffect(() => {
+        const fetchProductDetails = async () => {
+            try {
+                const data = await product.getProductById(productId);
+                setProductData(data);
+            } catch (err) {
+                setError(err.message || 'Failed to fetch product details');
+                toast.error(err.message || 'Failed to fetch product details');
+            } finally {
+                setLoading(false);
+            }
+        };
+
         fetchProductDetails();
-    }, [fetchProductDetails]);
+    }, [productId]);
 
     const handleAddToCart = async () => {
         try {
-            // This will need to be implemented in your cart API
             await cart.addToCart(productId, quantity);
             toast.success('Product added to cart successfully');
         } catch (err) {
@@ -66,7 +65,7 @@ const SingleProductPage = () => {
                             alt={productData.name}
                             style={styles.productImage}
                         />
-                        {!productData.isAvailable && (
+                        {productData.availability === 'Out of Stock' && (
                             <div style={styles.outOfStockBadge}>
                                 Out of Stock
                             </div>
@@ -77,26 +76,36 @@ const SingleProductPage = () => {
                         <h2 style={styles.productName}>{productData.name}</h2>
                         <p style={styles.price}>₱{productData.price.toFixed(2)}</p>
                         
-                        <div style={styles.description}>
+                        <div style={styles.section}>
                             <h3 style={styles.sectionTitle}>Description</h3>
                             <p style={styles.descriptionText}>{productData.description}</p>
                         </div>
 
-                        {productData.isAvailable && (
+                        <div style={styles.section}>
+                            <h3 style={styles.sectionTitle}>Store</h3>
+                            <p style={styles.storeText}>{productData.storeName}</p>
+                        </div>
+
+                        <div style={styles.section}>
+                            <h3 style={styles.sectionTitle}>Category</h3>
+                            <p style={styles.categoryText}>{productData.category}</p>
+                        </div>
+
+                        {productData.availability === 'Available' && (
                             <div style={styles.addToCartSection}>
                                 <div style={styles.quantitySelector}>
                                     <button 
                                         style={styles.quantityButton}
                                         onClick={() => setQuantity(Math.max(1, quantity - 1))}
                                     >
-                                        -
+                                        <MdRemove size={20} />
                                     </button>
                                     <span style={styles.quantityDisplay}>{quantity}</span>
                                     <button 
                                         style={styles.quantityButton}
                                         onClick={() => setQuantity(quantity + 1)}
                                     >
-                                        +
+                                        <MdAdd size={20} />
                                     </button>
                                 </div>
 
@@ -143,6 +152,7 @@ const styles = {
         position: 'sticky',
         top: 0,
         zIndex: 10,
+        boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
     },
     backButton: {
         background: 'none',
@@ -207,20 +217,31 @@ const styles = {
         color: '#ff8c00',
         margin: '0 0 20px 0',
     },
-    description: {
+    section: {
         marginBottom: '24px',
     },
     sectionTitle: {
         fontSize: '18px',
         fontWeight: '600',
         color: '#444',
-        marginBottom: '12px',
+        marginBottom: '8px',
     },
     descriptionText: {
         fontSize: '16px',
         color: '#666',
         lineHeight: '1.5',
         margin: 0,
+    },
+    storeText: {
+        fontSize: '16px',
+        color: '#666',
+        margin: 0,
+    },
+    categoryText: {
+        fontSize: '16px',
+        color: '#666',
+        margin: 0,
+        textTransform: 'capitalize',
     },
     addToCartSection: {
         marginTop: '24px',
@@ -240,7 +261,6 @@ const styles = {
         border: '1px solid #ddd',
         borderRadius: '8px',
         background: 'white',
-        fontSize: '18px',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',

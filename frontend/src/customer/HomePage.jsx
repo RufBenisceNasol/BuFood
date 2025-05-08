@@ -7,6 +7,70 @@ import 'slick-carousel/slick/slick-theme.css';
 import { store as storeApi, product as productApi, auth } from '../api';
 import '../styles/HomePage.css';
 
+const styles = {
+  bannerContainer: {
+    padding: '0 16px',
+    marginBottom: '20px',
+    maxWidth: '100%',
+    overflow: 'hidden'
+  },
+  slide: {
+    padding: '0 5px'
+  },
+  banner: {
+    position: 'relative',
+    borderRadius: '12px',
+    overflow: 'hidden',
+    cursor: 'pointer',
+    height: '180px',
+    boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+    transition: 'transform 0.2s ease'
+  },
+  bannerImage: {
+    width: '100%',
+    height: '100%',
+    objectFit: 'cover'
+  },
+  bannerGradient: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    background: 'linear-gradient(to bottom, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.6) 100%)',
+    zIndex: 1
+  },
+  bannerContent: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    padding: '20px',
+    zIndex: 2,
+    color: 'white'
+  },
+  storeName: {
+    fontSize: '24px',
+    fontWeight: '600',
+    margin: '0 0 8px 0',
+    color: 'white',
+    textShadow: '0 2px 4px rgba(0,0,0,0.3)'
+  },
+  storeDescription: {
+    fontSize: '14px',
+    margin: '0 0 8px 0',
+    opacity: 0.9,
+    textShadow: '0 1px 2px rgba(0,0,0,0.3)'
+  },
+  placeholderBanner: {
+    position: 'relative',
+    borderRadius: '12px',
+    overflow: 'hidden',
+    height: '180px',
+    boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+  }
+};
+
 const HomePage = () => {
   const navigate = useNavigate();
   const [stores, setStores] = useState([]);
@@ -78,19 +142,17 @@ const HomePage = () => {
   }, [searchQuery, filters, allProducts]);
 
   const fetchData = async () => {
+    setLoading(true);
+    setError(null);
+
     try {
-      setLoading(true);
-      
-      // Fetch current user information
-      const user = JSON.parse(localStorage.getItem('user') || '{}');
-      setUserName(user.name || 'Sample User');
-      
-      // Fetch all stores
+      // Fetch stores data
       try {
         const storesData = await storeApi.getAllStores();
         setStores(storesData || []);
       } catch (storeErr) {
         console.error('Error fetching stores:', storeErr);
+        setError(storeErr.message || 'Failed to load stores');
         setStores([]);
       }
 
@@ -100,8 +162,7 @@ const HomePage = () => {
         setAllProducts(allProductsData || []);
         setFilteredProducts(allProductsData || []);
         
-        // For popular products, we'll use the same list for now
-        // In a real implementation, you would have a dedicated endpoint for popular products
+        // For popular products, take the first 4 products
         setPopularProducts(allProductsData?.slice(0, 4) || []);
 
         // Extract unique categories
@@ -113,15 +174,15 @@ const HomePage = () => {
         }
       } catch (productErr) {
         console.error('Error fetching products:', productErr);
+        setError(productErr.message || 'Failed to load products');
         setAllProducts([]);
         setFilteredProducts([]);
         setPopularProducts([]);
       }
 
-      setError(null);
     } catch (err) {
       console.error('Error fetching data:', err);
-      setError('Failed to load data. Please try again.');
+      setError(err.message || 'Failed to load data');
     } finally {
       setLoading(false);
     }
@@ -169,7 +230,16 @@ const HomePage = () => {
     slidesToScroll: 1,
     autoplay: true,
     autoplaySpeed: 3000,
-    arrows: false
+    arrows: true,
+    pauseOnHover: true,
+    responsive: [
+      {
+        breakpoint: 1024,
+        settings: {
+          arrows: false
+        }
+      }
+    ]
   };
 
   const handleSearch = (e) => {
@@ -338,31 +408,47 @@ const HomePage = () => {
           )}
 
           {/* Banner/Promotional Slider */}
-          <div className="bannerContainer">
+          <div style={styles.bannerContainer}>
             {stores.length > 0 ? (
               <Slider {...sliderSettings}>
                 {stores.map(store => (
-                  <div key={store._id} className="slide">
+                  <div key={store._id} style={styles.slide}>
                     <div 
-                      className="banner"
+                      style={styles.banner}
                       onClick={() => navigate(`/store/${store._id}`)}
                     >
                       <img 
                         src={store.bannerImage || 'https://i.ibb.co/qkGWKQX/pizza-promotion.jpg'} 
                         alt={store.storeName} 
-                        className="bannerImage"
+                        style={styles.bannerImage}
                       />
+                      <div style={styles.bannerGradient}></div>
+                      <div style={styles.bannerContent}>
+                        <div>
+                          <h2 style={styles.storeName}>{store.storeName}</h2>
+                          {store.description && (
+                            <p style={styles.storeDescription}>{store.description}</p>
+                          )}
+                        </div>
+                      </div>
                     </div>
                   </div>
                 ))}
               </Slider>
             ) : (
-              <div className="placeholderBanner">
+              <div style={styles.placeholderBanner}>
                 <img 
                   src="https://i.ibb.co/qkGWKQX/pizza-promotion.jpg" 
-                  alt="Promotion" 
-                  className="bannerImage"
+                  alt="Welcome to BuFood" 
+                  style={styles.bannerImage}
                 />
+                <div style={styles.bannerGradient}></div>
+                <div style={styles.bannerContent}>
+                  <div>
+                    <h2 style={styles.storeName}>Welcome to BuFood</h2>
+                    <p style={styles.storeDescription}>No stores available at the moment.</p>
+                  </div>
+                </div>
               </div>
             )}
           </div>
@@ -374,7 +460,12 @@ const HomePage = () => {
             <div className="productsGrid">
               {popularProducts.length > 0 ? (
                 popularProducts.slice(0, 4).map(product => (
-                  <div key={product._id || Math.random()} className="productCard">
+                  <div 
+                    key={product._id || Math.random()} 
+                    className="productCard"
+                    onClick={() => navigate(`/customer/product/${product._id}`)}
+                    style={{ cursor: 'pointer' }}
+                  >
                     <div className="productImageContainer">
                       <img 
                         src={product.image || 'https://i.ibb.co/YZDGnfr/chicken-rice.jpg'} 
@@ -389,7 +480,10 @@ const HomePage = () => {
                         <p className="productPrice">₱{product.price || '49'}</p>
                         <button 
                           className="addButton"
-                          onClick={() => handleAddToCart(product)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleAddToCart(product);
+                          }}
                         >
                           Add to Cart
                         </button>
@@ -420,7 +514,10 @@ const HomePage = () => {
                         <p className="productPrice">₱{product.price}</p>
                         <button 
                           className="addButton"
-                          onClick={() => handleAddToCart(product)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleAddToCart(product);
+                          }}
                         >
                           Add to Cart
                         </button>
@@ -441,7 +538,12 @@ const HomePage = () => {
             {filteredProducts.length > 0 ? (
               <div className="productsGrid">
                 {filteredProducts.map(product => (
-                  <div key={product._id || Math.random()} className="productCard">
+                  <div 
+                    key={product._id || Math.random()} 
+                    className="productCard"
+                    onClick={() => navigate(`/customer/product/${product._id}`)}
+                    style={{ cursor: 'pointer' }}
+                  >
                     <div className="productImageContainer">
                       <img 
                         src={product.image || 'https://i.ibb.co/YZDGnfr/chicken-rice.jpg'} 
@@ -456,7 +558,10 @@ const HomePage = () => {
                         <p className="productPrice">₱{product.price || '0'}</p>
                         <button 
                           className="addButton"
-                          onClick={() => handleAddToCart(product)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleAddToCart(product);
+                          }}
                         >
                           Add to Cart
                         </button>

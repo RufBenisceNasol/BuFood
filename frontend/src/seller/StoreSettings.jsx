@@ -12,7 +12,7 @@ const StoreSettings = () => {
     contactNumber: '',
     description: '',
     openTime: '',
-    profileImage: '',
+    image: '',
     bannerImage: '',
   });
   const [loading, setLoading] = useState(true);
@@ -45,7 +45,7 @@ const StoreSettings = () => {
         contactNumber: profile.contactNumber || '',
         description: data.description || '',
         openTime: data.openTime || '',
-        profileImage: data.profileImage || '',
+        image: data.image || '',
         bannerImage: data.bannerImage || '',
       });
     } catch (err) {
@@ -134,8 +134,8 @@ const StoreSettings = () => {
       if (formData.bannerImage && formData.bannerImage instanceof File) {
         submitData.append('bannerImage', formData.bannerImage);
       }
-      if (formData.profileImage && formData.profileImage instanceof File) {
-        submitData.append('image', formData.profileImage);
+      if (formData.image && formData.image instanceof File) {
+        submitData.append('image', formData.image);
       }
       const updated = await store.updateStore(storeData._id, submitData);
       setStoreData(updated);
@@ -211,15 +211,15 @@ const StoreSettings = () => {
           )}
           
         <div style={styles.profileAvatarWrapper}>
-          {formData.profileImage && typeof formData.profileImage !== 'string' ? (
+          {formData.image && typeof formData.image !== 'string' ? (
             <img
-              src={URL.createObjectURL(formData.profileImage)}
+              src={URL.createObjectURL(formData.image)}
               alt="Profile"
               style={styles.profileAvatar}
             />
-          ) : formData.profileImage ? (
+          ) : formData.image ? (
             <img
-              src={formData.profileImage}
+              src={formData.image}
               alt="Profile"
               style={styles.profileAvatar}
             />
