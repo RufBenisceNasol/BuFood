@@ -256,110 +256,76 @@ const ProductPage = () => {
                             <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 'bold', mb: 2 }}>
                                 Delivery Information:
                             </Typography>
-                            <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', mb: 2 }}>
-                                <LocalShipping sx={{ color: '#FF8C00' }} />
-                                <Typography variant="body2">
-                                    Free Delivery within 5km
-                                </Typography>
-                            </Box>
-                            <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-                                <AccessTime sx={{ color: '#FF8C00' }} />
-                                <Typography variant="body2">
-                                    Delivery time: 30-45 minutes
-                                </Typography>
+                            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                                <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+                                    <AccessTime sx={{ color: '#FF8C00' }} />
+                                    <Typography variant="body2">
+                                        Estimated Time: {selectedProduct.estimatedTime ? `${selectedProduct.estimatedTime} minutes` : 'Not specified'}
+                                    </Typography>
+                                </Box>
+                                <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+                                    <LocalShipping sx={{ color: '#FF8C00' }} />
+                                    <Typography variant="body2">
+                                        Shipping Fee: ₱{selectedProduct.shippingFee ? parseFloat(selectedProduct.shippingFee).toFixed(2) : '0.00'}
+                                    </Typography>
+                                </Box>
                             </Box>
                         </Box>
+
+                        {/* Checkout Dialog */}
+                        <Dialog 
+                            open={checkoutDialogOpen} 
+                            onClose={() => setCheckoutDialogOpen(false)}
+                            maxWidth="sm"
+                            fullWidth
+                        >
+                            <DialogTitle>Checkout</DialogTitle>
+                            <DialogContent>
+                                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                                    <TextField
+                                        label="Customer Name"
+                                        value={checkoutData.customerName}
+                                        onChange={(e) => setCheckoutData({ ...checkoutData, customerName: e.target.value })}
+                                        fullWidth
+                                    />
+                                    <TextField
+                                        label="Contact Number"
+                                        value={checkoutData.contactNumber}
+                                        onChange={(e) => setCheckoutData({ ...checkoutData, contactNumber: e.target.value })}
+                                        fullWidth
+                                    />
+                                    <TextField
+                                        label="Delivery Location"
+                                        value={checkoutData.deliveryLocation}
+                                        onChange={(e) => setCheckoutData({ ...checkoutData, deliveryLocation: e.target.value })}
+                                        fullWidth
+                                    />
+                                    <RadioGroup
+                                        value={checkoutData.paymentMethod}
+                                        onChange={(e) => setCheckoutData({ ...checkoutData, paymentMethod: e.target.value })}
+                                    >
+                                        <FormControlLabel value="COD" control={<Radio />} label="Cash on Delivery" />
+                                        <FormControlLabel value="Online" control={<Radio />} label="Online Payment" />
+                                    </RadioGroup>
+                                </Box>
+                            </DialogContent>
+                            <DialogActions>
+                                <Button onClick={() => setCheckoutDialogOpen(false)}>Cancel</Button>
+                                <Button onClick={handlePlaceOrder} variant="contained" sx={{ bgcolor: '#FF8C00', '&:hover': { bgcolor: '#FF6B00' } }}>
+                                    Place Order
+                                </Button>
+                            </DialogActions>
+                        </Dialog>
                     </Box>
                 </Grid>
             </Grid>
 
-            {/* Checkout Dialog */}
-            <Dialog 
-                open={checkoutDialogOpen} 
-                onClose={() => setCheckoutDialogOpen(false)}
-                maxWidth="sm"
-                fullWidth
-            >
-                <DialogTitle sx={{ pb: 0 }}>
-                    <Typography variant="h5" sx={{ fontWeight: 'bold' }}>
-                        Complete Your Order
-                    </Typography>
-                </DialogTitle>
-                <DialogContent>
-                    <Box sx={{ mt: 2 }}>
-                        <TextField
-                            label="Full Name"
-                            fullWidth
-                            margin="normal"
-                            value={checkoutData.customerName}
-                            onChange={(e) => setCheckoutData(prev => ({ ...prev, customerName: e.target.value }))}
-                            required
-                        />
-                        <TextField
-                            label="Contact Number"
-                            fullWidth
-                            margin="normal"
-                            value={checkoutData.contactNumber}
-                            onChange={(e) => setCheckoutData(prev => ({ ...prev, contactNumber: e.target.value }))}
-                            required
-                        />
-                        <TextField
-                            label="Delivery Location"
-                            fullWidth
-                            margin="normal"
-                            value={checkoutData.deliveryLocation}
-                            onChange={(e) => setCheckoutData(prev => ({ ...prev, deliveryLocation: e.target.value }))}
-                            required
-                            multiline
-                            rows={3}
-                        />
-                        <Box sx={{ mt: 2 }}>
-                            <Typography variant="h6" gutterBottom>Payment Method</Typography>
-                            <RadioGroup
-                                value={checkoutData.paymentMethod}
-                                onChange={(e) => setCheckoutData(prev => ({ ...prev, paymentMethod: e.target.value }))}
-                            >
-                                <FormControlLabel 
-                                    value="COD" 
-                                    control={<Radio />} 
-                                    label="Cash on Delivery"
-                                />
-                                <FormControlLabel 
-                                    value="GCASH" 
-                                    control={<Radio />} 
-                                    label="GCash"
-                                    disabled
-                                />
-                            </RadioGroup>
-                        </Box>
-                    </Box>
-                </DialogContent>
-                <DialogActions sx={{ px: 3, pb: 3 }}>
-                    <Button onClick={() => setCheckoutDialogOpen(false)}>Cancel</Button>
-                    <Button
-                        variant="contained"
-                        onClick={handlePlaceOrder}
-                        disabled={!checkoutData.customerName || !checkoutData.contactNumber || !checkoutData.deliveryLocation}
-                        sx={{
-                            bgcolor: '#FF8C00',
-                            '&:hover': { bgcolor: '#FF6B00' }
-                        }}
-                    >
-                        Place Order
-                    </Button>
-                </DialogActions>
-            </Dialog>
-
             <Snackbar
                 open={snackbar.open}
                 autoHideDuration={6000}
-                onClose={() => setSnackbar(prev => ({ ...prev, open: false }))}
+                onClose={() => setSnackbar({ ...snackbar, open: false })}
             >
-                <Alert 
-                    onClose={() => setSnackbar(prev => ({ ...prev, open: false }))} 
-                    severity={snackbar.severity}
-                    sx={{ width: '100%' }}
-                >
+                <Alert onClose={() => setSnackbar({ ...snackbar, open: false })} severity={snackbar.severity}>
                     {snackbar.message}
                 </Alert>
             </Snackbar>

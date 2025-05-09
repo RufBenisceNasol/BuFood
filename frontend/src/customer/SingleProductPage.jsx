@@ -34,7 +34,9 @@ const SingleProductPage = () => {
             await cart.addToCart(productId, quantity);
             toast.success('Product added to cart successfully');
         } catch (err) {
-            toast.error(err.message || 'Failed to add product to cart');
+            const errorMessage = err.message || err.error || 'Failed to add product to cart';
+            toast.error(errorMessage);
+            console.error('Add to cart error:', err);
         }
     };
 
@@ -91,6 +93,22 @@ const SingleProductPage = () => {
                             <p style={styles.categoryText}>{productData.category}</p>
                         </div>
 
+                        <div style={styles.section}>
+                            <h3 style={styles.sectionTitle}>Delivery Information</h3>
+                            <div style={styles.deliveryInfo}>
+                                <div style={styles.infoGrid}>
+                                    <div style={styles.infoItem}>
+                                        <span style={styles.infoLabel}>Estimated Time:</span>
+                                        <span style={styles.infoValue}>{productData.estimatedTime ? `${productData.estimatedTime} minutes` : 'Not specified'}</span>
+                                    </div>
+                                    <div style={styles.infoItem}>
+                                        <span style={styles.infoLabel}>Shipping Fee:</span>
+                                        <span style={styles.infoValue}>₱{productData.shippingFee ? parseFloat(productData.shippingFee).toFixed(2) : '0.00'}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         {productData.availability === 'Available' && (
                             <div style={styles.addToCartSection}>
                                 <div style={styles.quantitySelector}>
@@ -123,6 +141,40 @@ const SingleProductPage = () => {
             </div>
 
             <style>{`
+                @media (max-width: 768px) {
+                    .productCard {
+                        border-radius: 0 !important;
+                        box-shadow: none !important;
+                    }
+                    .contentContainer {
+                        padding: 0 !important;
+                    }
+                    .imageContainer {
+                        height: 250px !important;
+                    }
+                    .productInfo {
+                        padding: 16px !important;
+                    }
+                    .header {
+                        padding: 12px !important;
+                    }
+                }
+                
+                @media (max-width: 480px) {
+                    .imageContainer {
+                        height: 200px !important;
+                    }
+                    .productName {
+                        font-size: 20px !important;
+                    }
+                    .price {
+                        font-size: 18px !important;
+                    }
+                    .quantitySelector {
+                        justify-content: center !important;
+                    }
+                }
+
                 .quantityButton:hover {
                     background-color: #f0f0f0;
                 }
@@ -166,13 +218,15 @@ const styles = {
     },
     headerTitle: {
         margin: 0,
-        fontSize: '20px',
+        fontSize: '1.25rem',
         fontWeight: '600',
     },
     contentContainer: {
-        padding: '20px',
+        padding: '1.25rem',
         maxWidth: '800px',
         margin: '0 auto',
+        width: '100%',
+        boxSizing: 'border-box',
     },
     productCard: {
         backgroundColor: 'white',
@@ -197,63 +251,88 @@ const styles = {
         right: '10px',
         backgroundColor: 'rgba(231, 76, 60, 0.9)',
         color: 'white',
-        padding: '8px 16px',
+        padding: '0.5rem 1rem',
         borderRadius: '4px',
-        fontSize: '14px',
+        fontSize: '0.875rem',
         fontWeight: '500',
     },
     productInfo: {
-        padding: '24px',
+        padding: '1.5rem',
     },
     productName: {
-        margin: '0 0 12px 0',
-        fontSize: '24px',
+        margin: '0 0 0.75rem 0',
+        fontSize: '1.5rem',
         fontWeight: '600',
         color: '#333',
     },
     price: {
-        fontSize: '22px',
+        fontSize: '1.375rem',
         fontWeight: '600',
         color: '#ff8c00',
-        margin: '0 0 20px 0',
+        margin: '0 0 1.25rem 0',
     },
     section: {
-        marginBottom: '24px',
+        marginBottom: '1.5rem',
     },
     sectionTitle: {
-        fontSize: '18px',
+        fontSize: '1.125rem',
         fontWeight: '600',
         color: '#444',
-        marginBottom: '8px',
+        marginBottom: '0.5rem',
     },
     descriptionText: {
-        fontSize: '16px',
+        fontSize: '1rem',
         color: '#666',
         lineHeight: '1.5',
         margin: 0,
     },
     storeText: {
-        fontSize: '16px',
+        fontSize: '1rem',
         color: '#666',
         margin: 0,
     },
     categoryText: {
-        fontSize: '16px',
+        fontSize: '1rem',
         color: '#666',
         margin: 0,
         textTransform: 'capitalize',
     },
+    deliveryInfo: {
+        backgroundColor: '#f8f8f8',
+        padding: '1rem',
+        borderRadius: '8px',
+    },
+    infoGrid: {
+        display: 'grid',
+        gap: '0.75rem',
+    },
+    infoItem: {
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        flexWrap: 'wrap',
+        gap: '0.5rem',
+    },
+    infoLabel: {
+        color: '#666',
+        fontSize: '0.9375rem',
+    },
+    infoValue: {
+        color: '#333',
+        fontSize: '0.9375rem',
+        fontWeight: '500',
+    },
     addToCartSection: {
-        marginTop: '24px',
+        marginTop: '1.5rem',
         display: 'flex',
         flexDirection: 'column',
-        gap: '16px',
+        gap: '1rem',
     },
     quantitySelector: {
         display: 'flex',
         alignItems: 'center',
-        gap: '12px',
-        marginBottom: '16px',
+        gap: '0.75rem',
+        marginBottom: '1rem',
     },
     quantityButton: {
         width: '36px',
@@ -268,7 +347,7 @@ const styles = {
         transition: 'background-color 0.2s',
     },
     quantityDisplay: {
-        fontSize: '18px',
+        fontSize: '1.125rem',
         fontWeight: '500',
         minWidth: '40px',
         textAlign: 'center',
@@ -277,24 +356,25 @@ const styles = {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        gap: '8px',
+        gap: '0.5rem',
         backgroundColor: '#ff8c00',
         color: 'white',
         border: 'none',
         borderRadius: '8px',
-        padding: '14px',
-        fontSize: '16px',
+        padding: '0.875rem',
+        fontSize: '1rem',
         fontWeight: '600',
         cursor: 'pointer',
         transition: 'all 0.3s ease',
         boxShadow: '0 2px 8px rgba(255, 140, 0, 0.3)',
+        width: '100%',
     },
     loadingContainer: {
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
         height: '100vh',
-        fontSize: '16px',
+        fontSize: '1rem',
         color: '#666',
     },
     errorContainer: {
@@ -302,9 +382,9 @@ const styles = {
         justifyContent: 'center',
         alignItems: 'center',
         height: '100vh',
-        fontSize: '16px',
+        fontSize: '1rem',
         color: '#e53e3e',
-        padding: '0 20px',
+        padding: '0 1.25rem',
         textAlign: 'center',
     },
 };

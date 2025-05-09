@@ -15,6 +15,8 @@ const AddProductPage = () => {
     price: '',
     category: '',
     availability: 'Available', // Default to Available
+    estimatedTime: '', // New field for estimated delivery time
+    shippingFee: '0', // New field for shipping fee
   });
   const [selectedImage, setSelectedImage] = useState(null);
   const [previewUrl, setPreviewUrl] = useState('');
@@ -60,6 +62,8 @@ const AddProductPage = () => {
         price: '',
         category: '',
         availability: 'Available',
+        estimatedTime: '',
+        shippingFee: '0',
       });
       setSelectedImage(null);
       setPreviewUrl('');
@@ -169,6 +173,39 @@ const AddProductPage = () => {
                 style={styles.input}
                 className="product-input"
                 placeholder="Enter category"
+              />
+            </div>
+
+            <div style={styles.inputGroup}>
+              <label htmlFor="estimatedTime" style={styles.label}>Estimated Delivery Time (minutes):</label>
+              <input
+                type="number"
+                id="estimatedTime"
+                name="estimatedTime"
+                value={formData.estimatedTime}
+                onChange={handleInputChange}
+                required
+                min="1"
+                style={styles.input}
+                className="product-input"
+                placeholder="Enter estimated delivery time in minutes"
+              />
+            </div>
+
+            <div style={styles.inputGroup}>
+              <label htmlFor="shippingFee" style={styles.label}>Shipping Fee:</label>
+              <input
+                type="number"
+                id="shippingFee"
+                name="shippingFee"
+                value={formData.shippingFee}
+                onChange={handleInputChange}
+                required
+                min="0"
+                step="0.01"
+                style={styles.input}
+                className="product-input"
+                placeholder="Enter shipping fee"
               />
             </div>
 

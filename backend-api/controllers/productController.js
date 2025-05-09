@@ -15,7 +15,7 @@ const deleteFile = async (filePath) => {
 // Create a product
 const createProduct = async (req, res) => {
   try {
-    const { name, description, price, category, availability } = req.body;
+    const { name, description, price, category, availability, estimatedTime, shippingFee } = req.body;
     const sellerId = req.user._id;
 
     // Find the store associated with the seller
@@ -36,7 +36,7 @@ const createProduct = async (req, res) => {
       imageUrl = Product.schema.path('image').defaultValue;
     }
 
-    // Create the product
+    // Create the product with shipping and time info
     const newProduct = new Product({
       name,
       description,
@@ -46,6 +46,8 @@ const createProduct = async (req, res) => {
       sellerId,
       storeId: store._id,  // Ensure the storeId is correctly referenced
       image: imageUrl, // Set the image URL (either uploaded or default)
+      estimatedTime: estimatedTime || 30, // Default 30 minutes if not provided
+      shippingFee: shippingFee || 0 // Default 0 if not provided
     });
 
     // Save the product and update the store with the new product
@@ -111,7 +113,7 @@ const updateProduct = async (req, res) => {
 
     // Only allow updating specific fields
     const updates = {};
-    const allowedUpdates = ['name', 'description', 'price', 'category', 'availability'];
+    const allowedUpdates = ['name', 'description', 'price', 'category', 'availability', 'estimatedTime', 'shippingFee'];
     
     allowedUpdates.forEach(field => {
       if (req.body[field] !== undefined) {
@@ -121,8 +123,6 @@ const updateProduct = async (req, res) => {
 
     // Handle image upload if file is present
     if (req.file) {
-      // When using CloudinaryStorage, the file is automatically uploaded to Cloudinary
-      // and req.file contains the Cloudinary result
       updates.image = req.file.path;
     }
 

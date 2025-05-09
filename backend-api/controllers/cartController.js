@@ -63,7 +63,7 @@ const addToCart = async (req, res) => {
 
       if (!cart) {
         cart = new Cart({
-          user: req.user._id,  // Using user instead of customer
+          user: req.user._id,
           items: [{ 
             product: productId, 
             quantity, 
@@ -102,7 +102,7 @@ const addToCart = async (req, res) => {
       ));
     } catch (err) {
       await session.abortTransaction();
-      throw err;  // Let outer try-catch handle the error
+      throw err;
     } finally {
       session.endSession();
     }

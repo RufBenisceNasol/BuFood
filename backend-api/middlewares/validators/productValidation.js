@@ -27,6 +27,18 @@ const createProductValidation = [
   body('image')
     .optional()
     .isURL().withMessage('Image must be a valid URL'),
+
+  // Validate estimatedTime: must be a positive number
+  body('estimatedTime')
+    .optional()
+    .isInt({ min: 1 })
+    .withMessage('Estimated time must be a positive number in minutes'),
+
+  // Validate shippingFee: must be a non-negative number
+  body('shippingFee')
+    .optional()
+    .isFloat({ min: 0 })
+    .withMessage('Shipping fee must be a non-negative number'),
 ];
 
 const updateProductValidation = [
@@ -67,6 +79,18 @@ const updateProductValidation = [
     .optional()
     .isURL()
     .withMessage('Image must be a valid URL'),
+
+  // Validate estimatedTime if provided
+  body('estimatedTime')
+    .optional()
+    .isInt({ min: 1 })
+    .withMessage('Estimated time must be a positive number in minutes'),
+
+  // Validate shippingFee if provided
+  body('shippingFee')
+    .optional()
+    .isFloat({ min: 0 })
+    .withMessage('Shipping fee must be a non-negative number'),
 ];
 
 module.exports = { 

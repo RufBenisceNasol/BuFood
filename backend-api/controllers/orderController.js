@@ -35,8 +35,9 @@ const createOrder = async (customerId, orderItems, totalAmount, paymentMethod) =
 // Checkout from Cart
 const checkoutFromCart = async (req, res) => {
   try {
-    const customerId = req.user._id;
-    let cart = await Cart.findOne({ customer: customerId }).populate('items.product');
+    const userId = req.user._id;
+
+    let cart = await Cart.findOne({ user: userId }).populate('items.product');
 
     if (!cart || cart.items.length === 0) {
       return res.status(400).json({ message: 'Your cart is empty. Add items to your cart before proceeding.' });
@@ -58,7 +59,7 @@ const checkoutFromCart = async (req, res) => {
       totalAmount += item.subtotal;
     }
 
-    const order = await createOrder(customerId, orderItems, totalAmount, 'COD');
+    const order = await createOrder(userId, orderItems, totalAmount, 'COD');
 
     cart.items = [];
     cart.total = 0;

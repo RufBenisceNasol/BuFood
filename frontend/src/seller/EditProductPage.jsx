@@ -19,7 +19,9 @@ const EditProductPage = () => {
         description: '',
         price: '',
         category: '',
-        availability: 'Available', // Set default value to 'Available'
+        availability: 'Available',
+        estimatedTime: '', // New field for estimated delivery time
+        shippingFee: '0', // New field for shipping fee
     });
     const [selectedImage, setSelectedImage] = useState(null);
     const [previewUrl, setPreviewUrl] = useState('');
@@ -34,7 +36,9 @@ const EditProductPage = () => {
                     description: data.description,
                     price: data.price,
                     category: data.category,
-                    availability: data.availability, // Use availability directly
+                    availability: data.availability,
+                    estimatedTime: data.estimatedTime || '', // Set from product data
+                    shippingFee: data.shippingFee || '0', // Set from product data
                 });
                 setPreviewUrl(data.image);
                 setLoading(false);
@@ -133,6 +137,8 @@ const EditProductPage = () => {
                     price: updatedProduct.price,
                     category: updatedProduct.category,
                     availability: updatedProduct.availability,
+                    estimatedTime: updatedProduct.estimatedTime || '',
+                    shippingFee: updatedProduct.shippingFee || '0',
                 });
                 
                 // Add timestamp to image URL to prevent browser caching
@@ -273,6 +279,39 @@ const EditProductPage = () => {
                                 style={styles.input}
                                 className="product-input"
                                 placeholder="Enter category"
+                            />
+                        </div>
+
+                        <div style={styles.inputGroup}>
+                            <label htmlFor="estimatedTime" style={styles.label}>Estimated Delivery Time (minutes):</label>
+                            <input
+                                type="number"
+                                id="estimatedTime"
+                                name="estimatedTime"
+                                value={formData.estimatedTime}
+                                onChange={handleInputChange}
+                                required
+                                min="1"
+                                style={styles.input}
+                                className="product-input"
+                                placeholder="Enter estimated delivery time in minutes"
+                            />
+                        </div>
+
+                        <div style={styles.inputGroup}>
+                            <label htmlFor="shippingFee" style={styles.label}>Shipping Fee:</label>
+                            <input
+                                type="number"
+                                id="shippingFee"
+                                name="shippingFee"
+                                value={formData.shippingFee}
+                                onChange={handleInputChange}
+                                required
+                                min="0"
+                                step="0.01"
+                                style={styles.input}
+                                className="product-input"
+                                placeholder="Enter shipping fee"
                             />
                         </div>
 

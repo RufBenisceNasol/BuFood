@@ -2001,3 +2001,323 @@
 {"level":"info","message":{"duration":"529ms","method":"GET","requestId":"96e6e428-a57d-4cdb-bb01-235ec571caf4","status":304,"url":"/products"},"timestamp":"2025-05-08T14:27:15.991Z"}
 {"level":"info","message":{"duration":"178ms","method":"GET","requestId":"884fc26b-04ea-4e37-8da4-115201e9665f","status":304,"url":"/me"},"timestamp":"2025-05-08T14:27:17.936Z"}
 {"level":"info","message":{"duration":"179ms","method":"GET","requestId":"09d22b9e-9fa5-495e-80b1-c6acef746cde","status":304,"url":"/me"},"timestamp":"2025-05-08T14:27:18.118Z"}
+{"level":"info","message":"Running with in-memory cache (Redis disabled)","timestamp":"2025-05-08T14:40:02.798Z"}
+{"level":"info","message":"🚀 Server started on port 8000","timestamp":"2025-05-08T14:40:02.820Z"}
+{"level":"info","message":"📚 API Documentation available at http://[YOUR_IP]:8000/api-docs","timestamp":"2025-05-08T14:40:02.820Z"}
+{"level":"info","message":"✅ Successfully connected to MongoDB","timestamp":"2025-05-08T14:40:04.905Z"}
+{"level":"info","message":"Running with in-memory cache (Redis disabled)","timestamp":"2025-05-08T14:40:30.767Z"}
+{"level":"info","message":"🚀 Server started on port 8000","timestamp":"2025-05-08T14:40:30.788Z"}
+{"level":"info","message":"📚 API Documentation available at http://[YOUR_IP]:8000/api-docs","timestamp":"2025-05-08T14:40:30.788Z"}
+{"level":"info","message":"✅ Successfully connected to MongoDB","timestamp":"2025-05-08T14:40:32.571Z"}
+{"level":"info","message":{"duration":"576ms","method":"GET","requestId":"62e17020-d942-42f4-b208-f2b22e2193d6","status":200,"url":"/my-store"},"timestamp":"2025-05-08T14:40:45.144Z"}
+{"level":"info","message":{"duration":"534ms","method":"GET","requestId":"d5345138-0692-4065-bd2f-c11c241622f9","status":200,"url":"/products"},"timestamp":"2025-05-08T14:40:46.673Z"}
+{"level":"info","message":{"duration":"529ms","method":"GET","requestId":"084cad27-b8e6-41ed-9e36-af82b6314aa3","status":304,"url":"/products"},"timestamp":"2025-05-08T14:40:47.204Z"}
+{"level":"info","message":{"duration":"361ms","method":"GET","requestId":"5bdbc062-ae7d-4e0d-99a2-d6bc5a75be4d","status":200,"url":"/681719d77679729b0d59b04d?t=1746715247447"},"timestamp":"2025-05-08T14:40:47.835Z"}
+{"level":"info","message":{"duration":"401ms","method":"GET","requestId":"e5bbba22-9aab-4e9e-8b99-09e67a1e32f1","status":200,"url":"/681719d77679729b0d59b04d?t=1746715247452"},"timestamp":"2025-05-08T14:40:48.178Z"}
+{"level":"info","message":{"duration":"1285ms","method":"GET","requestId":"45d4ef89-2c94-4299-8b22-9c856e82b846","status":200,"url":"/681719d77679729b0d59b04d?t=1746715247449"},"timestamp":"2025-05-08T14:40:48.764Z"}
+{"level":"info","message":{"duration":"1306ms","method":"GET","requestId":"ad04951b-b24e-49e9-a2fc-400ade56f488","status":200,"url":"/681719d77679729b0d59b04d?t=1746715247451"},"timestamp":"2025-05-08T14:40:48.787Z"}
+{"level":"info","message":{"duration":"371ms","method":"GET","requestId":"1d965cd6-25c4-4087-a9c2-68eb7a60cea8","status":200,"url":"/681719d77679729b0d59b04d?t=1746715250547"},"timestamp":"2025-05-08T14:40:51.257Z"}
+{"level":"info","message":{"duration":"371ms","method":"GET","requestId":"f3f24438-2243-4874-9482-75a8d750d8e8","status":200,"url":"/681719d77679729b0d59b04d?t=1746715250548"},"timestamp":"2025-05-08T14:40:51.261Z"}
+{"level":"info","message":{"duration":"555ms","method":"PATCH","requestId":"110782ef-69db-4a91-955f-d57bd732b271","status":200,"url":"/products/681719d77679729b0d59b04d"},"timestamp":"2025-05-08T14:41:37.533Z"}
+{"level":"info","message":{"duration":"357ms","method":"GET","requestId":"2702a984-9fae-4331-9a77-e86683599f96","status":200,"url":"/681719d77679729b0d59b04d?t=1746715298548"},"timestamp":"2025-05-08T14:41:38.913Z"}
+{"level":"info","message":{"duration":"349ms","method":"GET","requestId":"eb09b2b0-a9b5-42dd-8940-0e6fb6d1d548","status":200,"url":"/681719d77679729b0d59b04d?t=1746715301937"},"timestamp":"2025-05-08T14:41:42.639Z"}
+{"level":"info","message":{"duration":"354ms","method":"GET","requestId":"de3bcc41-abf5-428e-bd7b-b25a29353dd4","status":200,"url":"/681719d77679729b0d59b04d?t=1746715301959"},"timestamp":"2025-05-08T14:41:42.646Z"}
+{"level":"info","message":{"duration":"1587ms","method":"GET","requestId":"70fae4f1-7c00-4b7f-9324-b6c95f6883c1","status":200,"url":"/681719d77679729b0d59b04d?t=1746715301938"},"timestamp":"2025-05-08T14:41:43.878Z"}
+{"level":"info","message":{"duration":"1593ms","method":"GET","requestId":"cb7372e4-3e79-4d69-9d00-e961a9f05344","status":200,"url":"/681719d77679729b0d59b04d?t=1746715301935"},"timestamp":"2025-05-08T14:41:43.881Z"}
+{"level":"info","message":{"duration":"720ms","method":"GET","requestId":"e4732389-6f4a-4973-a306-32f7771fd0e1","status":200,"url":"/products"},"timestamp":"2025-05-08T14:42:08.994Z"}
+{"level":"info","message":{"duration":"539ms","method":"GET","requestId":"2283b093-919b-439d-b92c-5627865b0057","status":304,"url":"/products"},"timestamp":"2025-05-08T14:42:09.535Z"}
+{"level":"info","message":{"duration":"364ms","method":"GET","requestId":"f75716fd-485a-4637-9676-70a36e13000f","status":200,"url":"/681719d77679729b0d59b04d?t=1746715330303"},"timestamp":"2025-05-08T14:42:10.685Z"}
+{"level":"info","message":{"duration":"367ms","method":"GET","requestId":"158e4dd9-36a1-421c-9580-a2fef603095c","status":200,"url":"/681719d77679729b0d59b04d?t=1746715330304"},"timestamp":"2025-05-08T14:42:10.691Z"}
+{"level":"info","message":{"duration":"367ms","method":"GET","requestId":"7d15d434-f661-4b19-b7a7-836b18bc45cf","status":200,"url":"/681719d77679729b0d59b04d?t=1746715330305"},"timestamp":"2025-05-08T14:42:10.695Z"}
+{"level":"info","message":{"duration":"371ms","method":"GET","requestId":"82ae6a61-71af-4774-95be-dfad5affd1d0","status":200,"url":"/681719d77679729b0d59b04d?t=1746715668575"},"timestamp":"2025-05-08T14:47:49.278Z"}
+{"level":"info","message":{"duration":"372ms","method":"GET","requestId":"52f73c94-b8ad-4ec9-bbc4-9b6d2f42f7cb","status":200,"url":"/681719d77679729b0d59b04d?t=1746715668576"},"timestamp":"2025-05-08T14:47:49.284Z"}
+{"level":"info","message":{"duration":"402ms","method":"GET","requestId":"b7cc239f-20db-43d5-bf0c-881b7b77da67","status":200,"url":"/681719d77679729b0d59b04d?t=1746716243569"},"timestamp":"2025-05-08T14:57:24.297Z"}
+{"level":"info","message":{"duration":"406ms","method":"GET","requestId":"b6adf6d0-b9fc-45cb-98bd-cfe87b161b1a","status":200,"url":"/681719d77679729b0d59b04d?t=1746716243570"},"timestamp":"2025-05-08T14:57:24.305Z"}
+{"level":"info","message":{"duration":"375ms","method":"GET","requestId":"033dd064-7432-459a-ae0c-fa100b7bd629","status":200,"url":"/681719d77679729b0d59b04d?t=1746716244231"},"timestamp":"2025-05-08T14:57:24.648Z"}
+{"level":"info","message":{"duration":"374ms","method":"GET","requestId":"e62e7ec0-8c09-428a-8647-6913f4529e00","status":200,"url":"/681719d77679729b0d59b04d?t=1746716257523"},"timestamp":"2025-05-08T14:57:38.242Z"}
+{"level":"info","message":{"duration":"373ms","method":"GET","requestId":"3c0f5050-5c19-463b-92bb-241a44198151","status":200,"url":"/681719d77679729b0d59b04d?t=1746716257525"},"timestamp":"2025-05-08T14:57:38.246Z"}
+{"level":"info","message":{"duration":"386ms","method":"GET","requestId":"eae3dee5-5816-4cdf-9841-4a79b1451e8a","status":200,"url":"/681719d77679729b0d59b04d?t=1746716257520"},"timestamp":"2025-05-08T14:57:38.248Z"}
+{"level":"info","message":{"duration":"374ms","method":"GET","requestId":"84f4a88f-9c4a-43e0-a1d1-721563971f3d","status":200,"url":"/681719d77679729b0d59b04d?t=1746716257526"},"timestamp":"2025-05-08T14:57:38.251Z"}
+{"level":"info","message":{"duration":"621ms","method":"GET","requestId":"7b3446c8-fa5b-40a9-8d31-ef3c75aa7c69","status":304,"url":"/products"},"timestamp":"2025-05-08T14:59:11.203Z"}
+{"level":"info","message":{"duration":"601ms","method":"GET","requestId":"30295329-9cd4-4a94-8650-f7c2987f1f13","status":304,"url":"/products"},"timestamp":"2025-05-08T14:59:11.806Z"}
+{"level":"info","message":{"duration":"542ms","method":"GET","requestId":"705b12ba-640e-4907-9652-456d88cf045f","status":304,"url":"/products"},"timestamp":"2025-05-08T14:59:14.061Z"}
+{"level":"info","message":{"duration":"538ms","method":"GET","requestId":"1181e61e-6341-4c66-8701-a319c314705e","status":304,"url":"/products"},"timestamp":"2025-05-08T14:59:14.601Z"}
+{"level":"info","message":{"duration":"523ms","method":"GET","requestId":"de33097e-5ca9-4556-b7ac-a2cf29a118a3","status":200,"url":"/my-store"},"timestamp":"2025-05-08T14:59:14.692Z"}
+{"level":"info","message":{"duration":"4545ms","method":"POST","requestId":"93bcd2df-1882-44d2-b65d-9dfc88b32235","status":201,"url":"/products"},"timestamp":"2025-05-08T15:01:30.763Z"}
+{"level":"info","message":{"duration":"559ms","method":"GET","requestId":"0cc03fc7-9974-411e-94ef-88c9026e4d51","status":200,"url":"/products"},"timestamp":"2025-05-08T15:01:33.372Z"}
+{"level":"info","message":{"duration":"546ms","method":"GET","requestId":"b003ee5f-634a-425e-afb4-6da84994d2d3","status":304,"url":"/products"},"timestamp":"2025-05-08T15:01:33.920Z"}
+{"level":"info","message":{"duration":"389ms","method":"GET","requestId":"81dc5605-1316-4f60-87dd-295a86254b5a","status":200,"url":"/681cc74abc076072461fba1d?t=1746716496553"},"timestamp":"2025-05-08T15:01:36.973Z"}
+{"level":"info","message":{"duration":"396ms","method":"GET","requestId":"6138373d-6092-4f64-a2d3-e392cfbbc918","status":200,"url":"/681cc74abc076072461fba1d?t=1746716496552"},"timestamp":"2025-05-08T15:01:36.978Z"}
+{"level":"info","message":{"duration":"416ms","method":"GET","requestId":"2a6bb02f-c632-4a10-af53-ca5b975693a2","status":200,"url":"/681cc74abc076072461fba1d?t=1746716496554"},"timestamp":"2025-05-08T15:01:37.300Z"}
+{"level":"info","message":"Running with in-memory cache (Redis disabled)","timestamp":"2025-05-08T15:05:16.156Z"}
+{"level":"info","message":"🚀 Server started on port 8000","timestamp":"2025-05-08T15:05:16.177Z"}
+{"level":"info","message":"📚 API Documentation available at http://[YOUR_IP]:8000/api-docs","timestamp":"2025-05-08T15:05:16.178Z"}
+{"level":"info","message":"✅ Successfully connected to MongoDB","timestamp":"2025-05-08T15:05:18.344Z"}
+{"level":"info","message":"Running with in-memory cache (Redis disabled)","timestamp":"2025-05-09T02:45:23.468Z"}
+{"level":"info","message":"🚀 Server started on port 8000","timestamp":"2025-05-09T02:45:23.522Z"}
+{"level":"info","message":"📚 API Documentation available at http://[YOUR_IP]:8000/api-docs","timestamp":"2025-05-09T02:45:23.524Z"}
+{"level":"info","message":{"duration":"22ms","method":"GET","requestId":"892efe71-f3e7-459a-8d7b-2462d8dd32eb","status":401,"url":"/my-store"},"timestamp":"2025-05-09T02:45:23.804Z"}
+{"level":"info","message":"✅ Successfully connected to MongoDB","timestamp":"2025-05-09T02:45:26.677Z"}
+{"level":"info","message":{"duration":"3441ms","method":"POST","requestId":"aebca72c-43d1-4615-9427-6c33674c3dac","status":200,"url":"/refresh-token"},"timestamp":"2025-05-09T02:45:27.911Z"}
+{"level":"info","message":{"duration":"723ms","method":"GET","requestId":"7407d502-ea40-4d85-a1d2-c99cfa9b39f4","status":200,"url":"/my-store"},"timestamp":"2025-05-09T02:45:28.654Z"}
+{"level":"info","message":{"duration":"667ms","method":"GET","requestId":"f38d302b-3100-4ded-87ad-0a8857e27c99","status":200,"url":"/products"},"timestamp":"2025-05-09T02:45:31.462Z"}
+{"level":"info","message":{"duration":"544ms","method":"GET","requestId":"3cd32269-e28e-429f-a67d-1d7c076d852b","status":304,"url":"/products"},"timestamp":"2025-05-09T02:45:32.010Z"}
+{"level":"info","message":{"duration":"435ms","method":"GET","requestId":"b120a0c0-c885-4817-8cb2-41d0c76a0db4","status":200,"url":"/681cc74abc076072461fba1d?t=1746758732545"},"timestamp":"2025-05-09T02:45:33.024Z"}
+{"level":"info","message":{"duration":"540ms","method":"GET","requestId":"06a0af03-f8d5-4e6f-af99-642f53690ae6","status":200,"url":"/681cc74abc076072461fba1d?t=1746758732550"},"timestamp":"2025-05-09T02:45:33.428Z"}
+{"level":"info","message":{"duration":"1444ms","method":"GET","requestId":"de78494e-5efe-429b-b409-cd7ae303dae0","status":200,"url":"/681cc74abc076072461fba1d?t=1746758732547"},"timestamp":"2025-05-09T02:45:34.040Z"}
+{"level":"info","message":{"duration":"1444ms","method":"GET","requestId":"9383d4c1-96fb-4e33-b4d3-50fb9bb86faf","status":200,"url":"/681cc74abc076072461fba1d?t=1746758732549"},"timestamp":"2025-05-09T02:45:34.046Z"}
+{"level":"info","message":{"duration":"446ms","method":"GET","requestId":"246aae6e-02d4-4a10-b04f-86dd1a3760ce","status":200,"url":"/681cc74abc076072461fba1d?t=1746758751888"},"timestamp":"2025-05-09T02:45:52.684Z"}
+{"level":"info","message":{"duration":"447ms","method":"GET","requestId":"b5975dea-c069-4288-b354-7594400163a9","status":200,"url":"/681cc74abc076072461fba1d?t=1746758751893"},"timestamp":"2025-05-09T02:45:52.697Z"}
+{"level":"info","message":{"duration":"1549ms","method":"GET","requestId":"ea75f4d2-3981-41e7-94d8-b397202aed2a","status":200,"url":"/681cc74abc076072461fba1d?t=1746758751896"},"timestamp":"2025-05-09T02:45:53.806Z"}
+{"level":"info","message":{"duration":"1553ms","method":"GET","requestId":"15209454-d198-4b16-8b33-7ae7952548e3","status":200,"url":"/681cc74abc076072461fba1d?t=1746758751897"},"timestamp":"2025-05-09T02:45:53.816Z"}
+{"level":"info","message":{"duration":"406ms","method":"GET","requestId":"d69ca84e-1f56-4a2d-96e0-11f9ddb56a10","status":200,"url":"/681cc74abc076072461fba1d?t=1746759167648"},"timestamp":"2025-05-09T02:52:48.432Z"}
+{"level":"info","message":"Running with in-memory cache (Redis disabled)","timestamp":"2025-05-09T02:55:19.894Z"}
+{"level":"info","message":"🚀 Server started on port 8000","timestamp":"2025-05-09T02:55:20.007Z"}
+{"level":"info","message":"📚 API Documentation available at http://[YOUR_IP]:8000/api-docs","timestamp":"2025-05-09T02:55:20.011Z"}
+{"level":"info","message":"✅ Successfully connected to MongoDB","timestamp":"2025-05-09T02:55:22.548Z"}
+{"level":"info","message":"Running with in-memory cache (Redis disabled)","timestamp":"2025-05-09T02:55:46.082Z"}
+{"level":"info","message":"🚀 Server started on port 8000","timestamp":"2025-05-09T02:55:46.134Z"}
+{"level":"info","message":"📚 API Documentation available at http://[YOUR_IP]:8000/api-docs","timestamp":"2025-05-09T02:55:46.135Z"}
+{"level":"info","message":"✅ Successfully connected to MongoDB","timestamp":"2025-05-09T02:55:51.707Z"}
+{"level":"info","message":"Running with in-memory cache (Redis disabled)","timestamp":"2025-05-09T02:56:02.856Z"}
+{"level":"info","message":"🚀 Server started on port 8000","timestamp":"2025-05-09T02:56:02.904Z"}
+{"level":"info","message":"📚 API Documentation available at http://[YOUR_IP]:8000/api-docs","timestamp":"2025-05-09T02:56:02.906Z"}
+{"level":"info","message":"✅ Successfully connected to MongoDB","timestamp":"2025-05-09T02:56:05.140Z"}
+{"level":"info","message":{"duration":"389ms","method":"GET","requestId":"3148c491-28b5-438e-9dca-7811e6476809","status":200,"url":"/681cc74abc076072461fba1d?t=1746759372891"},"timestamp":"2025-05-09T02:56:13.626Z"}
+{"level":"info","message":{"duration":"536ms","method":"GET","requestId":"68bab3c4-0dac-4226-acd8-a43c1bd44d25","status":200,"url":"/681cc74abc076072461fba1d?t=1746759372898"},"timestamp":"2025-05-09T02:56:13.798Z"}
+{"level":"info","message":{"duration":"1350ms","method":"GET","requestId":"833a6df6-dfc8-450b-827d-fce8b7e6c103","status":200,"url":"/681cc74abc076072461fba1d?t=1746759372894"},"timestamp":"2025-05-09T02:56:14.598Z"}
+{"level":"info","message":{"duration":"1359ms","method":"GET","requestId":"e225c809-6b2a-468a-a530-532897aa44e1","status":200,"url":"/681cc74abc076072461fba1d?t=1746759372897"},"timestamp":"2025-05-09T02:56:14.612Z"}
+{"level":"info","message":"Running with in-memory cache (Redis disabled)","timestamp":"2025-05-09T02:58:04.778Z"}
+{"level":"info","message":"🚀 Server started on port 8000","timestamp":"2025-05-09T02:58:04.819Z"}
+{"level":"info","message":"📚 API Documentation available at http://[YOUR_IP]:8000/api-docs","timestamp":"2025-05-09T02:58:04.820Z"}
+{"level":"info","message":"✅ Successfully connected to MongoDB","timestamp":"2025-05-09T02:58:07.613Z"}
+{"level":"info","message":"Running with in-memory cache (Redis disabled)","timestamp":"2025-05-09T02:58:30.324Z"}
+{"level":"info","message":"🚀 Server started on port 8000","timestamp":"2025-05-09T02:58:30.423Z"}
+{"level":"info","message":"📚 API Documentation available at http://[YOUR_IP]:8000/api-docs","timestamp":"2025-05-09T02:58:30.426Z"}
+{"level":"info","message":"✅ Successfully connected to MongoDB","timestamp":"2025-05-09T02:58:44.691Z"}
+{"level":"info","message":"Running with in-memory cache (Redis disabled)","timestamp":"2025-05-09T02:58:57.208Z"}
+{"level":"info","message":"🚀 Server started on port 8000","timestamp":"2025-05-09T02:58:57.255Z"}
+{"level":"info","message":"📚 API Documentation available at http://[YOUR_IP]:8000/api-docs","timestamp":"2025-05-09T02:58:57.256Z"}
+{"level":"info","message":"✅ Successfully connected to MongoDB","timestamp":"2025-05-09T02:59:04.761Z"}
+{"level":"info","message":{"duration":"574ms","method":"GET","requestId":"517b0382-74d0-4336-b1fb-d3b749208251","status":200,"url":"/681cc74abc076072461fba1d?t=1746759709891"},"timestamp":"2025-05-09T03:01:50.887Z"}
+{"level":"info","message":"Running with in-memory cache (Redis disabled)","timestamp":"2025-05-09T03:01:59.844Z"}
+{"level":"info","message":"🚀 Server started on port 8000","timestamp":"2025-05-09T03:01:59.891Z"}
+{"level":"info","message":"📚 API Documentation available at http://[YOUR_IP]:8000/api-docs","timestamp":"2025-05-09T03:01:59.892Z"}
+{"level":"info","message":"✅ Successfully connected to MongoDB","timestamp":"2025-05-09T03:02:05.191Z"}
+{"level":"info","message":{"duration":"609ms","method":"GET","requestId":"7ced0e90-669a-4e9f-a99b-2cb5dd41e607","status":200,"url":"/681cc74abc076072461fba1d?t=1746759774712"},"timestamp":"2025-05-09T03:02:55.701Z"}
+{"level":"info","message":{"duration":"421ms","method":"GET","requestId":"97b1a5a1-c4d0-4d7b-b72a-1ef327628b8f","status":200,"url":"/681cc74abc076072461fba1d?t=1746759778601"},"timestamp":"2025-05-09T03:02:59.050Z"}
+{"level":"info","message":{"duration":"1964ms","method":"GET","requestId":"0039f35f-cb89-4e8f-9c7f-9d0d9776231f","status":200,"url":"/681cc74abc076072461fba1d?t=1746759778600"},"timestamp":"2025-05-09T03:03:00.586Z"}
+{"level":"info","message":{"duration":"745ms","method":"PATCH","requestId":"1daffa09-ab1b-4f57-bf2e-a029403cd75c","status":200,"url":"/products/681cc74abc076072461fba1d"},"timestamp":"2025-05-09T03:03:16.773Z"}
+{"level":"info","message":{"duration":"508ms","method":"GET","requestId":"a4db4cab-b800-41c9-922a-17b74fbb1634","status":200,"url":"/681cc74abc076072461fba1d?t=1746759797781"},"timestamp":"2025-05-09T03:03:18.307Z"}
+{"level":"info","message":{"duration":"397ms","method":"GET","requestId":"cd10567d-acd9-4f1f-a593-e5146782363c","status":200,"url":"/681cc74abc076072461fba1d?t=1746759801353"},"timestamp":"2025-05-09T03:03:21.870Z"}
+{"level":"info","message":{"duration":"380ms","method":"GET","requestId":"bd92ae35-3dd7-4d39-8d89-26918032ca91","status":200,"url":"/681cc74abc076072461fba1d?t=1746759801357"},"timestamp":"2025-05-09T03:03:21.895Z"}
+{"level":"info","message":{"duration":"450ms","method":"GET","requestId":"0b85fe44-3785-4906-8179-8c25f7caaaeb","status":200,"url":"/681cc74abc076072461fba1d?t=1746759801466"},"timestamp":"2025-05-09T03:03:22.299Z"}
+{"level":"info","message":{"duration":"1910ms","method":"GET","requestId":"eca1a459-ccb5-4de8-baaa-fdc865251700","status":200,"url":"/681cc74abc076072461fba1d?t=1746759801366"},"timestamp":"2025-05-09T03:03:23.740Z"}
+{"level":"info","message":{"duration":"1939ms","method":"GET","requestId":"940e6a66-5f0c-4beb-b557-e0f7172efb9a","status":200,"url":"/681cc74abc076072461fba1d?t=1746759801364"},"timestamp":"2025-05-09T03:03:23.755Z"}
+{"level":"info","message":{"duration":"685ms","method":"GET","requestId":"46b41502-f2b4-4a37-9e98-5b6f757fd8a4","status":200,"url":"/products"},"timestamp":"2025-05-09T03:03:31.113Z"}
+{"level":"info","message":{"duration":"705ms","method":"GET","requestId":"09656acc-210f-4dcc-8a17-ae7f428eb138","status":304,"url":"/products"},"timestamp":"2025-05-09T03:03:31.822Z"}
+{"level":"info","message":{"duration":"369ms","method":"GET","requestId":"a71b54af-25cf-4575-b68a-54755ae6ef4d","status":200,"url":"/681719d77679729b0d59b04d?t=1746759815585"},"timestamp":"2025-05-09T03:03:35.992Z"}
+{"level":"info","message":{"duration":"390ms","method":"GET","requestId":"d3536b0a-79c4-4dfd-8cb3-05d8a6decce8","status":200,"url":"/681719d77679729b0d59b04d?t=1746759815584"},"timestamp":"2025-05-09T03:03:36.010Z"}
+{"level":"info","message":{"duration":"394ms","method":"GET","requestId":"e0834922-e718-40d1-abeb-c3c75c2ff06c","status":200,"url":"/681719d77679729b0d59b04d?t=1746759815587"},"timestamp":"2025-05-09T03:03:36.021Z"}
+{"level":"info","message":{"duration":"1447ms","method":"GET","requestId":"1980eb4b-a72a-486e-aebc-b0dfc7789885","status":200,"url":"/681719d77679729b0d59b04d?t=1746759815589"},"timestamp":"2025-05-09T03:03:37.373Z"}
+{"level":"info","message":{"duration":"458ms","method":"GET","requestId":"acf4b729-3f74-4af5-9d43-f6c8fdda9f46","status":200,"url":"/681719d77679729b0d59b04d?t=1746759819628"},"timestamp":"2025-05-09T03:03:40.114Z"}
+{"level":"info","message":{"duration":"465ms","method":"GET","requestId":"d83cb278-c23b-4a3e-b444-05496fb7d29d","status":200,"url":"/681719d77679729b0d59b04d?t=1746759819629"},"timestamp":"2025-05-09T03:03:40.124Z"}
+{"level":"info","message":{"duration":"707ms","method":"PATCH","requestId":"fd133a22-ce1b-418e-957d-58ef720e08e4","status":200,"url":"/products/681719d77679729b0d59b04d"},"timestamp":"2025-05-09T03:03:52.505Z"}
+{"level":"info","message":{"duration":"401ms","method":"GET","requestId":"de5f4a94-292e-474a-99a2-5ca6ff97c8a1","status":200,"url":"/681719d77679729b0d59b04d?t=1746759833524"},"timestamp":"2025-05-09T03:03:53.939Z"}
+{"level":"info","message":{"duration":"382ms","method":"GET","requestId":"915977a9-ff95-4d40-a8d6-6a5a00dd6486","status":200,"url":"/681719d77679729b0d59b04d?t=1746759836974"},"timestamp":"2025-05-09T03:03:57.502Z"}
+{"level":"info","message":{"duration":"392ms","method":"GET","requestId":"d73d9c26-13c4-425a-841b-8d2012e9e626","status":200,"url":"/681719d77679729b0d59b04d?t=1746759836979"},"timestamp":"2025-05-09T03:03:57.521Z"}
+{"level":"info","message":{"duration":"363ms","method":"GET","requestId":"6aae7c9b-e217-4a0f-b86d-4842409223cc","status":200,"url":"/681719d77679729b0d59b04d?t=1746759836986"},"timestamp":"2025-05-09T03:03:57.774Z"}
+{"level":"info","message":{"duration":"375ms","method":"GET","requestId":"39d4bee0-5f5d-4daf-8b4e-d8e0dc75a6ed","status":200,"url":"/681719d77679729b0d59b04d?t=1746759836988"},"timestamp":"2025-05-09T03:03:57.795Z"}
+{"level":"info","message":{"duration":"387ms","method":"GET","requestId":"5501a31e-a16c-473b-b893-6091fd875582","status":200,"url":"/681719d77679729b0d59b04d?t=1746759837085"},"timestamp":"2025-05-09T03:03:57.813Z"}
+{"level":"info","message":{"duration":"716ms","method":"GET","requestId":"7d12dc3c-503f-4914-a9ef-13ec3cde3223","status":200,"url":"/products"},"timestamp":"2025-05-09T03:04:00.804Z"}
+{"level":"info","message":{"duration":"608ms","method":"GET","requestId":"b99ed616-a9e9-4602-9c9f-e6272ed5127c","status":304,"url":"/products"},"timestamp":"2025-05-09T03:04:01.418Z"}
+{"level":"info","message":{"duration":"657ms","method":"GET","requestId":"bb2e7e7d-eee2-496f-aea4-40dac0b7f143","status":200,"url":"/my-store"},"timestamp":"2025-05-09T03:04:02.958Z"}
+{"level":"info","message":{"duration":"8042ms","method":"POST","requestId":"f1e34be7-0b68-46d3-bcd5-0fb9616bfc9f","status":201,"url":"/products"},"timestamp":"2025-05-09T03:04:54.972Z"}
+{"level":"info","message":{"duration":"661ms","method":"GET","requestId":"2405a563-2d67-4501-8860-ab27edf11c09","status":200,"url":"/products"},"timestamp":"2025-05-09T03:04:57.735Z"}
+{"level":"info","message":{"duration":"543ms","method":"GET","requestId":"004fc72a-6de5-463b-b841-e9795f31c2f7","status":304,"url":"/products"},"timestamp":"2025-05-09T03:04:58.282Z"}
+{"level":"info","message":{"duration":"355ms","method":"GET","requestId":"ff6cf3e2-acfe-416b-a3b5-a40be687796d","status":200,"url":"/681d70d6d96562af903a79cf?t=1746759899352"},"timestamp":"2025-05-09T03:04:59.755Z"}
+{"level":"info","message":{"duration":"357ms","method":"GET","requestId":"8f578977-aa0b-491c-8da3-b4e3a3ba8993","status":200,"url":"/681d70d6d96562af903a79cf?t=1746759899353"},"timestamp":"2025-05-09T03:04:59.760Z"}
+{"level":"info","message":{"duration":"368ms","method":"GET","requestId":"92c4cec5-f8c9-4ac8-a4c4-7199b5646fa5","status":200,"url":"/681d70d6d96562af903a79cf?t=1746759899351"},"timestamp":"2025-05-09T03:04:59.764Z"}
+{"level":"info","message":{"duration":"392ms","method":"GET","requestId":"601599cd-f543-435e-a797-c21b34422fcf","status":200,"url":"/681d70d6d96562af903a79cf?t=1746759899354"},"timestamp":"2025-05-09T03:05:00.088Z"}
+{"level":"info","message":{"duration":"650ms","method":"GET","requestId":"ea4553bc-85d4-40bd-9d72-c8e00b8ae4ae","status":200,"url":"/products"},"timestamp":"2025-05-09T03:05:02.861Z"}
+{"level":"info","message":{"duration":"707ms","method":"GET","requestId":"c2ee4d9d-6cbf-4779-98f7-cf4725d9dc87","status":304,"url":"/products"},"timestamp":"2025-05-09T03:05:03.572Z"}
+{"level":"info","message":{"duration":"633ms","method":"GET","requestId":"c31ef59f-8309-4201-bd8c-2ba8ca993c87","status":200,"url":"/products"},"timestamp":"2025-05-09T03:05:21.600Z"}
+{"level":"info","message":{"duration":"604ms","method":"GET","requestId":"b886ee6b-9a4c-43cf-abe6-66059b7053bf","status":304,"url":"/products"},"timestamp":"2025-05-09T03:05:22.210Z"}
+{"level":"info","message":{"duration":"549ms","method":"POST","requestId":"490276b3-731f-4ca9-8c75-043fbecc5b52","status":200,"url":"/login"},"timestamp":"2025-05-09T03:34:22.767Z"}
+{"level":"info","message":{"duration":"160ms","method":"GET","requestId":"8a0d7379-5b0d-4d74-8969-5837dbc594b7","status":200,"url":"/"},"timestamp":"2025-05-09T03:34:23.118Z"}
+{"level":"info","message":{"duration":"165ms","method":"GET","requestId":"47db80b5-87ac-43b1-b51b-eb0d2654578d","status":200,"url":"/"},"timestamp":"2025-05-09T03:34:23.319Z"}
+{"level":"info","message":{"duration":"241ms","method":"POST","requestId":"39363f01-5d44-4dd3-bb25-d972afcafbcc","status":200,"url":"/logout"},"timestamp":"2025-05-09T03:34:37.317Z"}
+{"level":"info","message":{"duration":"400ms","method":"POST","requestId":"63d1d1c1-d08e-44c8-ab65-26305204ad11","status":200,"url":"/login"},"timestamp":"2025-05-09T03:34:42.150Z"}
+{"level":"info","message":{"duration":"251ms","method":"GET","requestId":"3c39ef23-a95e-49e6-ab58-0256c135f42c","status":200,"url":"/my-store"},"timestamp":"2025-05-09T03:34:42.508Z"}
+{"level":"info","message":{"duration":"241ms","method":"GET","requestId":"851399bb-bb57-4512-90df-140abcfbb948","status":200,"url":"/products"},"timestamp":"2025-05-09T03:34:44.623Z"}
+{"level":"info","message":{"duration":"242ms","method":"GET","requestId":"bb4b5529-4330-44cd-acc9-dfd960ce718d","status":304,"url":"/products"},"timestamp":"2025-05-09T03:34:44.870Z"}
+{"level":"info","message":{"duration":"4606ms","method":"POST","requestId":"9b17077d-4fef-4227-ba17-2af4b71f5af9","status":201,"url":"/products"},"timestamp":"2025-05-09T03:36:34.395Z"}
+{"level":"info","message":{"duration":"236ms","method":"GET","requestId":"4097e3d0-4621-4abb-be0e-4de44f70e258","status":200,"url":"/products"},"timestamp":"2025-05-09T03:36:47.724Z"}
+{"level":"info","message":{"duration":"245ms","method":"GET","requestId":"d00c7e86-73b4-4857-a885-f8c2a2a30ac9","status":304,"url":"/products"},"timestamp":"2025-05-09T03:36:47.975Z"}
+{"level":"info","message":{"duration":"133ms","method":"GET","requestId":"0f7d660a-f37b-49c8-8060-e66c771608e4","status":200,"url":"/681d7842d96562af903a7a2e?t=1746761809704"},"timestamp":"2025-05-09T03:36:49.875Z"}
+{"level":"info","message":{"duration":"158ms","method":"GET","requestId":"e5cec806-80b9-49c9-9883-5c258f9d587d","status":200,"url":"/681d7842d96562af903a7a2e?t=1746761809702"},"timestamp":"2025-05-09T03:36:49.895Z"}
+{"level":"info","message":{"duration":"162ms","method":"GET","requestId":"68e08801-788b-42bd-a569-acb8e5b743a6","status":200,"url":"/681d7842d96562af903a7a2e?t=1746761809707"},"timestamp":"2025-05-09T03:36:50.042Z"}
+{"level":"info","message":{"duration":"158ms","method":"GET","requestId":"586371ea-6ec4-47bc-84e0-36896df59226","status":200,"url":"/681d7842d96562af903a7a2e?t=1746761809708"},"timestamp":"2025-05-09T03:36:50.061Z"}
+{"level":"info","message":{"duration":"252ms","method":"GET","requestId":"0d9e56da-3af6-4397-bac4-f0e361d6281e","status":200,"url":"/products"},"timestamp":"2025-05-09T03:36:57.013Z"}
+{"level":"info","message":{"duration":"240ms","method":"GET","requestId":"d41c05af-d775-4dfb-88ea-81e80bc9bcc7","status":304,"url":"/products"},"timestamp":"2025-05-09T03:36:57.258Z"}
+{"level":"info","message":{"duration":"250ms","method":"GET","requestId":"b9a4f9d2-58ce-4a81-8765-6bb146a870f4","status":200,"url":"/products"},"timestamp":"2025-05-09T03:37:18.793Z"}
+{"level":"info","message":{"duration":"257ms","method":"GET","requestId":"66d3d307-3843-4b25-b7c6-1682e7e9f957","status":304,"url":"/products"},"timestamp":"2025-05-09T03:37:19.055Z"}
+{"level":"info","message":{"duration":"71ms","method":"GET","requestId":"21225f5e-7438-4fd8-9f6a-624853032a34","status":200,"url":"/681d7842d96562af903a7a2e?t=1746761840200"},"timestamp":"2025-05-09T03:37:20.309Z"}
+{"level":"info","message":{"duration":"148ms","method":"GET","requestId":"d30046d9-7c02-4ee1-8d62-118739513775","status":200,"url":"/681d7842d96562af903a7a2e?t=1746761840197"},"timestamp":"2025-05-09T03:37:20.377Z"}
+{"level":"info","message":{"duration":"154ms","method":"GET","requestId":"1b6491f1-e791-459f-bea1-2ed75a61de72","status":200,"url":"/681d7842d96562af903a7a2e?t=1746761840198"},"timestamp":"2025-05-09T03:37:20.387Z"}
+{"level":"info","message":{"duration":"77ms","method":"GET","requestId":"c55f8cae-3cf0-498a-aea4-72d07f66b80b","status":200,"url":"/681d7842d96562af903a7a2e?t=1746761840202"},"timestamp":"2025-05-09T03:37:20.393Z"}
+{"level":"info","message":{"duration":"117ms","method":"GET","requestId":"47e7d790-ca72-4e25-b7c1-9b64967c7842","status":200,"url":"/681d7842d96562af903a7a2e?t=1746761926654"},"timestamp":"2025-05-09T03:38:47.104Z"}
+{"level":"info","message":{"duration":"128ms","method":"GET","requestId":"41bae4d3-83a2-482c-ba14-4ec2af87e531","status":200,"url":"/681d7842d96562af903a7a2e?t=1746761926657"},"timestamp":"2025-05-09T03:38:47.121Z"}
+{"level":"info","message":{"duration":"166ms","method":"GET","requestId":"dec9cd7e-2f04-424d-905b-96b1d031c045","status":200,"url":"/681d7842d96562af903a7a2e?t=1746762478612"},"timestamp":"2025-05-09T03:47:59.146Z"}
+{"level":"info","message":{"duration":"172ms","method":"GET","requestId":"bfd8af22-8235-47ce-a8f6-2aa11aa9b809","status":200,"url":"/681d7842d96562af903a7a2e?t=1746762478617"},"timestamp":"2025-05-09T03:47:59.163Z"}
+{"level":"info","message":{"duration":"192ms","method":"GET","requestId":"f53f2011-5d76-48eb-8232-3ce4b6d2fe3a","status":200,"url":"/681d7842d96562af903a7a2e?t=1746762482193"},"timestamp":"2025-05-09T03:48:02.499Z"}
+{"level":"info","message":{"duration":"161ms","method":"GET","requestId":"9723f892-8828-49b8-8ac9-1ae78d013ee2","status":200,"url":"/681d7842d96562af903a7a2e?t=1746762493333"},"timestamp":"2025-05-09T03:48:13.524Z"}
+{"level":"info","message":{"duration":"162ms","method":"GET","requestId":"49cc5244-df38-4496-8f8d-6b345e4a0162","status":200,"url":"/681d7842d96562af903a7a2e?t=1746762493337"},"timestamp":"2025-05-09T03:48:13.690Z"}
+{"level":"info","message":{"duration":"122ms","method":"GET","requestId":"fa716d06-f3c2-4ad7-bc4b-cbcb287d5147","status":200,"url":"/681d7842d96562af903a7a2e?t=1746762493341"},"timestamp":"2025-05-09T03:48:13.789Z"}
+{"level":"info","message":{"duration":"123ms","method":"GET","requestId":"cbbe7a92-a1a4-4760-b61d-56ebafc69431","status":200,"url":"/681d7842d96562af903a7a2e?t=1746762493342"},"timestamp":"2025-05-09T03:48:13.799Z"}
+{"level":"info","message":{"duration":"240ms","method":"GET","requestId":"af0f2215-081a-4629-b6e8-6fcf066e47d0","status":200,"url":"/products"},"timestamp":"2025-05-09T03:48:18.141Z"}
+{"level":"info","message":{"duration":"247ms","method":"GET","requestId":"b5a80491-4e69-4043-9ba5-206045ae1588","status":304,"url":"/products"},"timestamp":"2025-05-09T03:48:18.392Z"}
+{"level":"info","message":{"duration":"4ms","method":"GET","requestId":"7f8200cb-4206-48d7-98c4-dadd3226be0a","status":304,"url":"/my-store"},"timestamp":"2025-05-09T03:48:19.810Z"}
+{"level":"info","message":{"duration":"4ms","method":"GET","requestId":"ad1069a7-1cb6-44fb-ac81-fd496ff3136e","status":304,"url":"/my-store"},"timestamp":"2025-05-09T03:48:19.819Z"}
+{"level":"info","message":{"duration":"3ms","method":"GET","requestId":"028d8488-1020-4734-bd9e-5fcb50763152","status":304,"url":"/my-store"},"timestamp":"2025-05-09T03:48:19.825Z"}
+{"level":"info","message":{"duration":"2ms","method":"GET","requestId":"796f912a-192a-433c-9c83-a00ed6d6abd4","status":304,"url":"/my-store"},"timestamp":"2025-05-09T03:48:19.830Z"}
+{"level":"info","message":{"duration":"246ms","method":"GET","requestId":"6eb4b1e2-de69-48cf-8954-484001100b5f","status":200,"url":"/my-store"},"timestamp":"2025-05-09T03:57:42.375Z"}
+{"level":"info","message":{"duration":"260ms","method":"GET","requestId":"5ca73d6d-115f-439c-84fb-acd901ae8cae","status":200,"url":"/products"},"timestamp":"2025-05-09T04:02:52.090Z"}
+{"level":"info","message":{"duration":"241ms","method":"GET","requestId":"ade06c62-ba7b-4027-97de-f070643646cf","status":304,"url":"/products"},"timestamp":"2025-05-09T04:02:52.337Z"}
+{"level":"info","message":{"duration":"89ms","method":"GET","requestId":"1ab1c7ab-b88a-42b3-b97e-b3f2b3ec5a3b","status":200,"url":"/681d7842d96562af903a7a2e?t=1746763375687"},"timestamp":"2025-05-09T04:02:55.818Z"}
+{"level":"info","message":{"duration":"180ms","method":"GET","requestId":"ba816b6c-6bca-45a4-a106-7ffcec2aa798","status":200,"url":"/681d7842d96562af903a7a2e?t=1746763375685"},"timestamp":"2025-05-09T04:02:55.904Z"}
+{"level":"info","message":{"duration":"195ms","method":"GET","requestId":"0c490af7-85e0-41cc-907d-9494ce8ed6a2","status":200,"url":"/681d7842d96562af903a7a2e?t=1746763375683"},"timestamp":"2025-05-09T04:02:55.915Z"}
+{"level":"info","message":{"duration":"105ms","method":"GET","requestId":"a6b4d109-622d-454f-95ac-74e80afc5a1e","status":200,"url":"/681d7842d96562af903a7a2e?t=1746763375688"},"timestamp":"2025-05-09T04:02:55.928Z"}
+{"level":"info","message":{"duration":"160ms","method":"DELETE","requestId":"1e1f92bd-82bb-49f2-8d7b-1716189bdf75","status":200,"url":"/products/681d7842d96562af903a7a2e"},"timestamp":"2025-05-09T04:02:59.645Z"}
+{"level":"info","message":{"duration":"6ms","method":"GET","requestId":"eeacd476-b0ee-411b-93a7-6f63ae685c00","status":304,"url":"/my-store"},"timestamp":"2025-05-09T04:02:59.865Z"}
+{"level":"info","message":{"duration":"123ms","method":"GET","requestId":"dea3ee59-556e-4684-9924-2dffe22fb7e2","status":200,"url":"/products"},"timestamp":"2025-05-09T04:03:12.553Z"}
+{"level":"info","message":{"duration":"150ms","method":"GET","requestId":"7c2bfeba-f596-4c22-9e82-39281cf311f2","status":304,"url":"/products"},"timestamp":"2025-05-09T04:03:12.710Z"}
+{"level":"info","message":{"duration":"123ms","method":"GET","requestId":"0614780a-6b25-4729-bee4-4dec065d3b9b","status":200,"url":"/products"},"timestamp":"2025-05-09T04:03:17.333Z"}
+{"level":"info","message":{"duration":"121ms","method":"GET","requestId":"a67220af-1148-473f-9698-5f44db5405fb","status":304,"url":"/products"},"timestamp":"2025-05-09T04:03:17.460Z"}
+{"level":"info","message":{"duration":"118ms","method":"GET","requestId":"dbb5eed4-b144-4f99-9bf7-50365c5b650a","status":200,"url":"/products"},"timestamp":"2025-05-09T04:03:23.218Z"}
+{"level":"info","message":{"duration":"125ms","method":"GET","requestId":"83df1a33-ac7a-4d3b-80fa-a213313bc67d","status":304,"url":"/products"},"timestamp":"2025-05-09T04:03:23.349Z"}
+{"level":"info","message":"Running with in-memory cache (Redis disabled)","timestamp":"2025-05-09T04:05:29.726Z"}
+{"level":"info","message":"🚀 Server started on port 8000","timestamp":"2025-05-09T04:05:29.781Z"}
+{"level":"info","message":"📚 API Documentation available at http://[YOUR_IP]:8000/api-docs","timestamp":"2025-05-09T04:05:29.782Z"}
+{"level":"info","message":"✅ Successfully connected to MongoDB","timestamp":"2025-05-09T04:05:36.834Z"}
+{"level":"info","message":"Running with in-memory cache (Redis disabled)","timestamp":"2025-05-09T04:06:47.278Z"}
+{"level":"info","message":"🚀 Server started on port 8000","timestamp":"2025-05-09T04:06:47.312Z"}
+{"level":"info","message":"📚 API Documentation available at http://[YOUR_IP]:8000/api-docs","timestamp":"2025-05-09T04:06:47.313Z"}
+{"level":"info","message":"✅ Successfully connected to MongoDB","timestamp":"2025-05-09T04:06:53.893Z"}
+{"level":"info","message":"Running with in-memory cache (Redis disabled)","timestamp":"2025-05-09T04:07:35.927Z"}
+{"level":"info","message":"🚀 Server started on port 8000","timestamp":"2025-05-09T04:07:35.969Z"}
+{"level":"info","message":"📚 API Documentation available at http://[YOUR_IP]:8000/api-docs","timestamp":"2025-05-09T04:07:35.970Z"}
+{"level":"info","message":"✅ Successfully connected to MongoDB","timestamp":"2025-05-09T04:07:39.705Z"}
+{"level":"info","message":{"duration":"3973ms","method":"GET","requestId":"f72d8867-0ed3-4823-a780-75e783a899fe","status":200,"url":"/my-store"},"timestamp":"2025-05-09T04:07:40.177Z"}
+{"level":"info","message":{"duration":"251ms","method":"GET","requestId":"4fd0aaea-4789-471c-99f3-b766338c79b2","status":200,"url":"/products"},"timestamp":"2025-05-09T04:07:43.689Z"}
+{"level":"info","message":{"duration":"242ms","method":"GET","requestId":"9b4df969-8c2f-4c0f-ab77-38fbcdf8c042","status":304,"url":"/products"},"timestamp":"2025-05-09T04:07:43.933Z"}
+{"level":"info","message":{"duration":"597ms","method":"POST","requestId":"6f5a403d-8297-4b3e-88d8-4223b677c7a8","status":200,"url":"/login"},"timestamp":"2025-05-09T04:07:51.755Z"}
+{"level":"info","message":{"duration":"178ms","method":"GET","requestId":"0eff7f52-7459-4005-af16-a6726773f16e","status":200,"url":"/"},"timestamp":"2025-05-09T04:07:52.096Z"}
+{"level":"info","message":{"duration":"181ms","method":"GET","requestId":"966c4b05-1ab6-4984-9ffa-0e0e856c0ed2","status":304,"url":"/"},"timestamp":"2025-05-09T04:07:52.307Z"}
+{"level":"info","message":{"duration":"261ms","method":"POST","requestId":"3b6fa453-65b7-4086-bed9-2011d3f269e0","status":200,"url":"/logout"},"timestamp":"2025-05-09T04:08:08.823Z"}
+{"level":"info","message":{"duration":"478ms","method":"POST","requestId":"669efebc-f2a9-4b6b-b544-160ddf96478f","status":200,"url":"/login"},"timestamp":"2025-05-09T04:08:27.576Z"}
+{"level":"info","message":{"duration":"265ms","method":"GET","requestId":"a4f995f4-035b-4af0-92ec-7a259726ca48","status":200,"url":"/products"},"timestamp":"2025-05-09T04:08:30.317Z"}
+{"level":"info","message":{"duration":"268ms","method":"GET","requestId":"09517537-fb42-43c4-86a9-03cd16e56260","status":304,"url":"/products"},"timestamp":"2025-05-09T04:08:30.590Z"}
+{"level":"info","message":{"duration":"165ms","method":"GET","requestId":"0e0e2434-e9c6-4907-925c-726409aa1e07","status":200,"url":"/681d70d6d96562af903a79cf?t=1746763711889"},"timestamp":"2025-05-09T04:08:32.111Z"}
+{"level":"info","message":{"duration":"171ms","method":"GET","requestId":"eb2a0253-6cab-46b3-8b65-27c8f504b5ce","status":200,"url":"/681d70d6d96562af903a79cf?t=1746763711894"},"timestamp":"2025-05-09T04:08:32.289Z"}
+{"level":"info","message":{"duration":"584ms","method":"GET","requestId":"243f98f3-b3b9-4f98-b04e-e9ac0b6a15b7","status":200,"url":"/681d70d6d96562af903a79cf?t=1746763711896"},"timestamp":"2025-05-09T04:08:32.813Z"}
+{"level":"info","message":{"duration":"873ms","method":"GET","requestId":"867e8a44-c962-43b9-80b7-1b118a20ce43","status":200,"url":"/681d70d6d96562af903a79cf?t=1746763711891"},"timestamp":"2025-05-09T04:08:32.826Z"}
+{"level":"info","message":{"duration":"125ms","method":"GET","requestId":"dc83de37-2a8f-40f5-9436-914ad87e0cfa","status":200,"url":"/681d70d6d96562af903a79cf?t=1746763794620"},"timestamp":"2025-05-09T04:09:55.091Z"}
+{"level":"info","message":{"duration":"148ms","method":"GET","requestId":"c2e11b5e-1275-4bf5-bc5d-47d6c1d939e3","status":200,"url":"/681d70d6d96562af903a79cf?t=1746763794617"},"timestamp":"2025-05-09T04:09:55.120Z"}
+{"level":"info","message":{"duration":"133ms","method":"GET","requestId":"527f85de-97d6-4f2a-8ec7-062d7b73edbe","status":200,"url":"/681d70d6d96562af903a79cf?t=1746763994672"},"timestamp":"2025-05-09T04:13:15.166Z"}
+{"level":"info","message":{"duration":"168ms","method":"GET","requestId":"9fb56f9c-81a0-4699-b085-71054706da12","status":200,"url":"/681d70d6d96562af903a79cf?t=1746763994670"},"timestamp":"2025-05-09T04:13:15.190Z"}
+{"level":"info","message":{"duration":"164ms","method":"GET","requestId":"351ed17e-db70-481d-9b48-897ddcc5f1fd","status":200,"url":"/681d70d6d96562af903a79cf?t=1746763995310"},"timestamp":"2025-05-09T04:13:15.509Z"}
+{"level":"info","message":{"duration":"152ms","method":"GET","requestId":"91031962-bb11-4392-b60e-823047027e43","status":200,"url":"/681d70d6d96562af903a79cf?t=1746764006066"},"timestamp":"2025-05-09T04:13:26.248Z"}
+{"level":"info","message":{"duration":"167ms","method":"GET","requestId":"02fbe8ce-b59d-44a9-9cb5-c80c25064a67","status":200,"url":"/681d70d6d96562af903a79cf?t=1746764006069"},"timestamp":"2025-05-09T04:13:26.420Z"}
+{"level":"info","message":{"duration":"124ms","method":"GET","requestId":"1ad24785-73a9-4f78-968f-b7cd0c0ce45d","status":200,"url":"/681d70d6d96562af903a79cf?t=1746764006074"},"timestamp":"2025-05-09T04:13:26.535Z"}
+{"level":"info","message":{"duration":"140ms","method":"GET","requestId":"8834428c-99c4-4b99-ae4a-e90471ba9578","status":200,"url":"/681d70d6d96562af903a79cf?t=1746764006073"},"timestamp":"2025-05-09T04:13:26.546Z"}
+{"level":"info","message":{"duration":"261ms","method":"GET","requestId":"ee6c956a-da23-497e-9d18-f1d2481e4ae9","status":200,"url":"/products"},"timestamp":"2025-05-09T04:13:34.677Z"}
+{"level":"info","message":{"duration":"244ms","method":"GET","requestId":"a871bfb0-be31-49c6-95c3-377489f2c009","status":304,"url":"/products"},"timestamp":"2025-05-09T04:13:34.928Z"}
+{"level":"info","message":{"duration":"4ms","method":"GET","requestId":"12efd642-4fde-4523-9804-fcefb152901c","status":304,"url":"/my-store"},"timestamp":"2025-05-09T04:13:36.584Z"}
+{"level":"info","message":{"duration":"377ms","method":"POST","requestId":"87f20a6d-2d00-4476-b1e7-f13bef52ef74","status":200,"url":"/login"},"timestamp":"2025-05-09T04:13:42.990Z"}
+{"level":"info","message":{"duration":"5ms","method":"GET","requestId":"847a6df0-81e2-494b-9b7e-26f195c0da19","status":304,"url":"/"},"timestamp":"2025-05-09T04:13:43.150Z"}
+{"level":"info","message":{"duration":"168ms","method":"GET","requestId":"a1c5ae31-b988-4a01-a0ab-8e57c6c1edba","status":304,"url":"/"},"timestamp":"2025-05-09T04:13:43.343Z"}
+{"level":"info","message":{"duration":"124ms","method":"GET","requestId":"ef25f004-6d6c-4c4f-9d82-0d020b72d6f0","status":200,"url":"/68060185f88fc04549e05f29?t=1746764064949"},"timestamp":"2025-05-09T04:14:25.423Z"}
+{"level":"info","message":{"duration":"160ms","method":"GET","requestId":"f38a8331-a543-46b3-8b49-42652ba634b8","status":200,"url":"/68060185f88fc04549e05f29?t=1746764064948"},"timestamp":"2025-05-09T04:14:25.453Z"}
+{"level":"info","message":{"duration":"161ms","method":"GET","requestId":"67368b45-fe29-4e20-81ec-5d67f3d998cb","status":304,"url":"/"},"timestamp":"2025-05-09T04:23:20.576Z"}
+{"level":"info","message":{"duration":"164ms","method":"GET","requestId":"c53bda9b-2472-45ab-8f00-a2ccf1e59e40","status":304,"url":"/"},"timestamp":"2025-05-09T04:23:20.767Z"}
+{"level":"info","message":{"duration":"155ms","method":"GET","requestId":"42fa0e17-9e72-4796-9300-0f5f4243f8c8","status":200,"url":"/680c90eef5e1080ec8342e41?t=1746764609076"},"timestamp":"2025-05-09T04:23:29.256Z"}
+{"level":"info","message":{"duration":"161ms","method":"GET","requestId":"d92b4b7e-27d0-4570-a500-16de785ab923","status":200,"url":"/680c90eef5e1080ec8342e41?t=1746764609078"},"timestamp":"2025-05-09T04:23:29.423Z"}
+{"level":"info","message":{"duration":"482ms","method":"POST","requestId":"bcc66308-2be5-4e6c-baa0-46cba6122753","status":500,"url":"/add"},"timestamp":"2025-05-09T04:23:39.838Z"}
+{"level":"info","message":{"duration":"126ms","method":"GET","requestId":"3fc85f2e-ebf8-47eb-a676-c850786e18d4","status":200,"url":"/681cc74abc076072461fba1d?t=1746764665301"},"timestamp":"2025-05-09T04:24:25.757Z"}
+{"level":"info","message":{"duration":"160ms","method":"GET","requestId":"e74a2f06-f2e7-4ab0-99a1-8d074798d2d6","status":200,"url":"/681cc74abc076072461fba1d?t=1746764665300"},"timestamp":"2025-05-09T04:24:25.784Z"}
+{"level":"info","message":{"duration":"393ms","method":"POST","requestId":"04c98651-6383-478c-b60b-7d1fbfed4a5c","status":500,"url":"/add"},"timestamp":"2025-05-09T04:24:29.123Z"}
+{"level":"info","message":{"duration":"154ms","method":"GET","requestId":"c142f7a8-9dff-48e9-91e2-e5b0452096ec","status":304,"url":"/"},"timestamp":"2025-05-09T05:00:24.202Z"}
+{"level":"info","message":{"duration":"154ms","method":"GET","requestId":"ba5087ab-d08c-48dd-81f9-d272d03322d7","status":304,"url":"/"},"timestamp":"2025-05-09T05:00:24.367Z"}
+{"level":"info","message":{"duration":"251ms","method":"POST","requestId":"e538b192-4dd0-47e5-8f5c-69489af6ede3","status":200,"url":"/logout"},"timestamp":"2025-05-09T05:00:37.413Z"}
+{"level":"info","message":{"duration":"450ms","method":"POST","requestId":"0ff59955-b089-4d37-823a-25ad6bb98b5b","status":200,"url":"/login"},"timestamp":"2025-05-09T05:00:40.245Z"}
+{"level":"info","message":{"duration":"248ms","method":"GET","requestId":"d242e64e-6fdb-456e-b7a8-602e438de09a","status":304,"url":"/my-store"},"timestamp":"2025-05-09T05:00:40.624Z"}
+{"level":"info","message":{"duration":"241ms","method":"GET","requestId":"07ddfce6-ef67-41df-ae7c-a1ccfd492be7","status":200,"url":"/products"},"timestamp":"2025-05-09T05:00:42.846Z"}
+{"level":"info","message":{"duration":"243ms","method":"GET","requestId":"c2fb303c-dccb-4f23-b7a6-2d6792df8774","status":304,"url":"/products"},"timestamp":"2025-05-09T05:00:43.094Z"}
+{"level":"info","message":{"duration":"123ms","method":"GET","requestId":"7fda416b-94cf-4531-a4d7-6a3c2beed20f","status":200,"url":"/681d70d6d96562af903a79cf?t=1746766844740"},"timestamp":"2025-05-09T05:00:44.910Z"}
+{"level":"info","message":{"duration":"166ms","method":"GET","requestId":"3b77f42c-d992-4197-9b1e-4b6f024d0693","status":200,"url":"/681d70d6d96562af903a79cf?t=1746766844738"},"timestamp":"2025-05-09T05:00:44.947Z"}
+{"level":"info","message":{"duration":"156ms","method":"GET","requestId":"51a220c1-cb73-4445-a744-16dbd8e17c33","status":200,"url":"/681d70d6d96562af903a79cf?t=1746766844741"},"timestamp":"2025-05-09T05:00:45.073Z"}
+{"level":"info","message":{"duration":"175ms","method":"GET","requestId":"17c99671-56b9-49ab-8e70-f3af1e7abd6a","status":200,"url":"/681d70d6d96562af903a79cf?t=1746766844742"},"timestamp":"2025-05-09T05:00:45.137Z"}
+{"level":"info","message":{"duration":"241ms","method":"GET","requestId":"442e9112-2bdb-4a75-9eb8-0a0cb4a3f97d","status":200,"url":"/products"},"timestamp":"2025-05-09T05:00:47.830Z"}
+{"level":"info","message":{"duration":"244ms","method":"GET","requestId":"ceca90b4-d7fc-4df7-a6ac-8669cd6a0789","status":304,"url":"/products"},"timestamp":"2025-05-09T05:00:48.080Z"}
+{"level":"info","message":{"duration":"430ms","method":"POST","requestId":"a88e7bd4-96d7-4491-bd9e-ec6e2559d5af","status":200,"url":"/login"},"timestamp":"2025-05-09T05:00:54.836Z"}
+{"level":"info","message":{"duration":"162ms","method":"GET","requestId":"e0ee5a03-ef2b-41a5-8dac-70f262447236","status":200,"url":"/68060185f88fc04549e05f29?t=1746766863998"},"timestamp":"2025-05-09T05:01:04.190Z"}
+{"level":"info","message":{"duration":"165ms","method":"GET","requestId":"74d410d4-3492-4d61-bf53-56015e9ba771","status":200,"url":"/68060185f88fc04549e05f29?t=1746766864000"},"timestamp":"2025-05-09T05:01:04.396Z"}
+{"level":"info","message":{"duration":"162ms","method":"GET","requestId":"35794877-ac59-40cd-8aa7-d7ff4cd61d67","status":200,"url":"/view"},"timestamp":"2025-05-09T05:01:52.540Z"}
+{"level":"info","message":{"duration":"154ms","method":"GET","requestId":"ae8d1476-7c71-4c6c-b6ba-995852437274","status":304,"url":"/view"},"timestamp":"2025-05-09T05:01:52.699Z"}
+{"level":"info","message":{"duration":"96ms","method":"GET","requestId":"be571800-9f12-41a1-bc14-f244208dfa49","status":200,"url":"/68060185f88fc04549e05f29?t=1746766919785"},"timestamp":"2025-05-09T05:01:59.913Z"}
+{"level":"info","message":{"duration":"160ms","method":"GET","requestId":"0d53d586-2772-4707-b063-2a4b35ede604","status":200,"url":"/68060185f88fc04549e05f29?t=1746766919783"},"timestamp":"2025-05-09T05:01:59.972Z"}
+{"level":"info","message":{"duration":"100ms","method":"GET","requestId":"7b8dee3a-22c0-4117-b862-9f25504a8128","status":200,"url":"/680c9be4aeab58413ccd5996?t=1746766925456"},"timestamp":"2025-05-09T05:02:05.580Z"}
+{"level":"info","message":{"duration":"160ms","method":"GET","requestId":"ac54e8b3-7023-46ef-93e8-48ccf852147e","status":200,"url":"/680c9be4aeab58413ccd5996?t=1746766925455"},"timestamp":"2025-05-09T05:02:05.636Z"}
+{"level":"info","message":{"duration":"155ms","method":"GET","requestId":"e1e4e56b-1c00-4a29-aa45-a79484b7e123","status":200,"url":"/68060185f88fc04549e05f29?t=1746766941214"},"timestamp":"2025-05-09T05:02:21.398Z"}
+{"level":"info","message":{"duration":"170ms","method":"GET","requestId":"6a7eb611-1ee0-45e3-88d7-cacf5780ca04","status":200,"url":"/68060185f88fc04549e05f29?t=1746766941217"},"timestamp":"2025-05-09T05:02:21.573Z"}
+{"level":"info","message":{"duration":"94ms","method":"GET","requestId":"a782f53d-3602-46ba-b919-617f82db2140","status":200,"url":"/680c9be4aeab58413ccd5996?t=1746766945661"},"timestamp":"2025-05-09T05:02:25.776Z"}
+{"level":"info","message":{"duration":"156ms","method":"GET","requestId":"c8f3da03-aad0-4303-a47f-36edca2c4c19","status":200,"url":"/680c9be4aeab58413ccd5996?t=1746766945660"},"timestamp":"2025-05-09T05:02:25.835Z"}
+{"level":"info","message":{"duration":"103ms","method":"GET","requestId":"6125b4af-6600-4c05-813f-4cf56e0923bb","status":200,"url":"/681d70d6d96562af903a79cf?t=1746767691689"},"timestamp":"2025-05-09T05:14:52.141Z"}
+{"level":"info","message":{"duration":"162ms","method":"GET","requestId":"fe4a468b-9cfa-4a6a-a64a-a10afc160b23","status":200,"url":"/681d70d6d96562af903a79cf?t=1746767691686"},"timestamp":"2025-05-09T05:14:52.193Z"}
+{"level":"info","message":{"duration":"402ms","method":"POST","requestId":"a9e30a8a-e563-4b8f-bf26-45a2aa909976","status":500,"url":"/add"},"timestamp":"2025-05-09T05:14:55.786Z"}
+{"level":"info","message":"Running with in-memory cache (Redis disabled)","timestamp":"2025-05-09T05:16:54.258Z"}
+{"level":"info","message":"🚀 Server started on port 8000","timestamp":"2025-05-09T05:16:54.322Z"}
+{"level":"info","message":"📚 API Documentation available at http://[YOUR_IP]:8000/api-docs","timestamp":"2025-05-09T05:16:54.322Z"}
+{"level":"info","message":"✅ Successfully connected to MongoDB","timestamp":"2025-05-09T05:17:02.887Z"}
+{"level":"info","message":"Running with in-memory cache (Redis disabled)","timestamp":"2025-05-09T05:18:27.680Z"}
+{"level":"info","message":"🚀 Server started on port 8000","timestamp":"2025-05-09T05:18:27.735Z"}
+{"level":"info","message":"📚 API Documentation available at http://[YOUR_IP]:8000/api-docs","timestamp":"2025-05-09T05:18:27.736Z"}
+{"level":"info","message":"✅ Successfully connected to MongoDB","timestamp":"2025-05-09T05:18:30.576Z"}
+{"level":"info","message":"Running with in-memory cache (Redis disabled)","timestamp":"2025-05-09T05:29:17.603Z"}
+{"level":"info","message":"🚀 Server started on port 8000","timestamp":"2025-05-09T05:29:17.654Z"}
+{"level":"info","message":"📚 API Documentation available at http://[YOUR_IP]:8000/api-docs","timestamp":"2025-05-09T05:29:17.655Z"}
+{"level":"info","message":"✅ Successfully connected to MongoDB","timestamp":"2025-05-09T05:29:23.729Z"}
+{"level":"info","message":{"duration":"206ms","method":"GET","requestId":"bd7df18c-afad-4b3f-8dec-846d67354e3a","status":200,"url":"/681d70d6d96562af903a79cf?t=1746769053270"},"timestamp":"2025-05-09T05:37:33.840Z"}
+{"level":"info","message":{"duration":"200ms","method":"GET","requestId":"0f178abd-3dbf-47a9-a62c-cc161b17914d","status":200,"url":"/681d70d6d96562af903a79cf?t=1746769053276"},"timestamp":"2025-05-09T05:37:33.852Z"}
+{"level":"info","message":"Running with in-memory cache (Redis disabled)","timestamp":"2025-05-09T06:05:37.184Z"}
+{"level":"info","message":"🚀 Server started on port 8000","timestamp":"2025-05-09T06:05:37.256Z"}
+{"level":"info","message":"📚 API Documentation available at http://[YOUR_IP]:8000/api-docs","timestamp":"2025-05-09T06:05:37.258Z"}
+{"level":"info","message":"✅ Successfully connected to MongoDB","timestamp":"2025-05-09T06:05:38.393Z"}
+{"level":"info","message":{"duration":"592ms","method":"POST","requestId":"3ba6c0fd-b873-474e-82e5-f2d3b4b1c82b","status":200,"url":"/login"},"timestamp":"2025-05-09T06:18:21.562Z"}
+{"level":"info","message":{"duration":"221ms","method":"GET","requestId":"cf88dad1-dddf-4b8c-94fc-c3cecab2c08e","status":304,"url":"/"},"timestamp":"2025-05-09T06:18:21.910Z"}
+{"level":"info","message":{"duration":"182ms","method":"GET","requestId":"b0fbb45e-7e0a-406d-9bdd-fa329274c91b","status":304,"url":"/"},"timestamp":"2025-05-09T06:18:22.124Z"}
+{"level":"info","message":{"duration":"98ms","method":"GET","requestId":"dad38e9e-2145-454f-9b0a-6a489345afd8","status":200,"url":"/680c9be4aeab58413ccd5996?t=1746771531178"},"timestamp":"2025-05-09T06:18:51.672Z"}
+{"level":"info","message":{"duration":"751ms","method":"GET","requestId":"4f15439f-3f7a-4224-930c-37f3af1bc5cc","status":200,"url":"/680c9be4aeab58413ccd5996?t=1746771531173"},"timestamp":"2025-05-09T06:18:52.314Z"}
+{"level":"info","message":{"duration":"317ms","method":"POST","requestId":"b050fbe5-ec57-4ddc-9c87-67170ec6adef","status":500,"url":"/add"},"timestamp":"2025-05-09T06:18:54.300Z"}
+{"level":"info","message":{"duration":"792ms","method":"GET","requestId":"89291f3a-f8f1-484f-b475-b4bdafbd1ca8","status":200,"url":"/680c9be4aeab58413ccd5996?t=1746780622176"},"timestamp":"2025-05-09T08:50:23.316Z"}
+{"level":"info","message":{"duration":"836ms","method":"GET","requestId":"2b2024c7-c341-447b-92ec-cb910ec09768","status":200,"url":"/680c9be4aeab58413ccd5996?t=1746780622171"},"timestamp":"2025-05-09T08:50:23.350Z"}
+{"level":"info","message":{"duration":"131ms","method":"GET","requestId":"0c574da9-2a66-446c-8639-fd32e58ee0d1","status":200,"url":"/680c9be4aeab58413ccd5996?t=1746780868871"},"timestamp":"2025-05-09T08:54:29.341Z"}
+{"level":"info","message":{"duration":"469ms","method":"GET","requestId":"e127bcb8-5efa-408f-84a8-3dcaeae145be","status":200,"url":"/680c9be4aeab58413ccd5996?t=1746795258716"},"timestamp":"2025-05-09T12:54:19.501Z"}
+{"level":"info","message":{"duration":"570ms","method":"GET","requestId":"6a8995f6-af4e-4a6a-a0ac-c05768c53443","status":200,"url":"/680c9be4aeab58413ccd5996?t=1746795258606"},"timestamp":"2025-05-09T12:54:19.599Z"}
+{"level":"info","message":{"duration":"3ms","method":"POST","requestId":"54828e9b-54a8-4b95-b1db-2e8b963d8420","status":401,"url":"/add"},"timestamp":"2025-05-09T12:54:41.759Z"}
+{"level":"info","message":{"duration":"163ms","method":"POST","requestId":"873992bf-93be-4383-9518-59f67fb163dc","status":200,"url":"/refresh-token"},"timestamp":"2025-05-09T12:54:41.928Z"}
+{"level":"info","message":{"duration":"372ms","method":"POST","requestId":"02a8b21d-fb03-4ce0-888a-df2dc1082fa1","status":500,"url":"/add"},"timestamp":"2025-05-09T12:54:42.305Z"}
+{"level":"info","message":{"duration":"179ms","method":"GET","requestId":"c50ae485-fa88-4a9e-a73f-6be1f82d777c","status":200,"url":"/680c9be4aeab58413ccd5996?t=1746800202297"},"timestamp":"2025-05-09T14:16:42.810Z"}
+{"level":"info","message":{"duration":"734ms","method":"GET","requestId":"2b18e7b8-33ab-4983-abf5-097cd6cd190e","status":200,"url":"/680c9be4aeab58413ccd5996?t=1746800202301"},"timestamp":"2025-05-09T14:16:43.376Z"}
+{"level":"info","message":{"duration":"9ms","method":"POST","requestId":"0cfa83c8-1b26-43ac-a9e1-2cc2441c8fad","status":401,"url":"/add"},"timestamp":"2025-05-09T14:16:53.948Z"}
+{"level":"info","message":{"duration":"41ms","method":"POST","requestId":"81af292e-61dd-4b95-a3df-e81cbc29d578","status":401,"url":"/refresh-token"},"timestamp":"2025-05-09T14:16:54.006Z"}
+{"level":"info","message":{"duration":"471ms","method":"POST","requestId":"1cebf389-cc28-4083-bafc-61a544b61bd7","status":200,"url":"/login"},"timestamp":"2025-05-09T14:17:53.569Z"}
+{"level":"info","message":{"duration":"73ms","method":"GET","requestId":"022f0462-2233-4eb2-8c67-024085439ecb","status":304,"url":"/"},"timestamp":"2025-05-09T14:17:53.724Z"}
+{"level":"info","message":{"duration":"122ms","method":"GET","requestId":"edc00b59-4e61-46dd-8e67-2adb2716f2e4","status":304,"url":"/"},"timestamp":"2025-05-09T14:17:53.862Z"}
+{"level":"info","message":{"duration":"124ms","method":"GET","requestId":"b3bb3f52-6980-42eb-884d-3419dacc7880","status":200,"url":"/681d70d6d96562af903a79cf?t=1746800281347"},"timestamp":"2025-05-09T14:18:01.820Z"}
+{"level":"info","message":{"duration":"164ms","method":"GET","requestId":"4aaaf4dd-9d9c-4902-b8ed-10dfcece9bb0","status":200,"url":"/681d70d6d96562af903a79cf?t=1746800281346"},"timestamp":"2025-05-09T14:18:01.850Z"}
+{"level":"info","message":{"duration":"432ms","method":"POST","requestId":"765b9b48-1734-4e21-b207-af2fc70cbd7e","status":500,"url":"/add"},"timestamp":"2025-05-09T14:18:04.998Z"}
+{"level":"info","message":{"duration":"163ms","method":"GET","requestId":"98a9a979-be64-4c70-adee-322a056983de","status":200,"url":"/681d70d6d96562af903a79cf?t=1746802356740"},"timestamp":"2025-05-09T14:52:37.231Z"}
+{"level":"info","message":{"duration":"155ms","method":"GET","requestId":"22918558-4d5d-4eec-8a71-21a36a345229","status":200,"url":"/681d70d6d96562af903a79cf?t=1746802382900"},"timestamp":"2025-05-09T14:53:03.088Z"}
+{"level":"info","message":{"duration":"160ms","method":"GET","requestId":"29940859-35ac-4caa-b820-db842f6a7d06","status":200,"url":"/681d70d6d96562af903a79cf?t=1746802382905"},"timestamp":"2025-05-09T14:53:03.251Z"}

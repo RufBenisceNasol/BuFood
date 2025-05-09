@@ -201,6 +201,24 @@ const SellerProductDetailPage = () => {
                                 <h3 style={styles.sectionTitle}>Description</h3>
                                 <p style={styles.descriptionText}>{productData.description}</p>
                             </div>
+
+                            <div style={styles.section}>
+                                <h3 style={styles.sectionTitle}>Delivery Information</h3>
+                                <div style={styles.deliveryInfo}>
+                                    <div style={styles.infoRow}>
+                                        <span style={styles.infoLabel}>Estimated Time:</span>
+                                        <span style={styles.infoValue}>
+                                            {productData.estimatedTime ? `${productData.estimatedTime} minutes` : 'Not specified'}
+                                        </span>
+                                    </div>
+                                    <div style={styles.infoRowLast}>
+                                        <span style={styles.infoLabel}>Shipping Fee:</span>
+                                        <span style={styles.infoValue}>
+                                            ₱{productData.shippingFee ? parseFloat(productData.shippingFee).toFixed(2) : '0.00'}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 )}
@@ -469,6 +487,35 @@ const styles = {
         color: '#e53e3e',
         padding: '0 20px',
         textAlign: 'center',
+    },
+    section: {
+        marginBottom: '24px',
+    },
+    deliveryInfo: {
+        backgroundColor: '#f8f8f8',
+        padding: '16px',
+        borderRadius: '8px',
+    },
+    infoRow: {
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: '8px'
+    },
+    infoRowLast: {
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 0
+    },
+    infoLabel: {
+        color: '#666',
+        fontSize: '15px',
+    },
+    infoValue: {
+        color: '#333',
+        fontSize: '15px',
+        fontWeight: '500',
     },
 };
 

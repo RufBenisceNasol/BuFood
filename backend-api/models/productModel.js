@@ -29,6 +29,16 @@ const productSchema = new mongoose.Schema({
     enum: ['Available', 'Out of Stock'],
     default: 'Available',
   },
+  estimatedTime: {
+    type: Number,
+    min: 1,
+    default: 30, // Default 30 minutes
+  },
+  shippingFee: {
+    type: Number,
+    min: 0,
+    default: 0,
+  },
   sellerId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
