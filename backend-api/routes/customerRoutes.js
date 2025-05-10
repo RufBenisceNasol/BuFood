@@ -23,6 +23,9 @@ const {
   getCustomerProfile,
   getAllStoresForCustomer,
   viewStore,
+  addToFavorites,
+  getFavorites,
+  removeFromFavorites
 } = require('../controllers/customerController');
 
 /**
@@ -46,6 +49,93 @@ const {
  *         description: Forbidden - Not a customer
  */
 router.get('/profile', authenticate, checkRole('Customer'), getCustomerProfile);
+
+/**
+ * @swagger
+ * /api/customers/favorites/{productId}:
+ *   post:
+ *     tags: [Customers]
+ *     summary: Add a product to customer's favorites
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: productId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Product added to favorites successfully
+ *       400:
+ *         description: Product already in favorites
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - Not a customer
+ *       404:
+ *         description: Product not found
+ */
+router.post('/favorites/:productId', authenticate, checkRole('Customer'), addToFavorites);
+
+/**
+ * @swagger
+ * /api/customers/favorites/{productId}:
+ *   delete:
+ *     tags: [Customers]
+ *     summary: Remove a product from customer's favorites
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: productId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Product removed from favorites successfully
+ *       400:
+ *         description: Product not in favorites
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - Not a customer
+ *       404:
+ *         description: User not found
+ */
+router.delete('/favorites/:productId', authenticate, checkRole('Customer'), removeFromFavorites);
+
+/**
+ * @swagger
+ * /api/customers/favorites:
+ *   get:
+ *     tags: [Customers]
+ *     summary: Get customer's favorite products
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: List of favorite products
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 favorites:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Product'
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - Not a customer
+ *       404:
+ *         description: User not found
+ */
+router.get('/favorites', authenticate, checkRole('Customer'), getFavorites);
 
 /**
  * @swagger

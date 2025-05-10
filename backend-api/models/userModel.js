@@ -44,7 +44,11 @@ const userSchema = new mongoose.Schema({
     },
     passwordResetExpires: {
         type: Date
-    }
+    },
+    favorites: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Product'
+    }]
 }, { timestamps: true });
 
 // Add method to generate password reset token

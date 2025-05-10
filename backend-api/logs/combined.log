@@ -2321,3 +2321,165 @@
 {"level":"info","message":{"duration":"163ms","method":"GET","requestId":"98a9a979-be64-4c70-adee-322a056983de","status":200,"url":"/681d70d6d96562af903a79cf?t=1746802356740"},"timestamp":"2025-05-09T14:52:37.231Z"}
 {"level":"info","message":{"duration":"155ms","method":"GET","requestId":"22918558-4d5d-4eec-8a71-21a36a345229","status":200,"url":"/681d70d6d96562af903a79cf?t=1746802382900"},"timestamp":"2025-05-09T14:53:03.088Z"}
 {"level":"info","message":{"duration":"160ms","method":"GET","requestId":"29940859-35ac-4caa-b820-db842f6a7d06","status":200,"url":"/681d70d6d96562af903a79cf?t=1746802382905"},"timestamp":"2025-05-09T14:53:03.251Z"}
+{"level":"info","message":"Running with in-memory cache (Redis disabled)","timestamp":"2025-05-10T06:05:11.305Z"}
+{"level":"info","message":"🚀 Server started on port 8000","timestamp":"2025-05-10T06:05:11.334Z"}
+{"level":"info","message":"📚 API Documentation available at http://[YOUR_IP]:8000/api-docs","timestamp":"2025-05-10T06:05:11.335Z"}
+{"level":"info","message":"✅ Successfully connected to MongoDB","timestamp":"2025-05-10T06:05:12.582Z"}
+{"level":"info","message":{"duration":"7ms","method":"GET","requestId":"9757f593-c39b-49d1-b2c8-f6f84ca3d043","status":301,"url":"/"},"timestamp":"2025-05-10T06:06:20.776Z"}
+{"level":"info","message":{"duration":"6ms","method":"GET","requestId":"6d95d979-13b3-484a-87e5-d9f15ebc0a48","status":200,"url":"/"},"timestamp":"2025-05-10T06:06:20.786Z"}
+{"level":"info","message":{"duration":"11ms","method":"GET","requestId":"959ed345-4912-4c88-ad87-f6ac6d9c3113","status":200,"url":"/swagger-ui.css"},"timestamp":"2025-05-10T06:06:20.844Z"}
+{"level":"info","message":{"duration":"25ms","method":"GET","requestId":"89e82d0b-766e-4acb-9c23-b9a879cf233a","status":200,"url":"/swagger-ui-standalone-preset.js"},"timestamp":"2025-05-10T06:06:20.899Z"}
+{"level":"info","message":{"duration":"3ms","method":"GET","requestId":"da7b6c04-c71f-4b88-99bc-4110de1583d4","status":200,"url":"/swagger-ui-init.js"},"timestamp":"2025-05-10T06:06:20.909Z"}
+{"level":"info","message":{"duration":"116ms","method":"GET","requestId":"a7d0b45e-c46d-4135-9118-4af905fbd67f","status":200,"url":"/swagger-ui-bundle.js"},"timestamp":"2025-05-10T06:06:20.951Z"}
+{"level":"info","message":{"duration":"191ms","method":"POST","requestId":"ca5b5495-9065-44de-995c-4d206654b8df","status":200,"url":"/login"},"timestamp":"2025-05-10T06:06:55.777Z"}
+{"level":"info","message":{"duration":"82ms","method":"GET","requestId":"80d8ee67-899e-43ac-8c65-235f095ca488","status":200,"url":"/"},"timestamp":"2025-05-10T06:07:41.140Z"}
+{"level":"info","message":{"duration":"157ms","method":"POST","requestId":"27863255-84b1-41e3-a766-8a20bfdc1705","status":200,"url":"/login"},"timestamp":"2025-05-10T06:15:53.674Z"}
+{"level":"info","message":{"duration":"62ms","method":"GET","requestId":"0e2abba2-1d16-4be8-8215-b739bec962fd","status":200,"url":"/"},"timestamp":"2025-05-10T06:15:53.773Z"}
+{"level":"info","message":{"duration":"2ms","method":"GET","requestId":"2e0c6d0e-d72f-48ae-ad3d-34e1ea317805","status":304,"url":"/"},"timestamp":"2025-05-10T06:15:53.782Z"}
+{"level":"info","message":{"duration":"2ms","method":"GET","requestId":"6a106e39-00e6-47ae-8a7f-d67cbe26aec4","status":304,"url":"/"},"timestamp":"2025-05-10T06:15:53.786Z"}
+{"level":"info","message":{"duration":"96ms","method":"GET","requestId":"4a6d31df-3a6e-4882-b36a-c2d4d73d363f","status":200,"url":"/view"},"timestamp":"2025-05-10T06:16:17.556Z"}
+{"level":"info","message":{"duration":"88ms","method":"GET","requestId":"5c90e275-1e5d-4672-bf77-69f2c33a7990","status":304,"url":"/view"},"timestamp":"2025-05-10T06:16:17.645Z"}
+{"level":"info","message":{"duration":"167ms","method":"PUT","requestId":"9385e5db-ac8c-4e69-89e8-0b87512e7b93","status":200,"url":"/update"},"timestamp":"2025-05-10T06:16:22.180Z"}
+{"level":"info","message":{"duration":"90ms","method":"GET","requestId":"2005b63c-baee-4087-9fff-27b6b39bf020","status":200,"url":"/view"},"timestamp":"2025-05-10T06:16:22.274Z"}
+{"level":"info","message":{"duration":"150ms","method":"PUT","requestId":"f1e1ac9d-f359-47cb-b3db-fca87496dfed","status":200,"url":"/update"},"timestamp":"2025-05-10T06:16:23.806Z"}
+{"level":"info","message":{"duration":"85ms","method":"GET","requestId":"da86be7a-daf5-4611-b2d3-c47e254e1a76","status":200,"url":"/view"},"timestamp":"2025-05-10T06:16:23.896Z"}
+{"level":"info","message":{"duration":"208ms","method":"POST","requestId":"dcde4d6b-7f18-4fd9-8e37-19d485d048bd","status":201,"url":"/checkout-cart"},"timestamp":"2025-05-10T06:16:24.860Z"}
+{"level":"info","message":{"duration":"2ms","method":"GET","requestId":"57b5f255-7b82-43f8-987e-397b6915c382","status":304,"url":"/"},"timestamp":"2025-05-10T06:16:27.993Z"}
+{"level":"info","message":{"duration":"1ms","method":"GET","requestId":"0b7f5b0d-3303-4341-bbb6-4530aee19529","status":304,"url":"/"},"timestamp":"2025-05-10T06:16:27.996Z"}
+{"level":"info","message":{"duration":"59ms","method":"GET","requestId":"0e9fac0c-50d3-4234-8552-c263dfae363d","status":200,"url":"/68060287f88fc04549e05f35?t=1746857790792"},"timestamp":"2025-05-10T06:16:30.858Z"}
+{"level":"info","message":{"duration":"175ms","method":"POST","requestId":"2058550a-5d7e-478c-8179-8472ddb6906b","status":200,"url":"/add"},"timestamp":"2025-05-10T06:16:35.090Z"}
+{"level":"info","message":{"duration":"1ms","method":"GET","requestId":"a5d2e485-1a0e-42ba-b6a6-c639d1b56fcd","status":304,"url":"/"},"timestamp":"2025-05-10T06:16:38.804Z"}
+{"level":"info","message":{"duration":"1ms","method":"GET","requestId":"e3fb0241-fddb-4f2f-8ff4-1320cf3f5a80","status":304,"url":"/"},"timestamp":"2025-05-10T06:16:38.806Z"}
+{"level":"info","message":{"duration":"88ms","method":"GET","requestId":"30b17a21-f487-4e8b-b506-e9e49b2c8a10","status":200,"url":"/view"},"timestamp":"2025-05-10T06:16:40.039Z"}
+{"level":"info","message":{"duration":"84ms","method":"GET","requestId":"1289eee6-1e7e-43e3-b4aa-cf517d7edc7c","status":304,"url":"/view"},"timestamp":"2025-05-10T06:16:40.125Z"}
+{"level":"info","message":{"duration":"1ms","method":"GET","requestId":"31ea430c-7f52-4960-8456-36cef3d6430e","status":304,"url":"/"},"timestamp":"2025-05-10T06:16:49.096Z"}
+{"level":"info","message":{"duration":"1ms","method":"GET","requestId":"09b96106-2f9d-4252-8b5f-0f22fcd5f885","status":304,"url":"/"},"timestamp":"2025-05-10T06:16:49.101Z"}
+{"level":"info","message":{"duration":"60ms","method":"GET","requestId":"85051bff-1a86-4f47-9725-6b8921c4cc3d","status":200,"url":"/68060287f88fc04549e05f35?t=1746857812469"},"timestamp":"2025-05-10T06:16:52.536Z"}
+{"level":"info","message":{"duration":"174ms","method":"POST","requestId":"5a5144d2-7702-476e-9c43-de291937289b","status":200,"url":"/add"},"timestamp":"2025-05-10T06:16:58.137Z"}
+{"level":"info","message":{"duration":"175ms","method":"POST","requestId":"52235a06-9ac2-468e-8bf5-4d9ac927b8fe","status":200,"url":"/add"},"timestamp":"2025-05-10T06:17:23.930Z"}
+{"level":"info","message":{"duration":"63ms","method":"GET","requestId":"7c7d1189-1e08-4897-a6b9-63582a2a0887","status":304,"url":"/"},"timestamp":"2025-05-10T06:18:12.503Z"}
+{"level":"info","message":{"duration":"86ms","method":"GET","requestId":"c3a9c58d-087f-411c-91fd-378c702fa5be","status":200,"url":"/view"},"timestamp":"2025-05-10T06:18:14.189Z"}
+{"level":"info","message":{"duration":"93ms","method":"GET","requestId":"c1cf121e-30ca-4966-8317-58dfc5258f38","status":304,"url":"/view"},"timestamp":"2025-05-10T06:18:14.284Z"}
+{"level":"info","message":{"duration":"149ms","method":"PUT","requestId":"c551c0f2-ca2f-45d8-a040-494d9e9db938","status":200,"url":"/update"},"timestamp":"2025-05-10T06:18:28.678Z"}
+{"level":"info","message":{"duration":"90ms","method":"GET","requestId":"5e94f6f1-7a32-4035-8631-70aeebca94f4","status":200,"url":"/view"},"timestamp":"2025-05-10T06:18:28.774Z"}
+{"level":"info","message":{"duration":"148ms","method":"PUT","requestId":"3766a741-2326-4230-b071-448ebf382fdb","status":200,"url":"/update"},"timestamp":"2025-05-10T06:18:29.918Z"}
+{"level":"info","message":{"duration":"85ms","method":"GET","requestId":"b0becef1-1565-472e-b842-8263846db6ef","status":200,"url":"/view"},"timestamp":"2025-05-10T06:18:30.007Z"}
+{"level":"info","message":{"duration":"148ms","method":"PUT","requestId":"b0ff6e1b-87d2-4390-9721-f860bd495b4f","status":200,"url":"/update"},"timestamp":"2025-05-10T06:18:31.005Z"}
+{"level":"info","message":{"duration":"86ms","method":"GET","requestId":"0a617c27-0a0e-42e3-a22b-d4d0c6d9f279","status":200,"url":"/view"},"timestamp":"2025-05-10T06:18:31.095Z"}
+{"level":"info","message":{"duration":"60ms","method":"POST","requestId":"4c93d8c3-0c2e-4ea6-9f85-75dd6f555761","status":400,"url":"/add"},"timestamp":"2025-05-10T06:24:20.853Z"}
+{"level":"info","message":{"duration":"180ms","method":"POST","requestId":"fcd3c139-c174-44c3-abd4-ffdfaa4920c1","status":200,"url":"/add"},"timestamp":"2025-05-10T06:25:47.103Z"}
+{"level":"info","message":{"duration":"98ms","method":"GET","requestId":"cb9575db-d5ca-4441-ba57-beb4bd9af451","status":200,"url":"/view"},"timestamp":"2025-05-10T06:25:57.392Z"}
+{"level":"info","message":{"duration":"97ms","method":"GET","requestId":"90bc19c3-9291-4443-9fee-9d931bdd968c","status":304,"url":"/view"},"timestamp":"2025-05-10T06:25:57.493Z"}
+{"level":"info","message":{"duration":"2ms","method":"GET","requestId":"091c3567-6acb-4163-bfb2-8f40089e76bf","status":304,"url":"/"},"timestamp":"2025-05-10T06:26:02.429Z"}
+{"level":"info","message":{"duration":"2ms","method":"GET","requestId":"f77d7579-dba3-4742-b247-10f51396034b","status":304,"url":"/"},"timestamp":"2025-05-10T06:26:02.435Z"}
+{"level":"info","message":{"duration":"65ms","method":"GET","requestId":"2cf71765-01f5-42c1-9a84-049dd609fc69","status":304,"url":"/"},"timestamp":"2025-05-10T06:26:02.504Z"}
+{"level":"info","message":{"duration":"56ms","method":"GET","requestId":"32278700-7ded-4fbe-9662-b65aaf2a635c","status":200,"url":"/68060185f88fc04549e05f29?t=1746858386625"},"timestamp":"2025-05-10T06:26:26.691Z"}
+{"level":"info","message":{"duration":"2ms","method":"GET","requestId":"1ab391a1-daf9-42fd-ba9c-3d94554f15cb","status":304,"url":"/"},"timestamp":"2025-05-10T06:26:39.003Z"}
+{"level":"info","message":{"duration":"3ms","method":"GET","requestId":"e9376ad4-77b2-43b3-81d6-ad1f397c48ff","status":304,"url":"/"},"timestamp":"2025-05-10T06:26:39.010Z"}
+{"level":"info","message":{"duration":"61ms","method":"GET","requestId":"04f0aadf-f795-4bfa-bf6b-d7c7eb847ffa","status":200,"url":"/68060287f88fc04549e05f35?t=1746858400431"},"timestamp":"2025-05-10T06:26:40.501Z"}
+{"level":"info","message":{"duration":"311ms","method":"GET","requestId":"ebbb2ae4-5d59-4156-8ef6-587d34667c5e","status":200,"url":"/68060287f88fc04549e05f35?t=1746858400430"},"timestamp":"2025-05-10T06:26:40.748Z"}
+{"level":"info","message":{"duration":"173ms","method":"POST","requestId":"3dd9744a-c40b-4c42-b279-0773eb06d5a8","status":200,"url":"/add"},"timestamp":"2025-05-10T06:26:43.064Z"}
+{"level":"info","message":{"duration":"2ms","method":"GET","requestId":"2e07a93a-5305-46da-8ede-bdf1f65e90f1","status":304,"url":"/"},"timestamp":"2025-05-10T06:26:47.800Z"}
+{"level":"info","message":{"duration":"2ms","method":"GET","requestId":"cba8b6da-ec37-4040-9fe2-b924582bce6f","status":304,"url":"/"},"timestamp":"2025-05-10T06:26:47.808Z"}
+{"level":"info","message":{"duration":"1ms","method":"GET","requestId":"7905a02e-fdd6-49d3-a160-cbc28c31389d","status":304,"url":"/"},"timestamp":"2025-05-10T06:27:36.227Z"}
+{"level":"info","message":{"duration":"1ms","method":"GET","requestId":"799e9de3-20f2-4b80-b55a-219d9fb9d465","status":304,"url":"/"},"timestamp":"2025-05-10T06:27:36.232Z"}
+{"level":"info","message":"Running with in-memory cache (Redis disabled)","timestamp":"2025-05-10T06:31:48.437Z"}
+{"level":"info","message":"🚀 Server started on port 8000","timestamp":"2025-05-10T06:31:48.470Z"}
+{"level":"info","message":"📚 API Documentation available at http://[YOUR_IP]:8000/api-docs","timestamp":"2025-05-10T06:31:48.471Z"}
+{"level":"info","message":"✅ Successfully connected to MongoDB","timestamp":"2025-05-10T06:31:50.155Z"}
+{"level":"info","message":"Running with in-memory cache (Redis disabled)","timestamp":"2025-05-10T06:32:14.287Z"}
+{"level":"info","message":"🚀 Server started on port 8000","timestamp":"2025-05-10T06:32:14.318Z"}
+{"level":"info","message":"📚 API Documentation available at http://[YOUR_IP]:8000/api-docs","timestamp":"2025-05-10T06:32:14.319Z"}
+{"level":"info","message":"✅ Successfully connected to MongoDB","timestamp":"2025-05-10T06:32:15.023Z"}
+{"level":"info","message":"Running with in-memory cache (Redis disabled)","timestamp":"2025-05-10T06:33:52.137Z"}
+{"level":"info","message":"🚀 Server started on port 8000","timestamp":"2025-05-10T06:33:52.176Z"}
+{"level":"info","message":"📚 API Documentation available at http://[YOUR_IP]:8000/api-docs","timestamp":"2025-05-10T06:33:52.177Z"}
+{"level":"info","message":"Running with in-memory cache (Redis disabled)","timestamp":"2025-05-10T06:33:57.733Z"}
+{"level":"info","message":"🚀 Server started on port 8000","timestamp":"2025-05-10T06:33:57.769Z"}
+{"level":"info","message":"📚 API Documentation available at http://[YOUR_IP]:8000/api-docs","timestamp":"2025-05-10T06:33:57.770Z"}
+{"level":"info","message":"✅ Successfully connected to MongoDB","timestamp":"2025-05-10T06:33:58.260Z"}
+{"level":"info","message":"Running with in-memory cache (Redis disabled)","timestamp":"2025-05-10T06:34:27.350Z"}
+{"level":"info","message":"🚀 Server started on port 8000","timestamp":"2025-05-10T06:34:27.388Z"}
+{"level":"info","message":"📚 API Documentation available at http://[YOUR_IP]:8000/api-docs","timestamp":"2025-05-10T06:34:27.389Z"}
+{"level":"info","message":"✅ Successfully connected to MongoDB","timestamp":"2025-05-10T06:34:28.348Z"}
+{"level":"info","message":"Running with in-memory cache (Redis disabled)","timestamp":"2025-05-10T06:35:12.455Z"}
+{"level":"info","message":"🚀 Server started on port 8000","timestamp":"2025-05-10T06:35:12.495Z"}
+{"level":"info","message":"📚 API Documentation available at http://[YOUR_IP]:8000/api-docs","timestamp":"2025-05-10T06:35:12.498Z"}
+{"level":"info","message":"✅ Successfully connected to MongoDB","timestamp":"2025-05-10T06:35:13.984Z"}
+{"level":"info","message":"Running with in-memory cache (Redis disabled)","timestamp":"2025-05-10T06:35:43.230Z"}
+{"level":"info","message":"🚀 Server started on port 8000","timestamp":"2025-05-10T06:35:43.264Z"}
+{"level":"info","message":"📚 API Documentation available at http://[YOUR_IP]:8000/api-docs","timestamp":"2025-05-10T06:35:43.265Z"}
+{"level":"info","message":"✅ Successfully connected to MongoDB","timestamp":"2025-05-10T06:35:43.932Z"}
+{"level":"info","message":"Running with in-memory cache (Redis disabled)","timestamp":"2025-05-10T06:36:31.460Z"}
+{"level":"info","message":"🚀 Server started on port 8000","timestamp":"2025-05-10T06:36:31.494Z"}
+{"level":"info","message":"📚 API Documentation available at http://[YOUR_IP]:8000/api-docs","timestamp":"2025-05-10T06:36:31.495Z"}
+{"level":"info","message":"✅ Successfully connected to MongoDB","timestamp":"2025-05-10T06:36:33.133Z"}
+{"level":"info","message":"Running with in-memory cache (Redis disabled)","timestamp":"2025-05-10T06:36:56.806Z"}
+{"level":"info","message":"🚀 Server started on port 8000","timestamp":"2025-05-10T06:36:56.836Z"}
+{"level":"info","message":"📚 API Documentation available at http://[YOUR_IP]:8000/api-docs","timestamp":"2025-05-10T06:36:56.837Z"}
+{"level":"info","message":"✅ Successfully connected to MongoDB","timestamp":"2025-05-10T06:36:57.286Z"}
+{"level":"info","message":{"duration":"11ms","method":"GET","requestId":"a89973e1-cf25-4d23-abf1-27a8cdfa53ea","status":304,"url":"/"},"timestamp":"2025-05-10T06:37:27.366Z"}
+{"level":"info","message":{"duration":"5ms","method":"GET","requestId":"00b80871-0260-4743-8d04-eae7f97fe83a","status":304,"url":"/swagger-ui.css"},"timestamp":"2025-05-10T06:37:27.389Z"}
+{"level":"info","message":{"duration":"4ms","method":"GET","requestId":"676fa6a6-642d-4964-b5b8-947552c794c0","status":304,"url":"/swagger-ui-bundle.js"},"timestamp":"2025-05-10T06:37:27.404Z"}
+{"level":"info","message":{"duration":"37ms","method":"GET","requestId":"8a63c046-323f-4d46-8d2e-68ca8d0f9fdb","status":304,"url":"/swagger-ui-standalone-preset.js"},"timestamp":"2025-05-10T06:37:27.438Z"}
+{"level":"info","message":{"duration":"22ms","method":"GET","requestId":"b3d5a7be-05ed-4f45-88d3-22c460884aa7","status":200,"url":"/swagger-ui-init.js"},"timestamp":"2025-05-10T06:37:27.479Z"}
+{"level":"info","message":{"duration":"11ms","method":"GET","requestId":"e9d89887-c13f-4268-96f6-09ca35794153","status":200,"url":"/favicon-32x32.png"},"timestamp":"2025-05-10T06:37:28.121Z"}
+{"level":"error","message":{"error":"Bad control character in string literal in JSON at position 33 (line 2 column 32)","method":"POST","stack":"SyntaxError: Bad control character in string literal in JSON at position 33 (line 2 column 32)\n    at JSON.parse (<anonymous>)\n    at parse (C:\\Users\\USER\\Desktop\\pushFolder\\BuFood\\backend-api\\node_modules\\body-parser\\lib\\types\\json.js:92:19)\n    at C:\\Users\\USER\\Desktop\\pushFolder\\BuFood\\backend-api\\node_modules\\body-parser\\lib\\read.js:128:18\n    at AsyncResource.runInAsyncScope (node:async_hooks:211:14)\n    at invokeCallback (C:\\Users\\USER\\Desktop\\pushFolder\\BuFood\\backend-api\\node_modules\\raw-body\\index.js:238:16)\n    at done (C:\\Users\\USER\\Desktop\\pushFolder\\BuFood\\backend-api\\node_modules\\raw-body\\index.js:227:7)\n    at IncomingMessage.onEnd (C:\\Users\\USER\\Desktop\\pushFolder\\BuFood\\backend-api\\node_modules\\raw-body\\index.js:287:7)\n    at IncomingMessage.emit (node:events:518:28)\n    at endReadableNT (node:internal/streams/readable:1698:12)\n    at process.processTicksAndRejections (node:internal/process/task_queues:90:21)","url":"/api/auth/login"},"timestamp":"2025-05-10T06:37:50.912Z"}
+{"level":"error","message":"[Error] [undefined] SyntaxError: Bad control character in string literal in JSON at position 33 (line 2 column 32)\n    at JSON.parse (<anonymous>)\n    at parse (C:\\Users\\USER\\Desktop\\pushFolder\\BuFood\\backend-api\\node_modules\\body-parser\\lib\\types\\json.js:92:19)\n    at C:\\Users\\USER\\Desktop\\pushFolder\\BuFood\\backend-api\\node_modules\\body-parser\\lib\\read.js:128:18\n    at AsyncResource.runInAsyncScope (node:async_hooks:211:14)\n    at invokeCallback (C:\\Users\\USER\\Desktop\\pushFolder\\BuFood\\backend-api\\node_modules\\raw-body\\index.js:238:16)\n    at done (C:\\Users\\USER\\Desktop\\pushFolder\\BuFood\\backend-api\\node_modules\\raw-body\\index.js:227:7)\n    at IncomingMessage.onEnd (C:\\Users\\USER\\Desktop\\pushFolder\\BuFood\\backend-api\\node_modules\\raw-body\\index.js:287:7)\n    at IncomingMessage.emit (node:events:518:28)\n    at endReadableNT (node:internal/streams/readable:1698:12)\n    at process.processTicksAndRejections (node:internal/process/task_queues:90:21)","timestamp":"2025-05-10T06:37:50.915Z"}
+{"level":"error","message":{"error":"Bad control character in string literal in JSON at position 33 (line 2 column 32)","method":"POST","stack":"SyntaxError: Bad control character in string literal in JSON at position 33 (line 2 column 32)\n    at JSON.parse (<anonymous>)\n    at parse (C:\\Users\\USER\\Desktop\\pushFolder\\BuFood\\backend-api\\node_modules\\body-parser\\lib\\types\\json.js:92:19)\n    at C:\\Users\\USER\\Desktop\\pushFolder\\BuFood\\backend-api\\node_modules\\body-parser\\lib\\read.js:128:18\n    at AsyncResource.runInAsyncScope (node:async_hooks:211:14)\n    at invokeCallback (C:\\Users\\USER\\Desktop\\pushFolder\\BuFood\\backend-api\\node_modules\\raw-body\\index.js:238:16)\n    at done (C:\\Users\\USER\\Desktop\\pushFolder\\BuFood\\backend-api\\node_modules\\raw-body\\index.js:227:7)\n    at IncomingMessage.onEnd (C:\\Users\\USER\\Desktop\\pushFolder\\BuFood\\backend-api\\node_modules\\raw-body\\index.js:287:7)\n    at IncomingMessage.emit (node:events:518:28)\n    at endReadableNT (node:internal/streams/readable:1698:12)\n    at process.processTicksAndRejections (node:internal/process/task_queues:90:21)","url":"/api/auth/login"},"timestamp":"2025-05-10T06:38:10.107Z"}
+{"level":"error","message":"[Error] [undefined] SyntaxError: Bad control character in string literal in JSON at position 33 (line 2 column 32)\n    at JSON.parse (<anonymous>)\n    at parse (C:\\Users\\USER\\Desktop\\pushFolder\\BuFood\\backend-api\\node_modules\\body-parser\\lib\\types\\json.js:92:19)\n    at C:\\Users\\USER\\Desktop\\pushFolder\\BuFood\\backend-api\\node_modules\\body-parser\\lib\\read.js:128:18\n    at AsyncResource.runInAsyncScope (node:async_hooks:211:14)\n    at invokeCallback (C:\\Users\\USER\\Desktop\\pushFolder\\BuFood\\backend-api\\node_modules\\raw-body\\index.js:238:16)\n    at done (C:\\Users\\USER\\Desktop\\pushFolder\\BuFood\\backend-api\\node_modules\\raw-body\\index.js:227:7)\n    at IncomingMessage.onEnd (C:\\Users\\USER\\Desktop\\pushFolder\\BuFood\\backend-api\\node_modules\\raw-body\\index.js:287:7)\n    at IncomingMessage.emit (node:events:518:28)\n    at endReadableNT (node:internal/streams/readable:1698:12)\n    at process.processTicksAndRejections (node:internal/process/task_queues:90:21)","timestamp":"2025-05-10T06:38:10.107Z"}
+{"level":"info","message":{"duration":"1ms","method":"GET","requestId":"5869986e-2c96-4ef7-acac-31daa42af567","status":304,"url":"/"},"timestamp":"2025-05-10T06:38:38.195Z"}
+{"level":"info","message":{"duration":"2ms","method":"GET","requestId":"b523e311-00a6-4eae-9d2f-2cef9a61a7f6","status":304,"url":"/swagger-ui.css"},"timestamp":"2025-05-10T06:38:38.214Z"}
+{"level":"info","message":{"duration":"2ms","method":"GET","requestId":"3b8d427c-03ed-433e-8186-44c4ff89775f","status":304,"url":"/swagger-ui-bundle.js"},"timestamp":"2025-05-10T06:38:38.223Z"}
+{"level":"info","message":{"duration":"3ms","method":"GET","requestId":"3a2cc16a-2c98-497a-88ae-dfec5564b1c3","status":304,"url":"/swagger-ui-standalone-preset.js"},"timestamp":"2025-05-10T06:38:38.227Z"}
+{"level":"info","message":{"duration":"1ms","method":"GET","requestId":"8496b2ca-630a-4247-8a76-c73e2cd1f210","status":304,"url":"/swagger-ui-init.js"},"timestamp":"2025-05-10T06:38:38.234Z"}
+{"level":"info","message":{"duration":"1ms","method":"GET","requestId":"153ac087-0a0e-422d-993a-15bbde153a01","status":304,"url":"/favicon-32x32.png"},"timestamp":"2025-05-10T06:38:38.840Z"}
+{"level":"info","message":{"duration":"222ms","method":"POST","requestId":"7c3ed412-8ea8-4095-a7d7-641488403b11","status":200,"url":"/login"},"timestamp":"2025-05-10T06:38:55.273Z"}
+{"level":"info","message":{"duration":"77ms","method":"GET","requestId":"c91ca8d9-7b77-41b2-b854-36a7d815908a","status":304,"url":"/"},"timestamp":"2025-05-10T06:39:28.888Z"}
+{"level":"info","message":{"duration":"127ms","method":"POST","requestId":"9aa59a5f-060b-4409-bb1f-a1de7d805113","status":200,"url":"/favorites/68060185f88fc04549e05f29"},"timestamp":"2025-05-10T06:39:40.028Z"}
+{"level":"info","message":"Running with in-memory cache (Redis disabled)","timestamp":"2025-05-10T06:41:04.721Z"}
+{"level":"info","message":"🚀 Server started on port 8000","timestamp":"2025-05-10T06:41:04.749Z"}
+{"level":"info","message":"📚 API Documentation available at http://[YOUR_IP]:8000/api-docs","timestamp":"2025-05-10T06:41:04.750Z"}
+{"level":"info","message":"✅ Successfully connected to MongoDB","timestamp":"2025-05-10T06:41:05.649Z"}
+{"level":"info","message":"Running with in-memory cache (Redis disabled)","timestamp":"2025-05-10T06:41:28.530Z"}
+{"level":"info","message":"🚀 Server started on port 8000","timestamp":"2025-05-10T06:41:28.568Z"}
+{"level":"info","message":"📚 API Documentation available at http://[YOUR_IP]:8000/api-docs","timestamp":"2025-05-10T06:41:28.570Z"}
+{"level":"info","message":"✅ Successfully connected to MongoDB","timestamp":"2025-05-10T06:41:29.541Z"}
+{"level":"info","message":{"duration":"10ms","method":"GET","requestId":"db0ac617-da89-4db7-a52e-1969b23accad","status":304,"url":"/"},"timestamp":"2025-05-10T06:41:44.167Z"}
+{"level":"info","message":{"duration":"4ms","method":"GET","requestId":"46bc2a23-290e-4cd0-83d8-287e01abeda3","status":304,"url":"/swagger-ui.css"},"timestamp":"2025-05-10T06:41:44.187Z"}
+{"level":"info","message":{"duration":"6ms","method":"GET","requestId":"4c0448db-2464-4304-9ab5-d4b70686e673","status":304,"url":"/swagger-ui-bundle.js"},"timestamp":"2025-05-10T06:41:44.191Z"}
+{"level":"info","message":{"duration":"4ms","method":"GET","requestId":"5da0df6d-d449-4b7d-b636-c197a4347130","status":304,"url":"/swagger-ui-standalone-preset.js"},"timestamp":"2025-05-10T06:41:44.201Z"}
+{"level":"info","message":{"duration":"12ms","method":"GET","requestId":"0a372931-c7bb-4c68-b20a-e0d4fce5ba3a","status":200,"url":"/swagger-ui-init.js"},"timestamp":"2025-05-10T06:41:44.210Z"}
+{"level":"info","message":{"duration":"5ms","method":"GET","requestId":"08690585-b6bc-4510-8fac-b5b988d4853f","status":304,"url":"/favicon-32x32.png"},"timestamp":"2025-05-10T06:41:44.555Z"}
+{"level":"info","message":{"duration":"196ms","method":"POST","requestId":"1b31594c-719d-4a89-8f08-4d81a6079109","status":200,"url":"/login"},"timestamp":"2025-05-10T06:42:05.641Z"}
+{"level":"info","message":{"duration":"2ms","method":"GET","requestId":"52a14165-3172-452d-98e6-aa71995b640c","status":401,"url":"/favorites"},"timestamp":"2025-05-10T06:42:22.320Z"}
+{"level":"info","message":{"duration":"98ms","method":"GET","requestId":"33839ab7-ff40-4a4b-a3d4-81b639e6b3e1","status":500,"url":"/favorites"},"timestamp":"2025-05-10T06:42:31.203Z"}
+{"level":"info","message":{"duration":"92ms","method":"GET","requestId":"0b167daa-07cf-4dd4-a00b-837e42245c3f","status":500,"url":"/favorites"},"timestamp":"2025-05-10T06:42:35.496Z"}
+{"level":"info","message":"Running with in-memory cache (Redis disabled)","timestamp":"2025-05-10T06:43:32.334Z"}
+{"level":"info","message":"🚀 Server started on port 8000","timestamp":"2025-05-10T06:43:32.366Z"}
+{"level":"info","message":"📚 API Documentation available at http://[YOUR_IP]:8000/api-docs","timestamp":"2025-05-10T06:43:32.367Z"}
+{"level":"info","message":"✅ Successfully connected to MongoDB","timestamp":"2025-05-10T06:43:33.406Z"}
+{"level":"info","message":{"duration":"172ms","method":"GET","requestId":"cbabdcff-ed8f-4d0a-b4f2-9b921af0ad91","status":200,"url":"/favorites"},"timestamp":"2025-05-10T06:43:49.297Z"}
+{"level":"info","message":"Running with in-memory cache (Redis disabled)","timestamp":"2025-05-10T06:44:58.813Z"}
+{"level":"info","message":"🚀 Server started on port 8000","timestamp":"2025-05-10T06:44:58.848Z"}
+{"level":"info","message":"📚 API Documentation available at http://[YOUR_IP]:8000/api-docs","timestamp":"2025-05-10T06:44:58.849Z"}
+{"level":"info","message":"✅ Successfully connected to MongoDB","timestamp":"2025-05-10T06:44:59.785Z"}
+{"level":"info","message":"Running with in-memory cache (Redis disabled)","timestamp":"2025-05-10T06:45:43.019Z"}
+{"level":"info","message":"🚀 Server started on port 8000","timestamp":"2025-05-10T06:45:43.053Z"}
+{"level":"info","message":"📚 API Documentation available at http://[YOUR_IP]:8000/api-docs","timestamp":"2025-05-10T06:45:43.056Z"}
+{"level":"info","message":"✅ Successfully connected to MongoDB","timestamp":"2025-05-10T06:45:44.013Z"}
+{"level":"info","message":"Running with in-memory cache (Redis disabled)","timestamp":"2025-05-10T06:48:25.554Z"}
+{"level":"info","message":"🚀 Server started on port 8000","timestamp":"2025-05-10T06:48:25.583Z"}
+{"level":"info","message":"📚 API Documentation available at http://[YOUR_IP]:8000/api-docs","timestamp":"2025-05-10T06:48:25.584Z"}
+{"level":"info","message":"✅ Successfully connected to MongoDB","timestamp":"2025-05-10T06:48:27.881Z"}
+{"level":"info","message":{"duration":"10ms","method":"GET","requestId":"5053b0e6-ecb0-45c6-99a9-3c8d77e810e7","status":304,"url":"/"},"timestamp":"2025-05-10T06:49:56.559Z"}
+{"level":"info","message":{"duration":"4ms","method":"GET","requestId":"42792387-a32b-42dd-933d-a2a2fc8d9fd1","status":304,"url":"/swagger-ui.css"},"timestamp":"2025-05-10T06:49:56.578Z"}
+{"level":"info","message":{"duration":"1ms","method":"GET","requestId":"7b18ccc8-0427-47fa-9361-9b53cabec8d3","status":304,"url":"/swagger-ui-bundle.js"},"timestamp":"2025-05-10T06:49:56.588Z"}
+{"level":"info","message":{"duration":"3ms","method":"GET","requestId":"daa0b444-e087-489d-ba51-387953bfeabd","status":304,"url":"/swagger-ui-standalone-preset.js"},"timestamp":"2025-05-10T06:49:56.593Z"}
+{"level":"info","message":{"duration":"21ms","method":"GET","requestId":"7856ff98-52ac-4be8-995c-c43c63401ffc","status":200,"url":"/swagger-ui-init.js"},"timestamp":"2025-05-10T06:49:56.631Z"}
+{"level":"info","message":{"duration":"2ms","method":"GET","requestId":"b106664f-797f-4127-a5ff-47d9ab1ad3ed","status":304,"url":"/favicon-32x32.png"},"timestamp":"2025-05-10T06:49:56.974Z"}
+{"level":"info","message":{"duration":"230ms","method":"POST","requestId":"767a7469-1396-4c9d-aaeb-655dab87d0d3","status":200,"url":"/login"},"timestamp":"2025-05-10T06:50:16.520Z"}
+{"level":"info","message":{"duration":"35ms","method":"GET","requestId":"21bcd658-af9a-4630-9557-1a5030b3ce6b","status":200,"url":"/profile"},"timestamp":"2025-05-10T06:50:42.809Z"}
+{"level":"info","message":{"duration":"106ms","method":"DELETE","requestId":"333529b0-20f5-468f-b645-d09f79a8bc10","status":200,"url":"/favorites/68060185f88fc04549e05f29"},"timestamp":"2025-05-10T06:51:04.887Z"}
+{"level":"info","message":{"duration":"119ms","method":"POST","requestId":"b3f26255-20a2-4252-95f0-b10193b02773","status":200,"url":"/favorites/68060185f88fc04549e05f29"},"timestamp":"2025-05-10T06:51:14.736Z"}
+{"level":"info","message":{"duration":"124ms","method":"GET","requestId":"3dfc035a-cc3d-497d-aec3-d7862f9b0ba2","status":304,"url":"/favorites"},"timestamp":"2025-05-10T06:51:42.166Z"}
