@@ -472,6 +472,81 @@ export const customer = {
         } catch (error) {
             throw error.response?.data || error.message;
         }
+    },
+
+    // Favorites management
+    addToFavorites: async (productId) => {
+        try {
+            const response = await api.post(`/customers/favorites/${productId}`);
+            return response.data;
+        } catch (error) {
+            throw error.response?.data || error.message;
+        }
+    },
+
+    removeFromFavorites: async (productId) => {
+        try {
+            const response = await api.delete(`/customers/favorites/${productId}`);
+            return response.data;
+        } catch (error) {
+            throw error.response?.data || error.message;
+        }
+    },
+
+    getFavorites: async () => {
+        try {
+            const response = await api.get('/customers/favorites');
+            return response.data;
+        } catch (error) {
+            throw error.response?.data || error.message;
+        }
+    },
+
+    // Profile management
+    updateProfile: async (profileData) => {
+        try {
+            const response = await api.put('/customers/profile', profileData);
+            return response.data;
+        } catch (error) {
+            throw error.response?.data || error.message;
+        }
+    },
+
+    // Address management
+    addAddress: async (addressData) => {
+        try {
+            const response = await api.post('/customers/addresses', addressData);
+            return response.data;
+        } catch (error) {
+            throw error.response?.data || error.message;
+        }
+    },
+
+    updateAddress: async (addressId, addressData) => {
+        try {
+            const response = await api.put(`/customers/addresses/${addressId}`, addressData);
+            return response.data;
+        } catch (error) {
+            throw error.response?.data || error.message;
+        }
+    },
+
+    deleteAddress: async (addressId) => {
+        try {
+            const response = await api.delete(`/customers/addresses/${addressId}`);
+            return response.data;
+        } catch (error) {
+            throw error.response?.data || error.message;
+        }
+    },
+
+    getAddresses: async () => {
+        try {
+            const response = await api.get('/customers/addresses');
+            return response.data;
+        } catch (error) {
+            throw error.response?.data || error.message;
+        }
     }
 };
 
