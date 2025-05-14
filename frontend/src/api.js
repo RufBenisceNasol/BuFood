@@ -334,13 +334,16 @@ export const cart = {
         } catch (error) {
             throw error.response?.data || error.message;
         }
-    },
-
-    removeFromCart: async (productId) => {
+    },    removeFromCart: async (productId) => {
         try {
+            console.log('Removing product:', productId); // Debug log
             const response = await api.post('/cart/remove', { productId });
-            return response.data.data.cart;
+            if (response.data?.data?.cart) {
+                return response.data.data.cart;
+            }
+            return response.data;
         } catch (error) {
+            console.error('API error:', error.response || error); // Debug log
             throw error.response?.data || error.message;
         }
     },

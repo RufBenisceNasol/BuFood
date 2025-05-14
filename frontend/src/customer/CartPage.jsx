@@ -23,7 +23,7 @@ import {
     Remove,
     ArrowBack,
     LocationOn,
-    Close,
+    DeleteOutline,
 } from '@mui/icons-material';
 
 const CartPage = () => {
@@ -31,8 +31,10 @@ const CartPage = () => {
     const [cartData, setCartData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [success, setSuccess] = useState(null);
     const [selectedItems, setSelectedItems] = useState({});
-    const [deleteItemId, setDeleteItemId] = useState(null);
+    const [isDeleting, setIsDeleting] = useState(false);
+    const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
     useEffect(() => {
         fetchCart();
@@ -40,14 +42,20 @@ const CartPage = () => {
 
     const fetchCart = async () => {
         try {
-            const data = await cart.viewCart();
-            setCartData(data);
+            setError(null);
+            setSuccess(null);
+            const response = await cart.viewCart();
+            console.log('Cart response:', response); // Debug log
+            setCartData(response);
             const initialSelected = {};
-            data.items.forEach(item => {
-                initialSelected[item.product._id] = false;
-            });
+            if (response?.items) {
+                response.items.forEach(item => {
+                    initialSelected[item.product._id] = false;
+                });
+            }
             setSelectedItems(initialSelected);
         } catch (err) {
+            console.error('Cart fetch error:', err);
             setError(err.message || 'Failed to fetch cart');
         } finally {
             setLoading(false);
@@ -59,6 +67,7 @@ const CartPage = () => {
             if (newQuantity < 1) return;
             await cart.updateCartItem(productId, newQuantity);
             fetchCart();
+            setSuccess('Quantity updated successfully');
         } catch (err) {
             setError(err.message || 'Failed to update quantity');
         }
@@ -71,14 +80,39 @@ const CartPage = () => {
         }));
     };
 
-    const handleDeleteItem = async () => {
+    const handleBulkDelete = async () => {
         try {
-            if (!deleteItemId) return;
-            await cart.removeFromCart(deleteItemId);
-            setDeleteItemId(null);
-            fetchCart();
+            setIsDeleting(true);
+            setError(null);
+            setSuccess(null);
+
+            const selectedItemIds = Object.entries(selectedItems)
+                .filter(([, isSelected]) => isSelected)
+                .map(([productId]) => productId);
+
+            if (selectedItemIds.length === 0) {
+                setError('No items selected');
+                return;
+            }
+
+            // Remove each selected item one by one
+            for (const productId of selectedItemIds) {
+                const response = await cart.removeFromCart(productId);
+                if (!response) {
+                    throw new Error('Failed to delete item from cart');
+                }
+            }
+
+            setShowDeleteDialog(false);
+            await fetchCart(); // This will refresh the cart state
+            setSelectedItems({}); // Reset selections
+            setSuccess('Selected items have been removed from your cart');
+
         } catch (err) {
-            setError(err.message || 'Failed to delete item from cart');
+            console.error('Delete error:', err);
+            setError(err.message || 'Failed to delete items from cart');
+        } finally {
+            setIsDeleting(false);
         }
     };
 
@@ -111,7 +145,7 @@ const CartPage = () => {
                 <IconButton onClick={() => navigate(-1)}>
                     <ArrowBack />
                 </IconButton>
-                <Box>
+                <Box sx={{ flex: 1 }}>
                     <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
                         Shopping Cart ({cartData?.items?.length || 0})
                     </Typography>
@@ -120,10 +154,28 @@ const CartPage = () => {
                         <Typography variant="body2">Your Location</Typography>
                     </Box>
                 </Box>
+                {getSelectedCount() > 0 && (
+                    <IconButton 
+                        color="error"
+                        onClick={() => setShowDeleteDialog(true)}
+                        disabled={isDeleting}
+                        sx={{ 
+                            '&:hover': { 
+                                bgcolor: 'rgba(211, 47, 47, 0.04)' 
+                            }
+                        }}
+                    >
+                        <DeleteOutline />
+                    </IconButton>
+                )}
             </Box>
 
             {error && (
                 <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>
+            )}
+
+            {success && (
+                <Alert severity="success" sx={{ mb: 2 }}>{success}</Alert>
             )}
 
             {/* Product List */}
@@ -131,13 +183,6 @@ const CartPage = () => {
                 <Card key={item.product._id} sx={styles.productCard}>
                     <CardContent>
                         <Box sx={styles.productContainer}>
-                            <IconButton 
-                                size="small" 
-                                onClick={() => setDeleteItemId(item.product._id)}
-                                sx={styles.deleteButton}
-                            >
-                                <Close />
-                            </IconButton>
                             <Checkbox 
                                 checked={selectedItems[item.product._id]}
                                 onChange={() => handleSelectItem(item.product._id)}
@@ -174,21 +219,48 @@ const CartPage = () => {
                         </Box>
                     </CardContent>
                 </Card>
-            ))}
-
-            {/* Delete Confirmation Dialog */}
-            <Dialog
-                open={Boolean(deleteItemId)}
-                onClose={() => setDeleteItemId(null)}
-            >
-                <DialogTitle>Remove Item</DialogTitle>
-                <DialogContent>
-                    Are you sure you want to remove this item from your cart?
+            ))}            {/* Delete Confirmation Dialog */}            <Dialog
+                id="delete-confirmation-dialog"
+                aria-labelledby="delete-dialog-title"
+                aria-describedby="delete-dialog-description"
+                open={showDeleteDialog}
+                onClose={() => !isDeleting && setShowDeleteDialog(false)}
+                sx={{
+                    '& .MuiDialog-paper': {
+                        width: '100%',
+                        maxWidth: '400px',
+                        p: 2
+                    }
+                }}
+            ><DialogTitle id="delete-dialog-title" sx={{ pb: 2 }}>
+                    Remove Items from Cart
+                </DialogTitle>
+                <DialogContent sx={{ py: 2 }}>
+                    <Typography id="delete-dialog-description">
+                        Are you sure you want to remove {getSelectedCount()} selected item(s) from your cart?
+                    </Typography>
                 </DialogContent>
-                <DialogActions>
-                    <Button onClick={() => setDeleteItemId(null)}>Cancel</Button>
-                    <Button onClick={handleDeleteItem} color="error" autoFocus>
-                        Remove
+                <DialogActions sx={{ pt: 2 }}>
+                    <Button 
+                        id="cancel-delete-button"
+                        name="cancel-delete"
+                        onClick={() => setShowDeleteDialog(false)} 
+                        disabled={isDeleting}
+                        sx={{ color: 'text.secondary' }}
+                    >
+                        Cancel
+                    </Button>
+                    <Button 
+                        id="confirm-delete-button"
+                        name="confirm-delete"
+                        onClick={handleBulkDelete} 
+                        color="error" 
+                        variant="contained"
+                        autoFocus 
+                        disabled={isDeleting}
+                        aria-label="Confirm delete items"
+                    >
+                        {isDeleting ? 'Removing...' : 'Remove'}
                     </Button>
                 </DialogActions>
             </Dialog>

@@ -4,7 +4,7 @@ import { MdSearch, MdHome, MdFavoriteBorder, MdShoppingCart, MdReceipt, MdPerson
 import Slider from 'react-slick';
 import 'slick-carousel/slick/slick.css';
 import 'slick-carousel/slick/slick-theme.css';
-import { store as storeApi, product as productApi, auth } from '../api';
+import { store as storeApi, product as productApi, auth, cart } from '../api';
 import '../styles/HomePage.css';
 
 const styles = {
@@ -79,7 +79,7 @@ const HomePage = () => {
   const [popularProducts, setPopularProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [userName, setUserName] = useState('');
+  const userName = '';
   const [searchQuery, setSearchQuery] = useState('');
   const [showFilters, setShowFilters] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -188,37 +188,18 @@ const HomePage = () => {
     }
   };
 
-  const handleAddToCart = (product) => {
+  const handleAddToCart = async (product) => {
     try {
-      // Get existing cart from localStorage
-      const existingCart = JSON.parse(localStorage.getItem('cart') || '[]');
-      
-      // Check if product is already in cart
-      const existingItemIndex = existingCart.findIndex(item => item.id === product._id);
-      
-      if (existingItemIndex >= 0) {
-        // If product exists, increment quantity
-        existingCart[existingItemIndex].quantity += 1;
-      } else {
-        // Otherwise add new product to cart
-        existingCart.push({
-          id: product._id,
-          name: product.name,
-          price: product.price,
-          image: product.image,
-          storeName: product.storeName,
-          quantity: 1
-        });
+      // Check if product is out of stock
+      if (product.availability === 'Out of Stock') {
+        return; // Don't proceed if product is out of stock
       }
       
-      // Save updated cart to localStorage
-      localStorage.setItem('cart', JSON.stringify(existingCart));
-      
-      // Provide feedback to user
+      await cart.addToCart(product._id, 1);
       alert(`${product.name} added to cart!`);
     } catch (error) {
       console.error('Error adding product to cart:', error);
-      alert('Failed to add product to cart. Please try again.');
+      alert(error?.message || 'Failed to add product to cart. Please try again.');
     }
   };
 
@@ -475,8 +456,7 @@ const HomePage = () => {
                     </div>
                     <div className="productInfo">
                       <h3 className="productName">{product.name || 'Chicken With Rice'}</h3>
-                      <p className="storeName">{product.storeName || 'Store Name'}</p>
-                      <div className="productPriceRow">
+                      <p className="storeName">{product.storeName || 'Store Name'}</p>                        <div className="productPriceRow">
                         <p className="productPrice">₱{product.price || '49'}</p>
                         <button 
                           className="addButton"
@@ -484,8 +464,13 @@ const HomePage = () => {
                             e.stopPropagation();
                             handleAddToCart(product);
                           }}
+                          disabled={product.availability === 'Out of Stock'}
+                          style={{
+                            backgroundColor: product.availability === 'Out of Stock' ? '#ccc' : undefined,
+                            cursor: product.availability === 'Out of Stock' ? 'not-allowed' : 'pointer'
+                          }}
                         >
-                          Add to Cart
+                          {product.availability === 'Out of Stock' ? 'Out of Stock' : 'Add to Cart'}
                         </button>
                       </div>
                     </div>
@@ -553,8 +538,7 @@ const HomePage = () => {
                     </div>
                     <div className="productInfo">
                       <h3 className="productName">{product.name || 'Product Name'}</h3>
-                      <p className="storeName">{product.storeName || 'Store Name'}</p>
-                      <div className="productPriceRow">
+                      <p className="storeName">{product.storeName || 'Store Name'}</p>                      <div className="productPriceRow">
                         <p className="productPrice">₱{product.price || '0'}</p>
                         <button 
                           className="addButton"
@@ -562,8 +546,13 @@ const HomePage = () => {
                             e.stopPropagation();
                             handleAddToCart(product);
                           }}
+                          disabled={product.availability === 'Out of Stock'}
+                          style={{
+                            backgroundColor: product.availability === 'Out of Stock' ? '#ccc' : undefined,
+                            cursor: product.availability === 'Out of Stock' ? 'not-allowed' : 'pointer'
+                          }}
                         >
-                          Add to Cart
+                          {product.availability === 'Out of Stock' ? 'Out of Stock' : 'Add to Cart'}
                         </button>
                       </div>
                     </div>
