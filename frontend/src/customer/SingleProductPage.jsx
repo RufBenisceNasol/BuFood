@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { product, cart } from '../api';
 import { toast, ToastContainer } from 'react-toastify';
@@ -10,8 +10,13 @@ const SingleProductPage = () => {
     const navigate = useNavigate();
     const [productData, setProductData] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState('');
+    const [error, setError] = useState('');    
     const [quantity, setQuantity] = useState(1);
+
+    const handleGoBack = () => {
+        navigate('/customer/home');
+    };
+
 
     useEffect(() => {
         const fetchProductDetails = async () => {
@@ -53,7 +58,7 @@ const SingleProductPage = () => {
             <ToastContainer position="top-right" autoClose={3000} />
             
             <div style={styles.header}>
-                <button style={styles.backButton} onClick={() => navigate(-1)}>
+                <button style={styles.backButton} onClick={handleGoBack}>
                     <MdArrowBack size={24} />
                 </button>
                 <h1 style={styles.headerTitle}>Product Details</h1>

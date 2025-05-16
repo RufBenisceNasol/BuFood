@@ -103,6 +103,20 @@ mongoose.connect(process.env.MONGODB_URI)
         process.exit(1);
     });
 
+// After MongoDB connection is established
+mongoose.connection.once('open', async () => {
+    logger.info('MongoDB connection established successfully');
+    
+    // Initialize cart collection
+    try {
+        const Cart = mongoose.model('Cart');
+        await Cart.collection.dropIndexes();
+        logger.info('Successfully dropped all indexes from cart collection');
+    } catch (err) {
+        logger.error('Error dropping indexes:', err);
+    }
+});
+
 // API Documentation
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpecs));
 

@@ -109,8 +109,7 @@ const ProductPage = () => {
                 open: true,
                 message: 'Order placed successfully!',
                 severity: 'success'
-            });
-            navigate('/orders');
+            });            navigate('/customer/orders');
         } catch (err) {
             setSnackbar({
                 open: true,

@@ -13,8 +13,7 @@ const cartLimiter = rateLimit({
 });
 
 // Validation for adding a product to the cart
-const addToCartValidator = [
-  body('productId')
+const addToCartValidator = [  body('productId')
     .notEmpty()
     .withMessage('Product ID is required')
     .isMongoId()

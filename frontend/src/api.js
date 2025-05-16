@@ -308,8 +308,7 @@ export const product = {
 };
 
 // Cart API endpoints
-export const cart = {
-    addToCart: async (productId, quantity) => {
+export const cart = {    addToCart: async (productId, quantity) => {
         try {
             const response = await api.post('/cart/add', { productId, quantity });
             return response.data.data.cart;

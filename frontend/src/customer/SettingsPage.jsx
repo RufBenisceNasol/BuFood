@@ -85,15 +85,15 @@ const SettingsPage = () => {
   }, [navigate]);
 
   const handleGoBack = () => {
-    navigate('/');
+    navigate('/customer/home');
   };
 
-  const handleEditProfile = () => {
-    navigate('/profile');
+  const navigateToProfile = () => {
+    navigate('/customer/profile');
   };
 
-  const handleChangePassword = () => {
-    navigate('/change-password');
+  const navigateToChangePassword = () => {
+    navigate('/customer/change-password');
   };
 
   const handleToggleDarkMode = () => {
@@ -115,12 +115,9 @@ const SettingsPage = () => {
   };
 
   const handleLogout = () => {
-    // Clear auth token and user data
     localStorage.removeItem('token');
     localStorage.removeItem('refreshToken');
     localStorage.removeItem('user');
-    
-    // Redirect to login page
     navigate('/login');
   };
 
@@ -185,7 +182,7 @@ const SettingsPage = () => {
           </Typography>
         </Box>
         <IconButton 
-          onClick={handleEditProfile}
+          onClick={navigateToProfile}
           sx={{ color: '#FF8C00' }}
         >
           <Edit />
@@ -212,7 +209,7 @@ const SettingsPage = () => {
         }}
       >
         <List disablePadding>
-          <ListItem button onClick={handleEditProfile}>
+          <ListItem button onClick={navigateToProfile}>
             <ListItemIcon>
               <Person sx={{ color: '#FF8C00' }} />
             </ListItemIcon>
@@ -226,7 +223,7 @@ const SettingsPage = () => {
           
           <Divider />
           
-          <ListItem button onClick={handleChangePassword}>
+          <ListItem button onClick={navigateToChangePassword}>
             <ListItemIcon>
               <Lock sx={{ color: '#FF8C00' }} />
             </ListItemIcon>
@@ -391,4 +388,4 @@ const SettingsPage = () => {
   );
 };
 
-export default SettingsPage; 
+export default SettingsPage;

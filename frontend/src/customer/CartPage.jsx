@@ -130,6 +130,18 @@ const CartPage = () => {
         return Object.values(selectedItems).filter(Boolean).length;
     };
 
+    const handleGoBack = () => {
+        navigate('/customer/home');
+    };
+
+    const navigateToCheckout = () => {
+        navigate('/customer/checkout');
+    };
+
+    const navigateToProduct = (productId) => {
+        navigate(`/customer/product/${productId}`);
+    };
+
     if (loading) {
         return (
             <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
@@ -142,7 +154,7 @@ const CartPage = () => {
         <Container maxWidth="lg" sx={{ pb: 8 }}>
             {/* Header */}
             <Box sx={styles.header}>
-                <IconButton onClick={() => navigate(-1)}>
+                <IconButton onClick={handleGoBack}>
                     <ArrowBack />
                 </IconButton>
                 <Box sx={{ flex: 1 }}>
@@ -191,6 +203,7 @@ const CartPage = () => {
                                 src={item.product.image} 
                                 alt={item.product.name}
                                 sx={styles.productImage}
+                                onClick={() => navigateToProduct(item.product._id)}
                             />
                             <Box sx={styles.productInfo}>
                                 <Typography variant="subtitle1">{item.product.name}</Typography>
@@ -279,8 +292,7 @@ const CartPage = () => {
                     component="button"
                     onClick={() => {
                         if (getSelectedCount() > 0) {
-                            // Handle checkout
-                            console.log('Proceeding to checkout with selected items');
+                            navigateToCheckout();
                         }
                     }}
                     sx={styles.checkoutButton}
@@ -322,7 +334,8 @@ const styles = {
         width: 80,
         height: 80,
         objectFit: 'cover',
-        borderRadius: 1
+        borderRadius: 1,
+        cursor: 'pointer'
     },
     productInfo: {
         flex: 1,

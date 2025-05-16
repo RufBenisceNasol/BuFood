@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MdSearch, MdHome, MdFavoriteBorder, MdShoppingCart, MdReceipt, MdPerson, MdFilterList, MdClose, MdMenuOpen, MdSettings, MdLogout, MdStore } from 'react-icons/md';
 import Slider from 'react-slick';
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import 'slick-carousel/slick/slick.css';
 import 'slick-carousel/slick/slick-theme.css';
 import { store as storeApi, product as productApi, auth, cart } from '../api';
@@ -190,16 +192,13 @@ const HomePage = () => {
 
   const handleAddToCart = async (product) => {
     try {
-      // Check if product is out of stock
-      if (product.availability === 'Out of Stock') {
-        return; // Don't proceed if product is out of stock
-      }
-      
       await cart.addToCart(product._id, 1);
-      alert(`${product.name} added to cart!`);
-    } catch (error) {
-      console.error('Error adding product to cart:', error);
-      alert(error?.message || 'Failed to add product to cart. Please try again.');
+      // Show success message
+      toast.success('Product added to cart successfully');
+     } catch (err) {
+                const errorMessage = err.message || err.error || 'Failed to add product to cart';
+                toast.error(errorMessage);
+                console.error('Add to cart error:', err);
     }
   };
 
@@ -241,14 +240,17 @@ const HomePage = () => {
       [filterType]: value
     });
   };
-
-  const navigateTo = (path) => {
-    navigate(path);
-  };
-
   const handleLogout = () => {
     auth.logout();
     navigate('/login');
+  };
+
+  const handleProductClick = (productId) => {
+    navigate(`/customer/product/${productId}`);
+  };
+
+  const handleStoreClick = (storeId) => {
+    navigate(`/customer/store/${storeId}`);
   };
 
   if (loading) {
@@ -272,6 +274,8 @@ const HomePage = () => {
 
   return (
     <div className="pageContainer">
+      <ToastContainer position="top-right" autoClose={3000} />
+      
       <div className="mainContainer">
         {/* Header */}
         <div className="header">
@@ -288,15 +292,15 @@ const HomePage = () => {
           
           {isMenuOpen && (
             <div className="popupMenu">
-              <div className="menuItem" onClick={() => navigateTo('/customer/profile')}>
+              <div className="menuItem" onClick={() => navigate('/customer/profile')}>
                 <MdPerson className="menuIcon" />
                 Profile
               </div>
-              <div className="menuItem" onClick={() => navigateTo('/stores')}>
+              <div className="menuItem" onClick={() => navigate('/customer/stores')}>
                 <MdStore className="menuIcon" />
                 Stores
               </div>
-              <div className="menuItem" onClick={() => navigateTo('/settings')}>
+              <div className="menuItem" onClick={() => navigate('/customer/settings')}>
                 <MdSettings className="menuIcon" />
                 Settings
               </div>
@@ -396,7 +400,7 @@ const HomePage = () => {
                   <div key={store._id} style={styles.slide}>
                     <div 
                       style={styles.banner}
-                      onClick={() => navigate(`/store/${store._id}`)}
+                      onClick={() => handleStoreClick(store._id)}
                     >
                       <img 
                         src={store.bannerImage || 'https://i.ibb.co/qkGWKQX/pizza-promotion.jpg'} 
@@ -444,7 +448,7 @@ const HomePage = () => {
                   <div 
                     key={product._id || Math.random()} 
                     className="productCard"
-                    onClick={() => navigate(`/customer/product/${product._id}`)}
+                    onClick={() => handleProductClick(product._id)}
                     style={{ cursor: 'pointer' }}
                   >
                     <div className="productImageContainer">
@@ -456,7 +460,8 @@ const HomePage = () => {
                     </div>
                     <div className="productInfo">
                       <h3 className="productName">{product.name || 'Chicken With Rice'}</h3>
-                      <p className="storeName">{product.storeName || 'Store Name'}</p>                        <div className="productPriceRow">
+                      <p className="storeName">{product.storeName || 'Store Name'}</p>
+                      <div className="productPriceRow">
                         <p className="productPrice">₱{product.price || '49'}</p>
                         <button 
                           className="addButton"
@@ -526,7 +531,7 @@ const HomePage = () => {
                   <div 
                     key={product._id || Math.random()} 
                     className="productCard"
-                    onClick={() => navigate(`/customer/product/${product._id}`)}
+                    onClick={() => handleProductClick(product._id)}
                     style={{ cursor: 'pointer' }}
                   >
                     <div className="productImageContainer">
@@ -538,7 +543,8 @@ const HomePage = () => {
                     </div>
                     <div className="productInfo">
                       <h3 className="productName">{product.name || 'Product Name'}</h3>
-                      <p className="storeName">{product.storeName || 'Store Name'}</p>                      <div className="productPriceRow">
+                      <p className="storeName">{product.storeName || 'Store Name'}</p>
+                      <div className="productPriceRow">
                         <p className="productPrice">₱{product.price || '0'}</p>
                         <button 
                           className="addButton"
@@ -566,27 +572,25 @@ const HomePage = () => {
             )}
           </div>
         </div>
-      </div>
-
-      {/* Bottom Navigation */}
+      </div>      {/* Bottom Navigation */}
       <div className="bottomNav">
-        <div className={"navItem activeNavItem"} onClick={() => navigateTo('/customer/home')}>
+        <div className={"navItem activeNavItem"} onClick={() => navigate('/customer/home')}>
           <MdHome size={24} className="activeNavIcon" />
           <span className="navText">Home</span>
         </div>
-        <div className="navItem" onClick={() => navigateTo('/favorites')}>
+        <div className="navItem" onClick={() => navigate('/customer/favorites')}>
           <MdFavoriteBorder size={24} />
           <span className="navText">Favorites</span>
         </div>
-        <div className="navItem" onClick={() => navigateTo('/customer/cart')}>
+        <div className="navItem" onClick={() => navigate('/customer/cart')}>
           <MdShoppingCart size={24} />
           <span className="navText">Cart</span>
         </div>
-        <div className="navItem" onClick={() => navigateTo('/stores')}>
+        <div className="navItem" onClick={() => navigate('/customer/stores')}>
           <MdStore size={24} />
           <span className="navText">Stores</span>
         </div>
-        <div className="navItem" onClick={() => navigateTo('/customer/profile')}>
+        <div className="navItem" onClick={() => navigate('/customer/profile')}>
           <MdPerson size={24} />
           <span className="navText">Profile</span>
         </div>

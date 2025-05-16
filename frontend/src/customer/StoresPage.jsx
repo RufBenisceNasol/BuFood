@@ -63,12 +63,12 @@ const StoresPage = () => {
     }
   };
 
-  const handleStoreClick = (storeId) => {
-    navigate(`/store/${storeId}`);
+  const handleGoBack = () => {
+    navigate('/customer/home');
   };
 
-  const handleGoBack = () => {
-    navigate('/');
+  const navigateToStore = (storeId) => {
+    navigate(`/customer/store/${storeId}`);
   };
 
   const handleSearch = (e) => {
@@ -132,7 +132,7 @@ const StoresPage = () => {
           filteredStores.map(store => (
             <Grid item xs={12} sm={6} md={4} key={store._id}>
               <Card 
-                onClick={() => handleStoreClick(store._id)}
+                onClick={() => navigateToStore(store._id)}
                 sx={{
                   height: '100%',
                   display: 'flex',
@@ -225,4 +225,4 @@ const StoresPage = () => {
   );
 };
 
-export default StoresPage; 
+export default StoresPage;

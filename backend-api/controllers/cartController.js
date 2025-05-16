@@ -4,6 +4,21 @@ const Product = require('../models/productModel');
 const Order = require('../models/orderModel');
 const OrderItem = require('../models/orderItemModel'); // Your OrderItem model
 
+// Add this new function after imports
+const initializeCartCollection = async () => {
+  try {
+    const Cart = mongoose.model('Cart');
+    // Drop all existing indexes
+    await Cart.collection.dropIndexes();
+    console.log('Successfully dropped all indexes from cart collection');
+  } catch (err) {
+    console.error('Error dropping indexes:', err);
+  }
+};
+
+// Call this once when the server starts
+initializeCartCollection();
+
 // Helper function for consistent response structure
 const createResponse = (success, message, data = null, error = null) => ({
   success,
@@ -28,8 +43,7 @@ const addToCart = async (req, res) => {
     const session = await mongoose.startSession();
     session.startTransaction();
 
-    try {
-      const { productId, quantity } = req.body;
+    try {      const { productId, quantity } = req.body;
 
       // Input validation
       if (!productId || !quantity || quantity <= 0) {
@@ -56,30 +70,27 @@ const addToCart = async (req, res) => {
           'Insufficient stock',
           { available: product.quantity }
         ));
-      }
-
-      const price = product.price;
+      }      const price = product.price;
       let cart = await Cart.findOne({ user: req.user._id }).session(session);
 
       if (!cart) {
         cart = new Cart({
           user: req.user._id,
+
           items: [{ 
             product: productId, 
             quantity, 
             subtotal: price * quantity 
           }],
-          total: price * quantity,
+          total: price * quantity
         });
       } else {
         const itemIndex = cart.items.findIndex(item => item.product.toString() === productId);
 
         if (itemIndex > -1) {
-          // Update existing item
           cart.items[itemIndex].quantity = cart.items[itemIndex].quantity + quantity;
           cart.items[itemIndex].subtotal = cart.items[itemIndex].quantity * price;
         } else {
-          // Add new item
           cart.items.push({ 
             product: productId, 
             quantity, 

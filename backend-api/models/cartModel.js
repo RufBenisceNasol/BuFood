@@ -19,7 +19,7 @@ const cartItemSchema = new mongoose.Schema({
 
 const cartSchema = new mongoose.Schema(
   {
-    user: {  // Changed from customer to user to match the database
+    user: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
       required: true
@@ -32,14 +32,9 @@ const cartSchema = new mongoose.Schema(
     },
   },
   { 
-    timestamps: true,
-    // Adding index at schema level
-    autoIndex: true 
+    timestamps: true
   }
 );
-
-// Creating a unique index on the user field
-cartSchema.index({ user: 1 }, { unique: true });
 
 const Cart = mongoose.model('Cart', cartSchema);
 module.exports = Cart;

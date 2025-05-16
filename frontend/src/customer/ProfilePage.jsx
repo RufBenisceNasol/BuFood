@@ -75,8 +75,7 @@ const ProfilePage = () => {
   const handleGoBack = () => {
     if (userData?.role === 'Seller') {
       navigate('/seller/dashboard');
-    } else {
-      navigate('/');
+    } else {      navigate('/customer/home');
     }
   };
 
