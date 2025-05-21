@@ -1,5 +1,22 @@
 const express = require('express');
 const router = express.Router();
+const { authenticate, checkRole } = require('../middlewares/authMiddleware');
+const {
+    checkoutFromCart,
+    checkoutFromProduct,
+    placeOrder,
+    getCustomerOrders,
+    getSellerOrders,
+    getOrderDetails,
+    cancelOrderByCustomer,
+    updateOrderStatus
+} = require('../controllers/orderController');
+const {
+    checkoutFromProductValidator,
+    placeOrderValidator,
+    orderIdValidator,
+    updateOrderStatusValidator
+} = require('../middlewares/validators/orderValidator');
 
 /**
  * @swagger
@@ -8,37 +25,61 @@ const router = express.Router();
  *     Order:
  *       type: object
  *       properties:
+ *         customer:
+ *           type: string
+ *           description: Customer ID
+ *         seller:
+ *           type: string
+ *           description: Seller ID
+ *         store:
+ *           type: string
+ *           description: Store ID
  *         items:
  *           type: array
  *           items:
  *             type: object
  *             properties:
- *               productId:
+ *               product:
  *                 type: string
+ *                 description: Product ID
  *               quantity:
  *                 type: number
- *         status:
- *           type: string
- *           enum: [pending, confirmed, preparing, ready, completed, cancelled]
+ *               price:
+ *                 type: number
+ *               subtotal:
+ *                 type: number
  *         totalAmount:
  *           type: number
- *         customerId:
+ *         shippingFee:
+ *           type: number
+ *         status:
  *           type: string
- *         sellerId:
+ *           enum: [Pending, Placed, Shipped, Delivered, Canceled]
+ *         paymentStatus:
  *           type: string
+ *           enum: [Pending, Paid, Failed]
+ *         paymentMethod:
+ *           type: string
+ *           enum: [Cash on Delivery, Credit Card, GCash]
  */
 
-const {
-  checkoutFromProduct,
-  checkoutFromCart,
-  placeOrder,
-  getOrdersForCustomer,
-  getOrderDetails,
-  cancelOrderByCustomer,
-  getPlacedOrdersForSeller, 
-  updateOrderStatusOrCancelBySeller,
-} = require('../controllers/orderController');
-const { authenticate, checkRole } = require('../middlewares/authMiddleware');
+/**
+ * @swagger
+ * /api/orders/checkout-cart:
+ *   post:
+ *     tags: [Orders]
+ *     summary: Checkout from cart
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Orders created successfully
+ *       400:
+ *         description: Cart is empty
+ *       401:
+ *         description: Unauthorized
+ */
+router.post('/checkout-cart', authenticate, checkRole('Customer'), checkoutFromCart);
 
 /**
  * @swagger
@@ -54,9 +95,6 @@ const { authenticate, checkRole } = require('../middlewares/authMiddleware');
  *         application/json:
  *           schema:
  *             type: object
- *             required:
- *               - productId
- *               - quantity
  *             properties:
  *               productId:
  *                 type: string
@@ -64,34 +102,20 @@ const { authenticate, checkRole } = require('../middlewares/authMiddleware');
  *                 type: number
  *     responses:
  *       200:
- *         description: Checkout successful
+ *         description: Order created successfully
  *       401:
  *         description: Unauthorized
+ *       404:
+ *         description: Product not found
  */
-router.post('/checkout-from-product', authenticate, checkRole('Customer'), checkoutFromProduct);
-
-/**
- * @swagger
- * /api/orders/checkout-cart:
- *   post:
- *     tags: [Orders]
- *     summary: Checkout from cart
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: Cart checkout successful
- *       401:
- *         description: Unauthorized
- */
-router.post('/checkout-cart', authenticate, checkRole('Customer'), checkoutFromCart);
+router.post('/checkout-from-product', authenticate, checkRole('Customer'), checkoutFromProductValidator, checkoutFromProduct);
 
 /**
  * @swagger
  * /api/orders/place-order/{orderId}:
  *   post:
  *     tags: [Orders]
- *     summary: Place order after checkout
+ *     summary: Place order with shipping details
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -100,59 +124,71 @@ router.post('/checkout-cart', authenticate, checkRole('Customer'), checkoutFromC
  *         required: true
  *         schema:
  *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               shippingAddress:
+ *                 type: object
+ *                 properties:
+ *                   street:
+ *                     type: string
+ *                   city:
+ *                     type: string
+ *                   state:
+ *                     type: string
+ *                   zipCode:
+ *                     type: string
+ *               paymentMethod:
+ *                 type: string
+ *               notes:
+ *                 type: string
  *     responses:
  *       200:
  *         description: Order placed successfully
  *       401:
  *         description: Unauthorized
+ *       404:
+ *         description: Order not found
  */
-router.post('/place-order/:orderId', authenticate, checkRole('Customer'), placeOrder);
+router.post('/place-order/:orderId', authenticate, checkRole('Customer'), placeOrderValidator, placeOrder);
 
 /**
  * @swagger
  * /api/orders/customer:
  *   get:
  *     tags: [Orders]
- *     summary: Get all orders for customer
+ *     summary: Get customer's orders
  *     security:
  *       - bearerAuth: []
  *     responses:
  *       200:
- *         description: List of customer orders
- *         content:
- *           application/json:
- *             schema:
- *               type: array
- *               items:
- *                 $ref: '#/components/schemas/Order'
+ *         description: Orders retrieved successfully
  *       401:
  *         description: Unauthorized
  */
-router.get('/customer', authenticate, getOrdersForCustomer);
+router.get('/customer', authenticate, checkRole('Customer'), getCustomerOrders);
 
 /**
  * @swagger
  * /api/orders/seller/placed:
  *   get:
  *     tags: [Orders]
- *     summary: Get all placed orders for seller
+ *     summary: Get seller's orders
  *     security:
  *       - bearerAuth: []
  *     responses:
  *       200:
- *         description: List of orders for seller
- *         content:
- *           application/json:
- *             schema:
- *               type: array
- *               items:
- *                 $ref: '#/components/schemas/Order'
+ *         description: Orders retrieved successfully
  *       401:
  *         description: Unauthorized
  *       403:
  *         description: Forbidden - Not a seller
  */
-router.get('/seller/placed', authenticate, checkRole('Seller'), getPlacedOrdersForSeller);
+router.get('/seller/placed', authenticate, checkRole('Seller'), getSellerOrders);
 
 /**
  * @swagger
@@ -170,13 +206,15 @@ router.get('/seller/placed', authenticate, checkRole('Seller'), getPlacedOrdersF
  *           type: string
  *     responses:
  *       200:
- *         description: Order details
+ *         description: Order details retrieved successfully
  *       401:
  *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - Not authorized to view this order
  *       404:
  *         description: Order not found
  */
-router.get('/:orderId', authenticate, getOrderDetails);
+router.get('/:orderId', authenticate, orderIdValidator, getOrderDetails);
 
 /**
  * @swagger
@@ -194,20 +232,20 @@ router.get('/:orderId', authenticate, getOrderDetails);
  *           type: string
  *     responses:
  *       200:
- *         description: Order cancelled successfully
+ *         description: Order canceled successfully
  *       401:
  *         description: Unauthorized
- *       403:
- *         description: Forbidden - Not order owner
+ *       404:
+ *         description: Order not found or cannot be canceled
  */
-router.patch('/cancel-by-customer/:orderId', authenticate, checkRole('Customer'), cancelOrderByCustomer);
+router.patch('/cancel-by-customer/:orderId', authenticate, checkRole('Customer'), orderIdValidator, cancelOrderByCustomer);
 
 /**
  * @swagger
  * /api/orders/seller/manage/{orderId}:
  *   patch:
  *     tags: [Orders]
- *     summary: Update order status or cancel by seller
+ *     summary: Update order status (seller)
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -222,20 +260,23 @@ router.patch('/cancel-by-customer/:orderId', authenticate, checkRole('Customer')
  *         application/json:
  *           schema:
  *             type: object
- *             required:
- *               - status
  *             properties:
+ *               action:
+ *                 type: string
+ *                 enum: [cancel, updateStatus]
  *               status:
  *                 type: string
- *                 enum: [confirmed, preparing, ready, completed, cancelled]
+ *                 enum: [Shipped, Delivered]
  *     responses:
  *       200:
  *         description: Order status updated successfully
  *       401:
  *         description: Unauthorized
  *       403:
- *         description: Forbidden - Not the seller
+ *         description: Forbidden - Not a seller
+ *       404:
+ *         description: Order not found
  */
-router.patch('/seller/manage/:orderId', authenticate, checkRole('Seller'), updateOrderStatusOrCancelBySeller);
+router.patch('/seller/manage/:orderId', authenticate, checkRole('Seller'), updateOrderStatusValidator, updateOrderStatus);
 
-module.exports = router;
+module.exports = router; 

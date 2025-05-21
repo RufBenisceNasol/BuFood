@@ -1,48 +1,32 @@
 const swaggerJsdoc = require('swagger-jsdoc');
 
 const options = {
-    definition: {
-        openapi: '3.0.0',
-        info: {
-            title: 'BuFood API Documentation',
-            version: '1.0.0',
-            description: 'API documentation for BuFood application',
-        },
-        servers: [
-            {
-                url: '{protocol}://{hostname}:{port}',
-                description: 'Dynamic server',
-                variables: {
-                    protocol: {
-                        enum: ['http', 'https'],
-                        default: 'http'
-                    },
-                    hostname: {
-                        default: 'localhost'
-                    },
-                    port: {
-                        default: '8000'
-                    }
-                }
-            }
-        ],
-        components: {
-            securitySchemes: {
-                bearerAuth: {
-                    type: 'http',
-                    scheme: 'bearer',
-                    bearerFormat: 'JWT',
-                },
-            },
-        },
-        security: [{
-            bearerAuth: [],
-        }],
+  definition: {
+    openapi: '3.0.0',
+    info: {
+      title: 'BuFood API Documentation',
+      version: '1.0.0',
+      description: 'API documentation for BuFood application',
     },
-    apis: [
-        './routes/*.js',
-        './models/*.js',
-    ],
+    components: {
+      securitySchemes: {
+        bearerAuth: {
+          type: 'http',
+          scheme: 'bearer',
+          bearerFormat: 'JWT',
+        },
+      },
+    },
+  },
+  apis: [
+    './routes/authRoutes.js',
+    './routes/productRoutes.js',
+    './routes/storeRoutes.js',
+    './routes/customerRoutes.js',
+    './routes/sellerRoutes.js',
+    './routes/cartRoutes.js',
+    './routes/orderRoutes.js'
+  ],
 };
 
 const specs = swaggerJsdoc(options);

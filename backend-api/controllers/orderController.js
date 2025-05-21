@@ -1,396 +1,383 @@
 const Order = require('../models/orderModel');
-const OrderItem = require('../models/orderItemModel');
 const Cart = require('../models/cartModel');
 const Product = require('../models/productModel');
+const Store = require('../models/storeModel');
+const User = require('../models/userModel');
+const mongoose = require('mongoose');
 
-// Helper function to create order item
-const createOrderItem = async (product, quantity) => {
-  const subtotal = product.price * quantity;
-  const orderItem = new OrderItem({
-    product: product._id,
-    quantity,
-    priceAtPurchase: product.price,
-    subtotal,
-  });
+// Helper function to create a response object
+const createResponse = (success, message, data = null, error = null) => ({
+    success,
+    message,
+    data,
+    error
+});
 
-  await orderItem.save();
-  return orderItem._id;
-};
-
-// Helper function to create order
-const createOrder = async (customerId, orderItems, totalAmount, paymentMethod) => {
-  const order = new Order({
-    customer: customerId,
-    items: orderItems,
-    totalAmount,
-    status: 'Pending',
-    paymentStatus: paymentMethod === 'COD' ? 'Unpaid' : 'Pending',
-    paymentMethod,
-  });
-
-  await order.save();
-  return order;
-};
-
-// Checkout from Cart
+// Checkout from cart
 const checkoutFromCart = async (req, res) => {
-  try {
-    const userId = req.user._id;
+    const session = await mongoose.startSession();
+    session.startTransaction();
 
-    let cart = await Cart.findOne({ user: userId }).populate('items.product');
+    try {
+        const cart = await Cart.findOne({ user: req.user._id })
+            .populate('items.product')
+            .session(session);
 
-    if (!cart || cart.items.length === 0) {
-      return res.status(400).json({ message: 'Your cart is empty. Add items to your cart before proceeding.' });
+        if (!cart || cart.items.length === 0) {
+            await session.abortTransaction();
+            return res.status(400).json(createResponse(false, 'Cart is empty'));
+        }
+
+        // Group items by store
+        const itemsByStore = cart.items.reduce((acc, item) => {
+            const storeId = item.product.storeId.toString();
+            if (!acc[storeId]) {
+                acc[storeId] = [];
+            }
+            acc[storeId].push(item);
+            return acc;
+        }, {});
+
+        const orders = [];
+
+        // Create an order for each store
+        for (const [storeId, items] of Object.entries(itemsByStore)) {
+            const store = await Store.findById(storeId).session(session);
+            if (!store) {
+                await session.abortTransaction();
+                return res.status(404).json(createResponse(false, 'Store not found'));
+            }
+
+            const seller = await User.findById(store.owner).session(session);
+            if (!seller) {
+                await session.abortTransaction();
+                return res.status(404).json(createResponse(false, 'Seller not found'));
+            }
+
+            // Calculate total amount and prepare order items
+            const orderItems = items.map(item => ({
+                product: item.product._id,
+                quantity: item.quantity,
+                price: item.product.price,
+                subtotal: item.subtotal
+            }));
+
+            const totalAmount = items.reduce((sum, item) => sum + item.subtotal, 0);
+            const shippingFee = items.reduce((sum, item) => sum + (item.product.shippingFee || 0), 0);
+            const estimatedDeliveryTime = Math.max(...items.map(item => item.product.estimatedTime || 30));
+
+            const order = new Order({
+                customer: req.user._id,
+                seller: seller._id,
+                store: store._id,
+                items: orderItems,
+                totalAmount: totalAmount + shippingFee,
+                shippingFee,
+                estimatedDeliveryTime,
+                status: 'Pending'
+            });
+
+            await order.save({ session });
+            orders.push(order);
+        }
+
+        // Clear the cart after creating orders
+        await Cart.findByIdAndDelete(cart._id, { session });
+
+        await session.commitTransaction();
+        res.status(200).json(createResponse(true, 'Orders created successfully', { orders }));
+    } catch (error) {
+        await session.abortTransaction();
+        console.error('Checkout error:', error);
+        res.status(500).json(createResponse(false, 'Failed to create orders', null, error.message));
+    } finally {
+        session.endSession();
     }
-
-    let orderItems = [];
-    let totalAmount = 0;
-
-    for (let item of cart.items) {
-      const product = item.product;
-      const quantity = item.quantity;
-
-      if (product.availability === 'Out of Stock') {
-        return res.status(400).json({ message: `Product ${product.name} is out of stock.` });
-      }
-
-      const orderItemId = await createOrderItem(product, quantity);
-      orderItems.push(orderItemId);
-      totalAmount += item.subtotal;
-    }
-
-    const order = await createOrder(userId, orderItems, totalAmount, 'COD');
-
-    cart.items = [];
-    cart.total = 0;
-    await cart.save();
-
-    res.status(201).json({ message: 'Checkout successful, order created', order });
-  } catch (err) {
-    console.error('Error during checkout:', err.message);
-    res.status(500).json({ error: 'Failed to complete checkout', details: err.message });
-  }
 };
 
-// Checkout from Product
+// Checkout directly from product
 const checkoutFromProduct = async (req, res) => {
-  const customerId = req.user._id;
-  const { productId, quantity } = req.body;
+    const session = await mongoose.startSession();
+    session.startTransaction();
 
-  try {
-    const product = await Product.findById(productId);
-    if (!product) return res.status(404).json({ message: 'Product not found' });
+    try {
+        const { productId, quantity } = req.body;
 
-    if (product.availability === 'Out of Stock') {
-      return res.status(400).json({ message: 'Product is out of stock' });
+        const product = await Product.findById(productId).session(session);
+        if (!product) {
+            await session.abortTransaction();
+            return res.status(404).json(createResponse(false, 'Product not found'));
+        }
+
+        const store = await Store.findById(product.storeId).session(session);
+        if (!store) {
+            await session.abortTransaction();
+            return res.status(404).json(createResponse(false, 'Store not found'));
+        }
+
+        const seller = await User.findById(store.owner).session(session);
+        if (!seller) {
+            await session.abortTransaction();
+            return res.status(404).json(createResponse(false, 'Seller not found'));
+        }
+
+        const subtotal = product.price * quantity;
+        const order = new Order({
+            customer: req.user._id,
+            seller: seller._id,
+            store: store._id,
+            items: [{
+                product: product._id,
+                quantity,
+                price: product.price,
+                subtotal
+            }],
+            totalAmount: subtotal + (product.shippingFee || 0),
+            shippingFee: product.shippingFee || 0,
+            estimatedDeliveryTime: product.estimatedTime || 30,
+            status: 'Pending'
+        });
+
+        await order.save({ session });
+        await session.commitTransaction();
+
+        res.status(200).json(createResponse(true, 'Order created successfully', { order }));
+    } catch (error) {
+        await session.abortTransaction();
+        console.error('Checkout error:', error);
+        res.status(500).json(createResponse(false, 'Failed to create order', null, error.message));
+    } finally {
+        session.endSession();
     }
-
-    const subtotal = product.price * quantity;
-    const orderItemId = await createOrderItem(product, quantity);
-    const newOrder = await createOrder(customerId, [orderItemId], subtotal, 'COD');
-
-    setTimeout(async () => {
-      const currentOrder = await Order.findById(newOrder._id);
-      if (currentOrder?.status === 'Pending') {
-        await Order.findByIdAndDelete(newOrder._id);
-        console.log(`Order ${newOrder._id} removed due to timeout.`);
-      }
-    }, 60000);
-
-    return res.status(201).json({ message: 'Order created successfully', order: newOrder });
-  } catch (error) {
-    console.error(error);
-    return res.status(500).json({ message: 'Error processing checkout', error: error.message });
-  }
 };
 
-// Place Order (Finalize the order)
+// Place order (update shipping address and confirm)
 const placeOrder = async (req, res) => {
-  try {
-    const { orderId } = req.params;
-    const { customerName, contactNumber, deliveryLocation, paymentMethod } = req.body;
+    try {
+        const { orderId } = req.params;
+        const { deliveryDetails, paymentMethod, notes } = req.body;
 
-    if (!customerName || !contactNumber || !deliveryLocation || !paymentMethod) {
-      return res.status(400).json({ message: "All fields (customerName, contactNumber, deliveryLocation, paymentMethod) are required to place the order." });
+        const order = await Order.findOne({
+            _id: orderId,
+            customer: req.user._id,
+            status: 'Pending'
+        });
+
+        if (!order) {
+            return res.status(404).json(createResponse(false, 'Order not found or cannot be modified'));
+        }
+
+        order.deliveryDetails = deliveryDetails;
+        order.paymentMethod = paymentMethod;
+        order.notes = notes;
+        order.status = 'Placed';
+
+        if (paymentMethod === 'Cash on Delivery') {
+            order.paymentStatus = 'Pending';
+        }
+
+        await order.save();
+        res.status(200).json(createResponse(true, 'Order placed successfully', { order }));
+    } catch (error) {
+        console.error('Place order error:', error);
+        res.status(500).json(createResponse(false, 'Failed to place order', null, error.message));
     }
-
-    if (!['e-wallet', 'COD'].includes(paymentMethod)) {
-      return res.status(400).json({ message: "Invalid payment method. Choose either 'e-wallet' or 'COD'." });
-    }
-
-    const order = await Order.findById(orderId);
-    if (!order) {
-      return res.status(404).json({ message: "Order not found." });
-    }
-
-    if (order.status === 'Placed') {
-      return res.status(400).json({ message: "This order has already been placed." });
-    }
-
-    order.customerName = customerName;
-    order.contactNumber = contactNumber;
-    order.deliveryLocation = deliveryLocation;
-    order.paymentMethod = paymentMethod;
-    order.paymentStatus = paymentMethod === 'COD' ? 'Unpaid' : 'Pending';
-    order.status = 'Placed';
-
-    await order.save();
-
-    res.status(200).json({
-      message: "Order placed successfully.",
-      order,
-    });
-
-  } catch (error) {
-    console.error('Error placing order:', error);
-    res.status(500).json({ message: "Server error while placing order." });
-  }
 };
 
-// Get all orders for a customer
-const getOrdersForCustomer = async (req, res) => {
-  try {
-    const customerId = req.user._id;
+// Get customer's orders
+const getCustomerOrders = async (req, res) => {
+    try {
+        const orders = await Order.find({ customer: req.user._id })
+            .populate('items.product')
+            .populate('store', 'storeName')
+            .sort({ createdAt: -1 });
 
-    const orders = await Order.find({ customer: customerId })
-      .populate('items.product', 'name price description image')
-      .sort({ createdAt: -1 });
-
-    if (!orders || orders.length === 0) {
-      return res.status(404).json({ message: 'No orders found for this customer.' });
+        res.status(200).json(createResponse(true, 'Orders retrieved successfully', { orders }));
+    } catch (error) {
+        console.error('Get orders error:', error);
+        res.status(500).json(createResponse(false, 'Failed to retrieve orders', null, error.message));
     }
+};
 
-    return res.status(200).json({
-      message: 'Orders fetched successfully.',
-      orders,
-    });
-  } catch (error) {
-    console.error(error);
-    return res.status(500).json({ message: 'Server error fetching customer orders.' });
-  }
+// Get seller's orders
+const getSellerOrders = async (req, res) => {
+    try {
+        const orders = await Order.find({ seller: req.user._id })
+            .populate('items.product')
+            .populate('customer', 'name')
+            .sort({ createdAt: -1 });
+
+        res.status(200).json(createResponse(true, 'Orders retrieved successfully', { orders }));
+    } catch (error) {
+        console.error('Get orders error:', error);
+        res.status(500).json(createResponse(false, 'Failed to retrieve orders', null, error.message));
+    }
 };
 
 // Get order details
 const getOrderDetails = async (req, res) => {
-  try {
-    const userId = req.user._id;
-    const isAdmin = req.user.role === 'Admin';
-    const isSeller = req.user.role === 'Seller';
+    try {
+        const { orderId } = req.params;
+        const order = await Order.findById(orderId)
+            .populate('items.product')
+            .populate('customer', 'name')
+            .populate('seller', 'name')
+            .populate('store', 'storeName');
 
-    const { orderId } = req.params;
-
-    const order = await Order.findById(orderId).populate('items.product', 'name price description image');
-    if (!order) {
-      return res.status(404).json({ message: 'Order not found.' });
-    }
-
-    if (
-      order.customer.toString() !== userId.toString() &&
-      !isAdmin &&
-      !isSeller
-    ) {
-      return res.status(403).json({ message: 'You are not authorized to view this order.' });
-    }
-
-    if (isSeller) {
-      const productIds = order.items.map(item => item.product.toString());
-      const sellerProducts = await Product.find({ sellerId: userId }).select('_id');
-
-      const isSellerSellingProduct = productIds.some(productId =>
-        sellerProducts.some(sellerProduct => sellerProduct._id.toString() === productId)
-      );
-
-      if (!isSellerSellingProduct) {
-        return res.status(403).json({ message: 'You are not authorized to view this order.' });
-      }
-    }
-
-    res.status(200).json({ order });
-  } catch (error) {
-    console.error(error);
-    return res.status(500).json({ message: 'Server error fetching order details.' });
-  }
-};
-
-// Get all orders for a seller
-const getPlacedOrdersForSeller = async (req, res) => {
-  try {
-    const sellerId = req.user._id;
-
-    // Step 1: Get all products sold by this seller
-    const sellerProducts = await Product.find({ sellerId }).select('_id');
-    const sellerProductIds = sellerProducts.map(product => product._id.toString());
-
-    // Step 2: Get all orders that include at least one of the seller's products
-    const orders = await Order.find({})
-      .populate({
-        path: 'items',
-        populate: {
-          path: 'product',
-          model: 'Product',
+        if (!order) {
+            return res.status(404).json(createResponse(false, 'Order not found'));
         }
-      })
-      .sort({ createdAt: -1 });
 
-    // Step 3: Filter orders to only include those with seller's products
-    const filteredOrders = orders.filter(order =>
-      order.items.some(item =>
-        item.product && sellerProductIds.includes(item.product._id.toString())
-      )
-    );
+        // Check if user has permission to view this order
+        if (order.customer._id.toString() !== req.user._id.toString() &&
+            order.seller._id.toString() !== req.user._id.toString()) {
+            return res.status(403).json(createResponse(false, 'Not authorized to view this order'));
+        }
 
-    res.status(200).json({
-      message: 'Orders for seller fetched successfully.',
-      orders: filteredOrders,
-    });
-
-  } catch (error) {
-    console.error('Error fetching orders for seller:', error);
-    res.status(500).json({ message: 'Server error while fetching orders.' });
-  }
+        res.status(200).json(createResponse(true, 'Order details retrieved successfully', { order }));
+    } catch (error) {
+        console.error('Get order details error:', error);
+        res.status(500).json(createResponse(false, 'Failed to retrieve order details', null, error.message));
+    }
 };
 
-
-// Cancel order by customer
+// Cancel order (customer)
 const cancelOrderByCustomer = async (req, res) => {
-  try {
-    const customerId = req.user._id; // Get the logged-in customer's ID
-    const { orderId } = req.params;  // Get the order ID from the URL params
+    try {
+        const { orderId } = req.params;
+        const order = await Order.findOne({
+            _id: orderId,
+            customer: req.user._id,
+            status: { $in: ['Pending', 'Placed'] }
+        });
 
-    // Find the order by its ID and populate the product items
-    const order = await Order.findById(orderId).populate('items.product');
+        if (!order) {
+            return res.status(404).json(createResponse(false, 'Order not found or cannot be canceled'));
+        }
 
-    if (!order) {
-      return res.status(404).json({ message: 'Order not found.' });
+        order.status = 'Canceled';
+        await order.save();
+
+        res.status(200).json(createResponse(true, 'Order canceled successfully', { order }));
+    } catch (error) {
+        console.error('Cancel order error:', error);
+        res.status(500).json(createResponse(false, 'Failed to cancel order', null, error.message));
     }
-
-    // Ensure the order status is either 'Pending' or 'Placed' (meaning it can still be canceled)
-    if (!['Pending', 'Placed'].includes(order.status)) {
-      return res.status(400).json({ message: `Only orders with status 'Pending' or 'Placed' can be canceled.` });
-    }
-
-    // Ensure that the authenticated user is the one who placed the order (customer)
-    if (order.customer.toString() !== customerId.toString()) {
-      return res.status(403).json({ message: 'You are not authorized to cancel this order.' });
-    }
-
-    // Update the order status to 'Canceled'
-    order.status = 'Canceled';
-    await order.save(); // Save the updated order to the database
-
-    // Respond with a success message
-    res.status(200).json({
-      message: 'Order canceled successfully by customer.',
-      order,
-    });
-  } catch (error) {
-    console.error('Error canceling order by customer:', error);
-    res.status(500).json({ message: 'Server error while canceling order.' });
-  }
 };
 
-const updateOrderStatusOrCancelBySeller = async (req, res) => {
-  try {
-    const sellerId = req.user._id;
-    const { orderId } = req.params;
-    const { action, status } = req.body;
+// Update order status (seller)
+const updateOrderStatus = async (req, res) => {
+    try {
+        const { orderId } = req.params;
+        const { action, status, note, estimatedTime } = req.body;
 
-    const order = await Order.findById(orderId).populate({
-      path: 'items',
-      populate: {
-        path: 'product',
-        model: 'Product',
-      },
-    });
+        const order = await Order.findOne({
+            _id: orderId,
+            seller: req.user._id
+        });
 
-    if (!order) {
-      return res.status(404).json({ message: 'Order not found.' });
+        if (!order) {
+            return res.status(404).json(createResponse(false, 'Order not found'));
+        }
+
+        // Attach order to request for validator use
+        req.order = order;
+
+        // Handle different actions
+        switch (action) {
+            case 'accept':
+                if (order.status !== 'Pending') {
+                    return res.status(400).json(
+                        createResponse(false, 'Can only accept pending orders')
+                    );
+                }
+                order.status = 'Accepted';
+                if (estimatedTime) {
+                    order.estimatedDeliveryTime = estimatedTime;
+                }
+                break;
+
+            case 'reject':
+                if (order.status !== 'Pending') {
+                    return res.status(400).json(
+                        createResponse(false, 'Can only reject pending orders')
+                    );
+                }
+                order.status = 'Rejected';
+                break;
+
+            case 'updateStatus':
+                // Define valid transitions based on order type
+                const validTransitions = order.orderType === 'Pickup' ? {
+                    'Accepted': ['Preparing'],
+                    'Preparing': ['Ready for Pickup'],
+                    'Ready for Pickup': ['Delivered'] // When customer picks up and pays
+                } : {
+                    'Accepted': ['Preparing'],
+                    'Preparing': ['Ready'],
+                    'Ready': ['Out for Delivery'],
+                    'Out for Delivery': ['Delivered']
+                };
+
+                if (!validTransitions[order.status]?.includes(status)) {
+                    return res.status(400).json(
+                        createResponse(false, `Invalid status transition from ${order.status} to ${status}`)
+                    );
+                }
+
+                // Update payment status for pickup orders when delivered
+                if (order.orderType === 'Pickup' && status === 'Delivered') {
+                    order.paymentStatus = 'Paid';
+                }
+
+                order.status = status;
+                break;
+
+            case 'cancel':
+                if (!['Pending', 'Accepted'].includes(order.status)) {
+                    return res.status(400).json(
+                        createResponse(false, 'Can only cancel pending or accepted orders')
+                    );
+                }
+                order.status = 'Canceled';
+                break;
+
+            default:
+                return res.status(400).json(createResponse(false, 'Invalid action'));
+        }
+
+        // Add note to status history
+        if (note) {
+            order.notes = note;
+        }
+
+        await order.save();
+        
+        // Send response with appropriate message based on action
+        const messages = {
+            accept: 'Order accepted successfully',
+            reject: 'Order rejected',
+            updateStatus: 'Order status updated successfully',
+            cancel: 'Order canceled successfully'
+        };
+
+        res.status(200).json(createResponse(true, messages[action], { 
+            order,
+            statusHistory: order.statusHistory 
+        }));
+    } catch (error) {
+        console.error('Update order status error:', error);
+        res.status(500).json(createResponse(false, 'Failed to update order status', null, error.message));
     }
-
-    const sellerOwnsProduct = order.items.some(item =>
-      item.product?.sellerId?.toString() === sellerId.toString()
-    );
-
-    if (!sellerOwnsProduct) {
-      return res.status(403).json({ message: 'You are not authorized to modify this order.' });
-    }
-
-    // Handle cancel request
-    if (action === 'cancel') {
-      if (!['Pending', 'Placed'].includes(order.status)) {
-        return res.status(400).json({ message: `Only orders with status 'Pending' or 'Placed' can be canceled.` });
-      }
-
-      order.status = 'Canceled';
-      order.canceledBy = 'Seller';
-    }
-
-    // Handle status update request
-    else if (action === 'updateStatus') {
-      const validStatusFlow = ['Placed', 'Shipped', 'Delivered'];
-
-      if (!status || !validStatusFlow.includes(status)) {
-        return res.status(400).json({ message: `Invalid status. Must be one of: ${validStatusFlow.join(', ')}` });
-      }
-
-      // Optional: prevent skipping status steps
-      const currentIndex = validStatusFlow.indexOf(order.status);
-      const newIndex = validStatusFlow.indexOf(status);
-
-      if (newIndex <= currentIndex) {
-        return res.status(400).json({ message: `Status must progress forward from '${order.status}' to '${status}'` });
-      }
-
-      order.status = status;
-    }
-
-    else {
-      return res.status(400).json({ message: 'Invalid action. Use "cancel" or "updateStatus".' });
-    }
-
-    await order.save();
-
-    res.status(200).json({
-      message: `Order ${action === 'cancel' ? 'canceled' : 'status updated'} successfully.`,
-      order,
-    });
-  } catch (error) {
-    console.error('Error updating/canceling order by seller:', error);
-    res.status(500).json({ message: 'Server error while updating order.' });
-  }
 };
-
-
-const deleteAllOrdersAndItems = async (req, res) => {
-  try {
-    // Ensure the user is an admin
-    if (req.user.role !== 'Admin') {
-      return res.status(403).json({ message: 'Only admins can delete orders and order items.' });
-    }
-
-    // Delete all order items
-    await OrderItem.deleteMany({});
-
-    // Delete all orders
-    await Order.deleteMany({});
-
-    res.status(200).json({ message: 'All orders and order items have been deleted successfully.' });
-  } catch (error) {
-    console.error('Error deleting orders and order items:', error);
-    res.status(500).json({ message: 'Server error while deleting orders and order items.' });
-  }
-};
-
-
-
 
 module.exports = {
-  checkoutFromCart,
-  checkoutFromProduct,
-  placeOrder,
-  getOrdersForCustomer,
-  getOrderDetails,
-  cancelOrderByCustomer,
-  getPlacedOrdersForSeller,
-  updateOrderStatusOrCancelBySeller,
-};
+    checkoutFromCart,
+    checkoutFromProduct,
+    placeOrder,
+    getCustomerOrders,
+    getSellerOrders,
+    getOrderDetails,
+    cancelOrderByCustomer,
+    updateOrderStatus
+}; 

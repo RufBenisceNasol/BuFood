@@ -1,89 +1,171 @@
 const mongoose = require('mongoose');
-const cron = require('node-cron');
-const OrderItem = require('./orderItemModel'); // Reference to OrderItem model
 
-// Order schema definition
-const orderSchema = new mongoose.Schema(
-  {
-    customer: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
-      required: true,
-    },
-    items: [
-      {
+const orderItemSchema = new mongoose.Schema({
+    product: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'OrderItem',
+        ref: 'Product',
+        required: true
+    },
+    quantity: {
+        type: Number,
         required: true,
-      },
-    ],
-    totalAmount: {
-      type: Number,
-      required: true,
+        min: 1
     },
-    status: {
-      type: String,
-      enum: ['Pending', 'Placed', 'Shipped', 'Delivered', 'Canceled'],  // Added 'Placed' here
-      default: 'Pending',
+    price: {
+        type: Number,
+        required: true,
+        min: 0
     },
-    paymentStatus: {
-      type: String,
-      enum: ['Unpaid', 'Paid', 'Pending'],
-      default: 'Pending',
-    },
-    paymentMethod: {
-      type: String,
-      enum: ['COD', 'Online'],
-      default: 'COD',
-    },
-    customerName: {
-      type: String,
-      required: false
-    },
-    contactNumber: {
-      type: String,
-      required:  false,
-    },
-    deliveryLocation: {
-      type: String,
-      required: false
-    },
-    paymentMethod: {
-      type: String,
-      enum: ['COD', 'e-wallet'],
-      required: false
-    }, 
-
-    canceledBy: {
-      type: String,
-      enum: ['Customer', 'Seller'],
-      default: null
+    subtotal: {
+        type: Number,
+        required: true,
+        min: 0
     }
-
-  },
-  { timestamps: true }
-);
-
-// Define the Order model before using it in the cron job
-const Order = mongoose.model('Order', orderSchema);
-
-// Cron job to remove orders older than 1 minute that are still 'Pending'
-cron.schedule('* * * * *', async () => {
-  try {
-    const oneMinuteAgo = new Date(Date.now() - 60000);
-
-    const pendingOrders = await Order.find({
-      status: 'Pending',
-      createdAt: { $lt: oneMinuteAgo },
-    });
-
-    for (const order of pendingOrders) {
-      await Order.findByIdAndDelete(order._id);
-      console.log(`Order ${order._id} removed due to timeout.`);
-    }
-  } catch (error) {
-    console.error('Error in cron job for removing pending orders:', error);
-  }
 });
 
-module.exports = Order;
+const statusHistorySchema = new mongoose.Schema({
+    status: {
+        type: String,
+        required: true
+    },
+    timestamp: {
+        type: Date,
+        default: Date.now
+    },
+    note: {
+        type: String,
+        trim: true
+    }
+});
+
+const orderSchema = new mongoose.Schema({
+    customer: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        required: true
+    },
+    seller: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        required: true
+    },
+    store: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Store',
+        required: true
+    },
+    items: [orderItemSchema],
+    totalAmount: {
+        type: Number,
+        required: true,
+        min: 0
+    },
+    orderType: {
+        type: String,
+        enum: ['Pickup', 'Delivery'],
+        required: true
+    },
+    shippingFee: {
+        type: Number,
+        default: 0,
+        min: 0,
+        required: function() {
+            return this.orderType === 'Delivery';
+        }
+    },
+    status: {
+        type: String,
+        enum: [
+            'Pending',           // Initial state when order is created
+            'Accepted',          // Seller has accepted the order
+            'Rejected',          // Seller rejected the order
+            'Preparing',         // Food is being prepared
+            'Ready',            // Ready for pickup or delivery
+            'Out for Delivery',  // Food is being delivered (delivery only)
+            'Ready for Pickup',  // Ready to be picked up (pickup only)
+            'Delivered',         // Delivered or picked up
+            'Canceled'           // Order was canceled
+        ],
+        default: 'Pending'
+    },
+    statusHistory: [statusHistorySchema],
+    paymentStatus: {
+        type: String,
+        enum: ['Pending', 'Paid', 'Failed'],
+        default: 'Pending'
+    },
+    paymentMethod: {
+        type: String,
+        enum: ['Cash on Delivery', 'GCash', 'Cash on Pickup'],
+        default: function() {
+            return this.orderType === 'Pickup' ? 'Cash on Pickup' : 'Cash on Delivery';
+        }
+    },
+    deliveryDetails: {
+        receiverName: {
+            type: String,
+            required: function() {
+                return this.orderType === 'Delivery';
+            },
+            trim: true
+        },
+        contactNumber: {
+            type: String,
+            required: true, // Required for both pickup and delivery
+            trim: true
+        },
+        building: {
+            type: String,
+            required: function() {
+                return this.orderType === 'Delivery';
+            },
+            trim: true
+        },
+        roomNumber: {
+            type: String,
+            required: function() {
+                return this.orderType === 'Delivery';
+            },
+            trim: true
+        },
+        additionalInstructions: {
+            type: String,
+            trim: true
+        }
+    },
+    pickupTime: {
+        type: Date,
+        required: function() {
+            return this.orderType === 'Pickup';
+        }
+    },
+    estimatedDeliveryTime: {
+        type: Number,
+        required: function() {
+            return this.orderType === 'Delivery';
+        },
+        min: 1
+    },
+    notes: {
+        type: String,
+        trim: true
+    }
+}, {
+    timestamps: true
+});
+
+// Pre-save middleware to update status history
+orderSchema.pre('save', function(next) {
+    if (this.isModified('status')) {
+        this.statusHistory.push({
+            status: this.status,
+            timestamp: new Date(),
+            note: this.notes
+        });
+    }
+    next();
+});
+
+const Order = mongoose.model('Order', orderSchema);
+
+module.exports = Order; 

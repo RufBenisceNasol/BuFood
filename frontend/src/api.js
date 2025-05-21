@@ -368,79 +368,134 @@ export const cart = {    addToCart: async (productId, quantity) => {
 
 // Order API endpoints
 export const order = {
-    checkoutFromCart: async () => {
+    // Checkout from cart
+    checkoutFromCart: async (orderType = 'Delivery') => {
         try {
-            const response = await api.post('/orders/checkout-cart');
-            return response.data;
+            const response = await api.post('/orders/checkout-cart', { orderType });
+            return response.data.data;
         } catch (error) {
             throw error.response?.data || error.message;
         }
     },
 
-    checkoutFromProduct: async (productId, quantity) => {
+    // Checkout directly from product
+    checkoutFromProduct: async (productId, quantity, orderType = 'Delivery') => {
         try {
             const response = await api.post('/orders/checkout-from-product', {
                 productId,
-                quantity
+                quantity,
+                orderType
             });
-            return response.data;
+            return response.data.data;
         } catch (error) {
             throw error.response?.data || error.message;
         }
     },
 
+    // Place order
     placeOrder: async (orderId, orderData) => {
         try {
-            const response = await api.post(`/orders/place-order/${orderId}`, orderData);
-            return response.data;
+            // Ensure orderType is included
+            const orderDetails = {
+                ...orderData,
+                orderType: orderData.orderType || 'Delivery'
+            };
+            const response = await api.post(`/orders/place-order/${orderId}`, orderDetails);
+            return response.data.data;
         } catch (error) {
             throw error.response?.data || error.message;
         }
     },
 
+    // Get customer orders
     getCustomerOrders: async () => {
         try {
             const response = await api.get('/orders/customer');
-            return response.data;
+            return response.data.data;
         } catch (error) {
             throw error.response?.data || error.message;
         }
     },
 
+    // Get seller orders
     getSellerOrders: async () => {
         try {
             const response = await api.get('/orders/seller/placed');
-            return response.data;
+            return response.data.data;
         } catch (error) {
             throw error.response?.data || error.message;
         }
     },
 
+    // Get order details
     getOrderDetails: async (orderId) => {
         try {
             const response = await api.get(`/orders/${orderId}`);
-            return response.data;
+            return response.data.data;
         } catch (error) {
             throw error.response?.data || error.message;
         }
     },
 
-    cancelOrderByCustomer: async (orderId) => {
+    // Cancel order (customer)
+    cancelOrder: async (orderId) => {
         try {
             const response = await api.patch(`/orders/cancel-by-customer/${orderId}`);
-            return response.data;
+            return response.data.data;
         } catch (error) {
             throw error.response?.data || error.message;
         }
     },
 
-    updateOrderStatus: async (orderId, action, status) => {
+    // Seller order management
+    manageOrder: async (orderId, action, data) => {
         try {
             const response = await api.patch(`/orders/seller/manage/${orderId}`, {
                 action,
-                status
+                ...data
             });
-            return response.data;
+            return response.data.data;
+        } catch (error) {
+            throw error.response?.data || error.message;
+        }
+    },
+
+    // Accept order (seller)
+    acceptOrder: async (orderId, estimatedTime, note) => {
+        try {
+            const response = await api.patch(`/orders/seller/manage/${orderId}`, {
+                action: 'accept',
+                estimatedTime,
+                note
+            });
+            return response.data.data;
+        } catch (error) {
+            throw error.response?.data || error.message;
+        }
+    },
+
+    // Reject order (seller)
+    rejectOrder: async (orderId, note) => {
+        try {
+            const response = await api.patch(`/orders/seller/manage/${orderId}`, {
+                action: 'reject',
+                note
+            });
+            return response.data.data;
+        } catch (error) {
+            throw error.response?.data || error.message;
+        }
+    },
+
+    // Update order status (seller)
+    updateOrderStatus: async (orderId, status, note) => {
+        try {
+            const response = await api.patch(`/orders/seller/manage/${orderId}`, {
+                action: 'updateStatus',
+                status,
+                note
+            });
+            return response.data.data;
         } catch (error) {
             throw error.response?.data || error.message;
         }

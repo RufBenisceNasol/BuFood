@@ -1,10 +1,6 @@
 const mongoose = require('mongoose');
 const Cart = require('../models/cartModel');
 const Product = require('../models/productModel');
-const Order = require('../models/orderModel');
-const OrderItem = require('../models/orderItemModel'); // Your OrderItem model
-
-// Add this new function after imports
 const initializeCartCollection = async () => {
   try {
     const Cart = mongoose.model('Cart');

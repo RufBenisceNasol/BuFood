@@ -27,6 +27,7 @@ import {
     LocalShipping,
     AccessTime
 } from '@mui/icons-material';
+import OrderDetailsForm from '../components/OrderDetailsForm';
 
 const ProductPage = () => {
     const { id } = useParams();
@@ -36,12 +37,6 @@ const ProductPage = () => {
     const [selectedProduct, setSelectedProduct] = useState(null);
     const [quantity, setQuantity] = useState(1);
     const [checkoutDialogOpen, setCheckoutDialogOpen] = useState(false);
-    const [checkoutData, setCheckoutData] = useState({
-        customerName: '',
-        contactNumber: '',
-        deliveryLocation: '',
-        paymentMethod: 'COD'
-    });
     const [orderId, setOrderId] = useState(null);
     const [snackbar, setSnackbar] = useState({
         open: false,
@@ -101,15 +96,16 @@ const ProductPage = () => {
         }
     };
 
-    const handlePlaceOrder = async () => {
+    const handlePlaceOrder = async (orderDetails) => {
         try {
-            await order.placeOrder(orderId, checkoutData);
+            await order.placeOrder(orderId, orderDetails);
             setCheckoutDialogOpen(false);
             setSnackbar({
                 open: true,
                 message: 'Order placed successfully!',
                 severity: 'success'
-            });            navigate('/customer/orders');
+            });
+            navigate('/customer/orders');
         } catch (err) {
             setSnackbar({
                 open: true,
@@ -272,48 +268,23 @@ const ProductPage = () => {
                         </Box>
 
                         {/* Checkout Dialog */}
-                        <Dialog 
-                            open={checkoutDialogOpen} 
+                        <Dialog
+                            open={checkoutDialogOpen}
                             onClose={() => setCheckoutDialogOpen(false)}
-                            maxWidth="sm"
+                            maxWidth="md"
                             fullWidth
                         >
-                            <DialogTitle>Checkout</DialogTitle>
+                            <DialogTitle>
+                                <Typography variant="h5" gutterBottom sx={{ color: '#FF8C00', fontWeight: 'bold' }}>
+                                    Complete Your Order
+                                </Typography>
+                            </DialogTitle>
                             <DialogContent>
-                                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                                    <TextField
-                                        label="Customer Name"
-                                        value={checkoutData.customerName}
-                                        onChange={(e) => setCheckoutData({ ...checkoutData, customerName: e.target.value })}
-                                        fullWidth
-                                    />
-                                    <TextField
-                                        label="Contact Number"
-                                        value={checkoutData.contactNumber}
-                                        onChange={(e) => setCheckoutData({ ...checkoutData, contactNumber: e.target.value })}
-                                        fullWidth
-                                    />
-                                    <TextField
-                                        label="Delivery Location"
-                                        value={checkoutData.deliveryLocation}
-                                        onChange={(e) => setCheckoutData({ ...checkoutData, deliveryLocation: e.target.value })}
-                                        fullWidth
-                                    />
-                                    <RadioGroup
-                                        value={checkoutData.paymentMethod}
-                                        onChange={(e) => setCheckoutData({ ...checkoutData, paymentMethod: e.target.value })}
-                                    >
-                                        <FormControlLabel value="COD" control={<Radio />} label="Cash on Delivery" />
-                                        <FormControlLabel value="Online" control={<Radio />} label="Online Payment" />
-                                    </RadioGroup>
-                                </Box>
+                                <OrderDetailsForm 
+                                    onSubmit={handlePlaceOrder}
+                                    loading={loading}
+                                />
                             </DialogContent>
-                            <DialogActions>
-                                <Button onClick={() => setCheckoutDialogOpen(false)}>Cancel</Button>
-                                <Button onClick={handlePlaceOrder} variant="contained" sx={{ bgcolor: '#FF8C00', '&:hover': { bgcolor: '#FF6B00' } }}>
-                                    Place Order
-                                </Button>
-                            </DialogActions>
                         </Dialog>
                     </Box>
                 </Grid>

@@ -47,8 +47,7 @@ const cacheRules = {
 // Cache invalidation functions
 const invalidateCache = {
     products: () => apicache.clear('/api/products'),
-    stores: () => apicache.clear('/api/stores'),
-    orders: () => apicache.clear('/api/orders')
+    stores: () => apicache.clear('/api/stores')
 };
 
 module.exports = {

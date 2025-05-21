@@ -18,7 +18,7 @@ import CartPage from './customer/CartPage'
 import CustomerOrdersPage from './customer/OrdersPage'
 import SingleProductPage from './customer/SingleProductPage'
 import CustomerProfilePage from './customer/ProfilePage'
-import FavoritesPage from './customer/FavoritesPage'
+// import FavoritesPage from './customer/FavoritesPage'
 import SettingsPage from './customer/SettingsPage'
 import StoresPage from './customer/StoresPage'
 import { Box } from '@mui/material'
@@ -53,7 +53,7 @@ function App() {
           {/* Customer Routes */}
           <Route path="/customer/home" element={<CustomerLayout><HomePage /></CustomerLayout>} />
           <Route path="/customer/profile" element={<CustomerLayout><CustomerProfilePage /></CustomerLayout>} />
-          <Route path="/customer/favorites" element={<CustomerLayout><FavoritesPage /></CustomerLayout>} />
+          {/* <Route path="/customer/favorites" element={<CustomerLayout><FavoritesPage /></CustomerLayout>} /> */}
           <Route path="/customer/settings" element={<CustomerLayout><SettingsPage /></CustomerLayout>} />
           <Route path="/customer/stores" element={<CustomerLayout><StoresPage /></CustomerLayout>} />
           <Route path="/customer/cart" element={<CustomerLayout><CartPage /></CustomerLayout>} />
@@ -64,7 +64,7 @@ function App() {
           {/* Redirects for root-level customer routes to /customer/* */}
           <Route path="/home" element={<CustomerLayout><HomePage /></CustomerLayout>} />
           <Route path="/profile" element={<CustomerLayout><CustomerProfilePage /></CustomerLayout>} />
-          <Route path="/favorites" element={<CustomerLayout><FavoritesPage /></CustomerLayout>} />
+          {/* <Route path="/favorites" element={<CustomerLayout><FavoritesPage /></CustomerLayout>} /> */}
           <Route path="/settings" element={<CustomerLayout><SettingsPage /></CustomerLayout>} />
           <Route path="/stores" element={<CustomerLayout><StoresPage /></CustomerLayout>} />
           <Route path="/cart" element={<CustomerLayout><CartPage /></CustomerLayout>} />

@@ -2870,3 +2870,137 @@
 {"level":"info","message":{"duration":"58ms","method":"GET","requestId":"138bbd96-444f-4b72-94dc-745845f4b3f8","status":304,"url":"/"},"timestamp":"2025-05-16T15:20:34.961Z"}
 {"level":"info","message":{"duration":"63ms","method":"GET","requestId":"b0962677-5f59-40fb-b86c-9e8eae8f7779","status":304,"url":"/"},"timestamp":"2025-05-16T15:20:35.030Z"}
 {"level":"info","message":{"duration":"186ms","method":"POST","requestId":"8e19dc92-2ecb-4c65-b081-16551c88d8a7","status":200,"url":"/add"},"timestamp":"2025-05-16T15:20:36.171Z"}
+{"level":"info","message":"Running with in-memory cache (Redis disabled)","timestamp":"2025-05-21T08:31:16.942Z"}
+{"level":"info","message":"🚀 Server started on port 8000","timestamp":"2025-05-21T08:31:16.971Z"}
+{"level":"info","message":"📚 API Documentation available at http://[YOUR_IP]:8000/api-docs","timestamp":"2025-05-21T08:31:16.972Z"}
+{"level":"info","message":"MongoDB connection established successfully","timestamp":"2025-05-21T08:31:18.796Z"}
+{"level":"info","message":"✅ Successfully connected to MongoDB","timestamp":"2025-05-21T08:31:18.800Z"}
+{"level":"info","message":"Successfully dropped all indexes from cart collection","timestamp":"2025-05-21T08:31:18.830Z"}
+{"level":"info","message":{"duration":"8ms","method":"GET","requestId":"068de2f7-e567-474d-bdd4-7ece755a27d1","status":301,"url":"/"},"timestamp":"2025-05-21T08:31:43.609Z"}
+{"level":"info","message":{"duration":"6ms","method":"GET","requestId":"fc37242e-de4b-46eb-ba0d-b9a9fe96bd07","status":200,"url":"/"},"timestamp":"2025-05-21T08:31:43.618Z"}
+{"level":"info","message":{"duration":"44ms","method":"GET","requestId":"1630f1cb-7bb5-46ff-9e76-af0ce64bc739","status":200,"url":"/swagger-ui.css"},"timestamp":"2025-05-21T08:31:43.714Z"}
+{"level":"info","message":{"duration":"85ms","method":"GET","requestId":"79735771-befe-463b-a63a-da36e2da2c3c","status":200,"url":"/swagger-ui-bundle.js"},"timestamp":"2025-05-21T08:31:43.804Z"}
+{"level":"info","message":{"duration":"2ms","method":"GET","requestId":"b1ac703c-7565-48f9-9e2f-de29a5798cd7","status":200,"url":"/swagger-ui-init.js"},"timestamp":"2025-05-21T08:31:43.830Z"}
+{"level":"info","message":{"duration":"11ms","method":"GET","requestId":"dfe74ea4-51af-4f88-9b8f-9321e06e769e","status":200,"url":"/swagger-ui-standalone-preset.js"},"timestamp":"2025-05-21T08:31:43.833Z"}
+{"level":"info","message":{"duration":"382ms","method":"GET","requestId":"aaede498-f352-4d56-97b3-363eae51a551","status":200,"url":"/favicon-32x32.png"},"timestamp":"2025-05-21T08:31:44.614Z"}
+{"level":"info","message":"Running with in-memory cache (Redis disabled)","timestamp":"2025-05-21T08:35:59.293Z"}
+{"level":"info","message":"🚀 Server started on port 8000","timestamp":"2025-05-21T08:35:59.321Z"}
+{"level":"info","message":"📚 API Documentation available at http://[YOUR_IP]:8000/api-docs","timestamp":"2025-05-21T08:35:59.321Z"}
+{"level":"info","message":"MongoDB connection established successfully","timestamp":"2025-05-21T08:36:00.735Z"}
+{"level":"info","message":"✅ Successfully connected to MongoDB","timestamp":"2025-05-21T08:36:00.740Z"}
+{"level":"info","message":"Successfully dropped all indexes from cart collection","timestamp":"2025-05-21T08:36:00.773Z"}
+{"level":"info","message":"Running with in-memory cache (Redis disabled)","timestamp":"2025-05-21T08:36:18.555Z"}
+{"level":"info","message":"🚀 Server started on port 8000","timestamp":"2025-05-21T08:36:18.580Z"}
+{"level":"info","message":"📚 API Documentation available at http://[YOUR_IP]:8000/api-docs","timestamp":"2025-05-21T08:36:18.580Z"}
+{"level":"info","message":"MongoDB connection established successfully","timestamp":"2025-05-21T08:36:19.444Z"}
+{"level":"info","message":"✅ Successfully connected to MongoDB","timestamp":"2025-05-21T08:36:19.448Z"}
+{"level":"info","message":"Successfully dropped all indexes from cart collection","timestamp":"2025-05-21T08:36:19.495Z"}
+{"level":"info","message":"Running with in-memory cache (Redis disabled)","timestamp":"2025-05-21T08:36:36.844Z"}
+{"level":"info","message":"🚀 Server started on port 8000","timestamp":"2025-05-21T08:36:36.876Z"}
+{"level":"info","message":"📚 API Documentation available at http://[YOUR_IP]:8000/api-docs","timestamp":"2025-05-21T08:36:36.877Z"}
+{"level":"info","message":"MongoDB connection established successfully","timestamp":"2025-05-21T08:36:38.268Z"}
+{"level":"info","message":"✅ Successfully connected to MongoDB","timestamp":"2025-05-21T08:36:38.272Z"}
+{"level":"info","message":"Successfully dropped all indexes from cart collection","timestamp":"2025-05-21T08:36:38.309Z"}
+{"level":"info","message":"Running with in-memory cache (Redis disabled)","timestamp":"2025-05-21T08:39:02.969Z"}
+{"level":"info","message":"🚀 Server started on port 8000","timestamp":"2025-05-21T08:39:03.002Z"}
+{"level":"info","message":"📚 API Documentation available at http://[YOUR_IP]:8000/api-docs","timestamp":"2025-05-21T08:39:03.003Z"}
+{"level":"info","message":"MongoDB connection established successfully","timestamp":"2025-05-21T08:39:06.071Z"}
+{"level":"info","message":"✅ Successfully connected to MongoDB","timestamp":"2025-05-21T08:39:06.079Z"}
+{"level":"info","message":"Successfully dropped all indexes from cart collection","timestamp":"2025-05-21T08:39:06.113Z"}
+{"level":"info","message":{"duration":"236ms","method":"POST","requestId":"3cac5407-4581-4415-b6ac-6ccd8bd719d7","status":200,"url":"/login"},"timestamp":"2025-05-21T08:42:32.574Z"}
+{"level":"info","message":{"duration":"84ms","method":"GET","requestId":"57fcf2a0-49ab-49dc-969f-962818ab611c","status":200,"url":"/"},"timestamp":"2025-05-21T08:42:32.706Z"}
+{"level":"info","message":{"duration":"73ms","method":"GET","requestId":"0ceb9c42-1432-4a86-bfbb-0623baa97ad8","status":200,"url":"/"},"timestamp":"2025-05-21T08:42:32.786Z"}
+{"level":"info","message":{"duration":"245ms","method":"POST","requestId":"04b8659f-bbd9-4f71-a659-38333304a586","status":200,"url":"/add"},"timestamp":"2025-05-21T08:42:37.192Z"}
+{"level":"info","message":{"duration":"89ms","method":"GET","requestId":"4592afa3-14cb-4f5e-bd8c-b419f7bff8d1","status":200,"url":"/view"},"timestamp":"2025-05-21T08:42:40.294Z"}
+{"level":"info","message":{"duration":"87ms","method":"GET","requestId":"9cc70aec-7179-4147-bf1a-ab697f2f4c23","status":304,"url":"/view"},"timestamp":"2025-05-21T08:42:40.384Z"}
+{"level":"info","message":{"duration":"98ms","method":"GET","requestId":"bf69540e-7e6a-44aa-994c-2694bc433c99","status":304,"url":"/view"},"timestamp":"2025-05-21T08:47:04.757Z"}
+{"level":"info","message":{"duration":"88ms","method":"GET","requestId":"af968f7b-13db-40dc-961b-40bdc7d47185","status":304,"url":"/view"},"timestamp":"2025-05-21T08:47:04.924Z"}
+{"level":"info","message":{"duration":"87ms","method":"GET","requestId":"d133e10d-61d4-4aff-942a-76441cacaeb0","status":304,"url":"/view"},"timestamp":"2025-05-21T08:47:51.486Z"}
+{"level":"info","message":{"duration":"86ms","method":"GET","requestId":"17546d16-79dc-4ca6-8cdf-c66aff3fc274","status":304,"url":"/view"},"timestamp":"2025-05-21T08:47:51.582Z"}
+{"level":"info","message":{"duration":"89ms","method":"GET","requestId":"b8c92c4d-e47c-4bf0-9549-1839e6fcc410","status":304,"url":"/view"},"timestamp":"2025-05-21T08:48:02.254Z"}
+{"level":"info","message":{"duration":"95ms","method":"GET","requestId":"622ec1ee-fb78-4ba7-994d-670eb2c22646","status":304,"url":"/view"},"timestamp":"2025-05-21T08:48:02.355Z"}
+{"level":"info","message":{"duration":"4ms","method":"GET","requestId":"f7996ddc-4475-40d2-bec3-189a4d02eca8","status":304,"url":"/"},"timestamp":"2025-05-21T08:48:42.266Z"}
+{"level":"info","message":{"duration":"2ms","method":"GET","requestId":"aa10cc3f-5659-4110-88c6-457c2eef1e26","status":304,"url":"/"},"timestamp":"2025-05-21T08:48:42.286Z"}
+{"level":"info","message":{"duration":"4ms","method":"GET","requestId":"d8c37e07-9053-408b-8d18-6a706a99f150","status":304,"url":"/"},"timestamp":"2025-05-21T08:48:42.295Z"}
+{"level":"info","message":{"duration":"65ms","method":"GET","requestId":"02bf1082-afe8-4af1-9357-9431b1a59640","status":200,"url":"/68060185f88fc04549e05f29?t=1747817323807"},"timestamp":"2025-05-21T08:48:43.886Z"}
+{"level":"info","message":{"duration":"71ms","method":"GET","requestId":"6545c0a4-6d12-4c8b-a46d-697acc2807a7","status":200,"url":"/68060185f88fc04549e05f29?t=1747817323806"},"timestamp":"2025-05-21T08:48:43.889Z"}
+{"level":"info","message":{"duration":"3ms","method":"GET","requestId":"dc6ced49-6957-47a3-b74d-dae60442c5d1","status":304,"url":"/"},"timestamp":"2025-05-21T08:48:46.152Z"}
+{"level":"info","message":{"duration":"3ms","method":"GET","requestId":"5bff8ba5-4866-47bb-9863-a28ec907005d","status":304,"url":"/"},"timestamp":"2025-05-21T08:48:46.157Z"}
+{"level":"info","message":{"duration":"62ms","method":"GET","requestId":"776382a9-71ac-4885-9bcf-0311a5290cc7","status":200,"url":"/68060287f88fc04549e05f35?t=1747817327060"},"timestamp":"2025-05-21T08:48:47.133Z"}
+{"level":"info","message":{"duration":"299ms","method":"GET","requestId":"7045e783-fa13-4998-8708-b4414895d090","status":200,"url":"/68060287f88fc04549e05f35?t=1747817327057"},"timestamp":"2025-05-21T08:48:47.369Z"}
+{"level":"info","message":{"duration":"1ms","method":"GET","requestId":"d699143d-19b6-4bf6-903d-fd316e66417b","status":304,"url":"/"},"timestamp":"2025-05-21T08:48:51.417Z"}
+{"level":"info","message":{"duration":"2ms","method":"GET","requestId":"82b63aea-5994-4cc3-85ad-0588ed952a1d","status":304,"url":"/"},"timestamp":"2025-05-21T08:48:51.421Z"}
+{"level":"info","message":{"duration":"94ms","method":"GET","requestId":"b3d9561e-d094-46e8-a1d3-4d84f343dc19","status":304,"url":"/view"},"timestamp":"2025-05-21T08:50:01.753Z"}
+{"level":"info","message":{"duration":"89ms","method":"GET","requestId":"75113320-885e-43de-8b90-0d0c1add8bae","status":304,"url":"/view"},"timestamp":"2025-05-21T08:50:01.859Z"}
+{"level":"info","message":{"duration":"61ms","method":"GET","requestId":"1c185332-749b-4d4a-94fa-4f7d82571b57","status":200,"url":"/681d70d6d96562af903a79cf?t=1747817586781"},"timestamp":"2025-05-21T08:53:07.219Z"}
+{"level":"info","message":{"duration":"75ms","method":"GET","requestId":"f0c88630-9655-47f6-8bcf-cb0fc8768949","status":200,"url":"/681d70d6d96562af903a79cf?t=1747817586780"},"timestamp":"2025-05-21T08:53:07.229Z"}
+{"level":"info","message":{"duration":"3ms","method":"GET","requestId":"ddbdec65-7080-4b6f-a602-d972e89f2445","status":304,"url":"/"},"timestamp":"2025-05-21T08:53:11.023Z"}
+{"level":"info","message":{"duration":"4ms","method":"GET","requestId":"68503724-c8e4-4afd-bcf0-ba8dd5d029ba","status":304,"url":"/"},"timestamp":"2025-05-21T08:53:11.031Z"}
+{"level":"info","message":{"duration":"305ms","method":"GET","requestId":"987d3b0d-57eb-486c-8731-9d65601d4d88","status":304,"url":"/"},"timestamp":"2025-05-21T08:53:11.365Z"}
+{"level":"info","message":{"duration":"91ms","method":"GET","requestId":"71b9420f-1559-458d-963e-31acf23deac9","status":304,"url":"/view"},"timestamp":"2025-05-21T08:53:13.244Z"}
+{"level":"info","message":{"duration":"91ms","method":"GET","requestId":"8906eb97-0f33-4356-9685-c6f42ffefecd","status":304,"url":"/view"},"timestamp":"2025-05-21T08:53:13.340Z"}
+{"level":"info","message":{"duration":"62ms","method":"GET","requestId":"6b83310e-c9af-494f-adc6-8e1b2bcb0c1f","status":200,"url":"/681d70d6d96562af903a79cf?t=1747817594651"},"timestamp":"2025-05-21T08:53:14.727Z"}
+{"level":"info","message":{"duration":"65ms","method":"GET","requestId":"b97048f5-fa96-492a-bba7-8b93e749b271","status":200,"url":"/681d70d6d96562af903a79cf?t=1747817594654"},"timestamp":"2025-05-21T08:53:14.733Z"}
+{"level":"info","message":{"duration":"1ms","method":"GET","requestId":"e42b7efe-6356-40fb-95c3-f2166bb05547","status":304,"url":"/"},"timestamp":"2025-05-21T08:53:16.931Z"}
+{"level":"info","message":{"duration":"1ms","method":"GET","requestId":"4cbdfbda-9f15-4fa3-82ad-f2963ca60e23","status":304,"url":"/"},"timestamp":"2025-05-21T08:53:16.935Z"}
+{"level":"info","message":{"duration":"94ms","method":"GET","requestId":"e85f5b6d-ff82-4e5d-9138-b3d4a8b43503","status":304,"url":"/view"},"timestamp":"2025-05-21T08:53:22.092Z"}
+{"level":"info","message":{"duration":"343ms","method":"GET","requestId":"cbf7fdf0-8f77-4d63-b319-597965760613","status":304,"url":"/view"},"timestamp":"2025-05-21T08:53:22.437Z"}
+{"level":"info","message":{"duration":"203ms","method":"POST","requestId":"1d722769-a132-4346-83bd-cf986c1dd970","status":500,"url":"/checkout-cart"},"timestamp":"2025-05-21T08:57:09.671Z"}
+{"level":"info","message":{"duration":"124ms","method":"POST","requestId":"c54108db-699f-4a66-bd50-35770e309657","status":200,"url":"/remove"},"timestamp":"2025-05-21T08:59:14.689Z"}
+{"level":"info","message":{"duration":"95ms","method":"GET","requestId":"22fee0ac-6f8b-4225-ba37-652119a878f0","status":200,"url":"/view"},"timestamp":"2025-05-21T08:59:14.793Z"}
+{"level":"info","message":{"duration":"124ms","method":"POST","requestId":"fb9324df-0111-445a-959a-64102107bbf5","status":200,"url":"/remove"},"timestamp":"2025-05-21T08:59:16.512Z"}
+{"level":"info","message":{"duration":"98ms","method":"GET","requestId":"a87b8a42-2f27-45c9-aca7-6b43940f3e01","status":200,"url":"/view"},"timestamp":"2025-05-21T08:59:16.614Z"}
+{"level":"info","message":{"duration":"126ms","method":"POST","requestId":"55301e4e-e46b-4e73-8143-de2d1e2f1656","status":200,"url":"/remove"},"timestamp":"2025-05-21T08:59:18.038Z"}
+{"level":"info","message":{"duration":"88ms","method":"GET","requestId":"5dd3ec58-ae14-406e-ac26-61349064dc84","status":200,"url":"/view"},"timestamp":"2025-05-21T08:59:18.130Z"}
+{"level":"info","message":{"duration":"124ms","method":"POST","requestId":"8823107d-2861-4b2f-b3bb-6ddb7b4a2836","status":200,"url":"/remove"},"timestamp":"2025-05-21T08:59:19.760Z"}
+{"level":"info","message":{"duration":"85ms","method":"GET","requestId":"4d60da0c-5ab7-4e44-9e9c-353b15972516","status":200,"url":"/view"},"timestamp":"2025-05-21T08:59:19.851Z"}
+{"level":"info","message":{"duration":"127ms","method":"POST","requestId":"2eaae758-7bae-4803-9855-9077453df028","status":200,"url":"/remove"},"timestamp":"2025-05-21T08:59:21.044Z"}
+{"level":"info","message":{"duration":"90ms","method":"GET","requestId":"657da240-ce75-44a0-8768-79e1eaab4b14","status":200,"url":"/view"},"timestamp":"2025-05-21T08:59:21.138Z"}
+{"level":"info","message":{"duration":"125ms","method":"POST","requestId":"0cee08e6-57fb-405a-9b6a-4eac61f2494f","status":200,"url":"/remove"},"timestamp":"2025-05-21T08:59:22.030Z"}
+{"level":"info","message":{"duration":"91ms","method":"GET","requestId":"9b7e8636-4ae2-4dd6-8b20-befd1b0facaa","status":200,"url":"/view"},"timestamp":"2025-05-21T08:59:22.126Z"}
+{"level":"info","message":{"duration":"369ms","method":"POST","requestId":"24fa954d-bd89-4b61-bf62-be540dee7177","status":200,"url":"/remove"},"timestamp":"2025-05-21T08:59:23.351Z"}
+{"level":"info","message":{"duration":"64ms","method":"GET","requestId":"2db7759a-95e4-4710-be76-5c5b59d166c5","status":200,"url":"/view"},"timestamp":"2025-05-21T08:59:23.421Z"}
+{"level":"info","message":{"duration":"57ms","method":"GET","requestId":"632b8778-1f78-4d8e-b6da-8f53c4683398","status":304,"url":"/"},"timestamp":"2025-05-21T09:01:38.562Z"}
+{"level":"info","message":{"duration":"66ms","method":"GET","requestId":"82127d64-efa0-4ba2-9303-e5ff6bd35d67","status":304,"url":"/"},"timestamp":"2025-05-21T09:01:38.722Z"}
+{"level":"info","message":{"duration":"71ms","method":"GET","requestId":"2974d14f-622c-48fc-915b-3d89d2dff947","status":304,"url":"/view"},"timestamp":"2025-05-21T09:01:41.245Z"}
+{"level":"info","message":{"duration":"64ms","method":"GET","requestId":"52235952-b94d-4f16-8ec0-c77f8346ff2e","status":304,"url":"/view"},"timestamp":"2025-05-21T09:01:41.339Z"}
+{"level":"info","message":{"duration":"193ms","method":"POST","requestId":"faa18537-507c-45f7-9b32-f83da9ff96fc","status":200,"url":"/add"},"timestamp":"2025-05-21T09:05:01.974Z"}
+{"level":"info","message":{"duration":"94ms","method":"GET","requestId":"5488cf32-9e11-435b-a2ef-a11c50ea9241","status":200,"url":"/view"},"timestamp":"2025-05-21T09:05:03.602Z"}
+{"level":"info","message":{"duration":"93ms","method":"GET","requestId":"3057a706-db7c-49a7-aad3-2595030967f5","status":304,"url":"/view"},"timestamp":"2025-05-21T09:05:03.701Z"}
+{"level":"info","message":{"duration":"63ms","method":"GET","requestId":"c8d8f0c0-e170-4767-acd9-fbb706c23e89","status":304,"url":"/"},"timestamp":"2025-05-21T09:07:23.497Z"}
+{"level":"info","message":{"duration":"65ms","method":"GET","requestId":"ad33acb0-d3f8-4e60-8689-47307f362727","status":304,"url":"/"},"timestamp":"2025-05-21T09:07:23.581Z"}
+{"level":"info","message":{"duration":"196ms","method":"POST","requestId":"b3ed613a-2068-4ca1-a3cf-cc30970833c5","status":200,"url":"/add"},"timestamp":"2025-05-21T09:07:26.458Z"}
+{"level":"info","message":{"duration":"197ms","method":"POST","requestId":"e24ab8be-f3c5-4f66-88a4-0fcca6b38950","status":200,"url":"/add"},"timestamp":"2025-05-21T09:07:27.513Z"}
+{"level":"info","message":{"duration":"202ms","method":"POST","requestId":"585f48df-2b12-4be1-bd64-6726c5e2c0a2","status":200,"url":"/add"},"timestamp":"2025-05-21T09:07:28.305Z"}
+{"level":"info","message":{"duration":"89ms","method":"GET","requestId":"d40841af-9223-46fe-85e9-4ae274261194","status":200,"url":"/view"},"timestamp":"2025-05-21T09:07:30.678Z"}
+{"level":"info","message":{"duration":"98ms","method":"GET","requestId":"95772493-a1cf-4b39-a00e-589db89eebb5","status":304,"url":"/view"},"timestamp":"2025-05-21T09:07:30.778Z"}
+{"level":"info","message":{"duration":"194ms","method":"POST","requestId":"968dc9a8-d73a-4752-98be-6e21c201dfee","status":200,"url":"/add"},"timestamp":"2025-05-21T09:07:36.794Z"}
+{"level":"info","message":{"duration":"114ms","method":"GET","requestId":"65dc849e-9e43-4ff6-824f-031f4eaf24c8","status":200,"url":"/view"},"timestamp":"2025-05-21T09:07:38.112Z"}
+{"level":"info","message":{"duration":"93ms","method":"GET","requestId":"1b424781-a9b7-4df0-9cfe-bea56aa984b1","status":304,"url":"/view"},"timestamp":"2025-05-21T09:07:38.239Z"}
+{"level":"info","message":{"duration":"188ms","method":"POST","requestId":"cd8b5fb8-1fc5-4eab-9d3f-2ba8dce3957f","status":500,"url":"/checkout-cart"},"timestamp":"2025-05-21T09:07:50.462Z"}
+{"level":"info","message":"Running with in-memory cache (Redis disabled)","timestamp":"2025-05-21T09:08:32.759Z"}
+{"level":"info","message":"🚀 Server started on port 8000","timestamp":"2025-05-21T09:08:32.785Z"}
+{"level":"info","message":"📚 API Documentation available at http://[YOUR_IP]:8000/api-docs","timestamp":"2025-05-21T09:08:32.786Z"}
+{"level":"info","message":"MongoDB connection established successfully","timestamp":"2025-05-21T09:08:34.119Z"}
+{"level":"info","message":"✅ Successfully connected to MongoDB","timestamp":"2025-05-21T09:08:34.125Z"}
+{"level":"info","message":"Successfully dropped all indexes from cart collection","timestamp":"2025-05-21T09:08:34.168Z"}
+{"level":"info","message":{"duration":"233ms","method":"POST","requestId":"82016932-ea68-4c40-a0bf-80439dd08d77","status":500,"url":"/checkout-cart"},"timestamp":"2025-05-21T09:09:28.495Z"}
+{"level":"info","message":{"duration":"180ms","method":"POST","requestId":"3f9528ca-7b51-4d77-b5b3-a98305134077","status":500,"url":"/checkout-cart"},"timestamp":"2025-05-21T09:11:02.334Z"}
+{"level":"info","message":{"duration":"193ms","method":"POST","requestId":"29f403c8-50f5-459b-9d43-e35c1082e48a","status":500,"url":"/checkout-cart"},"timestamp":"2025-05-21T09:13:12.010Z"}
+{"level":"info","message":{"duration":"192ms","method":"POST","requestId":"d125254b-709d-46c9-ba83-77028ac958d7","status":500,"url":"/checkout-cart"},"timestamp":"2025-05-21T09:22:17.903Z"}
+{"level":"info","message":{"duration":"180ms","method":"POST","requestId":"d712c35f-7590-463e-829e-388603320c79","status":500,"url":"/checkout-cart"},"timestamp":"2025-05-21T09:23:50.352Z"}
+{"level":"info","message":{"duration":"339ms","method":"GET","requestId":"8c36f46d-4708-4225-b208-c656f8e01f26","status":304,"url":"/view"},"timestamp":"2025-05-21T09:25:35.961Z"}
+{"level":"info","message":{"duration":"90ms","method":"GET","requestId":"c855a97f-5fc7-4bc8-a778-df8d37335c93","status":304,"url":"/view"},"timestamp":"2025-05-21T09:31:09.736Z"}
+{"level":"info","message":{"duration":"88ms","method":"GET","requestId":"e44e2923-b0d6-4453-8792-f4616c4f0c1c","status":304,"url":"/view"},"timestamp":"2025-05-21T09:31:09.829Z"}
+{"level":"info","message":{"duration":"203ms","method":"POST","requestId":"ecae2d80-42ec-43f9-9927-7f00386cb52a","status":200,"url":"/login"},"timestamp":"2025-05-21T09:31:50.218Z"}
+{"level":"info","message":{"duration":"60ms","method":"GET","requestId":"75b44299-7007-4c05-be94-80b174e609e4","status":304,"url":"/"},"timestamp":"2025-05-21T09:31:50.306Z"}
+{"level":"info","message":{"duration":"65ms","method":"GET","requestId":"4d79387c-4ba4-4201-a60b-4b740f751143","status":304,"url":"/"},"timestamp":"2025-05-21T09:31:50.382Z"}
+{"level":"info","message":{"duration":"205ms","method":"POST","requestId":"10906266-8cc5-4583-8608-d1cca693805f","status":200,"url":"/add"},"timestamp":"2025-05-21T09:31:52.992Z"}
+{"level":"info","message":{"duration":"93ms","method":"GET","requestId":"075793b9-5a79-4d5f-9021-2b7deb557ea4","status":200,"url":"/view"},"timestamp":"2025-05-21T09:31:55.561Z"}
+{"level":"info","message":{"duration":"92ms","method":"GET","requestId":"bd39f768-cfd2-42ce-8454-639ba98ad41f","status":304,"url":"/view"},"timestamp":"2025-05-21T09:31:55.654Z"}
+{"level":"info","message":{"duration":"126ms","method":"POST","requestId":"770d3853-9268-439f-a4be-b79eff82910b","status":200,"url":"/remove"},"timestamp":"2025-05-21T09:31:57.300Z"}
+{"level":"info","message":{"duration":"95ms","method":"GET","requestId":"037b29f3-0fc6-449a-8c7a-d3de9df8e294","status":200,"url":"/view"},"timestamp":"2025-05-21T09:31:57.398Z"}
+{"level":"info","message":{"duration":"132ms","method":"POST","requestId":"b3d0cb65-62b8-44a2-afdd-1992f5c47b4c","status":200,"url":"/remove"},"timestamp":"2025-05-21T09:31:59.123Z"}
+{"level":"info","message":{"duration":"93ms","method":"GET","requestId":"6ca74835-f0b5-46ce-965c-875a2740d04d","status":200,"url":"/view"},"timestamp":"2025-05-21T09:31:59.219Z"}
+{"level":"info","message":{"duration":"88ms","method":"GET","requestId":"3fbdb099-185d-488d-9f1b-5b20cd2b9252","status":304,"url":"/view"},"timestamp":"2025-05-21T09:34:13.742Z"}
+{"level":"info","message":{"duration":"89ms","method":"GET","requestId":"3feacf83-8002-4b07-b414-e6afaacea24b","status":304,"url":"/view"},"timestamp":"2025-05-21T09:34:13.834Z"}
