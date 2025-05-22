@@ -69,4 +69,59 @@ export const hasFavorites = () => {
     console.error('Error checking if favorites exist:', error);
     return false;
   }
-}; 
+};
+
+/**
+ * Check if a store is in the user's favorites
+ * @param {string} storeId - The ID of the store to check
+ * @returns {boolean} - True if the store is in favorites, false otherwise
+ */
+export const isStoreInFavorites = (storeId) => {
+  try {
+    const storeFavorites = JSON.parse(localStorage.getItem('storeFavorites') || '[]');
+    return storeFavorites.includes(storeId);
+  } catch (error) {
+    console.error('Error checking if store is in favorites:', error);
+    return false;
+  }
+};
+
+/**
+ * Add or remove a store from favorites
+ * @param {string} storeId - The ID of the store to toggle
+ * @returns {boolean} - True if store was added, false if removed
+ */
+export const toggleStoreFavorite = (storeId) => {
+  try {
+    const storeFavorites = JSON.parse(localStorage.getItem('storeFavorites') || '[]');
+    const index = storeFavorites.indexOf(storeId);
+    
+    if (index === -1) {
+      // Add to favorites
+      storeFavorites.push(storeId);
+      localStorage.setItem('storeFavorites', JSON.stringify(storeFavorites));
+      return true;
+    } else {
+      // Remove from favorites
+      storeFavorites.splice(index, 1);
+      localStorage.setItem('storeFavorites', JSON.stringify(storeFavorites));
+      return false;
+    }
+  } catch (error) {
+    console.error('Error toggling store favorite status:', error);
+    return false;
+  }
+};
+
+/**
+ * Get all favorite store IDs
+ * @returns {string[]} - Array of store IDs
+ */
+export const getAllStoreFavorites = () => {
+  try {
+    return JSON.parse(localStorage.getItem('storeFavorites') || '[]');
+  } catch (error) {
+    console.error('Error getting store favorites:', error);
+    return [];
+  }
+};

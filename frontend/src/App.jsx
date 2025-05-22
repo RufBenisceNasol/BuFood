@@ -21,6 +21,7 @@ import CustomerProfilePage from './customer/ProfilePage'
 // import FavoritesPage from './customer/FavoritesPage'
 import SettingsPage from './customer/SettingsPage'
 import StoresPage from './customer/StoresPage'
+import StoreDetailPage from './customer/StoreDetailPage'
 import { Box } from '@mui/material'
 import './App.css'
 
@@ -56,6 +57,7 @@ function App() {
           {/* <Route path="/customer/favorites" element={<CustomerLayout><FavoritesPage /></CustomerLayout>} /> */}
           <Route path="/customer/settings" element={<CustomerLayout><SettingsPage /></CustomerLayout>} />
           <Route path="/customer/stores" element={<CustomerLayout><StoresPage /></CustomerLayout>} />
+          <Route path="/customer/store/:storeId" element={<CustomerLayout><StoreDetailPage /></CustomerLayout>} />
           <Route path="/customer/cart" element={<CustomerLayout><CartPage /></CustomerLayout>} />
           <Route path="/customer/orders" element={<CustomerLayout><CustomerOrdersPage /></CustomerLayout>} />
           <Route path="/customer/product/:productId" element={<CustomerLayout><SingleProductPage /></CustomerLayout>} />
@@ -67,6 +69,7 @@ function App() {
           {/* <Route path="/favorites" element={<CustomerLayout><FavoritesPage /></CustomerLayout>} /> */}
           <Route path="/settings" element={<CustomerLayout><SettingsPage /></CustomerLayout>} />
           <Route path="/stores" element={<CustomerLayout><StoresPage /></CustomerLayout>} />
+          <Route path="/store/:storeId" element={<CustomerLayout><StoreDetailPage /></CustomerLayout>} />
           <Route path="/cart" element={<CustomerLayout><CartPage /></CustomerLayout>} />
           <Route path="/orders" element={<CustomerLayout><CustomerOrdersPage /></CustomerLayout>} />
           <Route path="/product/:productId" element={<CustomerLayout><SingleProductPage /></CustomerLayout>} />
