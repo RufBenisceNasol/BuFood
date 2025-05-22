@@ -3004,3 +3004,22 @@
 {"level":"info","message":{"duration":"93ms","method":"GET","requestId":"6ca74835-f0b5-46ce-965c-875a2740d04d","status":200,"url":"/view"},"timestamp":"2025-05-21T09:31:59.219Z"}
 {"level":"info","message":{"duration":"88ms","method":"GET","requestId":"3fbdb099-185d-488d-9f1b-5b20cd2b9252","status":304,"url":"/view"},"timestamp":"2025-05-21T09:34:13.742Z"}
 {"level":"info","message":{"duration":"89ms","method":"GET","requestId":"3feacf83-8002-4b07-b414-e6afaacea24b","status":304,"url":"/view"},"timestamp":"2025-05-21T09:34:13.834Z"}
+{"level":"info","message":"Running with in-memory cache (Redis disabled)","timestamp":"2025-05-22T03:07:21.656Z"}
+{"level":"info","message":"🚀 Server started on port 8000","timestamp":"2025-05-22T03:07:21.695Z"}
+{"level":"info","message":"📚 API Documentation available at http://[YOUR_IP]:8000/api-docs","timestamp":"2025-05-22T03:07:21.696Z"}
+{"level":"info","message":"MongoDB connection established successfully","timestamp":"2025-05-22T03:07:23.871Z"}
+{"level":"info","message":"✅ Successfully connected to MongoDB","timestamp":"2025-05-22T03:07:23.875Z"}
+{"level":"info","message":"Successfully dropped all indexes from cart collection","timestamp":"2025-05-22T03:07:23.906Z"}
+{"level":"info","message":{"duration":"7ms","method":"GET","requestId":"b4ffbf4a-5a1f-4ea1-be86-f7cdc0aee790","status":304,"url":"/"},"timestamp":"2025-05-22T03:07:59.969Z"}
+{"level":"info","message":{"duration":"5ms","method":"GET","requestId":"a9f820ce-a596-4087-9d5e-71d8b132f4e2","status":304,"url":"/swagger-ui.css"},"timestamp":"2025-05-22T03:07:59.994Z"}
+{"level":"info","message":{"duration":"1ms","method":"GET","requestId":"094780f5-286f-46f5-af2f-4a3d0577e19b","status":304,"url":"/swagger-ui-bundle.js"},"timestamp":"2025-05-22T03:07:59.997Z"}
+{"level":"info","message":{"duration":"4ms","method":"GET","requestId":"ce1e3eb1-2973-4daf-862d-1af31c379f5a","status":304,"url":"/swagger-ui-standalone-preset.js"},"timestamp":"2025-05-22T03:08:00.005Z"}
+{"level":"info","message":{"duration":"1ms","method":"GET","requestId":"87100fea-5ccc-4f15-8d1b-ac9efedb1934","status":304,"url":"/swagger-ui-init.js"},"timestamp":"2025-05-22T03:08:00.008Z"}
+{"level":"info","message":{"duration":"442ms","method":"POST","requestId":"d9ec9b0b-1694-4e0f-97cf-997d1e8ab767","status":200,"url":"/login"},"timestamp":"2025-05-22T03:08:42.235Z"}
+{"level":"info","message":{"duration":"74ms","method":"GET","requestId":"dbe2408c-cd54-46f6-8105-38db7e28695d","status":304,"url":"/"},"timestamp":"2025-05-22T03:08:42.355Z"}
+{"level":"info","message":{"duration":"69ms","method":"GET","requestId":"eda7e8d8-df08-439c-848b-0c1e7ec7bf17","status":304,"url":"/"},"timestamp":"2025-05-22T03:08:42.432Z"}
+{"level":"info","message":{"duration":"99ms","method":"GET","requestId":"14af1bf2-3e2f-467f-8b15-7b5fd9bcfc3e","status":304,"url":"/view"},"timestamp":"2025-05-22T03:08:48.404Z"}
+{"level":"info","message":{"duration":"117ms","method":"GET","requestId":"48410801-8353-489d-8ade-473e6a6f7fb5","status":304,"url":"/view"},"timestamp":"2025-05-22T03:08:48.523Z"}
+{"level":"info","message":{"duration":"64ms","method":"GET","requestId":"b8991800-490a-41cd-83a9-0f596bd4c0ef","status":200,"url":"/681cc74abc076072461fba1d?t=1747883330085"},"timestamp":"2025-05-22T03:08:50.158Z"}
+{"level":"info","message":{"duration":"85ms","method":"GET","requestId":"a71b5c29-537e-497a-a0d3-1b9c52ef5007","status":304,"url":"/view"},"timestamp":"2025-05-22T03:08:53.462Z"}
+{"level":"info","message":{"duration":"90ms","method":"GET","requestId":"1a1f7955-38df-407d-b3cc-d4b105930a64","status":304,"url":"/view"},"timestamp":"2025-05-22T03:08:53.557Z"}
