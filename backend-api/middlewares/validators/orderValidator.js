@@ -1,161 +1,256 @@
-const { body, param } = require('express-validator');
-const handleValidation = require('./handleValidation');
+const { body, param, query } = require('express-validator');
+const { validationResult } = require('express-validator');
 
-// Validation for checkout from product
-const checkoutFromProductValidator = [
-    body('productId')
-        .notEmpty()
-        .withMessage('Product ID is required')
-        .isMongoId()
-        .withMessage('Invalid product ID format'),
-    body('quantity')
-        .notEmpty()
-        .withMessage('Quantity is required')
-        .isInt({ min: 1 })
-        .withMessage('Quantity must be a positive number'),
-    body('orderType')
-        .notEmpty()
-        .withMessage('Order type is required')
-        .isIn(['Pickup', 'Delivery'])
-        .withMessage('Invalid order type'),
-    handleValidation
+// Helper function to validate results
+const validateResults = (req, res, next) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({
+      success: false,
+      message: 'Validation error',
+      errors: errors.array()
+    });
+  }
+  next();
+};
+
+// Validate create order from cart
+const validateCreateOrderFromCart = [
+  body('orderType')
+    .trim()
+    .notEmpty()
+    .withMessage('Order type is required')
+    .isIn(['Pickup', 'Delivery'])
+    .withMessage('Order type must be either Pickup or Delivery'),
+
+  body('selectedItems')
+    .isArray()
+    .withMessage('Selected items must be an array')
+    .notEmpty()
+    .withMessage('At least one item must be selected'),
+
+  body('selectedItems.*')
+    .isMongoId()
+    .withMessage('Invalid product ID format'),
+
+  body('paymentMethod')
+    .optional()
+    .trim()
+    .isIn(['Cash on Delivery', 'Cash on Pickup', 'Online Payment'])
+    .withMessage('Invalid payment method'),
+
+  body('deliveryDetails')
+    .if(body('orderType').equals('Delivery'))
+    .notEmpty()
+    .withMessage('Delivery details are required for delivery orders'),
+
+  body('deliveryDetails.receiverName')
+    .if(body('orderType').equals('Delivery'))
+    .trim()
+    .notEmpty()
+    .withMessage('Receiver name is required')
+    .isLength({ min: 2, max: 50 })
+    .withMessage('Receiver name must be between 2 and 50 characters'),
+
+  body('deliveryDetails.contactNumber')
+    .if(body('orderType').equals('Delivery'))
+    .trim()
+    .notEmpty()
+    .withMessage('Contact number is required')
+    .matches(/^[+]?[(]?[0-9]{1,4}[)]?[-\s./0-9]*$/)
+    .withMessage('Invalid contact number format'),
+
+  body('deliveryDetails.building')
+    .if(body('orderType').equals('Delivery'))
+    .trim()
+    .notEmpty()
+    .withMessage('Building information is required'),
+
+  body('deliveryDetails.roomNumber')
+    .if(body('orderType').equals('Delivery'))
+    .trim()
+    .notEmpty()
+    .withMessage('Room number is required'),
+
+  body('pickupTime')
+    .if(body('orderType').equals('Pickup'))
+    .notEmpty()
+    .withMessage('Pickup time is required for pickup orders')
+    .isISO8601()
+    .withMessage('Invalid pickup time format')
+    .custom((value) => {
+      const pickupTime = new Date(value);
+      const now = new Date();
+      if (pickupTime <= now) {
+        throw new Error('Pickup time must be in the future');
+      }
+      return true;
+    }),
+
+  body('notes')
+    .optional()
+    .trim()
+    .isLength({ max: 500 })
+    .withMessage('Notes cannot exceed 500 characters'),
+
+  validateResults
 ];
 
-// Validation for placing order
-const placeOrderValidator = [
-    param('orderId')
-        .isMongoId()
-        .withMessage('Invalid order ID format'),
-    body('orderType')
-        .notEmpty()
-        .withMessage('Order type is required')
-        .isIn(['Pickup', 'Delivery'])
-        .withMessage('Invalid order type'),
-    body('deliveryDetails')
-        .custom((value, { req }) => {
-            if (req.body.orderType === 'Delivery') {
-                if (!value || typeof value !== 'object') {
-                    throw new Error('Delivery details are required for delivery orders');
-                }
-            }
-            return true;
-        }),
-    body('deliveryDetails.receiverName')
-        .if(body('orderType').equals('Delivery'))
-        .notEmpty()
-        .withMessage('Receiver name is required for delivery')
-        .isString()
-        .withMessage('Receiver name must be a string')
-        .trim(),
-    body('deliveryDetails.contactNumber')
-        .notEmpty()
-        .withMessage('Contact number is required')
-        .isString()
-        .withMessage('Contact number must be a string')
-        .matches(/^[0-9+\-\s()]+$/)
-        .withMessage('Invalid contact number format')
-        .trim(),
-    body('deliveryDetails.building')
-        .if(body('orderType').equals('Delivery'))
-        .notEmpty()
-        .withMessage('Building name/number is required for delivery')
-        .isString()
-        .withMessage('Building must be a string')
-        .trim(),
-    body('deliveryDetails.roomNumber')
-        .if(body('orderType').equals('Delivery'))
-        .notEmpty()
-        .withMessage('Room number is required for delivery')
-        .isString()
-        .withMessage('Room number must be a string')
-        .trim(),
-    body('deliveryDetails.additionalInstructions')
-        .optional()
-        .isString()
-        .withMessage('Additional instructions must be a string')
-        .trim(),
-    body('pickupTime')
-        .if(body('orderType').equals('Pickup'))
-        .notEmpty()
-        .withMessage('Pickup time is required for pickup orders')
-        .isISO8601()
-        .withMessage('Invalid pickup time format')
-        .custom((value) => {
-            const pickupTime = new Date(value);
-            const now = new Date();
-            if (pickupTime <= now) {
-                throw new Error('Pickup time must be in the future');
-            }
-            return true;
-        }),
-    body('paymentMethod')
-        .notEmpty()
-        .withMessage('Payment method is required')
-        .custom((value, { req }) => {
-            const validMethods = req.body.orderType === 'Pickup' 
-                ? ['Cash on Pickup', 'GCash']
-                : ['Cash on Delivery', 'GCash'];
-            if (!validMethods.includes(value)) {
-                throw new Error(`Invalid payment method for ${req.body.orderType.toLowerCase()} order`);
-            }
-            return true;
-        }),
-    body('notes')
-        .optional()
-        .isString()
-        .withMessage('Notes must be a string')
-        .trim(),
-    handleValidation
+// Validate create direct order
+const validateCreateDirectOrder = [
+  body('orderType')
+    .trim()
+    .notEmpty()
+    .withMessage('Order type is required')
+    .isIn(['Pickup', 'Delivery'])
+    .withMessage('Order type must be either Pickup or Delivery'),
+
+  body('items')
+    .isArray()
+    .withMessage('Items must be an array')
+    .notEmpty()
+    .withMessage('At least one item must be selected'),
+
+  body('items.*.productId')
+    .isMongoId()
+    .withMessage('Invalid product ID format'),
+
+  body('items.*.quantity')
+    .isInt({ min: 1 })
+    .withMessage('Quantity must be at least 1'),
+
+  // Reuse delivery and pickup validations
+  ...validateCreateOrderFromCart.filter(validator => 
+    validator.builder?.fields?.[0]?.startsWith('deliveryDetails') ||
+    validator.builder?.fields?.[0] === 'pickupTime' ||
+    validator.builder?.fields?.[0] === 'paymentMethod' ||
+    validator.builder?.fields?.[0] === 'notes'
+  ),
+
+  validateResults
 ];
 
-// Validation for order ID parameter
-const orderIdValidator = [
-    param('orderId')
-        .isMongoId()
-        .withMessage('Invalid order ID format'),
-    handleValidation
+// Validate update order status
+const validateUpdateOrderStatus = [
+  param('orderId')
+    .isMongoId()
+    .withMessage('Invalid order ID format'),
+
+  body('status')
+    .trim()
+    .notEmpty()
+    .withMessage('Status is required')
+    .isIn(['Accepted', 'Preparing', 'Ready', 'Out for Delivery', 'Ready for Pickup', 'Delivered', 'Rejected'])
+    .withMessage('Invalid status'),
+
+  body('estimatedTime')
+    .optional()
+    .isInt({ min: 1 })
+    .withMessage('Estimated time must be a positive number'),
+
+  validateResults
 ];
 
-// Validation for updating order status
-const updateOrderStatusValidator = [
-    param('orderId')
-        .isMongoId()
-        .withMessage('Invalid order ID format'),
-    body('action')
-        .notEmpty()
-        .withMessage('Action is required')
-        .isIn(['accept', 'reject', 'updateStatus', 'cancel'])
-        .withMessage('Invalid action'),
-    body('status')
-        .optional()
-        .custom((value, { req }) => {
-            if (req.body.action !== 'updateStatus') return true;
-            
-            const order = req.order; // Assuming order is attached in previous middleware
-            const validStatuses = order.orderType === 'Pickup'
-                ? ['Preparing', 'Ready for Pickup', 'Delivered']
-                : ['Preparing', 'Ready', 'Out for Delivery', 'Delivered'];
-            
-            if (!validStatuses.includes(value)) {
-                throw new Error(`Invalid status for ${order.orderType.toLowerCase()} order`);
-            }
-            return true;
-        }),
-    body('estimatedTime')
-        .optional()
-        .isInt({ min: 1 })
-        .withMessage('Estimated time must be a positive number (in minutes)'),
-    body('note')
-        .optional()
-        .isString()
-        .withMessage('Note must be a string')
-        .trim(),
-    handleValidation
+// Validate get order details
+const validateGetOrderDetails = [
+  param('orderId')
+    .isMongoId()
+    .withMessage('Invalid order ID format'),
+
+  validateResults
+];
+
+// Validate cancel order
+const validateCancelOrder = [
+  param('orderId')
+    .isMongoId()
+    .withMessage('Invalid order ID format'),
+
+  body('cancellationReason')
+    .optional()
+    .trim()
+    .isLength({ min: 10, max: 500 })
+    .withMessage('Cancellation reason must be between 10 and 500 characters'),
+
+  validateResults
+];
+
+// Validate get seller orders
+const validateGetSellerOrders = [
+  query('status')
+    .optional()
+    .isIn(['Pending', 'Accepted', 'Preparing', 'Ready', 'Out for Delivery', 'Ready for Pickup', 'Delivered', 'Rejected', 'Canceled'])
+    .withMessage('Invalid status'),
+
+  query('orderType')
+    .optional()
+    .isIn(['Pickup', 'Delivery'])
+    .withMessage('Invalid order type'),
+
+  query('startDate')
+    .optional()
+    .isISO8601()
+    .withMessage('Invalid start date format'),
+
+  query('endDate')
+    .optional()
+    .isISO8601()
+    .withMessage('Invalid end date format')
+    .custom((endDate, { req }) => {
+      if (req.query.startDate && new Date(endDate) <= new Date(req.query.startDate)) {
+        throw new Error('End date must be after start date');
+      }
+      return true;
+    }),
+
+  query('page')
+    .optional()
+    .isInt({ min: 1 })
+    .withMessage('Page must be a positive integer'),
+
+  query('limit')
+    .optional()
+    .isInt({ min: 1, max: 100 })
+    .withMessage('Limit must be between 1 and 100'),
+
+  query('sortBy')
+    .optional()
+    .isIn(['createdAt', 'totalAmount', 'status'])
+    .withMessage('Invalid sort field'),
+
+  query('sortOrder')
+    .optional()
+    .isIn(['asc', 'desc'])
+    .withMessage('Sort order must be asc or desc'),
+
+  validateResults
+];
+
+// Validate accept order
+const validateAcceptOrder = [
+  param('orderId')
+    .isMongoId()
+    .withMessage('Invalid order ID format'),
+
+  body('estimatedPreparationTime')
+    .isInt({ min: 1 })
+    .withMessage('Estimated preparation time must be a positive number'),
+
+  body('note')
+    .optional()
+    .trim()
+    .isLength({ max: 500 })
+    .withMessage('Note cannot exceed 500 characters'),
+
+  validateResults
 ];
 
 module.exports = {
-    checkoutFromProductValidator,
-    placeOrderValidator,
-    orderIdValidator,
-    updateOrderStatusValidator
+  validateCreateOrderFromCart,
+  validateCreateDirectOrder,
+  validateUpdateOrderStatus,
+  validateGetOrderDetails,
+  validateCancelOrder,
+  validateGetSellerOrders,
+  validateAcceptOrder
 }; 

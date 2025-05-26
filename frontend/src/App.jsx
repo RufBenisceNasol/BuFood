@@ -18,7 +18,7 @@ import CartPage from './customer/CartPage'
 import CustomerOrdersPage from './customer/OrdersPage'
 import SingleProductPage from './customer/SingleProductPage'
 import CustomerProfilePage from './customer/ProfilePage'
-// import FavoritesPage from './customer/FavoritesPage'
+import OrderSummaryPage from './customer/OrderSummaryPage'
 import SettingsPage from './customer/SettingsPage'
 import StoresPage from './customer/StoresPage'
 import StoreDetailPage from './customer/StoreDetailPage'
@@ -54,19 +54,18 @@ function App() {
           {/* Customer Routes */}
           <Route path="/customer/home" element={<CustomerLayout><HomePage /></CustomerLayout>} />
           <Route path="/customer/profile" element={<CustomerLayout><CustomerProfilePage /></CustomerLayout>} />
-          {/* <Route path="/customer/favorites" element={<CustomerLayout><FavoritesPage /></CustomerLayout>} /> */}
           <Route path="/customer/settings" element={<CustomerLayout><SettingsPage /></CustomerLayout>} />
           <Route path="/customer/stores" element={<CustomerLayout><StoresPage /></CustomerLayout>} />
           <Route path="/customer/store/:storeId" element={<CustomerLayout><StoreDetailPage /></CustomerLayout>} />
           <Route path="/customer/cart" element={<CustomerLayout><CartPage /></CustomerLayout>} />
           <Route path="/customer/orders" element={<CustomerLayout><CustomerOrdersPage /></CustomerLayout>} />
+          <Route path="/customer/order-summary" element={<CustomerLayout><OrderSummaryPage /></CustomerLayout>} />
           <Route path="/customer/product/:productId" element={<CustomerLayout><SingleProductPage /></CustomerLayout>} />
           <Route path="/customer/products" element={<CustomerLayout><ProductPage /></CustomerLayout>} />
 
           {/* Redirects for root-level customer routes to /customer/* */}
           <Route path="/home" element={<CustomerLayout><HomePage /></CustomerLayout>} />
           <Route path="/profile" element={<CustomerLayout><CustomerProfilePage /></CustomerLayout>} />
-          {/* <Route path="/favorites" element={<CustomerLayout><FavoritesPage /></CustomerLayout>} /> */}
           <Route path="/settings" element={<CustomerLayout><SettingsPage /></CustomerLayout>} />
           <Route path="/stores" element={<CustomerLayout><StoresPage /></CustomerLayout>} />
           <Route path="/store/:storeId" element={<CustomerLayout><StoreDetailPage /></CustomerLayout>} />

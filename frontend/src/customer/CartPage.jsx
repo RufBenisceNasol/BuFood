@@ -150,7 +150,17 @@ const CartPage = () => {
             return;
         }
 
-        setShowCheckoutForm(true);
+        // Get selected items with their details
+        const selectedCartItems = cartData.items.filter(item => selectedItems[item.product._id]);
+        const selectedTotal = getSelectedTotal();
+
+        // Navigate to order summary page with selected items data
+        navigate('/customer/order-summary', {
+            state: {
+                cartItems: selectedCartItems,
+                totalAmount: selectedTotal
+            }
+        });
     };
 
     const handlePlaceOrder = async (orderDetails) => {
@@ -528,7 +538,7 @@ const styles = {
         display: 'flex',
         flexDirection: 'column',
         gap: { xs: 1, sm: 2 },
-        width: '100%'
+        width: '100vw',
     },
     productCard: {
         width: '100%',

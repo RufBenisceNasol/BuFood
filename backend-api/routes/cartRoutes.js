@@ -33,9 +33,51 @@ const {
  *         quantity:
  *           type: number
  *           description: Quantity of the product
+ *     Cart:
+ *       type: object
+ *       properties:
+ *         user:
+ *           type: string
+ *           description: ID of the cart owner
+ *         items:
+ *           type: array
+ *           items:
+ *             $ref: '#/components/schemas/CartItem'
+ *         total:
+ *           type: number
+ *           description: Total amount of all items in cart
  */
 
-// Cart routes
+/**
+ * @swagger
+ * /api/cart:
+ *   get:
+ *     tags: [Cart]
+ *     summary: View cart items
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Cart items retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     cart:
+ *                       $ref: '#/components/schemas/Cart'
+ *       401:
+ *         description: Unauthorized
+ */
+router.get('/', authenticate, cartLimiter, viewCart);
+
 /**
  * @swagger
  * /api/cart/add:
@@ -59,22 +101,6 @@ const {
  *         description: Unauthorized
  */
 router.post('/add', authenticate, cartLimiter, addToCartValidator, addToCart);
-
-/**
- * @swagger
- * /api/cart:
- *   get:
- *     tags: [Cart]
- *     summary: View cart items
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: Cart items retrieved successfully
- *       401:
- *         description: Unauthorized
- */
-router.get('/view', authenticate, cartLimiter, viewCart);
 
 /**
  * @swagger
