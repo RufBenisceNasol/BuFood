@@ -1,7 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { authenticate } = require('../middlewares/authMiddleware');
-const { createOrderValidator, updateOrderStatusValidator, acceptOrderValidator, cancelOrderValidator, createDirectOrderValidator } = require('../middlewares/validators/orderValidator');
+const { authenticate, checkRole } = require('../middlewares/authMiddleware');
 const { 
   createOrderFromCart, 
   getSellerOrders, 
@@ -9,7 +8,8 @@ const {
   getOrderDetails,
   acceptOrder,
   cancelOrder,
-  createDirectOrder
+  createDirectOrder,
+  getCustomerOrders
 } = require('../controllers/orderController');
 const { 
   validateCreateOrderFromCart,
@@ -20,7 +20,6 @@ const {
   validateGetSellerOrders,
   validateAcceptOrder
 } = require('../middlewares/validators/orderValidator');
-const { authenticateUser } = require('../middleware/auth'); // Assuming you have auth middleware
 
 /**
  * @swagger
@@ -210,246 +209,20 @@ const { authenticateUser } = require('../middleware/auth'); // Assuming you have
  */
 
 // Apply authentication middleware to all routes
-router.use(authenticateUser);
+router.use(authenticate);
 
 /**
  * @swagger
- * /api/orders/create:
- *   post:
- *     tags: [Orders]
- *     summary: Create a new order from selected cart items
- *     description: |
- *       Creates one or more orders from selected items in the cart. Items are grouped by store,
- *       creating separate orders for each store. Selected items will be removed from the cart.
- *       
- *       For delivery orders, complete delivery details are required.
- *       For pickup orders, a future pickup time is required.
- *       
- *       The cart will be updated to remove ordered items. If all items are ordered,
- *       the cart will be deleted.
- *     security:
- *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             $ref: '#/components/schemas/CreateOrder'
- *     responses:
- *       201:
- *         description: Orders created successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: true
- *                 message:
- *                   type: string
- *                   example: Orders created successfully
- *                 data:
- *                   type: object
- *                   properties:
- *                     orders:
- *                       type: array
- *                       items:
- *                         $ref: '#/components/schemas/Order'
- *       400:
- *         description: |
- *           Bad Request - Possible causes:
- *           * Invalid order type
- *           * No items selected
- *           * Selected items not found in cart
- *           * Empty cart
- *           * Incomplete delivery details
- *           * Missing pickup time
- *           * Invalid pickup time (must be in future)
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: false
- *                 message:
- *                   type: string
- *                 error:
- *                   type: string
- *       401:
- *         description: Unauthorized - User must be logged in
- *       500:
- *         description: Server error while processing the order
- */
-router.post('/create', createOrderValidator, createOrderFromCart);
-
-/**
- * @swagger
- * /api/orders/seller:
+ * /api/orders/my-orders:
  *   get:
  *     tags: [Orders]
- *     summary: Get seller's orders with filtering and pagination
+ *     summary: Get all orders for logged-in customer
+ *     description: Retrieve all orders placed by the currently logged-in customer
  *     security:
  *       - bearerAuth: []
- *     parameters:
- *       - in: query
- *         name: status
- *         schema:
- *           type: string
- *           enum: [Pending, Accepted, Rejected, Preparing, Ready, Out for Delivery, Ready for Pickup, Delivered, Canceled]
- *         description: Filter orders by status
- *       - in: query
- *         name: orderType
- *         schema:
- *           type: string
- *           enum: [Pickup, Delivery]
- *         description: Filter orders by type
- *       - in: query
- *         name: startDate
- *         schema:
- *           type: string
- *           format: date
- *         description: Filter orders from this date
- *       - in: query
- *         name: endDate
- *         schema:
- *           type: string
- *           format: date
- *         description: Filter orders until this date
- *       - in: query
- *         name: page
- *         schema:
- *           type: integer
- *           default: 1
- *         description: Page number for pagination
- *       - in: query
- *         name: limit
- *         schema:
- *           type: integer
- *           default: 10
- *         description: Number of items per page
- *       - in: query
- *         name: sortBy
- *         schema:
- *           type: string
- *           default: createdAt
- *         description: Field to sort by
- *       - in: query
- *         name: sortOrder
- *         schema:
- *           type: string
- *           enum: [asc, desc]
- *           default: desc
- *         description: Sort order
  *     responses:
  *       200:
- *         description: List of orders retrieved successfully
- *       401:
- *         description: Unauthorized
- *       500:
- *         description: Server error
- */
-router.get('/seller', getSellerOrders);
-
-/**
- * @swagger
- * /api/orders/{orderId}:
- *   get:
- *     tags: [Orders]
- *     summary: Get order details
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: orderId
- *         required: true
- *         schema:
- *           type: string
- *         description: ID of the order
- *     responses:
- *       200:
- *         description: Order details retrieved successfully
- *       401:
- *         description: Unauthorized
- *       403:
- *         description: Forbidden - User does not have permission
- *       404:
- *         description: Order not found
- *       500:
- *         description: Server error
- */
-router.get('/:orderId', getOrderDetails);
-
-/**
- * @swagger
- * /api/orders/{orderId}/status:
- *   patch:
- *     tags: [Orders]
- *     summary: Update order status (Seller only)
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: orderId
- *         required: true
- *         schema:
- *           type: string
- *         description: ID of the order
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             $ref: '#/components/schemas/UpdateOrderStatus'
- *     responses:
- *       200:
- *         description: Order status updated successfully
- *       400:
- *         description: Invalid status transition
- *       401:
- *         description: Unauthorized
- *       403:
- *         description: Forbidden - User is not the seller
- *       404:
- *         description: Order not found
- *       500:
- *         description: Server error
- */
-router.patch('/:orderId/status', updateOrderStatusValidator, updateOrderStatus);
-
-/**
- * @swagger
- * /api/orders/{orderId}/accept:
- *   post:
- *     tags: [Orders]
- *     summary: Accept an order (Seller only)
- *     description: |
- *       Allows a seller to accept a pending order. When accepting an order:
- *       - Validates product availability and stock
- *       - Updates product stock
- *       - Sets order status to Accepted
- *       - Records acceptance time and estimated completion time
- *       - Optionally adds seller notes
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: orderId
- *         required: true
- *         schema:
- *           type: string
- *         description: ID of the order to accept
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             $ref: '#/components/schemas/AcceptOrder'
- *     responses:
- *       200:
- *         description: Order accepted successfully
+ *         description: Orders retrieved successfully
  *         content:
  *           application/json:
  *             schema:
@@ -457,173 +230,8 @@ router.patch('/:orderId/status', updateOrderStatusValidator, updateOrderStatus);
  *               properties:
  *                 success:
  *                   type: boolean
- *                   example: true
  *                 message:
  *                   type: string
- *                   example: Order accepted successfully
- *                 data:
- *                   type: object
- *                   properties:
- *                     order:
- *                       type: object
- *                       properties:
- *                         _id:
- *                           type: string
- *                         status:
- *                           type: string
- *                           example: Accepted
- *                         customer:
- *                           type: object
- *                           properties:
- *                             name:
- *                               type: string
- *                             email:
- *                               type: string
- *                         store:
- *                           type: string
- *                         acceptedAt:
- *                           type: string
- *                           format: date-time
- *                         estimatedPreparationTime:
- *                           type: integer
- *                         estimatedCompletionTime:
- *                           type: string
- *                           format: date-time
- *                         sellerNotes:
- *                           type: string
- *       400:
- *         description: |
- *           Bad Request - Possible causes:
- *           * Order is not in Pending status
- *           * Invalid preparation time
- *           * Products no longer available
- *           * Insufficient stock
- *       401:
- *         description: Unauthorized - User must be logged in
- *       403:
- *         description: Forbidden - User is not the seller of this order
- *       404:
- *         description: Order not found
- *       500:
- *         description: Server error while processing the request
- */
-router.post('/:orderId/accept', acceptOrderValidator, acceptOrder);
-
-/**
- * @swagger
- * /api/orders/{orderId}/cancel:
- *   post:
- *     tags: [Orders]
- *     summary: Cancel a pending order (Customer only)
- *     description: |
- *       Allows a customer to cancel their order if it's still in Pending status.
- *       When an order is cancelled:
- *       - Order status is updated to Canceled
- *       - Cancellation time and reason are recorded
- *       - Items are returned to the customer's cart for easy reordering
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: orderId
- *         required: true
- *         schema:
- *           type: string
- *         description: ID of the order to cancel
- *     requestBody:
- *       required: false
- *       content:
- *         application/json:
- *           schema:
- *             $ref: '#/components/schemas/CancelOrder'
- *     responses:
- *       200:
- *         description: Order cancelled successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: true
- *                 message:
- *                   type: string
- *                   example: Order cancelled successfully
- *                 data:
- *                   type: object
- *                   properties:
- *                     order:
- *                       type: object
- *                       properties:
- *                         _id:
- *                           type: string
- *                         status:
- *                           type: string
- *                           example: Canceled
- *                         store:
- *                           type: string
- *                         canceledAt:
- *                           type: string
- *                           format: date-time
- *                         cancellationReason:
- *                           type: string
- *       400:
- *         description: |
- *           Bad Request - Possible causes:
- *           * Order is not in Pending status
- *           * Invalid cancellation reason format
- *       401:
- *         description: Unauthorized - User must be logged in
- *       403:
- *         description: Forbidden - User is not the customer who placed this order
- *       404:
- *         description: Order not found
- *       500:
- *         description: Server error while processing the request
- */
-router.post('/:orderId/cancel', cancelOrderValidator, cancelOrder);
-
-/**
- * @swagger
- * /api/orders/create-direct:
- *   post:
- *     tags: [Orders]
- *     summary: Create orders directly from products
- *     description: |
- *       Creates one or more orders directly from products without using the cart.
- *       Orders are grouped by store, and each store's items create a separate order.
- *       
- *       Features:
- *       - Specify quantity for each product
- *       - Automatic store grouping
- *       - Stock validation and update
- *       - Delivery fee calculation per store
- *       
- *       For delivery orders, complete delivery details are required.
- *       For pickup orders, a future pickup time is required.
- *     security:
- *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             $ref: '#/components/schemas/CreateDirectOrder'
- *     responses:
- *       201:
- *         description: Orders created successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: true
- *                 message:
- *                   type: string
- *                   example: Orders created successfully
  *                 data:
  *                   type: object
  *                   properties:
@@ -634,53 +242,259 @@ router.post('/:orderId/cancel', cancelOrderValidator, cancelOrder);
  *                         properties:
  *                           _id:
  *                             type: string
+ *                           customer:
+ *                             type: string
  *                           store:
- *                             type: string
- *                           totalAmount:
- *                             type: number
- *                           status:
- *                             type: string
- *                           orderType:
- *                             type: string
+ *                             type: object
+ *                             properties:
+ *                               _id:
+ *                                 type: string
+ *                               storeName:
+ *                                 type: string
  *                           items:
  *                             type: array
  *                             items:
  *                               type: object
  *                               properties:
  *                                 product:
- *                                   type: string
+ *                                   type: object
+ *                                   properties:
+ *                                     name:
+ *                                       type: string
+ *                                     price:
+ *                                       type: number
+ *                                     image:
+ *                                       type: string
  *                                 quantity:
- *                                   type: integer
+ *                                   type: number
  *                                 price:
  *                                   type: number
- *                                 subtotal:
- *                                   type: number
+ *                           totalAmount:
+ *                             type: number
+ *                           status:
+ *                             type: string
+ *                             enum: [Pending, Placed, Shipped, Delivered, Canceled]
+ *                           paymentStatus:
+ *                             type: string
+ *                             enum: [Pending, Paid, Failed]
+ *                           createdAt:
+ *                             type: string
+ *                             format: date-time
+ *       401:
+ *         description: Unauthorized - User not logged in
+ *       500:
+ *         description: Server error
+ */
+router.get('/my-orders', checkRole('Customer'), getCustomerOrders);
+
+/**
+ * @swagger
+ * /api/orders/create-from-cart:
+ *   post:
+ *     tags: [Orders]
+ *     summary: Create a new order from cart items
+ *     description: Creates an order from selected items in the cart
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/CreateOrder'
+ *     responses:
+ *       201:
+ *         description: Order created successfully
  *       400:
- *         description: |
- *           Bad Request - Possible causes:
- *           * Invalid order type
- *           * No items provided
- *           * Invalid product IDs
- *           * Invalid quantities
- *           * Products not available
- *           * Insufficient stock
- *           * Incomplete delivery details
- *           * Missing pickup time
- *           * Invalid pickup time
+ *         description: Invalid input or validation error
  *       401:
  *         description: Unauthorized - User must be logged in
- *       500:
- *         description: Server error while processing the request
  */
-router.post('/create-direct', createDirectOrderValidator, createDirectOrder);
-
-// Order routes with validators
 router.post('/create-from-cart', validateCreateOrderFromCart, createOrderFromCart);
+
+/**
+ * @swagger
+ * /api/orders/create-direct:
+ *   post:
+ *     tags: [Orders]
+ *     summary: Create order directly from products
+ *     description: Creates an order directly from products without using cart
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/CreateDirectOrder'
+ *     responses:
+ *       201:
+ *         description: Order created successfully
+ *       400:
+ *         description: Invalid input or validation error
+ *       401:
+ *         description: Unauthorized
+ */
 router.post('/create-direct', validateCreateDirectOrder, createDirectOrder);
-router.get('/seller', validateGetSellerOrders, getSellerOrders);
+
+/**
+ * @swagger
+ * /api/orders/seller:
+ *   get:
+ *     tags: [Orders]
+ *     summary: Get seller's orders
+ *     description: Get all orders for the authenticated seller with filtering options
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *           enum: [Pending, Accepted, Preparing, Ready, Out for Delivery, Ready for Pickup, Delivered, Canceled]
+ *       - in: query
+ *         name: orderType
+ *         schema:
+ *           type: string
+ *           enum: [Pickup, Delivery]
+ *     responses:
+ *       200:
+ *         description: List of orders retrieved successfully
+ *       401:
+ *         description: Unauthorized
+ */
+router.get('/seller', validateGetSellerOrders, checkRole('Seller'), getSellerOrders);
+
+/**
+ * @swagger
+ * /api/orders/{orderId}:
+ *   get:
+ *     tags: [Orders]
+ *     summary: Get order details
+ *     description: Get details of a specific order
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: orderId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Order details retrieved successfully
+ *       404:
+ *         description: Order not found
+ */
 router.get('/:orderId', validateGetOrderDetails, getOrderDetails);
+
+/**
+ * @swagger
+ * /api/orders/{orderId}/status:
+ *   patch:
+ *     tags: [Orders]
+ *     summary: Update order status (Seller only)
+ *     description: Update the status of an order
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: orderId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - status
+ *             properties:
+ *               status:
+ *                 type: string
+ *                 enum: [Accepted, Preparing, Ready, Out for Delivery, Ready for Pickup, Delivered]
+ *     responses:
+ *       200:
+ *         description: Order status updated successfully
+ *       400:
+ *         description: Invalid status
+ *       403:
+ *         description: Not authorized
+ */
 router.patch('/:orderId/status', validateUpdateOrderStatus, updateOrderStatus);
+
+/**
+ * @swagger
+ * /api/orders/{orderId}/accept:
+ *   post:
+ *     tags: [Orders]
+ *     summary: Accept order (Seller only)
+ *     description: Accept a pending order
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: orderId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - estimatedPreparationTime
+ *             properties:
+ *               estimatedPreparationTime:
+ *                 type: integer
+ *                 minimum: 1
+ *     responses:
+ *       200:
+ *         description: Order accepted successfully
+ *       400:
+ *         description: Invalid input
+ *       403:
+ *         description: Not authorized
+ */
 router.post('/:orderId/accept', validateAcceptOrder, acceptOrder);
+
+/**
+ * @swagger
+ * /api/orders/{orderId}/cancel:
+ *   post:
+ *     tags: [Orders]
+ *     summary: Cancel order (Customer only)
+ *     description: Cancel a pending order
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: orderId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: false
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               cancellationReason:
+ *                 type: string
+ *                 maxLength: 500
+ *     responses:
+ *       200:
+ *         description: Order cancelled successfully
+ *       400:
+ *         description: Cannot cancel order
+ *       403:
+ *         description: Not authorized
+ */
 router.post('/:orderId/cancel', validateCancelOrder, cancelOrder);
 
 module.exports = router; 

@@ -19,6 +19,7 @@ import CustomerOrdersPage from './customer/OrdersPage'
 import SingleProductPage from './customer/SingleProductPage'
 import CustomerProfilePage from './customer/ProfilePage'
 import OrderSummaryPage from './customer/OrderSummaryPage'
+import SuccessOrderMessagePage from './customer/SuccessOrderMessagePage'
 import SettingsPage from './customer/SettingsPage'
 import StoresPage from './customer/StoresPage'
 import StoreDetailPage from './customer/StoreDetailPage'
@@ -60,6 +61,7 @@ function App() {
           <Route path="/customer/cart" element={<CustomerLayout><CartPage /></CustomerLayout>} />
           <Route path="/customer/orders" element={<CustomerLayout><CustomerOrdersPage /></CustomerLayout>} />
           <Route path="/customer/order-summary" element={<CustomerLayout><OrderSummaryPage /></CustomerLayout>} />
+          <Route path="/customer/success-order" element={<CustomerLayout><SuccessOrderMessagePage /></CustomerLayout>} />
           <Route path="/customer/product/:productId" element={<CustomerLayout><SingleProductPage /></CustomerLayout>} />
           <Route path="/customer/products" element={<CustomerLayout><ProductPage /></CustomerLayout>} />
 

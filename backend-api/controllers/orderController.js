@@ -3,6 +3,8 @@ const Order = require('../models/orderModel');
 const Cart = require('../models/cartModel');
 const Product = require('../models/productModel');
 const Store = require('../models/storeModel');
+const { validationResult } = require('express-validator');
+const ApiError = require('../utils/ApiError');
 
 // Helper function for consistent response structure
 const createResponse = (success, message, data = null, error = null) => ({
@@ -32,7 +34,7 @@ const createOrderFromCart = async (req, res) => {
       orderType,
       paymentMethod,
       deliveryDetails,
-      pickupTime,
+      pickupDetails,
       notes,
       selectedItems // Array of product IDs to order
     } = req.body;
@@ -135,9 +137,13 @@ const createOrderFromCart = async (req, res) => {
         }
       }
 
-      // Validate pickup time for pickup orders
-      if (orderType === 'Pickup' && !pickupTime) {
-        throw new Error('Pickup time is required for pickup orders');
+      // Validate pickup details for pickup orders
+      if (orderType === 'Pickup') {
+        if (!pickupDetails || 
+            !pickupDetails.contactNumber ||
+            !pickupDetails.pickupTime) {
+          throw new Error('Incomplete pickup details');
+        }
       }
 
       // Create the order
@@ -153,7 +159,7 @@ const createOrderFromCart = async (req, res) => {
         paymentStatus: 'Pending',
         paymentMethod: paymentMethod || (orderType === 'Pickup' ? 'Cash on Pickup' : 'Cash on Delivery'),
         deliveryDetails: orderType === 'Delivery' ? deliveryDetails : undefined,
-        pickupTime: orderType === 'Pickup' ? new Date(pickupTime) : undefined,
+        pickupDetails: orderType === 'Pickup' ? pickupDetails : undefined,
         estimatedDeliveryTime,
         notes
       });
@@ -919,6 +925,32 @@ const createDirectOrder = async (req, res) => {
   }
 };
 
+/**
+ * Get all orders for the logged-in customer
+ * @route GET /api/orders/my-orders
+ * @access Private (Customer only)
+ */
+const getCustomerOrders = async (req, res, next) => {
+    try {
+        // Get orders for the logged-in customer
+        const orders = await Order.find({ customer: req.user._id })
+            .populate({
+                path: 'items.product',
+                select: 'name price image'
+            })
+            .populate('store', 'storeName')
+            .sort({ createdAt: -1 }); // Most recent orders first
+
+        res.status(200).json(createResponse(
+            true,
+            'Orders retrieved successfully',
+            { orders }
+        ));
+    } catch (error) {
+        next(new ApiError(500, error.message));
+    }
+};
+
 module.exports = {
   createOrderFromCart,
   getSellerOrders,
@@ -926,5 +958,6 @@ module.exports = {
   getOrderDetails,
   acceptOrder,
   cancelOrder,
-  createDirectOrder
+  createDirectOrder,
+  getCustomerOrders
 }; 

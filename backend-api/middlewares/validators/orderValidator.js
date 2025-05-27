@@ -36,9 +36,10 @@ const validateCreateOrderFromCart = [
   body('paymentMethod')
     .optional()
     .trim()
-    .isIn(['Cash on Delivery', 'Cash on Pickup', 'Online Payment'])
+    .isIn(['Cash on Delivery', 'Cash on Pickup', 'GCash'])
     .withMessage('Invalid payment method'),
 
+  // Delivery details validation
   body('deliveryDetails')
     .if(body('orderType').equals('Delivery'))
     .notEmpty()
@@ -72,7 +73,21 @@ const validateCreateOrderFromCart = [
     .notEmpty()
     .withMessage('Room number is required'),
 
-  body('pickupTime')
+  // Pickup details validation
+  body('pickupDetails')
+    .if(body('orderType').equals('Pickup'))
+    .notEmpty()
+    .withMessage('Pickup details are required for pickup orders'),
+
+  body('pickupDetails.contactNumber')
+    .if(body('orderType').equals('Pickup'))
+    .trim()
+    .notEmpty()
+    .withMessage('Contact number is required')
+    .matches(/^[+]?[(]?[0-9]{1,4}[)]?[-\s./0-9]*$/)
+    .withMessage('Invalid contact number format'),
+
+  body('pickupDetails.pickupTime')
     .if(body('orderType').equals('Pickup'))
     .notEmpty()
     .withMessage('Pickup time is required for pickup orders')
@@ -122,7 +137,7 @@ const validateCreateDirectOrder = [
   // Reuse delivery and pickup validations
   ...validateCreateOrderFromCart.filter(validator => 
     validator.builder?.fields?.[0]?.startsWith('deliveryDetails') ||
-    validator.builder?.fields?.[0] === 'pickupTime' ||
+    validator.builder?.fields?.[0] === 'pickupDetails' ||
     validator.builder?.fields?.[0] === 'paymentMethod' ||
     validator.builder?.fields?.[0] === 'notes'
   ),

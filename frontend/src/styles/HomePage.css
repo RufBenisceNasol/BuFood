@@ -402,12 +402,30 @@ body {
   background-color: #ff9800;
   color: white;
   border: none;
-  border-radius: 15px;
-  padding: 5px 10px;
-  font-size: 12px;
-  font-weight: 600;
+  border-radius: 50%;
+  width: 35px;
+  height: 35px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
 }
+
+.addButton:hover {
+  background-color: #ff8c00;
+  transform: scale(1.05);
+  box-shadow: 0 3px 8px rgba(0,0,0,0.2);
+}
+
+.addButton:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
 .bottomNav {
   position: fixed;
   bottom: 0;

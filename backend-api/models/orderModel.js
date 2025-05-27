@@ -111,7 +111,9 @@ const orderSchema = new mongoose.Schema({
         },
         contactNumber: {
             type: String,
-            required: true, // Required for both pickup and delivery
+            required: function() {
+                return this.orderType === 'Delivery';
+            },
             trim: true
         },
         building: {
@@ -133,10 +135,19 @@ const orderSchema = new mongoose.Schema({
             trim: true
         }
     },
-    pickupTime: {
-        type: Date,
-        required: function() {
-            return this.orderType === 'Pickup';
+    pickupDetails: {
+        contactNumber: {
+            type: String,
+            required: function() {
+                return this.orderType === 'Pickup';
+            },
+            trim: true
+        },
+        pickupTime: {
+            type: Date,
+            required: function() {
+                return this.orderType === 'Pickup';
+            }
         }
     },
     estimatedDeliveryTime: {

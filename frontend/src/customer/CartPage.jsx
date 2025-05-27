@@ -37,7 +37,7 @@ const CartPage = () => {
     const [error, setError] = useState(null);
     const [success, setSuccess] = useState(null);
     const [selectedItems, setSelectedItems] = useState({});
-    const [isDeleting, setIsDeleting] = useState(false);
+    const [isDeleting] = useState(false);
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const [showCheckoutForm, setShowCheckoutForm] = useState(false);
     const [orderId, setOrderId] = useState(null);
@@ -86,41 +86,7 @@ const CartPage = () => {
         }));
     };
 
-    const handleBulkDelete = async () => {
-        try {
-            setIsDeleting(true);
-            setError(null);
-            setSuccess(null);
 
-            const selectedItemIds = Object.entries(selectedItems)
-                .filter(([, isSelected]) => isSelected)
-                .map(([productId]) => productId);
-
-            if (selectedItemIds.length === 0) {
-                setError('No items selected');
-                return;
-            }
-
-            // Remove each selected item one by one
-            for (const productId of selectedItemIds) {
-                const response = await cart.removeFromCart(productId);
-                if (!response) {
-                    throw new Error('Failed to delete item from cart');
-                }
-            }
-
-            setShowDeleteDialog(false);
-            await fetchCart(); // This will refresh the cart state
-            setSelectedItems({}); // Reset selections
-            setSuccess('Selected items have been removed from your cart');
-
-        } catch (err) {
-            console.error('Delete error:', err);
-            setError(err.message || 'Failed to delete items from cart');
-        } finally {
-            setIsDeleting(false);
-        }
-    };
 
     const getSelectedTotal = () => {
         if (!cartData?.items) return 0;
@@ -477,18 +443,7 @@ const CartPage = () => {
                     >
                         Cancel
                     </Button>
-                    <Button 
-                        id="confirm-delete-button"
-                        name="confirm-delete"
-                        onClick={handleBulkDelete} 
-                        color="error" 
-                        variant="contained"
-                        autoFocus 
-                        disabled={isDeleting}
-                        aria-label="Confirm delete items"
-                    >
-                        {isDeleting ? 'Removing...' : 'Remove'}
-                    </Button>
+                
                 </DialogActions>
             </Dialog>
 

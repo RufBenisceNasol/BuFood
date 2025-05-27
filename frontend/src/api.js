@@ -319,7 +319,7 @@ export const cart = {    addToCart: async (productId, quantity) => {
 
     viewCart: async () => {
         try {
-            const response = await api.get('/cart/view');
+            const response = await api.get('/cart');
             return response.data.data.cart;
         } catch (error) {
             throw error.response?.data || error.message;
@@ -390,8 +390,30 @@ export const order = {
 
     // Get seller's orders with filters and pagination
     getSellerOrders: async (params = {}) => {
+        const { 
+            status,
+            orderType,
+            startDate,
+            endDate,
+            page = 1,
+            limit = 10,
+            sortBy = 'createdAt',
+            sortOrder = 'desc'
+        } = params;
+        
         try {
-            const response = await api.get('/orders/seller', { params });
+            const response = await api.get('/orders/seller', { 
+                params: {
+                    status,
+                    orderType,
+                    startDate,
+                    endDate,
+                    page,
+                    limit,
+                    sortBy,
+                    sortOrder
+                }
+            });
             return response.data;
         } catch (error) {
             throw error.response?.data || error.message;
@@ -438,57 +460,57 @@ export const order = {
         }
     },
 
-    // Legacy methods maintained for backward compatibility
-    checkoutFromCart: async (selectedItems, orderType = 'Delivery') => {
-        return order.createOrderFromCart({ 
-            selectedItems,
-            orderType 
-        });
-    },
-
-    checkoutFromProduct: async (productId, quantity, orderType = 'Delivery') => {
-        return order.createDirectOrder({
-            orderType,
-            items: [{
-                productId,
-                quantity
-            }]
-        });
-    },
-
-    placeOrder: async (orderId, orderData) => {
-        console.warn('placeOrder is deprecated. Use createOrderFromCart or createDirectOrder instead.');
-        return order.createOrderFromCart(orderData);
-    },
-
+    // Get customer orders
     getCustomerOrders: async () => {
         try {
-            const response = await api.get('/orders/customer');
+            const response = await api.get('/orders/my-orders');
             return response.data;
         } catch (error) {
             throw error.response?.data || error.message;
         }
     },
 
+    // Helper method for managing orders (accept, update status)
     manageOrder: async (orderId, action, data) => {
         switch (action) {
             case 'accept':
-                return order.acceptOrder(orderId, data);
+                return order.acceptOrder(orderId, {
+                    estimatedPreparationTime: data.estimatedPreparationTime,
+                    note: data.note
+                });
             case 'updateStatus':
-                return order.updateOrderStatus(orderId, { 
+                return order.updateOrderStatus(orderId, {
                     status: data.status,
-                    note: data.note 
+                    estimatedTime: data.estimatedTime
+                });
+            case 'reject':
+                return order.updateOrderStatus(orderId, {
+                    status: 'Rejected',
+                    note: data.note
                 });
             default:
                 throw new Error(`Unsupported action: ${action}`);
         }
     },
 
-    rejectOrder: async (orderId, note) => {
-        return order.updateOrderStatus(orderId, { 
-            status: 'Rejected',
-            note 
-        });
+    // Helper method for checkout process
+    checkout: async (orderData) => {
+        const { items, isFromCart = true, ...restData } = orderData;
+        
+        if (isFromCart) {
+            return order.createOrderFromCart({
+                selectedItems: items,
+                ...restData
+            });
+        } else {
+            return order.createDirectOrder({
+                items: items.map(item => ({
+                    productId: item.productId,
+                    quantity: item.quantity
+                })),
+                ...restData
+            });
+        }
     }
 };
 

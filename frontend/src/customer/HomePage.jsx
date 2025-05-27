@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MdSearch, MdHome, MdFavoriteBorder, MdShoppingCart, MdReceipt, MdPerson, MdFilterList, MdClose, MdMenuOpen, MdSettings, MdLogout, MdStore } from 'react-icons/md';
+import { MdSearch, MdHome, MdFavoriteBorder, MdShoppingCart, MdReceipt, MdPerson, MdFilterList, MdClose, MdMenuOpen, MdSettings, MdLogout, MdStore, MdAddShoppingCart } from 'react-icons/md';
 import Slider from 'react-slick';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -472,10 +472,21 @@ const HomePage = () => {
                           disabled={product.availability === 'Out of Stock'}
                           style={{
                             backgroundColor: product.availability === 'Out of Stock' ? '#ccc' : undefined,
-                            cursor: product.availability === 'Out of Stock' ? 'not-allowed' : 'pointer'
+                            cursor: product.availability === 'Out of Stock' ? 'not-allowed' : 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            width: '35px',
+                            height: '35px',
+                            borderRadius: '50%',
+                            padding: '0'
                           }}
                         >
-                          {product.availability === 'Out of Stock' ? 'Out of Stock' : 'Add to Cart'}
+                          {product.availability === 'Out of Stock' ? (
+                            <MdClose size={18} />
+                          ) : (
+                            <MdAddShoppingCart size={18} />
+                          )}
                         </button>
                       </div>
                     </div>
@@ -555,10 +566,21 @@ const HomePage = () => {
                           disabled={product.availability === 'Out of Stock'}
                           style={{
                             backgroundColor: product.availability === 'Out of Stock' ? '#ccc' : undefined,
-                            cursor: product.availability === 'Out of Stock' ? 'not-allowed' : 'pointer'
+                            cursor: product.availability === 'Out of Stock' ? 'not-allowed' : 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            width: '35px',
+                            height: '35px',
+                            borderRadius: '50%',
+                            padding: '0'
                           }}
                         >
-                          {product.availability === 'Out of Stock' ? 'Out of Stock' : 'Add to Cart'}
+                          {product.availability === 'Out of Stock' ? (
+                            <MdClose size={18} />
+                          ) : (
+                            <MdAddShoppingCart size={18} />
+                          )}
                         </button>
                       </div>
                     </div>
