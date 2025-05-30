@@ -4,6 +4,368 @@ import { product, cart } from '../api';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { MdArrowBack, MdShoppingCart, MdAdd, MdRemove } from 'react-icons/md';
+import { Favorite, FavoriteBorder } from '@mui/icons-material';
+import { toggleFavorite, isInFavorites } from '../utils/favoriteUtils';
+import styled from 'styled-components';
+
+// Styled Components
+const PageContainer = styled.div`
+  background-color: #f7f7f7;
+  height: 100vh;
+  height: 100dvh;
+  width: 100vw;
+  max-width: 100%;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overscroll-behavior-y: none;
+`;
+
+const Header = styled.header`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 60px;
+  background-color: #ff8c00e0;
+  color: white;
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  z-index: 1100;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+`;
+
+const BackButton = styled.button`
+  background: none;
+  border: none;
+  color: white;
+  padding: 8px;
+  margin-right: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
+
+const HeaderTitle = styled.h1`
+  font-size: 1.2rem;
+  font-weight: 500;
+  margin: 0;
+  color: white;
+`;
+
+const ToolbarSpacer = styled.div`
+  height: 60px;
+`;
+
+const ScrollableContent = styled.div`
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+  padding: 16px 0 100px;
+  
+  /* Custom scrollbar for WebKit browsers */
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 10px;
+    transition: background 0.3s ease;
+  }
+  
+  &::-webkit-scrollbar-thumb:hover {
+    background: #555;
+  }
+  
+  /* Firefox scrollbar */
+  scrollbar-width: thin;
+  scrollbar-color: #888 #f1f1f1;
+`;
+
+const ContentContainer = styled.div`
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+  padding: 0 16px;
+  
+  @media (max-width: 768px) {
+    padding: 0;
+  }
+`;
+
+const ProductCard = styled.div`
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  margin-bottom: 20px;
+  
+  @media (max-width: 768px) {
+    border-radius: 0;
+    box-shadow: none;
+  }
+`;
+
+const ImageContainer = styled.div`
+  position: relative;
+  width: 100%;
+  height: 300px;
+  overflow: hidden;
+  
+  @media (max-width: 768px) {
+    height: 250px;
+  }
+  
+  @media (max-width: 480px) {
+    height: 200px;
+  }
+`;
+
+const ProductImage = styled.img`
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+`;
+
+const OutOfStockBadge = styled.div`
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.875rem;
+  font-weight: 500;
+`;
+
+const ProductInfo = styled.div`
+  padding: 24px;
+  
+  @media (max-width: 768px) {
+    padding: 16px;
+  }
+`;
+
+const ProductHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+`;
+
+const ProductName = styled.h2`
+  font-size: 1.75rem;
+  margin: 0;
+  color: #333;
+  flex-grow: 1;
+`;
+
+const FavoriteButton = styled.button`
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  margin-left: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ff4081;
+  
+  &:hover {
+    opacity: 0.8;
+  }
+  
+  &:focus {
+    outline: none;
+  }
+`;
+
+const Price = styled.p`
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #ff8c00;
+  margin: 0 0 24px 0;
+  
+  @media (max-width: 480px) {
+    font-size: 1.25rem;
+  }
+`;
+
+const Section = styled.div`
+  margin-bottom: 24px;
+`;
+
+const SectionTitle = styled.h3`
+  font-size: 1.1rem;
+  margin: 0 0 8px 0;
+  color: #333;
+`;
+
+const DescriptionText = styled.p`
+  font-size: 1rem;
+  color: #666;
+  margin: 0;
+  line-height: 1.6;
+`;
+
+const StoreText = styled.p`
+  font-size: 1rem;
+  color: #666;
+  margin: 0;
+`;
+
+const CategoryText = styled.p`
+  font-size: 1rem;
+  color: #666;
+  margin: 0;
+`;
+
+const DeliveryInfo = styled.div`
+  background: #f9f9f9;
+  border-radius: 8px;
+  padding: 16px;
+`;
+
+const InfoGrid = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  
+  @media (max-width: 480px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const InfoItem = styled.div`
+  display: flex;
+  flex-direction: column;
+`;
+
+const InfoLabel = styled.span`
+  font-size: 0.875rem;
+  color: #888;
+  margin-bottom: 4px;
+`;
+
+const InfoValue = styled.span`
+  font-size: 1rem;
+  color: #333;
+  font-weight: 500;
+`;
+
+const AddToCartSection = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 32px;
+  
+  @media (max-width: 480px) {
+    flex-direction: column;
+    gap: 16px;
+  }
+`;
+
+const QuantitySelector = styled.div`
+  display: flex;
+  align-items: center;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  overflow: hidden;
+  
+  @media (max-width: 480px) {
+    width: 100%;
+    justify-content: space-between;
+  }
+`;
+
+const QuantityButton = styled.button`
+  background: none;
+  border: none;
+  padding: 8px 16px;
+  font-size: 1.25rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s;
+  
+  &:hover {
+    background-color: #f5f5f5;
+  }
+`;
+
+const QuantityDisplay = styled.span`
+  padding: 0 16px;
+  font-size: 1rem;
+  font-weight: 500;
+  min-width: 40px;
+  text-align: center;
+`;
+
+const AddToCartButton = styled.button`
+  background: linear-gradient(135deg, #fbaa39, #fc753b);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 24px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: transform 0.2s, box-shadow 0.2s;
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(255, 140, 0, 0.35);
+  }
+  
+  @media (max-width: 480px) {
+    width: 100%;
+    justify-content: center;
+  }
+`;
+
+const LoadingContainer = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background: #fff;
+  font-size: 1.25rem;
+  color: #666;
+`;
+
+const ErrorContainer = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background: #fff;
+  color: #d32f2f;
+  font-size: 1.25rem;
+  padding: 20px;
+  text-align: center;
+`;
 
 const SingleProductPage = () => {
     const { productId } = useParams();
@@ -12,11 +374,11 @@ const SingleProductPage = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');    
     const [quantity, setQuantity] = useState(1);
+    const [isFavorite, setIsFavorite] = useState(false);
 
     const handleGoBack = () => {
         navigate('/customer/home');
     };
-
 
     useEffect(() => {
         const fetchProductDetails = async () => {
@@ -46,352 +408,123 @@ const SingleProductPage = () => {
     };
 
     if (loading) {
-        return <div style={styles.loadingContainer}>Loading...</div>;
+        return <LoadingContainer>Loading...</LoadingContainer>;
     }
 
     if (error || !productData) {
-        return <div style={styles.errorContainer}>{error || 'Product not found'}</div>;
+        return <ErrorContainer>{error || 'Product not found'}</ErrorContainer>;
     }
 
     return (
-        <div style={styles.mainContainer}>
+        <PageContainer>
             <ToastContainer position="top-right" autoClose={3000} />
             
-            <div style={styles.header}>
-                <button style={styles.backButton} onClick={handleGoBack}>
+            <Header>
+                <BackButton onClick={handleGoBack}>
                     <MdArrowBack size={24} />
-                </button>
-                <h1 style={styles.headerTitle}>Product Details</h1>
-            </div>
+                </BackButton>
+                <HeaderTitle>Product Details</HeaderTitle>
+            </Header>
+            <ToolbarSpacer />
 
-            <div style={styles.contentContainer}>
-                <div style={styles.productCard}>
-                    <div style={styles.imageContainer}>
-                        <img 
-                            src={productData.image} 
-                            alt={productData.name}
-                            style={styles.productImage}
-                        />
-                        {productData.availability === 'Out of Stock' && (
-                            <div style={styles.outOfStockBadge}>
-                                Out of Stock
-                            </div>
-                        )}
-                    </div>
+            <ScrollableContent>
+                <ContentContainer>
+                    <ProductCard>
+                        <ImageContainer>
+                            <ProductImage 
+                                src={productData.image} 
+                                alt={productData.name}
+                            />
+                            {productData.availability === 'Out of Stock' && (
+                                <OutOfStockBadge>Out of Stock</OutOfStockBadge>
+                            )}
+                        </ImageContainer>
 
-                    <div style={styles.productInfo}>
-                        <h2 style={styles.productName}>{productData.name}</h2>
-                        <p style={styles.price}>₱{productData.price.toFixed(2)}</p>
-                        
-                        <div style={styles.section}>
-                            <h3 style={styles.sectionTitle}>Description</h3>
-                            <p style={styles.descriptionText}>{productData.description}</p>
-                        </div>
-
-                        <div style={styles.section}>
-                            <h3 style={styles.sectionTitle}>Store</h3>
-                            <p style={styles.storeText}>{productData.storeName}</p>
-                        </div>
-
-                        <div style={styles.section}>
-                            <h3 style={styles.sectionTitle}>Category</h3>
-                            <p style={styles.categoryText}>{productData.category}</p>
-                        </div>
-
-                        <div style={styles.section}>
-                            <h3 style={styles.sectionTitle}>Delivery Information</h3>
-                            <div style={styles.deliveryInfo}>
-                                <div style={styles.infoGrid}>
-                                    <div style={styles.infoItem}>
-                                        <span style={styles.infoLabel}>Estimated Time:</span>
-                                        <span style={styles.infoValue}>{productData.estimatedTime ? `${productData.estimatedTime} minutes` : 'Not specified'}</span>
-                                    </div>
-                                    <div style={styles.infoItem}>
-                                        <span style={styles.infoLabel}>Shipping Fee:</span>
-                                        <span style={styles.infoValue}>₱{productData.shippingFee ? parseFloat(productData.shippingFee).toFixed(2) : '0.00'}</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        {productData.availability === 'Available' && (
-                            <div style={styles.addToCartSection}>
-                                <div style={styles.quantitySelector}>
-                                    <button 
-                                        style={styles.quantityButton}
-                                        onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                                    >
-                                        <MdRemove size={20} />
-                                    </button>
-                                    <span style={styles.quantityDisplay}>{quantity}</span>
-                                    <button 
-                                        style={styles.quantityButton}
-                                        onClick={() => setQuantity(quantity + 1)}
-                                    >
-                                        <MdAdd size={20} />
-                                    </button>
-                                </div>
-
-                                <button 
-                                    style={styles.addToCartButton}
-                                    onClick={handleAddToCart}
+                        <ProductInfo>
+                            <ProductHeader>
+                                <ProductName>{productData.name}</ProductName>
+                                <FavoriteButton 
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        const newFavoriteStatus = toggleFavorite(productId);
+                                        setIsFavorite(newFavoriteStatus);
+                                        toast.success(newFavoriteStatus ? 'Added to favorites' : 'Removed from favorites');
+                                    }}
+                                    aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
                                 >
-                                    <MdShoppingCart size={20} />
-                                    Add to Cart
-                                </button>
-                            </div>
-                        )}
-                    </div>
-                </div>
-            </div>
+                                    {isFavorite ? 
+                                        <Favorite style={{ color: '#ff4081', fontSize: '1.5rem' }} /> : 
+                                        <FavoriteBorder style={{ color: '#999', fontSize: '1.5rem' }} />
+                                    }
+                                </FavoriteButton>
+                            </ProductHeader>
+                            <Price>₱{productData.price.toFixed(2)}</Price>
+                            
+                            <Section>
+                                <SectionTitle>Description</SectionTitle>
+                                <DescriptionText>{productData.description}</DescriptionText>
+                            </Section>
 
-            <style>{`
-                @media (max-width: 768px) {
-                    .productCard {
-                        border-radius: 0 !important;
-                        box-shadow: none !important;
-                    }
-                    .contentContainer {
-                        padding: 0 !important;
-                    }
-                    .imageContainer {
-                        height: 250px !important;
-                    }
-                    .productInfo {
-                        padding: 16px !important;
-                    }
-                    .header {
-                        padding: 12px !important;
-                    }
-                }
-                
-                @media (max-width: 480px) {
-                    .imageContainer {
-                        height: 200px !important;
-                    }
-                    .productName {
-                        font-size: 20px !important;
-                    }
-                    .price {
-                        font-size: 18px !important;
-                    }
-                    .quantitySelector {
-                        justify-content: center !important;
-                    }
-                }
+                            <Section>
+                                <SectionTitle>Store</SectionTitle>
+                                <StoreText>{productData.storeName}</StoreText>
+                            </Section>
 
-                .quantityButton:hover {
-                    background-color: #f0f0f0;
-                }
-                
-                .addToCartButton:hover {
-                    transform: translateY(-2px);
-                    box-shadow: 0 6px 15px rgba(255, 140, 0, 0.35);
-                }
-            `}</style>
-        </div>
+                            <Section>
+                                <SectionTitle>Category</SectionTitle>
+                                <CategoryText>{productData.category}</CategoryText>
+                            </Section>
+
+                            <Section>
+                                <SectionTitle>Delivery Information</SectionTitle>
+                                <DeliveryInfo>
+                                    <InfoGrid>
+                                        <InfoItem>
+                                            <InfoLabel>Estimated Time:</InfoLabel>
+                                            <InfoValue>
+                                                {productData.estimatedTime ? 
+                                                    `${productData.estimatedTime} minutes` : 'Not specified'}
+                                            </InfoValue>
+                                        </InfoItem>
+                                        <InfoItem>
+                                            <InfoLabel>Shipping Fee:</InfoLabel>
+                                            <InfoValue>
+                                                ₱{productData.shippingFee ? 
+                                                    parseFloat(productData.shippingFee).toFixed(2) : '0.00'}
+                                            </InfoValue>
+                                        </InfoItem>
+                                    </InfoGrid>
+                                </DeliveryInfo>
+                            </Section>
+
+                            {productData.availability === 'Available' && (
+                                <AddToCartSection>
+                                    <QuantitySelector>
+                                        <QuantityButton 
+                                            onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                                        >
+                                            <MdRemove size={20} />
+                                        </QuantityButton>
+                                        <QuantityDisplay>{quantity}</QuantityDisplay>
+                                        <QuantityButton 
+                                            onClick={() => setQuantity(quantity + 1)}
+                                        >
+                                            <MdAdd size={20} />
+                                        </QuantityButton>
+                                    </QuantitySelector>
+
+                                    <AddToCartButton onClick={handleAddToCart}>
+                                        <MdShoppingCart size={20} />
+                                        Add to Cart
+                                    </AddToCartButton>
+                                </AddToCartSection>
+                            )}
+                        </ProductInfo>
+                    </ProductCard>
+                </ContentContainer>
+            </ScrollableContent>
+        </PageContainer>
     );
-};
-
-const styles = {
-    mainContainer: {
-        backgroundColor: '#f7f7f7',
-        minHeight: '100vh',
-        width: '100%',
-        position: 'relative',
-    },
-    header: {
-        backgroundColor: '#ff8c00e0',
-        padding: '16px',
-        display: 'flex',
-        alignItems: 'center',
-        color: 'white',
-        position: 'sticky',
-        top: 0,
-        zIndex: 10,
-        boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-    },
-    backButton: {
-        background: 'none',
-        border: 'none',
-        color: 'white',
-        cursor: 'pointer',
-        padding: '8px',
-        display: 'flex',
-        alignItems: 'center',
-        marginRight: '16px',
-    },
-    headerTitle: {
-        margin: 0,
-        fontSize: '1.25rem',
-        fontWeight: '600',
-    },
-    contentContainer: {
-        padding: '1.25rem',
-        maxWidth: '800px',
-        margin: '0 auto',
-        width: '100%',
-        boxSizing: 'border-box',
-    },
-    productCard: {
-        backgroundColor: 'white',
-        borderRadius: '12px',
-        overflow: 'hidden',
-        boxShadow: '0 4px 10px rgba(0, 0, 0, 0.1)',
-    },
-    imageContainer: {
-        position: 'relative',
-        width: '100%',
-        height: '300px',
-        backgroundColor: '#f8f8f8',
-    },
-    productImage: {
-        width: '100%',
-        height: '100%',
-        objectFit: 'cover',
-    },
-    outOfStockBadge: {
-        position: 'absolute',
-        top: '10px',
-        right: '10px',
-        backgroundColor: 'rgba(231, 76, 60, 0.9)',
-        color: 'white',
-        padding: '0.5rem 1rem',
-        borderRadius: '4px',
-        fontSize: '0.875rem',
-        fontWeight: '500',
-    },
-    productInfo: {
-        padding: '1.5rem',
-    },
-    productName: {
-        margin: '0 0 0.75rem 0',
-        fontSize: '1.5rem',
-        fontWeight: '600',
-        color: '#333',
-    },
-    price: {
-        fontSize: '1.375rem',
-        fontWeight: '600',
-        color: '#ff8c00',
-        margin: '0 0 1.25rem 0',
-    },
-    section: {
-        marginBottom: '1.5rem',
-    },
-    sectionTitle: {
-        fontSize: '1.125rem',
-        fontWeight: '600',
-        color: '#444',
-        marginBottom: '0.5rem',
-    },
-    descriptionText: {
-        fontSize: '1rem',
-        color: '#666',
-        lineHeight: '1.5',
-        margin: 0,
-    },
-    storeText: {
-        fontSize: '1rem',
-        color: '#666',
-        margin: 0,
-    },
-    categoryText: {
-        fontSize: '1rem',
-        color: '#666',
-        margin: 0,
-        textTransform: 'capitalize',
-    },
-    deliveryInfo: {
-        backgroundColor: '#f8f8f8',
-        padding: '1rem',
-        borderRadius: '8px',
-    },
-    infoGrid: {
-        display: 'grid',
-        gap: '0.75rem',
-    },
-    infoItem: {
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        flexWrap: 'wrap',
-        gap: '0.5rem',
-    },
-    infoLabel: {
-        color: '#666',
-        fontSize: '0.9375rem',
-    },
-    infoValue: {
-        color: '#333',
-        fontSize: '0.9375rem',
-        fontWeight: '500',
-    },
-    addToCartSection: {
-        marginTop: '1.5rem',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '1rem',
-    },
-    quantitySelector: {
-        display: 'flex',
-        alignItems: 'center',
-        gap: '0.75rem',
-        marginBottom: '1rem',
-    },
-    quantityButton: {
-        width: '36px',
-        height: '36px',
-        border: '1px solid #ddd',
-        borderRadius: '8px',
-        background: 'white',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        cursor: 'pointer',
-        transition: 'background-color 0.2s',
-    },
-    quantityDisplay: {
-        fontSize: '1.125rem',
-        fontWeight: '500',
-        minWidth: '40px',
-        textAlign: 'center',
-    },
-    addToCartButton: {
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: '0.5rem',
-        backgroundColor: '#ff8c00',
-        color: 'white',
-        border: 'none',
-        borderRadius: '8px',
-        padding: '0.875rem',
-        fontSize: '1rem',
-        fontWeight: '600',
-        cursor: 'pointer',
-        transition: 'all 0.3s ease',
-        boxShadow: '0 2px 8px rgba(255, 140, 0, 0.3)',
-        width: '100%',
-    },
-    loadingContainer: {
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        height: '100vh',
-        fontSize: '1rem',
-        color: '#666',
-    },
-    errorContainer: {
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        height: '100vh',
-        fontSize: '1rem',
-        color: '#e53e3e',
-        padding: '0 1.25rem',
-        textAlign: 'center',
-    },
 };
 
 export default SingleProductPage;

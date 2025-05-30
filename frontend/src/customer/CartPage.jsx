@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { cart, order } from '../api';
+import styled from 'styled-components';
 import {
     Container,
     Typography,
@@ -17,8 +18,6 @@ import {
     DialogContent,
     DialogActions,
     Button,
-    AppBar,
-    Toolbar,
 } from '@mui/material';
 import {
     Add,
@@ -29,6 +28,268 @@ import {
     Close as CloseIcon
 } from '@mui/icons-material';
 import OrderDetailsForm from '../components/OrderDetailsForm';
+
+// Styled Components
+const CartContainer = styled.div`
+  background-color: rgb(255, 255, 255);
+  height: 100vh;
+  height: 100dvh; /* Use dynamic viewport height for mobile browsers */
+  width: 100vw;
+  max-width: 100%;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overscroll-behavior-y: none;
+`;
+
+const ScrollableContent = styled.div`
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+  padding-bottom: 80px; /* Space for the fixed footer */
+  
+  /* Custom scrollbar for WebKit browsers */
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 10px;
+    transition: background 0.3s ease;
+  }
+  
+  &::-webkit-scrollbar-thumb:hover {
+    background: #555;
+  }
+  
+  /* Firefox scrollbar */
+  scrollbar-width: thin;
+  scrollbar-color: #888 #f1f1f1;
+`;
+
+const ContentWrapper = styled.div`
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 20px 15px;
+  background: #ffffff;
+  position: relative;
+  min-height: 100%;
+`;
+
+const FormContainer = styled.div`
+  width: 100%;
+  padding: 15px 0;
+`;
+
+const CartHeader = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 60px;
+  background-color: #ff8c00e0;
+  color: white;
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  z-index: 1100;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+`;
+
+const BackButton = styled.button`
+  background: none;
+  border: none;
+  color: white;
+  padding: 8px;
+  margin-right: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
+
+const HeaderTitle = styled.span`
+  font-size: 1.2rem;
+  font-weight: 500;
+`;
+
+const ToolbarSpacer = styled.div`
+  height: 60px;
+`;
+
+const ProductList = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 16px;
+`;
+
+const ProductCard = styled(Card)`
+  border-radius: 12px !important;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+  }
+`;
+
+const ProductCardContent = styled(CardContent)`
+  display: flex;
+  padding: 12px 16px !important;
+  align-items: center;
+  background: #fff;
+`;
+
+const ImageContainer = styled.div`
+  width: 80px;
+  height: 80px;
+  border-radius: 8px;
+  overflow: hidden;
+  margin-right: 16px;
+  flex-shrink: 0;
+`;
+
+const ProductImage = styled.img`
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  cursor: pointer;
+`;
+
+const ProductInfo = styled.div`
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+`;
+
+const ProductName = styled.span`
+  font-size: 1rem;
+  font-weight: 500;
+  color: #333;
+  margin-bottom: 4px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+`;
+
+const ProductRight = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  margin-left: auto;
+  gap: 8px;
+`;
+
+const ProductPrice = styled.span`
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #ff8c00e0;
+`;
+
+const QuantityControl = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: #f5f5f5;
+  border-radius: 20px;
+  padding: 2px 8px;
+`;
+
+const QuantityButton = styled(IconButton)`
+  padding: 4px !important;
+  color: #ff8c00e0 !important;
+`;
+
+const QuantityValue = styled.span`
+  min-width: 24px;
+  text-align: center;
+  font-weight: 500;
+`;
+
+const RemoveItemButton = styled(IconButton)`
+  color: #999 !important;
+  padding: 4px !important;
+  margin-left: 8px !important;
+  
+  &:hover {
+    color: #ff8c00e0 !important;
+  }
+`;
+
+const Footer = styled.footer`
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background-color: white;
+  padding: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  height: 80px; /* Fixed height for the footer */
+`;
+
+const CheckoutButton = styled(Button)`
+  background: linear-gradient(135deg, #fbaa39, #fc753b) !important;
+  color: white !important;
+  padding: 8px 24px !important;
+  border-radius: 8px !important;
+  text-transform: none !important;
+  font-weight: 600 !important;
+  
+  &:disabled {
+    background-color: #cccccc !important;
+  }
+`;
+
+const EmptyCartBox = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 16px;
+  text-align: center;
+`;
+
+const EmptyCartText = styled(Typography)`
+  margin-bottom: 16px !important;
+  color: #666;
+`;
+
+const AlertMessage = styled(Alert)`
+  margin-bottom: 16px !important;
+  border-radius: 8px !important;
+`;
+
+const CheckoutDialogTitleBar = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-right: 8px;
+`;
 
 const CartPage = () => {
     const navigate = useNavigate();
@@ -85,8 +346,6 @@ const CartPage = () => {
             [productId]: !prev[productId]
         }));
     };
-
-
 
     const getSelectedTotal = () => {
         if (!cartData?.items) return 0;
@@ -186,236 +445,113 @@ const CartPage = () => {
     }
 
     return (
-        <Box sx={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
-            <AppBar 
-                position="fixed" 
-                color="inherit" 
-                elevation={1}
-                sx={{
-                    top: 0,
-                    bgcolor: 'white'
-                }}
-            >
-                <Toolbar sx={{ px: { xs: 1, sm: 2, md: 4 }, minHeight: { xs: '56px', sm: '64px' } }}>
-                    <IconButton 
-                        edge="start" 
-                        onClick={handleGoBack}
-                        sx={styles.backButton}
-                    >
-                        <ArrowBack />
-                    </IconButton>
-                    <Box sx={{ flex: 1 }}>
-                        <Typography 
-                            variant="h6" 
-                            sx={styles.headerTitle}
-                        >
-                            Shopping Cart ({cartData?.items?.length || 0})
-                        </Typography>
-                        <Box sx={styles.locationText}>
-                            <LocationOn sx={{ fontSize: { xs: 14, sm: 16 }, mr: 0.5 }} />
-                            <Typography 
-                                variant="body2"
-                                sx={styles.locationText}
-                            >
-                                Your Location
-                            </Typography>
-                        </Box>
-                    </Box>
-                </Toolbar>
-            </AppBar>
-            <Toolbar sx={{ minHeight: { xs: '56px', sm: '64px' } }} />
+        <CartContainer>
+            {/* Custom Header */}
+            <CartHeader>
+                <BackButton onClick={handleGoBack}>
+                    <ArrowBack />
+                </BackButton>
+                <HeaderTitle>
+                    Shopping Cart ({cartData?.items?.length || 0})
+                </HeaderTitle>
+            </CartHeader>
+            <ToolbarSpacer />
 
-            {/* Scrollable Content Area */}
-            <Box
-                sx={{
-                    flex: 1,
-                    overflowY: 'auto',
-                    px: { xs: 1, sm: 2, md: 4 },
-                    pb: { xs: '100px', sm: '80px' },
-                    bgcolor: '#f5f5f5',
-                    display: 'flex',
-                    justifyContent: 'center'
-                }}
-            >
-                <Box
-                    sx={{
-                        width: '100%',
-                        maxWidth: '800px', // Maximum width for better readability
-                        py: { xs: 1, sm: 2 }
-                    }}
-                >
-                    {error && (
-                        <Alert 
-                            severity="error" 
-                            sx={{ 
-                                mb: 2,
-                                fontSize: { xs: '0.875rem', sm: '1rem' } 
-                            }}
-                        >
-                            {error}
-                        </Alert>
-                    )}
+            <ScrollableContent>
+                <ContentWrapper>
+                    <FormContainer>
+                        {error && (
+                            <AlertMessage severity="error">
+                                {error}
+                            </AlertMessage>
+                        )}
 
-                    {success && (
-                        <Alert 
-                            severity="success" 
-                            sx={{ 
-                                mb: 2,
-                                fontSize: { xs: '0.875rem', sm: '1rem' } 
-                            }}
-                        >
-                            {success}
-                        </Alert>
-                    )}
+                        {success && (
+                            <AlertMessage severity="success">
+                                {success}
+                            </AlertMessage>
+                        )}
 
-                    {/* Empty Cart Message */}
-                    {(!cartData?.items || cartData.items.length === 0) && (
-                        <Box
-                            sx={{
-                                textAlign: 'center',
-                                py: 4,
-                                bgcolor: 'white',
-                                borderRadius: 2,
-                                boxShadow: 1
-                            }}
-                        >
-                            <Typography
-                                variant="h6"
-                                sx={{
-                                    color: 'text.secondary',
-                                    mb: 2
-                                }}
-                            >
-                                Your cart is empty
-                            </Typography>
-                            <Button
-                                variant="contained"
-                                onClick={() => navigate('/customer/home')}
-                                sx={{
-                                    bgcolor: '#FF385C',
-                                    '&:hover': {
-                                        bgcolor: '#FF1744'
-                                    }
-                                }}
-                            >
-                                Continue Shopping
-                            </Button>
-                        </Box>
-                    )}
+                        {(!cartData?.items || cartData.items.length === 0) && (
+                            <EmptyCartBox>
+                                <EmptyCartText variant="h6">
+                                    Your cart is empty
+                                </EmptyCartText>
+                                <CheckoutButton
+                                    variant="contained"
+                                    onClick={() => navigate('/customer/home')}
+                                >
+                                    Continue Shopping
+                                </CheckoutButton>
+                            </EmptyCartBox>
+                        )}
 
-                    {/* Product List */}
-                    <Box sx={styles.productList}>
-                        {cartData?.items?.map((item) => (
-                            <Card key={item.product._id} sx={styles.productCard}>
-                                <CardContent sx={{ p: { xs: 1.5, sm: 2 } }}>
-                                    <Box sx={styles.productContainer}>
+                        <ProductList>
+                            {cartData?.items?.map((item) => (
+                                <ProductCard key={item.product._id}>
+                                    <ProductCardContent>
                                         <Checkbox 
                                             checked={selectedItems[item.product._id]}
                                             onChange={() => handleSelectItem(item.product._id)}
-                                            sx={{ p: { xs: 0.5, sm: 1 } }}
+                                            style={{ marginRight: 16 }}
                                         />
-                                        <Box 
-                                            component="img" 
-                                            src={item.product.image} 
-                                            alt={item.product.name}
-                                            sx={styles.productImage}
-                                            onClick={() => navigateToProduct(item.product._id)}
-                                        />
-                                        <Box sx={styles.productInfo}>
-                                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                                                <Box>
-                                                    <Typography 
-                                                        variant="subtitle1"
-                                                        sx={styles.productName}
-                                                    >
-                                                        {item.product.name}
-                                                    </Typography>
-                                                    <Typography 
-                                                        variant="h6" 
-                                                        color="error"
-                                                        sx={styles.productPrice}
-                                                    >
-                                                        ₱{item.product.price.toFixed(2)}
-                                                    </Typography>
-                                                </Box>
-                                                <IconButton
-                                                    onClick={() => handleRemoveItem(item.product._id)}
-                                                    sx={styles.removeItemButton}
-                                                >
-                                                    <CloseIcon sx={{ 
-                                                        fontSize: { xs: '1.1rem', sm: '1.25rem' },
-                                                        color: 'text.secondary'
-                                                    }} />
-                                                </IconButton>
-                                            </Box>
-                                            <Box sx={styles.quantityControl}>
-                                                <IconButton 
+                                        <ImageContainer>
+                                            <ProductImage 
+                                                src={item.product.image} 
+                                                alt={item.product.name}
+                                                onClick={() => navigateToProduct(item.product._id)}
+                                            />
+                                        </ImageContainer>
+                                        <ProductInfo>
+                                            <ProductName>{item.product.name}</ProductName>
+                                        </ProductInfo>
+                                        <ProductRight>
+                                            <ProductPrice>₱{(item.product.price * item.quantity).toFixed(0)}</ProductPrice>
+                                            <QuantityControl>
+                                                <QuantityButton 
                                                     size={window.innerWidth < 600 ? "small" : "medium"}
                                                     onClick={() => handleQuantityChange(item.product._id, item.quantity - 1)}
-                                                    sx={styles.quantityButton}
                                                 >
-                                                    <Remove sx={{ fontSize: { xs: '1.1rem', sm: '1.25rem' } }} />
-                                                </IconButton>
-                                                <Typography sx={{ px: { xs: 1, sm: 2 } }}>
-                                                    {item.quantity}
-                                                </Typography>
-                                                <IconButton 
+                                                    <Remove />
+                                                </QuantityButton>
+                                                <QuantityValue>{item.quantity}</QuantityValue>
+                                                <QuantityButton 
                                                     size={window.innerWidth < 600 ? "small" : "medium"}
                                                     onClick={() => handleQuantityChange(item.product._id, item.quantity + 1)}
-                                                    sx={styles.quantityButton}
                                                 >
-                                                    <Add sx={{ fontSize: { xs: '1.1rem', sm: '1.25rem' } }} />
-                                                </IconButton>
-                                            </Box>
-                                            <Typography 
-                                                variant="body2" 
-                                                color="text.secondary"
-                                                sx={styles.subtotalText}
+                                                    <Add />
+                                                </QuantityButton>
+                                            </QuantityControl>
+                                            <RemoveItemButton
+                                                onClick={() => handleRemoveItem(item.product._id)}
                                             >
-                                                Subtotal: ₱{(item.product.price * item.quantity).toFixed(2)}
-                                            </Typography>
-                                        </Box>
-                                    </Box>
-                                </CardContent>
-                            </Card>
-                        ))}
-                    </Box>
-                </Box>
-            </Box>
+                                                <CloseIcon />
+                                            </RemoveItemButton>
+                                        </ProductRight>
+                                    </ProductCardContent>
+                                </ProductCard>
+                            ))}
+                        </ProductList>
+                    </FormContainer>
+                </ContentWrapper>
+            </ScrollableContent>
 
-            {/* Fixed Footer */}
-            <Box sx={styles.footer}>
-                <Box>
-                    <Typography 
-                        variant="body2" 
-                        color="text.secondary"
-                        sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}
-                    >
+            <Footer>
+                <div>
+                    <Typography variant="body2" color="text.secondary">
                         Selected Items: {getSelectedCount()}
                     </Typography>
-                    <Typography 
-                        variant="h6" 
-                        sx={{ 
-                            fontWeight: 'bold', 
-                            color: '#FF385C',
-                            fontSize: { xs: '1.1rem', sm: '1.25rem' }
-                        }}
-                    >
+                    <Typography variant="h6" style={{ fontWeight: 'bold', color: '#FF385C' }}>
                         Total: ₱{getSelectedTotal().toFixed(2)}
                     </Typography>
-                </Box>
-                <Button
+                </div>
+                <CheckoutButton
                     onClick={handleCheckout}
                     disabled={getSelectedCount() === 0}
-                    sx={{
-                        ...styles.checkoutButton,
-                        position: 'relative',
-                        overflow: 'hidden'
-                    }}
                 >
                     Checkout
-                </Button>
-            </Box>
+                </CheckoutButton>
+            </Footer>
 
             {/* Dialogs */}
             <Dialog
@@ -424,26 +560,41 @@ const CartPage = () => {
                 aria-describedby="delete-dialog-description"
                 open={showDeleteDialog}
                 onClose={() => !isDeleting && setShowDeleteDialog(false)}
-                sx={styles.deleteDialog}
-            ><DialogTitle id="delete-dialog-title" sx={{ pb: 2 }}>
+                sx={{
+                    '& .MuiDialog-paper': {
+                        borderRadius: '12px',
+                        padding: '16px',
+                        maxWidth: '500px',
+                        width: '90%',
+                        margin: '16px',
+                    },
+                }}
+            >
+                <DialogTitle id="delete-dialog-title" sx={{ p: 0, mb: 2, fontSize: '1.25rem', fontWeight: 600 }}>
                     Remove Items from Cart
                 </DialogTitle>
-                <DialogContent sx={{ py: 2 }}>
+                <DialogContent sx={{ p: 0, mb: 2 }}>
                     <Typography id="delete-dialog-description">
                         Are you sure you want to remove {getSelectedCount()} selected item(s) from your cart?
                     </Typography>
                 </DialogContent>
-                <DialogActions sx={{ pt: 2 }}>
+                <DialogActions sx={{ p: 0, justifyContent: 'flex-end' }}>
                     <Button 
                         id="cancel-delete-button"
                         name="cancel-delete"
                         onClick={() => setShowDeleteDialog(false)} 
                         disabled={isDeleting}
-                        sx={{ color: 'text.secondary' }}
+                        sx={{ 
+                            color: 'gray',
+                            textTransform: 'none',
+                            fontWeight: 500,
+                            '&:hover': {
+                                backgroundColor: 'transparent',
+                            }
+                        }}
                     >
                         Cancel
                     </Button>
-                
                 </DialogActions>
             </Dialog>
 
@@ -455,26 +606,35 @@ const CartPage = () => {
                 fullWidth
                 disablePortal
                 keepMounted={false}
+                aria-labelledby="checkout-dialog-title"
                 sx={{
                     '& .MuiDialog-paper': {
-                        m: 2,
-                        maxHeight: 'calc(100% - 32px)'
-                    }
+                        borderRadius: '12px',
+                        maxWidth: '800px',
+                        width: '90%',
+                        margin: '16px',
+                    },
                 }}
-                aria-labelledby="checkout-dialog-title"
             >
-                <DialogTitle id="checkout-dialog-title">
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <Typography variant="h6">Checkout</Typography>
+                <DialogTitle id="checkout-dialog-title" sx={{ p: 0 }}>
+                    <CheckoutDialogTitleBar>
+                        <Typography variant="h6" sx={{ fontWeight: 600 }}>Checkout</Typography>
                         <IconButton 
                             onClick={() => setShowCheckoutForm(false)}
                             aria-label="close dialog"
+                            size="small"
+                            sx={{
+                                color: 'text.secondary',
+                                '&:hover': {
+                                    backgroundColor: 'rgba(0, 0, 0, 0.04)',
+                                }
+                            }}
                         >
                             <CloseIcon />
                         </IconButton>
-                    </Box>
+                    </CheckoutDialogTitleBar>
                 </DialogTitle>
-                <DialogContent>
+                <DialogContent sx={{ p: 3 }}>
                     <OrderDetailsForm
                         onSubmit={handlePlaceOrder}
                         loading={loading}
@@ -483,155 +643,8 @@ const CartPage = () => {
                     />
                 </DialogContent>
             </Dialog>
-        </Box>
+        </CartContainer>
     );
-};
-
-// Styles
-const styles = {
-    productList: {
-        display: 'flex',
-        flexDirection: 'column',
-        gap: { xs: 1, sm: 2 },
-        width: '100vw',
-    },
-    productCard: {
-        width: '100%',
-        mb: 0, // Remove margin bottom since we're using gap
-        borderRadius: { xs: 1, sm: 2 },
-        position: 'relative',
-        transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-        '&:hover': {
-            transform: 'translateY(-2px)',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
-        }
-    },
-    productContainer: {
-        display: 'flex',
-        alignItems: 'center',
-        gap: { xs: 1, sm: 2 },
-        width: '100%'
-    },
-    productImage: {
-        width: { xs: 60, sm: 80 },
-        height: { xs: 60, sm: 80 },
-        objectFit: 'cover',
-        borderRadius: 1,
-        cursor: 'pointer'
-    },
-    productInfo: {
-        flex: 1,
-        '& > *': { mb: { xs: 0.5, sm: 1 } }
-    },
-    quantityControl: {
-        display: 'flex',
-        alignItems: 'center',
-        border: '1px solid #e0e0e0',
-        borderRadius: 1,
-        width: 'fit-content',
-        mt: { xs: 0.5, sm: 1 }
-    },
-    footer: {
-        position: 'fixed',
-        bottom: 0,
-        left: 0,
-        right: 0,
-        bgcolor: 'white',
-        borderTop: '1px solid #e0e0e0',
-        p: { xs: 1.5, sm: 2 },
-        px: { xs: 2, sm: 3, md: 4 },
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        zIndex: 1300,
-        boxShadow: '0 -2px 8px rgba(0,0,0,0.1)'
-    },
-    checkoutButton: {
-        bgcolor: '#FF385C',
-        color: 'white',
-        border: 'none',
-        borderRadius: { xs: 1.5, sm: 2 },
-        py: { xs: 1, sm: 1.5 },
-        px: { xs: 3, sm: 4 },
-        fontSize: { xs: '0.875rem', sm: '1rem' },
-        cursor: 'pointer',
-        transition: 'all 0.2s ease',
-        '&:hover': {
-            bgcolor: '#FF1744',
-            transform: 'translateY(-1px)'
-        },
-        '&:disabled': {
-            bgcolor: '#ccc',
-            cursor: 'not-allowed',
-            transform: 'none'
-        }
-    },
-    // New button styles
-    backButton: {
-        mr: { xs: 1, sm: 2 },
-        color: 'text.primary',
-        '&:hover': {
-            bgcolor: 'action.hover'
-        }
-    },
-    removeItemButton: {
-        p: { xs: 0.5, sm: 1 },
-        transition: 'all 0.2s ease',
-        '&:hover': {
-            color: 'error.main',
-            bgcolor: 'error.lighter',
-            transform: 'scale(1.1)'
-        }
-    },
-    quantityButton: {
-        transition: 'all 0.2s ease',
-        '&:hover': {
-            bgcolor: 'primary.lighter'
-        },
-        '& .MuiSvgIcon-root': {
-            fontSize: { xs: '1.1rem', sm: '1.25rem' }
-        }
-    },
-    // Dialog styles
-    deleteDialog: {
-        '& .MuiDialog-paper': {
-            width: '100%',
-            maxWidth: { xs: '90%', sm: '400px' },
-            p: { xs: 1.5, sm: 2 },
-            m: { xs: 2, sm: 'auto' }
-        }
-    },
-    // Typography styles
-    productName: {
-        fontSize: { xs: '0.9rem', sm: '1rem' },
-        fontWeight: 'medium',
-        mb: 1
-    },
-    productPrice: {
-        fontSize: { xs: '1.1rem', sm: '1.25rem' },
-        fontWeight: 'bold',
-        color: 'error.main'
-    },
-    subtotalText: {
-        fontSize: { xs: '0.8rem', sm: '0.875rem' },
-        color: 'text.secondary',
-        mt: { xs: 0.5, sm: 1 }
-    },
-    headerTitle: {
-        fontWeight: 'bold',
-        fontSize: { xs: '1.1rem', sm: '1.25rem' }
-    },
-    locationText: {
-        fontSize: { xs: '0.75rem', sm: '0.875rem' },
-        color: 'text.secondary',
-        display: 'flex',
-        alignItems: 'center',
-        mt: 0.5,
-        '& .MuiSvgIcon-root': {
-            fontSize: { xs: 14, sm: 16 },
-            mr: 0.5
-        }
-    }
 };
 
 export default CartPage;

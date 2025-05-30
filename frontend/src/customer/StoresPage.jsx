@@ -1,27 +1,265 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { store as storeApi } from '../api';
+import styled from 'styled-components';
 import {
-  Container,
-  Box,
-  Typography,
-  Grid,
-  Card,
-  CardMedia,
-  CardContent,
-  InputBase,
-  Paper,
-  Rating,
   Chip,
-  IconButton,
   CircularProgress,
   Alert
 } from '@mui/material';
 import {
   ArrowBack,
   LocationOn,
-  Search
+  Search,
+  Favorite,
+  FavoriteBorder
 } from '@mui/icons-material';
+
+// Styled Components
+const PageContainer = styled.div`
+  background-color: #ffffff;
+  height: 100vh;
+  height: 100dvh;
+  width: 100vw;
+  max-width: 100%;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overscroll-behavior-y: none;
+`;
+
+const Header = styled.header`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 60px;
+  background-color: #ff8c00e0;
+  color: white;
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  z-index: 1100;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+`;
+
+const BackButton = styled.button`
+  background: none;
+  border: none;
+  color: white;
+  padding: 8px;
+  margin-right: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
+
+const HeaderTitle = styled.span`
+  font-size: 1.2rem;
+  font-weight: 500;
+`;
+
+const ToolbarSpacer = styled.div`
+  height: 60px;
+`;
+
+const ScrollableContent = styled.div`
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+  padding: 16px 0 20px;
+  
+  /* Custom scrollbar for WebKit browsers */
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 10px;
+    transition: background 0.3s ease;
+  }
+  
+  &::-webkit-scrollbar-thumb:hover {
+    background: #555;
+  }
+  
+  /* Firefox scrollbar */
+  scrollbar-width: thin;
+  scrollbar-color: #888 #f1f1f1;
+`;
+
+const Container = styled.div`
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 15px;
+`;
+
+const SearchContainer = styled.div`
+  display: flex;
+  align-items: center;
+  background: white;
+  padding: 2px 4px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  margin-bottom: 16px;
+`;
+
+const SearchInput = styled.input`
+  flex: 1;
+  border: none;
+  padding: 10px;
+  font-size: 1rem;
+  outline: none;
+  margin-left: 8px;
+`;
+
+const StoresGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 24px;
+  padding: 16px 0;
+  
+  @media (max-width: 768px) {
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  }
+  
+  @media (max-width: 480px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const StoreCard = styled.div`
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  cursor: pointer;
+  transition: transform 0.3s, box-shadow 0.3s;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  
+  &:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 8px 20px rgba(255, 140, 0, 0.2);
+  }
+`;
+
+const StoreImage = styled.img`
+  width: 100%;
+  height: 160px;
+  object-fit: cover;
+`;
+
+const StoreContent = styled.div`
+  padding: 16px;
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+`;
+
+const StoreName = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 0 0 8px 0;
+  color: #333;
+  font-size: 1.25rem;
+  font-weight: 600;
+  width: 100%;
+`;
+
+const StoreNameText = styled.h2`
+  margin: 0;
+  flex-grow: 1;
+`;
+
+const FavoriteButton = styled.button`
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ff4081;
+  
+  &:hover {
+    opacity: 0.8;
+  }
+  
+  &:focus {
+    outline: none;
+  }
+`;
+
+const StoreDescription = styled.p`
+  font-size: 0.875rem;
+  color: #666;
+  margin: 0 0 12px 0;
+  flex-grow: 1;
+`;
+
+const StoreRating = styled.div`
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+`;
+
+const RatingText = styled.span`
+  font-size: 0.875rem;
+  margin-left: 8px;
+  color: #666;
+`;
+
+const StoreLocation = styled.div`
+  display: flex;
+  align-items: center;
+  margin-bottom: 12px;
+  
+  svg {
+    color: #FF5722;
+    margin-right: 4px;
+    font-size: 1rem;
+  }
+  
+  span {
+    font-size: 0.875rem;
+    color: #666;
+  }
+`;
+
+const TagsContainer = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: auto;
+`;
+
+const Tag = styled.span`
+  background: rgba(255, 140, 0, 0.1);
+  color: #FF8C00;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+`;
 
 const StoresPage = () => {
   const [stores, setStores] = useState([]);
@@ -29,6 +267,7 @@ const StoresPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+  const [favoriteStores, setFavoriteStores] = useState(new Set());
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -77,151 +316,129 @@ const StoresPage = () => {
 
   if (loading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-        <CircularProgress sx={{ color: '#FF8C00' }} />
-      </Box>
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        height: '100vh',
+        background: '#fff'
+      }}>
+        <CircularProgress style={{ color: '#FF8C00' }} />
+      </div>
     );
   }
 
   return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
-      <Box sx={{ mb: 4, display: 'flex', alignItems: 'center' }}>
-        <IconButton 
-          onClick={handleGoBack}
-          sx={{ mr: 2 }}
-        >
+    <PageContainer>
+      <Header>
+        <BackButton onClick={handleGoBack}>
           <ArrowBack />
-        </IconButton>
-        <Typography variant="h4" component="h1" 
-          sx={{ 
-            fontWeight: 'bold',
-            background: 'linear-gradient(45deg, #FF8C00 30%, #FF6B00 90%)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent'
-          }}
-        >
-          Explore Stores
-        </Typography>
-      </Box>
+        </BackButton>
+        <HeaderTitle>Explore Stores</HeaderTitle>
+      </Header>
+      <ToolbarSpacer />
 
-      <Paper
-        elevation={2}
-        sx={{
-          p: '2px 4px',
-          display: 'flex',
-          alignItems: 'center',
-          mb: 4,
-          borderRadius: 2
-        }}
-      >
-        <IconButton sx={{ p: '10px' }}>
-          <Search />
-        </IconButton>
-        <InputBase
-          sx={{ ml: 1, flex: 1 }}
-          placeholder="Search stores..."
-          value={searchQuery}
-          onChange={handleSearch}
-        />
-      </Paper>
+      <ScrollableContent>
+        <Container>
+          <SearchContainer>
+            <Search style={{ color: '#777', margin: '0 8px' }} />
+            <SearchInput
+              placeholder="Search stores..."
+              value={searchQuery}
+              onChange={handleSearch}
+            />
+          </SearchContainer>
 
-      {error && <Alert severity="error" sx={{ mb: 4 }}>{error}</Alert>}
+          {error && (
+            <div style={{ 
+              background: '#fdecea',
+              color: '#d32f2f',
+              padding: '12px',
+              borderRadius: '4px',
+              marginBottom: '16px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}>
+              <span style={{ fontSize: '1.25rem' }}>!</span>
+              <span>{error}</span>
+            </div>
+          )}
 
-      <Grid container spacing={3}>
-        {filteredStores.length > 0 ? (
-          filteredStores.map(store => (
-            <Grid item xs={12} sm={6} md={4} key={store._id}>
-              <Card 
-                onClick={() => navigateToStore(store._id)}
-                sx={{
-                  height: '100%',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  cursor: 'pointer',
-                  transition: 'transform 0.3s, box-shadow 0.3s',
-                  '&:hover': {
-                    transform: 'translateY(-8px)',
-                    boxShadow: '0 8px 20px rgba(255, 140, 0, 0.2)'
-                  }
-                }}
-              >
-                <CardMedia
-                  component="img"
-                  height="160"
-                  image={store.bannerImage || 'https://placehold.co/600x400/orange/white?text=Store'}
-                  alt={store.storeName}
-                />
-                <CardContent sx={{ flexGrow: 1 }}>
-                  <Typography gutterBottom variant="h5" component="h2">
-                    {store.storeName}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                    {store.description ? 
-                      (store.description.length > 80 ? 
-                        `${store.description.substring(0, 80)}...` : 
-                        store.description) : 
-                      'No description available'}
-                  </Typography>
-                  
-                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                    <Rating 
-                      value={store.rating || 0} 
-                      readOnly 
-                      precision={0.5}
-                      size="small"
-                      sx={{
-                        '& .MuiRating-iconFilled': {
-                          color: '#FFD700',
+          <StoresGrid>
+            {filteredStores.length > 0 ? (
+              filteredStores.map(store => (
+                <StoreCard key={store._id} onClick={() => navigateToStore(store._id)}>
+                  <StoreImage 
+                    src={store.bannerImage || 'https://placehold.co/600x400/orange/white?text=Store'} 
+                    alt={store.storeName}
+                  />
+                  <StoreContent>
+                    <StoreName>
+                      <StoreNameText>{store.storeName}</StoreNameText>
+                      <FavoriteButton 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          // Toggle favorite status
+                          const newFavorites = new Set(favoriteStores);
+                          if (favoriteStores.has(store._id)) {
+                            newFavorites.delete(store._id);
+                          } else {
+                            newFavorites.add(store._id);
+                          }
+                          setFavoriteStores(newFavorites);
+                        }}
+                        aria-label={favoriteStores.has(store._id) ? 'Remove from favorites' : 'Add to favorites'}
+                      >
+                        {favoriteStores.has(store._id) ? 
+                          <Favorite style={{ color: '#ff4081' }} /> : 
+                          <FavoriteBorder style={{ color: '#999' }} />
                         }
-                      }}
-                    />
-                    <Typography variant="body2" sx={{ ml: 1 }}>
-                      {store.rating || '0'}
-                    </Typography>
-                  </Box>
-                  
-                  {store.location && (
-                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                      <LocationOn sx={{ color: '#FF5722', mr: 0.5, fontSize: '1rem' }} />
-                      <Typography variant="body2">
-                        {store.location}
-                      </Typography>
-                    </Box>
-                  )}
-                  
-                  {store.tags && store.tags.length > 0 && (
-                    <Box sx={{ mt: 2, display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                      {store.tags.slice(0, 3).map(tag => (
-                        <Chip 
-                          key={tag} 
-                          label={tag}
-                          size="small"
-                          sx={{ 
-                            bgcolor: 'rgba(255, 140, 0, 0.1)', 
-                            color: '#FF8C00',
-                            fontWeight: 'medium'
-                          }}
-                        />
-                      ))}
-                    </Box>
-                  )}
-                </CardContent>
-              </Card>
-            </Grid>
-          ))
-        ) : (
-          <Box sx={{ 
-            width: '100%', 
-            textAlign: 'center', 
-            py: 5 
-          }}>
-            <Typography variant="h6" color="text.secondary">
-              No stores found. Try a different search.
-            </Typography>
-          </Box>
-        )}
-      </Grid>
-    </Container>
+                      </FavoriteButton>
+                    </StoreName>
+                    <StoreDescription>
+                      {store.description ? 
+                        (store.description.length > 80 ? 
+                          `${store.description.substring(0, 80)}...` : 
+                          store.description) : 
+                        'No description available'}
+                    </StoreDescription>
+                    
+                    <StoreRating>
+                      <RatingText>Review: {store.rating || '0'}</RatingText>
+                    </StoreRating>
+                    
+                    {store.location && (
+                      <StoreLocation>
+                        <LocationOn />
+                        <span>{store.location}</span>
+                      </StoreLocation>
+                    )}
+                    
+                    {store.tags && store.tags.length > 0 && (
+                      <TagsContainer>
+                        {store.tags.slice(0, 3).map(tag => (
+                          <Tag key={tag}>{tag}</Tag>
+                        ))}
+                      </TagsContainer>
+                    )}
+                  </StoreContent>
+                </StoreCard>
+              ))
+            ) : (
+              <div style={{ 
+                gridColumn: '1 / -1', 
+                textAlign: 'center', 
+                padding: '40px 0',
+                color: '#666'
+              }}>
+                No stores found matching your search.
+              </div>
+            )}
+          </StoresGrid>
+        </Container>
+      </ScrollableContent>
+    </PageContainer>
   );
 };
 

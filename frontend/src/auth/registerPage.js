@@ -65,146 +65,150 @@ const RegisterPage = () => {
     return (
         <div style={styles.container}>
             <div style={styles.formContainer}>
-                <img src={logod} alt="BuFood Logo" style={styles.logo} />
-                <h2 style={styles.title}>SIGN UP</h2>
-                {error && <div style={styles.error}>{error}</div>}
-                {success && <div style={styles.success}>{success}</div>}
-                <form onSubmit={handleSubmit} style={styles.form}>
-                    <div style={styles.inputGroup}>
-                        <span style={styles.inputIcon}><FiUser /></span>
-                        <input
-                            type="text"
-                            id="name"
-                            name="name"
-                            value={formData.name}
-                            onChange={handleChange}
-                            required
-                            style={styles.input}
-                            disabled={loading}
-                            autoComplete="name"
-                            placeholder="Full Name"
-                        />
-                    </div>
-
-                    <div style={styles.inputGroup}>
-                        <span style={styles.inputIcon}><FiMail /></span>
-                        <input
-                            type="email"
-                            id="email"
-                            name="email"
-                            value={formData.email}
-                            onChange={handleChange}
-                            required
-                            style={styles.input}
-                            disabled={loading}
-                            autoComplete="email"
-                            placeholder="Email"
-                        />
-                    </div>
-
-                    <div style={styles.inputGroup}>
-                        <div style={styles.inputWrapper}>
-                            <span style={styles.inputIcon}><FiLock /></span>
+                <div style={{ marginBottom: '1rem' }}>
+                    <img src={logod} alt="BuFood Logo" style={styles.logo} />
+                    <h2 style={styles.title}>SIGN UP</h2>
+                    {error && <div style={styles.error}>{error}</div>}
+                    {success && <div style={styles.success}>{success}</div>}
+                </div>
+                <div style={{ flex: 1, overflowY: 'auto', padding: '0 0.5rem' }}>
+                    <form onSubmit={handleSubmit} style={styles.form}>
+                        <div style={styles.inputGroup}>
+                            <span style={styles.inputIcon}><FiUser /></span>
                             <input
-                                type={showPassword ? "text" : "password"}
-                                id="password"
-                                name="password"
-                                value={formData.password}
+                                type="text"
+                                id="name"
+                                name="name"
+                                value={formData.name}
                                 onChange={handleChange}
                                 required
-                                minLength={6}
                                 style={styles.input}
                                 disabled={loading}
-                                autoComplete="new-password"
-                                placeholder="Password"
+                                autoComplete="name"
+                                placeholder="Full Name"
                             />
-                            <button 
-                                type="button"
-                                onClick={() => setShowPassword(!showPassword)}
-                                style={styles.showPasswordButton}
-                            >
-                                {showPassword ? <FiEye /> : <FiEyeOff />}
-                            </button>
                         </div>
-                    </div>
 
-                    <div style={styles.inputGroup}>
-                        <div style={styles.inputWrapper}>
-                            <span style={styles.inputIcon}><FiLock /></span>
+                        <div style={styles.inputGroup}>
+                            <span style={styles.inputIcon}><FiMail /></span>
                             <input
-                                type={showConfirmPassword ? "text" : "password"}
-                                id="confirmPassword"
-                                name="confirmPassword"
-                                value={formData.confirmPassword}
+                                type="email"
+                                id="email"
+                                name="email"
+                                value={formData.email}
                                 onChange={handleChange}
                                 required
-                                minLength={6}
                                 style={styles.input}
                                 disabled={loading}
-                                autoComplete="new-password"
-                                placeholder="Confirm Password"
+                                autoComplete="email"
+                                placeholder="Email"
                             />
-                            <button 
-                                type="button"
-                                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                                style={styles.showPasswordButton}
-                            >
-                                {showConfirmPassword ? <FiEye /> : <FiEyeOff />}
-                            </button>
                         </div>
-                    </div>
 
-                    <div style={styles.inputGroup}>
-                        <span style={styles.inputIcon}><FiPhone /></span>
-                        <input
-                            type="tel"
-                            id="contactNumber"
-                            name="contactNumber"
-                            value={formData.contactNumber}
-                            onChange={handleChange}
-                            required
-                            style={styles.input}
-                            disabled={loading}
-                            autoComplete="tel"
-                            placeholder="Phone Number"
-                        />
-                    </div>
+                        <div style={styles.inputGroup}>
+                            <div style={styles.inputWrapper}>
+                                <span style={styles.inputIcon}><FiLock /></span>
+                                <input
+                                    type={showPassword ? "text" : "password"}
+                                    id="password"
+                                    name="password"
+                                    value={formData.password}
+                                    onChange={handleChange}
+                                    required
+                                    minLength={6}
+                                    style={styles.input}
+                                    disabled={loading}
+                                    autoComplete="new-password"
+                                    placeholder="Password"
+                                />
+                                <button 
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    style={styles.showPasswordButton}
+                                >
+                                    {showPassword ? <FiEye /> : <FiEyeOff />}
+                                </button>
+                            </div>
+                        </div>
 
-                    <div style={styles.inputGroup}>
-                        <span style={styles.inputIcon}><FiBriefcase /></span>
-                        <select
-                            id="role"
-                            name="role"
-                            value={formData.role}
-                            onChange={handleChange}
-                            style={styles.input}
+                        <div style={styles.inputGroup}>
+                            <div style={styles.inputWrapper}>
+                                <span style={styles.inputIcon}><FiLock /></span>
+                                <input
+                                    type={showConfirmPassword ? "text" : "password"}
+                                    id="confirmPassword"
+                                    name="confirmPassword"
+                                    value={formData.confirmPassword}
+                                    onChange={handleChange}
+                                    required
+                                    minLength={6}
+                                    style={styles.input}
+                                    disabled={loading}
+                                    autoComplete="new-password"
+                                    placeholder="Confirm Password"
+                                />
+                                <button 
+                                    type="button"
+                                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                    style={styles.showPasswordButton}
+                                >
+                                    {showConfirmPassword ? <FiEye /> : <FiEyeOff />}
+                                </button>
+                            </div>
+                        </div>
+
+                        <div style={styles.inputGroup}>
+                            <span style={styles.inputIcon}><FiPhone /></span>
+                            <input
+                                type="tel"
+                                id="contactNumber"
+                                name="contactNumber"
+                                value={formData.contactNumber}
+                                onChange={handleChange}
+                                required
+                                style={styles.input}
+                                disabled={loading}
+                                autoComplete="tel"
+                                placeholder="Phone Number"
+                            />
+                        </div>
+
+                        <div style={styles.inputGroup}>
+                            <span style={styles.inputIcon}><FiBriefcase /></span>
+                            <select
+                                id="role"
+                                name="role"
+                                value={formData.role}
+                                onChange={handleChange}
+                                style={styles.input}
+                                disabled={loading}
+                            >
+                                <option value="Customer">Customer</option>
+                                <option value="Seller">Seller</option>
+                            </select>
+                        </div>
+
+                        <div style={styles.checkboxGroup}>
+                            <input
+                                type="checkbox"
+                                id="terms"
+                                required
+                                style={styles.checkbox}
+                            />
+                            <label htmlFor="terms" style={styles.checkboxLabel}>
+                                I agree to the Terms of Service and Privacy Policy
+                            </label>
+                        </div>
+
+                        <button 
+                            type="submit" 
+                            style={styles.button}
                             disabled={loading}
                         >
-                            <option value="Customer">Customer</option>
-                            <option value="Seller">Seller</option>
-                        </select>
-                    </div>
-
-                    <div style={styles.checkboxGroup}>
-                        <input
-                            type="checkbox"
-                            id="terms"
-                            required
-                            style={styles.checkbox}
-                        />
-                        <label htmlFor="terms" style={styles.checkboxLabel}>
-                            I agree to the Terms of Service and Privacy Policy
-                        </label>
-                    </div>
-
-                    <button 
-                        type="submit" 
-                        style={styles.button}
-                        disabled={loading}
-                    >
-                        {loading ? 'Creating Account...' : 'CREATE ACCOUNT'}
-                    </button>
-                </form>
+                            {loading ? 'Creating Account...' : 'CREATE ACCOUNT'}
+                        </button>
+                    </form>
+                </div>
                 <div style={styles.links}>
                     <p style={styles.loginText}>
                         Already have an account? <a href="/login" style={styles.loginLink}>Sign In</a>
@@ -218,8 +222,10 @@ const RegisterPage = () => {
 const styles = {
     container: {
         width: '100%',
-        minHeight: '100vh',
+        height: '100vh',
+        overflow: 'hidden',
         display: 'flex',
+        flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
         backgroundColor: '#f5f5f5',
@@ -227,15 +233,15 @@ const styles = {
         boxSizing: 'border-box',
     },
     formContainer: {
-        width: '100%',
         maxWidth: '400px',
-        padding: 'clamp(20px, 5vw, 40px) clamp(15px, 4vw, 30px)',
-        backgroundColor: '#f5f5f5',
-        borderRadius: 'clamp(12px, 3vw, 20px)',
+        width: '100%',
+        margin: '0 auto',
+        padding: '2rem',
+        overflowY: 'auto',
+        flex: 1,
         display: 'flex',
         flexDirection: 'column',
-        alignItems: 'center',
-        margin: '0 auto',
+        maxHeight: '100vh',
     },
     logo: {
         width: 'clamp(60px, 15vw, 80px)',

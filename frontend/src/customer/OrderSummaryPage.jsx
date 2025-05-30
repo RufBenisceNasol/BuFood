@@ -1,13 +1,12 @@
 import React, { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { order } from '../api';
-import { toast, ToastContainer } from 'react-toastify';
+import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import styled from 'styled-components';
 import {
     Box,
-    Container,
     Typography,
-    Paper,
     Radio,
     RadioGroup,
     FormControlLabel,
@@ -15,17 +14,231 @@ import {
     Button,
     CircularProgress,
     Divider,
-    Card,
-    CardContent,
-    AppBar,
-    Toolbar,
-    IconButton,
-    Dialog,
-    DialogTitle,
-    DialogContent,
-    DialogActions
+    IconButton
 } from '@mui/material';
-import { ArrowBack, CheckCircleOutline } from '@mui/icons-material';
+import { ArrowBack } from '@mui/icons-material';
+
+// Styled Components
+const PageContainer = styled.div`
+  background-color: rgb(5, 4, 4);
+  height: 100vh;
+  height: 100dvh;
+  width: 100vw;
+  max-width: 100%;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overscroll-behavior-y: none;
+`;
+
+const Header = styled.header`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 60px;
+  background-color: #ff8c00e0;
+  color: white;
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  z-index: 1100;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+`;
+
+const BackButton = styled(IconButton)`
+  color: white !important;
+  margin-right: 16px;
+`;
+
+const HeaderTitle = styled(Typography)`
+  font-size: 1.2rem;
+  font-weight: 500;
+  color: white;
+`;
+
+const ToolbarSpacer = styled.div`
+  height: 60px;
+`;
+
+const ContentWrapper = styled.div`
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+  padding: 16px 0 100px;
+  background: #fff;
+  
+  /* Custom scrollbar for WebKit browsers */
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 10px;
+    transition: background 0.3s ease;
+  }
+  
+  &::-webkit-scrollbar-thumb:hover {
+    background: #555;
+  }
+  
+  /* Firefox scrollbar */
+  scrollbar-width: thin;
+  scrollbar-color: #888 #f1f1f1;
+`;
+
+const Container = styled.div`
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 0 15px;
+`;
+
+const Section = styled.div`
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+`;
+
+const SectionTitle = styled(Typography)`
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 16px;
+  color: #333;
+`;
+
+const OrderItem = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #f0f0f0;
+  
+  &:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+  }
+`;
+
+const ItemImage = styled.img`
+  width: 60px;
+  height: 60px;
+  object-fit: cover;
+  border-radius: 8px;
+  margin-right: 16px;
+`;
+
+const ItemInfo = styled.div`
+  flex: 1;
+`;
+
+const ItemName = styled(Typography)`
+  font-size: 1rem;
+  font-weight: 500;
+  margin-bottom: 4px;
+`;
+
+const ItemQuantity = styled(Typography)`
+  font-size: 0.875rem;
+  color: #666;
+`;
+
+const ItemPrice = styled(Typography)`
+  font-size: 1rem;
+  font-weight: 600;
+  color: #ff8c00e0;
+`;
+
+const StyledTextField = styled(TextField)`
+  margin-bottom: 16px !important;
+  
+  & .MuiOutlinedInput-root {
+    border-radius: 8px;
+  }
+`;
+
+const Footer = styled.footer`
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: white;
+  padding: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  height: 80px; /* Fixed height for the footer */
+`;
+
+const FooterContent = styled.div`
+  max-width: 900px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+`;
+
+const TotalAmount = styled.div`
+  display: flex;
+  flex-direction: column;
+`;
+
+const TotalLabel = styled(Typography)`
+  font-size: 0.875rem;
+  color: #666;
+`;
+
+const TotalValue = styled(Typography)`
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #ff8c00e0;
+`;
+
+const PlaceOrderButton = styled(Button)`
+  background: linear-gradient(135deg, #fbaa39, #fc753b) !important;
+  color: white !important;
+  padding: 10px 24px !important;
+  border-radius: 8px !important;
+  text-transform: none !important;
+  font-weight: 600 !important;
+  min-width: 200px;
+  
+  &:disabled {
+    background: #cccccc !important;
+  }
+  
+  @media (max-width: 480px) {
+    min-width: 150px;
+  }
+`;
+
+const FormGroup = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 16px;
+`;
 
 const OrderSummaryPage = () => {
     const location = useLocation();
@@ -146,68 +359,64 @@ const OrderSummaryPage = () => {
     };
 
     return (
-        <Box sx={{ display: 'flex', flexDirection: 'column', height: '100vh', bgcolor: '#f5f5f5' }}>
-            <ToastContainer />
-            
-            {/* Header */}
-            <AppBar position="fixed" color="inherit" elevation={1}>
-                <Toolbar>
-                    <IconButton edge="start" onClick={handleGoBack} sx={{ mr: 2 }}>
-                        <ArrowBack />
-                    </IconButton>
-                    <Typography variant="h6">Order Summary</Typography>
-                </Toolbar>
-            </AppBar>
-            <Toolbar /> {/* Spacer */}
+        <PageContainer>
+            <Header>
+                <BackButton onClick={handleGoBack}>
+                    <ArrowBack />
+                </BackButton>
+                <HeaderTitle>Order Summary</HeaderTitle>
+            </Header>
+            <ToolbarSpacer />
 
-            {/* Scrollable Content */}
-            <Box sx={{ flex: 1, overflow: 'auto', pb: '80px' }}>
-                <Container maxWidth="md" sx={{ py: 3 }}>
+            <ContentWrapper>
+                <Container>
                     {/* Order Items Summary */}
-                    <Card sx={{ mb: 3 }}>
-                        <CardContent>
-                            <Typography variant="h6" gutterBottom>Order Items</Typography>
-                            {cartItems.map((item) => (
-                                <Box key={item.product._id} sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-                                    <Box sx={{ display: 'flex', gap: 2 }}>
-                                        <img 
-                                            src={item.product.image} 
-                                            alt={item.product.name}
-                                            style={{ width: 60, height: 60, objectFit: 'cover', borderRadius: 8 }}
-                                        />
-                                        <Box>
-                                            <Typography variant="subtitle1">{item.product.name}</Typography>
-                                            <Typography variant="body2" color="text.secondary">
-                                                Quantity: {item.quantity}
-                                            </Typography>
-                                        </Box>
-                                    </Box>
-                                    <Typography variant="subtitle1">₱{(item.product.price * item.quantity).toFixed(2)}</Typography>
-                                </Box>
-                            ))}
-                            <Divider sx={{ my: 2 }} />
-                            <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                                <Typography variant="subtitle1">Total Amount:</Typography>
-                                <Typography variant="h6" color="primary">₱{totalAmount.toFixed(2)}</Typography>
-                            </Box>
-                        </CardContent>
-                    </Card>
+                    <Section>
+                        <SectionTitle>Order Items</SectionTitle>
+                        {cartItems.map((item) => (
+                            <OrderItem key={item.product._id}>
+                                <div style={{ display: 'flex', alignItems: 'center' }}>
+                                    <ItemImage 
+                                        src={item.product.image} 
+                                        alt={item.product.name}
+                                    />
+                                    <ItemInfo>
+                                        <ItemName>{item.product.name}</ItemName>
+                                        <ItemQuantity>Quantity: {item.quantity}</ItemQuantity>
+                                    </ItemInfo>
+                                </div>
+                                <ItemPrice>₱{(item.product.price * item.quantity).toFixed(2)}</ItemPrice>
+                            </OrderItem>
+                        ))}
+                        <Divider sx={{ my: 2 }} />
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <TotalLabel>Total Amount:</TotalLabel>
+                            <TotalValue>₱{totalAmount.toFixed(2)}</TotalValue>
+                        </div>
+                    </Section>
 
-                    {/* Order Type Selection */}
-                    <Paper sx={{ p: 3, mb: 3 }}>
-                        <Typography variant="h6" gutterBottom>Order Type</Typography>
+                    {/* Order Type & Payment Method */}
+                    <Section>
+                        <SectionTitle>Order Type</SectionTitle>
                         <RadioGroup
                             name="orderType"
                             value={formData.orderType}
                             onChange={handleInputChange}
-                            sx={{ mb: 2 }}
+                            style={{ marginBottom: '16px' }}
                         >
-                            <FormControlLabel value="Delivery" control={<Radio />} label="Delivery" />
-                            <FormControlLabel value="Pickup" control={<Radio />} label="Pickup" />
+                            <FormControlLabel 
+                                value="Delivery" 
+                                control={<Radio />} 
+                                label="Delivery" 
+                            />
+                            <FormControlLabel 
+                                value="Pickup" 
+                                control={<Radio />} 
+                                label="Pickup" 
+                            />
                         </RadioGroup>
 
-                        {/* Payment Method */}
-                        <Typography variant="subtitle1" gutterBottom>Payment Method</Typography>
+                        <SectionTitle>Payment Method</SectionTitle>
                         <RadioGroup
                             name="paymentMethod"
                             value={formData.paymentMethod}
@@ -225,16 +434,20 @@ const OrderSummaryPage = () => {
                                 label="Cash on Pickup"
                                 disabled={formData.orderType === 'Delivery'}
                             />
-                            <FormControlLabel value="GCash" control={<Radio />} label="GCash" />
+                            <FormControlLabel 
+                                value="GCash" 
+                                control={<Radio />} 
+                                label="GCash" 
+                            />
                         </RadioGroup>
-                    </Paper>
+                    </Section>
 
                     {/* Delivery Details */}
                     {formData.orderType === 'Delivery' && (
-                        <Paper sx={{ p: 3, mb: 3 }}>
-                            <Typography variant="h6" gutterBottom>Delivery Details</Typography>
-                            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                                <TextField
+                        <Section>
+                            <SectionTitle>Delivery Details</SectionTitle>
+                            <FormGroup>
+                                <StyledTextField
                                     label="Receiver Name"
                                     name="deliveryDetails.receiverName"
                                     value={formData.deliveryDetails.receiverName}
@@ -242,7 +455,7 @@ const OrderSummaryPage = () => {
                                     fullWidth
                                     required
                                 />
-                                <TextField
+                                <StyledTextField
                                     label="Contact Number"
                                     name="deliveryDetails.contactNumber"
                                     value={formData.deliveryDetails.contactNumber}
@@ -251,7 +464,7 @@ const OrderSummaryPage = () => {
                                     required
                                     placeholder="e.g., +639123456789"
                                 />
-                                <TextField
+                                <StyledTextField
                                     label="Building"
                                     name="deliveryDetails.building"
                                     value={formData.deliveryDetails.building}
@@ -259,7 +472,7 @@ const OrderSummaryPage = () => {
                                     fullWidth
                                     required
                                 />
-                                <TextField
+                                <StyledTextField
                                     label="Room Number"
                                     name="deliveryDetails.roomNumber"
                                     value={formData.deliveryDetails.roomNumber}
@@ -267,7 +480,7 @@ const OrderSummaryPage = () => {
                                     fullWidth
                                     required
                                 />
-                                <TextField
+                                <StyledTextField
                                     label="Additional Instructions"
                                     name="deliveryDetails.additionalInstructions"
                                     value={formData.deliveryDetails.additionalInstructions}
@@ -276,16 +489,16 @@ const OrderSummaryPage = () => {
                                     multiline
                                     rows={2}
                                 />
-                            </Box>
-                        </Paper>
+                            </FormGroup>
+                        </Section>
                     )}
 
                     {/* Pickup Details */}
                     {formData.orderType === 'Pickup' && (
-                        <Paper sx={{ p: 3, mb: 3 }}>
-                            <Typography variant="h6" gutterBottom>Pickup Details</Typography>
-                            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                                <TextField
+                        <Section>
+                            <SectionTitle>Pickup Details</SectionTitle>
+                            <FormGroup>
+                                <StyledTextField
                                     label="Contact Number"
                                     name="pickupDetails.contactNumber"
                                     value={formData.pickupDetails.contactNumber}
@@ -296,10 +509,10 @@ const OrderSummaryPage = () => {
                                     error={!formData.pickupDetails.contactNumber}
                                     helperText={!formData.pickupDetails.contactNumber ? "Contact number is required" : ""}
                                 />
-                                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                                <Typography variant="body2" color="text.secondary">
                                     Pickup Date: {new Date().toLocaleDateString()}
                                 </Typography>
-                                <TextField
+                                <StyledTextField
                                     label="Pickup Time"
                                     name="pickupDetails.pickupTime"
                                     type="time"
@@ -318,14 +531,14 @@ const OrderSummaryPage = () => {
                                     }}
                                     helperText="Please select a pickup time for today"
                                 />
-                            </Box>
-                        </Paper>
+                            </FormGroup>
+                        </Section>
                     )}
 
                     {/* Additional Notes */}
-                    <Paper sx={{ p: 3, mb: 3 }}>
-                        <Typography variant="h6" gutterBottom>Additional Notes</Typography>
-                        <TextField
+                    <Section>
+                        <SectionTitle>Additional Notes</SectionTitle>
+                        <StyledTextField
                             name="notes"
                             value={formData.notes}
                             onChange={handleInputChange}
@@ -334,52 +547,32 @@ const OrderSummaryPage = () => {
                             rows={3}
                             placeholder="Any special requests or notes?"
                         />
-                    </Paper>
+                    </Section>
                 </Container>
-            </Box>
+            </ContentWrapper>
 
             {/* Fixed Footer */}
-            <Paper 
-                elevation={3} 
-                sx={{ 
-                    position: 'fixed', 
-                    bottom: 0, 
-                    left: 0, 
-                    right: 0, 
-                    p: 2,
-                    bgcolor: 'white',
-                    zIndex: 1000
-                }}
-            >
-                <Container maxWidth="md">
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <Box>
-                            <Typography variant="subtitle1">Total Amount</Typography>
-                            <Typography variant="h6" color="primary">₱{totalAmount.toFixed(2)}</Typography>
-                        </Box>
-                        <Button
-                            variant="contained"
-                            size="large"
-                            onClick={handleSubmit}
-                            disabled={loading}
-                            sx={{ 
-                                minWidth: 200,
-                                bgcolor: '#FF385C',
-                                '&:hover': {
-                                    bgcolor: '#FF1744'
-                                }
-                            }}
-                        >
-                            {loading ? (
-                                <CircularProgress size={24} color="inherit" />
-                            ) : (
-                                'Place Order'
-                            )}
-                        </Button>
-                    </Box>
-                </Container>
-            </Paper>
-        </Box>
+            <Footer>
+                <FooterContent>
+                    <TotalAmount>
+                        <TotalLabel>Total Amount</TotalLabel>
+                        <TotalValue>₱{totalAmount.toFixed(2)}</TotalValue>
+                    </TotalAmount>
+                    <PlaceOrderButton
+                        variant="contained"
+                        size="large"
+                        onClick={handleSubmit}
+                        disabled={loading}
+                    >
+                        {loading ? (
+                            <CircularProgress size={24} color="inherit" />
+                        ) : (
+                            'Place Order'
+                        )}
+                    </PlaceOrderButton>
+                </FooterContent>
+            </Footer>
+        </PageContainer>
     );
 };
 

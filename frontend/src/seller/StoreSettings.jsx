@@ -403,7 +403,7 @@ const styles = {
     height: '100vh',
     width: '100%',
     fontSize: '16px',
-    color: '#666',
+    color: ' #666666',
     fontWeight: '500',
   },
   contentContainer: {

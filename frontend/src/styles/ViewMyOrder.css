@@ -1,0 +1,123 @@
+/* ViewMyOrder.css */
+
+.order-card {
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+
+.order-card:hover {
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1) !important;
+}
+
+.order-status {
+  display: flex;
+  align-items: center;
+  font-weight: 500;
+  text-transform: capitalize;
+}
+
+.order-status.completed {
+  color: #4caf50;
+}
+
+.order-status.pending {
+  color: #ff9800;
+}
+
+.order-status.preparing {
+  color: #2196f3;
+}
+
+.order-total {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.order-actions {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 16px 16px;
+  border-top: 1px solid #f0f0f0;
+}
+
+.order-details {
+  background-color: #f9f9f9;
+  padding: 12px;
+  border-radius: 8px;
+  margin-top: 12px;
+}
+
+.order-item {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.order-item-name {
+  flex: 2;
+  color: #333;
+}
+
+.order-item-price {
+  flex: 1;
+  text-align: right;
+  font-weight: 500;
+}
+
+.order-summary {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px dashed #e0e0e0;
+}
+
+.order-summary-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.order-summary-total {
+  font-weight: 600;
+  font-size: 1.1rem;
+  color: #333;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid #f0f0f0;
+}
+
+.order-detail-label {
+  font-size: 0.75rem;
+  color: #666;
+  margin-bottom: 4px;
+}
+
+.order-detail-value {
+  font-size: 0.9rem;
+  color: #333;
+  margin-bottom: 12px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 600px) {
+  .order-actions {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .order-actions .MuiButton-root {
+    width: 100%;
+    margin: 0 !important;
+  }
+  
+  .order-actions > div {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .order-actions .MuiButton-outlined {
+    margin-right: 0 !important;
+  }
+}

@@ -81,8 +81,18 @@ const HomePage = () => {
   const [popularProducts, setPopularProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const userName = '';
+  const [userName, setUserName] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+  
+  useEffect(() => {
+    // Get user data from local storage
+    const userData = JSON.parse(localStorage.getItem('user'));
+    if (userData && userData.name) {
+      setUserName(userData.name);
+    } else if (userData && userData.username) {
+      setUserName(userData.username);
+    }
+  }, []);
   const [showFilters, setShowFilters] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [filters, setFilters] = useState({
@@ -460,7 +470,6 @@ const HomePage = () => {
                     </div>
                     <div className="productInfo">
                       <h3 className="productName">{product.name || 'Chicken With Rice'}</h3>
-                      <p className="storeName">{product.storeName || 'Store Name'}</p>
                       <div className="productPriceRow">
                         <p className="productPrice">₱{product.price || '49'}</p>
                         <button 
@@ -554,7 +563,6 @@ const HomePage = () => {
                     </div>
                     <div className="productInfo">
                       <h3 className="productName">{product.name || 'Product Name'}</h3>
-                      <p className="storeName">{product.storeName || 'Store Name'}</p>
                       <div className="productPriceRow">
                         <p className="productPrice">₱{product.price || '0'}</p>
                         <button 

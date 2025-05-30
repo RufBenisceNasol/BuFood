@@ -1,20 +1,231 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { auth } from '../api';
-import {
-  Container,
-  Box,
-  Typography,
-  Paper,
-  Avatar,
-  Chip,
-  Grid,
-  Button,
-  Divider,
-  CircularProgress,
-  Alert
-} from '@mui/material';
-import { ArrowBack, Edit } from '@mui/icons-material';
+import styled, { createGlobalStyle } from 'styled-components';
+import { MdArrowBack, MdEdit, MdPerson, MdEmail, MdPhone, MdDateRange } from 'react-icons/md';
+
+// Styled Components
+const MainContainer = styled.div`
+  background-color: #ffffff;
+  height: 100vh;
+  height: 100dvh;
+  width: 100vw;
+  max-width: 100%;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overscroll-behavior-y: none;
+`;
+
+const ScrollContent = styled.div`
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 0 16px 80px;
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+`;
+
+const Header = styled.div`
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  background-color: #ff8c00;
+  color: white;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  flex-shrink: 0;
+`;
+
+const BackButton = styled.div`
+  display: flex;
+  align-items: center;
+  padding: 8px;
+  cursor: pointer;
+  font-weight: 500;
+`;
+
+const HeaderText = styled.span`
+  margin-left: 8px;
+  font-size: 18px;
+  font-weight: 600;
+`;
+
+const ContentContainer = styled.div`
+  padding: 20px 0;
+  max-width: 800px;
+  margin: 0 auto;
+  width: 100%;
+  box-sizing: border-box;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+`;
+
+const AvatarSection = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 30px 20px 20px;
+  background: white;
+  margin-bottom: 10px;
+`;
+
+const ProfileAvatarWrapper = styled.div`
+  position: relative;
+  margin-bottom: 15px;
+`;
+
+const ProfileAvatar = styled.div`
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  overflow: hidden;
+  margin: 0 auto;
+  border: 4px solid white;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  transition: transform 0.3s;
+`;
+
+const UserInfo = styled.div`
+  text-align: center;
+`;
+
+const UserName = styled.h2`
+  margin: 5px 0;
+  font-size: 22px;
+  font-weight: 600;
+  color: #333;
+`;
+
+const RoleBadge = styled.div`
+  background: linear-gradient(135deg, #fbaa39, #fc753b);
+  color: white;
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+  display: inline-block;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+`;
+
+const FormContainer = styled.div`
+  background-color: white;
+  border-radius: 16px;
+  margin: 0 15px 20px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+  transition: transform 0.3s, box-shadow 0.3s;
+`;
+
+const ProfileDetails = styled.div`
+  padding: 20px;
+`;
+
+const DetailItem = styled.div`
+  padding: 15px 0;
+  border-bottom: 1px solid #f0f0f0;
+  display: flex;
+  justify-content: space-between;
+`;
+
+const DetailLabel = styled.div`
+  display: flex;
+  align-items: center;
+  color: #666;
+  font-size: 14px;
+  flex: 1;
+`;
+
+const DetailIcon = styled.span`
+  margin-right: 10px;
+  color: #ff8c00;
+`;
+
+const DetailValue = styled.div`
+  font-weight: 500;
+  color: #333;
+  flex: 1;
+  text-align: right;
+`;
+
+const ButtonRow = styled.div`
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 25px;
+  gap: 10px;
+`;
+
+const EditButton = styled.button`
+  background: linear-gradient(135deg, #fbaa39, #fc753b);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 25px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(255, 140, 0, 0.3);
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(255, 140, 0, 0.4);
+  }
+`;
+
+const LoadingContainer = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background: #fff;
+  font-size: 16px;
+  color: #666;
+`;
+
+const ErrorContainer = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background: #fff;
+  color: #e53e3e;
+  font-size: 16px;
+  padding: 20px;
+  text-align: center;
+`;
+
+// Responsive styles
+const GlobalStyle = createGlobalStyle`
+  @media (max-width: 480px) {
+    ${DetailItem} {
+      flex-direction: column;
+      gap: 5px;
+    }
+    
+    ${DetailValue} {
+      text-align: left;
+    }
+  }
+`;
 
 const ProfilePage = () => {
   const [userData, setUserData] = useState(null);
@@ -30,16 +241,11 @@ const ProfilePage = () => {
     setLoading(true);
     setError('');
     try {
-      // Get the raw response first
       const rawResponse = await auth.getMe();
       console.log('Raw API response:', rawResponse);
       
-      // Extract the user data from the response
       let data;
-      
-      // Check all possible locations for user data
       if (rawResponse && typeof rawResponse === 'object') {
-        // Try to find user data in common response structures
         if (rawResponse.user) {
           data = rawResponse.user;
         } else if (rawResponse.data && rawResponse.data.user) {
@@ -53,7 +259,6 @@ const ProfilePage = () => {
         data = { name: 'Unknown User', email: 'No email available' };
       }
       
-      // Ensure required fields have values
       const processedData = {
         ...data,
         name: data.name || data.fullName || data.username || 'User',
@@ -63,7 +268,6 @@ const ProfilePage = () => {
       };
       
       setUserData(processedData);
-      console.log('Final processed user data:', processedData);
     } catch (err) {
       setError(err.message || 'Failed to fetch user profile');
       console.error('Error fetching user data:', err);
@@ -81,174 +285,118 @@ const ProfilePage = () => {
 
   if (loading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-        <CircularProgress sx={{ color: '#FF8C00' }} />
-      </Box>
+      <LoadingContainer>
+        Loading...
+      </LoadingContainer>
     );
   }
 
   if (error && !userData) {
-    return <Alert severity="error" sx={{ m: 4 }}>{error}</Alert>;
+    return (
+      <ErrorContainer>
+        {error}
+      </ErrorContainer>
+    );
   }
 
   if (!userData) {
-    return <Alert severity="warning" sx={{ m: 4 }}>No user data found</Alert>;
+    return (
+      <ErrorContainer>
+        No user data found
+      </ErrorContainer>
+    );
   }
 
   return (
-    <Container maxWidth="md" sx={{ py: 4 }}>
-      <Box sx={{ mb: 3, display: 'flex', alignItems: 'center' }}>
-        <Button 
-          startIcon={<ArrowBack />} 
-          onClick={handleGoBack}
-          sx={{ mr: 2 }}
-        >
-          Back
-        </Button>
-        <Typography variant="h4" component="h1" 
-          sx={{ 
-            fontWeight: 'bold',
-            background: 'linear-gradient(45deg, #FF8C00 30%, #FF6B00 90%)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent'
-          }}
-        >
-          My Profile
-        </Typography>
-      </Box>
+    <MainContainer>
+      <GlobalStyle />
+      <Header>
+        <BackButton onClick={() => navigate(-1)}>
+          <MdArrowBack size={24} />
+        </BackButton>
+        <h2 style={{ margin: '0 auto', fontSize: '18px', fontWeight: '600' }}>My Profile</h2>
+        <div style={{ width: '40px' }}></div> {/* For balance */}
+      </Header>
 
-      <Paper 
-        elevation={3} 
-        sx={{ 
-          p: 4, 
-          borderRadius: 2,
-          transition: 'transform 0.3s, box-shadow 0.3s',
-          '&:hover': {
-            boxShadow: '0 8px 16px rgba(255, 140, 0, 0.2)'
-          }
-        }}
-      >
-        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: 4 }}>
-          <Avatar 
-            src={userData.profileImage} 
-            alt={userData.name} 
-            sx={{ 
-              width: 120, 
-              height: 120, 
-              fontSize: '3rem',
-              bgcolor: '#FF8C00',
-              mb: 2
-            }}
-          >
-            {userData.name && userData.name.trim() ? userData.name.charAt(0).toUpperCase() : '?'}
-          </Avatar>
-          <Typography variant="h5" sx={{ fontWeight: 'bold', mb: 1 }}>
-            {userData.name || 'User'}
-          </Typography>
-          <Chip 
-            label={userData.role}
-            sx={{ 
-              bgcolor: '#FF8C00', 
-              color: 'white',
-              fontWeight: 'bold'
-            }}
-          />
-        </Box>
+      <ScrollContent>
+        <ContentContainer>
+          <AvatarSection>
+            <ProfileAvatarWrapper>
+              <ProfileAvatar>
+                {userData.name && (
+                  <div style={{
+                    width: '100%',
+                    height: '100%',
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    backgroundColor: '#ff8c00e0',
+                    color: 'white',
+                    fontSize: '48px',
+                    fontWeight: 'bold'
+                  }}>
+                    {userData.name.charAt(0).toUpperCase()}
+                  </div>
+                )}
+              </ProfileAvatar>
+            </ProfileAvatarWrapper>
+            <UserInfo>
+              <UserName>{userData.name}</UserName>
+              <RoleBadge>{userData.role}</RoleBadge>
+            </UserInfo>
+          </AvatarSection>
 
-        <Divider sx={{ mb: 3 }} />
+          <FormContainer>
+            <ProfileDetails>
+              <DetailItem>
+                <DetailLabel>
+                  <DetailIcon><MdPerson /></DetailIcon>
+                  Full Name
+                </DetailLabel>
+                <DetailValue>{userData.name || '—'}</DetailValue>
+              </DetailItem>
 
-        <Grid container spacing={2}>
-          <Grid item xs={12} sm={6}>
-            <Box sx={{ mb: 2 }}>
-              <Typography variant="subtitle2" color="text.secondary">
-                Full Name
-              </Typography>
-              <Typography variant="body1" sx={{ fontWeight: 'medium' }}>
-                {userData.name}
-              </Typography>
-            </Box>
-          </Grid>
+              <DetailItem>
+                <DetailLabel>
+                  <DetailIcon><MdEmail /></DetailIcon>
+                  Email
+                </DetailLabel>
+                <DetailValue>{userData.email || '—'}</DetailValue>
+              </DetailItem>
 
-          <Grid item xs={12} sm={6}>
-            <Box sx={{ mb: 2 }}>
-              <Typography variant="subtitle2" color="text.secondary">
-                Email
-              </Typography>
-              <Typography variant="body1" sx={{ fontWeight: 'medium' }}>
-                {userData.email || '—'}
-              </Typography>
-            </Box>
-          </Grid>
-
-          <Grid item xs={12} sm={6}>
-            <Box sx={{ mb: 2 }}>
-              <Typography variant="subtitle2" color="text.secondary">
-                Contact Number
-              </Typography>
-              <Typography variant="body1" sx={{ fontWeight: 'medium' }}>
-                {userData.contactNumber || '—'}
-              </Typography>
-            </Box>
-          </Grid>
-
-          <Grid item xs={12} sm={6}>
-            <Box sx={{ mb: 2 }}>
-              <Typography variant="subtitle2" color="text.secondary">
-                Role
-              </Typography>
-              <Typography variant="body1" sx={{ fontWeight: 'medium' }}>
-                {userData.role}
-              </Typography>
-            </Box>
-          </Grid>
-
-          {userData.store && (
-            <Grid item xs={12} sm={6}>
-              <Box sx={{ mb: 2 }}>
-                <Typography variant="subtitle2" color="text.secondary">
-                  Store Name
-                </Typography>
-                <Typography variant="body1" sx={{ fontWeight: 'medium' }}>
-                  {userData.store.storeName || userData.storeName || 'Not available'}
-                </Typography>
-              </Box>
-            </Grid>
-          )}
-
-          <Grid item xs={12} sm={6}>
-            <Box sx={{ mb: 2 }}>
-              <Typography variant="subtitle2" color="text.secondary">
-                Member Since
-              </Typography>
-              <Typography variant="body1" sx={{ fontWeight: 'medium' }}>
-                {userData.createdAt || userData.memberSince
-                  ? new Date(userData.createdAt || userData.memberSince).toLocaleDateString('en-US', {
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric'
-                    })
-                  : 'Not available'}
-              </Typography>
-            </Box>
-          </Grid>
-        </Grid>
-
-        <Box sx={{ mt: 4, display: 'flex', justifyContent: 'center' }}>
-          <Button 
-            variant="contained" 
-            startIcon={<Edit />}
-            sx={{
-              bgcolor: '#FF8C00',
-              '&:hover': {
-                bgcolor: '#FF6B00'
-              }
-            }}
-          >
-            Edit Profile
-          </Button>
-        </Box>
-      </Paper>
-    </Container>
+              <DetailItem>
+                <DetailLabel>
+                  <DetailIcon><MdPhone /></DetailIcon>
+                  Contact Number
+                </DetailLabel>
+                <DetailValue>{userData.contactNumber || '—'}</DetailValue>
+              </DetailItem>
+              <DetailItem>
+                <DetailLabel>
+                  <DetailIcon><MdDateRange /></DetailIcon>
+                  Member Since
+                </DetailLabel>
+                <DetailValue>
+                  {userData.createdAt || userData.memberSince
+                    ? new Date(userData.createdAt || userData.memberSince).toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                      })
+                    : '—'}
+                </DetailValue>
+              </DetailItem>
+              <ButtonRow>
+                <EditButton>
+                  <MdEdit />
+                  Edit Profile
+                </EditButton>
+              </ButtonRow>
+            </ProfileDetails>
+          </FormContainer>
+        </ContentContainer>
+      </ScrollContent>
+    </MainContainer>
   );
 };
 
