@@ -60,3 +60,32 @@
 {"level":"info","message":{"duration":"83ms","method":"GET","requestId":"1b2e3e5c-4f87-4fa9-8768-d84cf94c1569","status":200,"url":"/"},"timestamp":"2025-06-05T07:22:57.663Z"}
 {"level":"info","message":{"duration":"206ms","method":"POST","requestId":"54752ae7-4b4f-4ec1-a418-db3ed6e7c4dc","status":201,"url":"/create-from-cart"},"timestamp":"2025-06-05T07:23:52.047Z"}
 {"level":"info","message":"Received shutdown signal, starting graceful shutdown...","timestamp":"2025-06-05T07:24:37.664Z"}
+{"level":"info","message":"Running with in-memory cache (Redis disabled)","timestamp":"2025-06-05T07:31:12.262Z"}
+{"level":"info","message":"🚀 Server started on port 8000","timestamp":"2025-06-05T07:31:12.293Z"}
+{"level":"info","message":"📚 API Documentation available at http://[YOUR_IP]:8000/api-docs","timestamp":"2025-06-05T07:31:12.293Z"}
+{"level":"info","message":"MongoDB connection established successfully","timestamp":"2025-06-05T07:31:13.206Z"}
+{"level":"info","message":"✅ Successfully connected to MongoDB","timestamp":"2025-06-05T07:31:13.210Z"}
+{"level":"info","message":"Successfully dropped all indexes from cart collection","timestamp":"2025-06-05T07:31:13.272Z"}
+{"level":"info","message":{"duration":"56ms","method":"POST","requestId":"46b257d0-8019-4466-aee9-93bccfb4fa0f","status":400,"url":"/register"},"timestamp":"2025-06-05T07:33:54.189Z"}
+{"level":"info","message":{"duration":"5ms","method":"GET","requestId":"e68d5977-6172-4083-915b-61449ea3f8d0","status":304,"url":"/"},"timestamp":"2025-06-05T07:35:17.986Z"}
+{"level":"info","message":{"duration":"5ms","method":"GET","requestId":"56e8a725-a7ba-409e-86e5-3d159813a646","status":304,"url":"/swagger-ui.css"},"timestamp":"2025-06-05T07:35:18.007Z"}
+{"level":"info","message":{"duration":"7ms","method":"GET","requestId":"73fbd0a5-63b1-4946-96d7-1941d7493796","status":304,"url":"/swagger-ui-bundle.js"},"timestamp":"2025-06-05T07:35:18.011Z"}
+{"level":"info","message":{"duration":"1ms","method":"GET","requestId":"43138db8-a842-46fd-873e-62a1c812ef66","status":304,"url":"/swagger-ui-init.js"},"timestamp":"2025-06-05T07:35:18.017Z"}
+{"level":"info","message":{"duration":"7ms","method":"GET","requestId":"72aecdb3-d9b2-407b-b925-e42966ef4094","status":304,"url":"/swagger-ui-standalone-preset.js"},"timestamp":"2025-06-05T07:35:18.022Z"}
+{"level":"info","message":{"duration":"3ms","method":"GET","requestId":"2fbe38d1-b3a2-4bf5-9e3c-4b99e6cc3533","status":304,"url":"/favicon-32x32.png"},"timestamp":"2025-06-05T07:35:18.513Z"}
+{"level":"info","message":{"duration":"31ms","method":"POST","requestId":"373bb6d0-7df4-40a3-831c-6fe0610c28c6","status":400,"url":"/register"},"timestamp":"2025-06-05T07:36:08.224Z"}
+{"level":"info","message":"Received shutdown signal, starting graceful shutdown...","timestamp":"2025-06-05T07:36:29.757Z"}
+{"level":"info","message":"Running with in-memory cache (Redis disabled)","timestamp":"2025-06-05T07:36:38.717Z"}
+{"level":"info","message":"🚀 Server started on port 8000","timestamp":"2025-06-05T07:36:38.747Z"}
+{"level":"info","message":"📚 API Documentation available at http://[YOUR_IP]:8000/api-docs","timestamp":"2025-06-05T07:36:38.748Z"}
+{"level":"info","message":"MongoDB connection established successfully","timestamp":"2025-06-05T07:36:39.560Z"}
+{"level":"info","message":"✅ Successfully connected to MongoDB","timestamp":"2025-06-05T07:36:39.566Z"}
+{"level":"info","message":"Successfully dropped all indexes from cart collection","timestamp":"2025-06-05T07:36:39.598Z"}
+{"level":"info","message":"Received shutdown signal, starting graceful shutdown...","timestamp":"2025-06-05T07:41:29.488Z"}
+{"level":"info","message":"Running with in-memory cache (Redis disabled)","timestamp":"2025-06-05T07:41:35.096Z"}
+{"level":"info","message":"🚀 Server started on port 8000","timestamp":"2025-06-05T07:41:35.127Z"}
+{"level":"info","message":"📚 API Documentation available at http://[YOUR_IP]:8000/api-docs","timestamp":"2025-06-05T07:41:35.129Z"}
+{"level":"info","message":"MongoDB connection established successfully","timestamp":"2025-06-05T07:41:35.952Z"}
+{"level":"info","message":"✅ Successfully connected to MongoDB","timestamp":"2025-06-05T07:41:35.956Z"}
+{"level":"info","message":"Successfully dropped all indexes from cart collection","timestamp":"2025-06-05T07:41:35.988Z"}
+{"level":"info","message":"Received shutdown signal, starting graceful shutdown...","timestamp":"2025-06-05T07:42:33.760Z"}
