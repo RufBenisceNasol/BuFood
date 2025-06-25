@@ -245,6 +245,15 @@ const OrderSummaryPage = () => {
     const navigate = useNavigate();
     const { cartItems, totalAmount } = location.state || { cartItems: [], totalAmount: 0 };
     const [loading, setLoading] = useState(false);
+
+    const getDefaultPickupTime = () => {
+        const now = new Date();
+        now.setMinutes(now.getMinutes() + 15);
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        return `${hours}:${minutes}`;
+    };
+
     const [formData, setFormData] = useState({
         orderType: 'Delivery',
         paymentMethod: 'Cash on Delivery',
@@ -257,11 +266,7 @@ const OrderSummaryPage = () => {
         },
         pickupDetails: {
             contactNumber: '',
-            pickupTime: new Date().toLocaleTimeString('en-US', { 
-                hour12: false, 
-                hour: '2-digit', 
-                minute: '2-digit' 
-            })
+            pickupTime: getDefaultPickupTime()
         },
         notes: ''
     });
@@ -301,32 +306,81 @@ const OrderSummaryPage = () => {
     const handleSubmit = async () => {
         try {
             setLoading(true);
-            
-            if (formData.orderType === 'Pickup') {
-                const [hours, minutes] = formData.pickupDetails.pickupTime.split(':').map(Number);
-                const pickupDateTime = new Date();
-                pickupDateTime.setHours(hours, minutes, 0);
-
-                if (pickupDateTime <= new Date()) {
-                    toast.error('Please select a future time for pickup');
-                    setLoading(false);
-                    return;
+            if (formData.paymentMethod === 'GCash') {
+                // GCash payment flow
+                // 1. Create a pending order for this store (reuse your order creation logic, but set paymentStatus to 'Pending')
+                // 2. Call gcashCheckout to get the PayMongo checkout URL
+                // 3. Redirect the user to the GCash payment page
+                // For now, we'll assume one store per checkout (your backend already does this)
+                // We'll create the order first, then call gcashCheckout
+                // Step 1: Create the order (but don't mark as paid)
+                const orderData = {
+                    orderType: formData.orderType,
+                    paymentMethod: formData.paymentMethod,
+                    selectedItems: cartItems.map(item => item.product._id),
+                    notes: formData.notes
+                };
+                if (formData.orderType === 'Delivery') {
+                    orderData.deliveryDetails = {
+                        receiverName: formData.deliveryDetails.receiverName,
+                        contactNumber: formData.deliveryDetails.contactNumber,
+                        building: formData.deliveryDetails.building,
+                        roomNumber: formData.deliveryDetails.roomNumber,
+                        additionalInstructions: formData.deliveryDetails.additionalInstructions
+                    };
+                } else {
+                    // For pickup orders
+                    const [hours, minutes] = formData.pickupDetails.pickupTime.split(':').map(Number);
+                    const pickupDate = new Date();
+                    pickupDate.setHours(hours, minutes, 0, 0);
+                    orderData.pickupDetails = {
+                        contactNumber: formData.pickupDetails.contactNumber,
+                        pickupTime: pickupDate.toISOString()
+                    };
                 }
-
+                // Create the order
+                const response = await order.createOrderFromCart(orderData);
+                const createdOrder = response.data?.orders?.[0] || response.orders?.[0];
+                if (!createdOrder) {
+                    throw new Error('Order creation failed');
+                }
+                // Step 2: Call gcashCheckout
+                const redirectUrl = window.location.origin + '/gcash-callback';
+                const checkoutUrl = await order.gcashCheckout({
+                    amount: createdOrder.totalAmount,
+                    orderId: createdOrder._id,
+                    redirectUrl
+                });
+                // Step 3: Redirect to GCash
+                window.location.href = checkoutUrl;
+                return;
+            }
+            if (formData.orderType === 'Pickup') {
                 if (!formData.pickupDetails.contactNumber) {
                     toast.error('Contact number is required');
                     setLoading(false);
                     return;
                 }
+                if (!formData.pickupDetails.pickupTime) {
+                    toast.error('Pickup time is required');
+                    setLoading(false);
+                    return;
+                }
+                const [hours, minutes] = formData.pickupDetails.pickupTime.split(':').map(Number);
+                const pickupDateTime = new Date();
+                pickupDateTime.setHours(hours, minutes, 0, 0);
+                if (pickupDateTime <= new Date()) {
+                    toast.error('Please select a future time for pickup (at least 15 minutes from now)');
+                    setLoading(false);
+                    return;
+                }
             }
-
             const orderData = {
                 orderType: formData.orderType,
                 paymentMethod: formData.paymentMethod,
                 selectedItems: cartItems.map(item => item.product._id),
                 notes: formData.notes
             };
-
             if (formData.orderType === 'Delivery') {
                 orderData.deliveryDetails = {
                     receiverName: formData.deliveryDetails.receiverName,
@@ -337,23 +391,29 @@ const OrderSummaryPage = () => {
                 };
             } else {
                 // For pickup orders
-                const [hours, minutes] = formData.pickupDetails.pickupTime.split(':');
+                const [hours, minutes] = formData.pickupDetails.pickupTime.split(':').map(Number);
                 const pickupDate = new Date();
                 pickupDate.setHours(hours, minutes, 0, 0);
-                
                 orderData.pickupDetails = {
                     contactNumber: formData.pickupDetails.contactNumber,
                     pickupTime: pickupDate.toISOString()
                 };
             }
-
             console.log('Submitting order data:', orderData);
             await order.createOrderFromCart(orderData);
             toast.success('Order placed successfully!');
             navigate('/customer/success-order');
         } catch (err) {
+            // Enhanced error logging
             console.error('Order submission error:', err);
-            toast.error(err.message || 'Failed to create order');
+            if (err && err.response) {
+                console.error('Error response data:', err.response.data);
+                toast.error(err.response.data?.message || err.response.data?.error || (err.response.data?.errors && err.response.data.errors[0]?.msg) || 'Failed to create order');
+            } else if (err && err.message) {
+                toast.error(err.message);
+            } else {
+                toast.error('Failed to create order (unknown error)');
+            }
             setLoading(false);
         }
     };
@@ -523,11 +583,7 @@ const OrderSummaryPage = () => {
                                     InputLabelProps={{ shrink: true }}
                                     inputProps={{
                                         step: 60,
-                                        min: new Date().toLocaleTimeString('en-US', { 
-                                            hour12: false, 
-                                            hour: '2-digit', 
-                                            minute: '2-digit' 
-                                        })
+                                        min: getDefaultPickupTime()
                                     }}
                                     helperText="Please select a pickup time for today"
                                 />

@@ -144,6 +144,7 @@ const login = async (req, res) => {
         email: user.email,
         contactNumber: user.contactNumber,
         role: user.role,
+        profileImage: user.profileImage,
         store: user.role === 'Seller' ? user.store : null,
       },
     });
@@ -251,6 +252,7 @@ const getMe = async (req, res) => {
       email: user.email,
       contactNumber: user.contactNumber,
       role: user.role,
+      profileImage: user.profileImage,
       store: user.role === 'Seller' ? user.store : null,
     });
   } catch (error) {
@@ -358,6 +360,39 @@ const refreshToken = async (req, res) => {
   }
 };
 
+// Update user profile
+const updateProfile = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const { name, contactNumber, profileImage } = req.body;
+    const update = {};
+    if (name) update.name = name;
+    if (contactNumber) update.contactNumber = contactNumber;
+    if (profileImage !== undefined) update.profileImage = profileImage;
+    const user = await User.findByIdAndUpdate(userId, update, { new: true, runValidators: true }).select('-password -refreshToken -verificationToken -passwordResetToken -passwordResetExpires');
+    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+    res.status(200).json({ success: true, message: 'Profile updated', user });
+  } catch (error) {
+    console.error('Error updating profile:', error);
+    res.status(500).json({ success: false, message: 'Failed to update profile' });
+  }
+};
+
+// Upload profile image
+const uploadProfileImage = async (req, res) => {
+  try {
+    if (!req.file || !req.file.path) {
+      return res.status(400).json({ success: false, message: 'No image uploaded' });
+    }
+    req.user.profileImage = req.file.path;
+    await req.user.save();
+    res.status(200).json({ success: true, message: 'Profile image uploaded', imageUrl: req.file.path });
+  } catch (error) {
+    console.error('Error uploading profile image:', error);
+    res.status(500).json({ success: false, message: 'Failed to upload profile image' });
+  }
+};
+
 module.exports = {
   register,
   login,
@@ -370,4 +405,6 @@ module.exports = {
   forgotPassword,
   resetPassword,
   refreshToken,
+  updateProfile,
+  uploadProfileImage,
 };

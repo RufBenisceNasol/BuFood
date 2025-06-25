@@ -7,8 +7,11 @@ import {
   Pending, 
   LocalShipping, 
   Restaurant,
-  Refresh
+  Refresh,
+  Timeline as TimelineIcon,
+  FiberManualRecord
 } from '@mui/icons-material';
+import api from '../api'; // Assumes you have an api instance for requests
 
 // Styled Components
 const PageContainer = styled.div`
@@ -165,109 +168,78 @@ const LoadingState = styled.div`
   height: 60vh;
 `;
 
-const mockOrders = [
-  { 
-    id: 'ORD123456', 
-    date: '2024-06-01', 
-    total: 456.00, 
-    status: 'delivered',
-    items: [
-      { name: 'Burger Meal', quantity: 2, price: 99.00 },
-      { name: 'Fries', quantity: 1, price: 59.00 },
-      { name: 'Soda', quantity: 1, price: 35.00 }
-    ],
-    deliveryFee: 49.00,
-    paymentMethod: 'Cash on Delivery',
-    estimatedDelivery: '2024-06-01 19:30',
-    orderStatus: 'Delivered',
-    orderStatusIcon: 'delivered',
-    orderDate: 'June 1, 2024 6:30 PM',
-    orderNumber: 'ORD123456'
-  },
-  { 
-    id: 'ORD123455', 
-    date: '2024-05-31', 
-    total: 320.00, 
-    status: 'shipped',
-    items: [
-      { name: 'Pizza', quantity: 1, price: 249.00 },
-      { name: 'Garlic Bread', quantity: 1, price: 71.00 }
-    ],
-    deliveryFee: 49.00,
-    paymentMethod: 'Credit Card',
-    estimatedDelivery: '2024-06-01 20:15',
-    orderStatus: 'Shipped',
-    orderStatusIcon: 'on-the-way',
-    orderDate: 'May 31, 2024 7:15 PM',
-    orderNumber: 'ORD123455'
-  },
-  { 
-    id: 'ORD123454', 
-    date: '2024-05-30', 
-    total: 150.00, 
-    status: 'placed',
-    items: [
-      { name: 'Pasta Carbonara', quantity: 1, price: 150.00 }
-    ],
-    deliveryFee: 0.00,
-    paymentMethod: 'GCash',
-    estimatedDelivery: '2024-05-31 18:45',
-    orderStatus: 'Placed',
-    orderStatusIcon: 'preparing',
-    orderDate: 'May 30, 2024 5:45 PM',
-    orderNumber: 'ORD123454'
-  },
-  { 
-    id: 'ORD123453', 
-    date: '2024-05-29', 
-    total: 275.00, 
-    status: 'pending',
-    items: [
-      { name: 'Chicken Sandwich', quantity: 2, price: 125.00 },
-      { name: 'Soda', quantity: 1, price: 25.00 }
-    ],
-    deliveryFee: 0.00,
-    paymentMethod: 'Cash on Delivery',
-    estimatedDelivery: '2024-05-30 19:30',
-    orderStatus: 'Pending',
-    orderStatusIcon: 'pending',
-    orderDate: 'May 29, 2024 6:30 PM',
-    orderNumber: 'ORD123453'
-  },
-  { 
-    id: 'ORD123452', 
-    date: '2024-05-28', 
-    total: 180.00, 
-    status: 'canceled',
-    items: [
-      { name: 'Caesar Salad', quantity: 1, price: 180.00 }
-    ],
-    deliveryFee: 0.00,
-    paymentMethod: 'Credit Card',
-    estimatedDelivery: '2024-05-29 13:30',
-    orderStatus: 'Canceled',
-    orderStatusIcon: 'canceled',
-    orderDate: 'May 28, 2024 12:30 PM',
-    orderNumber: 'ORD123452',
-    cancelReason: 'Out of stock'
-  },
-];
+const TimelineContainer = styled.div`
+  margin-top: 16px;
+  padding: 12px;
+  background: #f5f5f5;
+  border-radius: 8px;
+`;
+const TimelineTitle = styled.p`
+  font-size: 14px;
+  font-weight: 600;
+  margin: 0 0 12px 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+`;
+const TimelineList = styled.ul`
+  list-style: none;
+  padding: 0;
+  margin: 0;
+`;
+const TimelineItem = styled.li`
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 10px;
+`;
+const TimelineDot = styled.span`
+  color: #ff8c00;
+  margin-top: 2px;
+`;
+const TimelineContent = styled.div`
+  flex: 1;
+`;
+const TimelineStatus = styled.span`
+  font-weight: 500;
+  font-size: 13px;
+`;
+const TimelineTime = styled.span`
+  font-size: 12px;
+  color: #888;
+  margin-left: 8px;
+`;
+const TimelineNote = styled.div`
+  font-size: 12px;
+  color: #666;
+  margin-top: 2px;
+`;
 
 const ViewMyOrder = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [expandedOrder, setExpandedOrder] = useState(null);
+  const [orderHistories, setOrderHistories] = useState({}); // { orderId: [history] }
+  const [historyLoading, setHistoryLoading] = useState({}); // { orderId: bool }
+  const [reviewingOrder, setReviewingOrder] = useState(null); // orderId being reviewed
+  const [reviewComment, setReviewComment] = useState('');
   const navigate = useNavigate();
 
   useEffect(() => {
     setLoading(true);
     setError(null);
-    // Simulate API call
-    setTimeout(() => {
-      setOrders(mockOrders);
+    // Fetch real orders from API
+    api.get('/orders/my-orders')
+      .then(res => {
+        // Fix: extract orders from res.data.data.orders if present
+        setOrders(res.data.data?.orders || res.data.orders || []);
+        setLoading(false);
+      })
+      .catch(err => {
+        setError('Failed to load orders.');
       setLoading(false);
-    }, 1000);
+      });
   }, []);
 
   const handleGoBack = () => {
@@ -275,11 +247,28 @@ const ViewMyOrder = () => {
   };
 
   const toggleOrderDetails = (orderId) => {
-    setExpandedOrder(expandedOrder === orderId ? null : orderId);
+    if (expandedOrder === orderId) {
+      setExpandedOrder(null);
+      return;
+    }
+    setExpandedOrder(orderId);
+    // Fetch order history if not already loaded
+    if (!orderHistories[orderId] && !historyLoading[orderId]) {
+      setHistoryLoading(prev => ({ ...prev, [orderId]: true }));
+      api.get(`/orders/${orderId}/history`)
+        .then(res => {
+          setOrderHistories(prev => ({ ...prev, [orderId]: res.data.history || [] }));
+          setHistoryLoading(prev => ({ ...prev, [orderId]: false }));
+        })
+        .catch(() => {
+          setOrderHistories(prev => ({ ...prev, [orderId]: [] }));
+          setHistoryLoading(prev => ({ ...prev, [orderId]: false }));
+        });
+    }
   };
 
   const getStatusIcon = (status) => {
-    switch (status) {
+    switch (status?.toLowerCase()) {
       case 'delivered':
         return <CheckCircle style={{ fontSize: '16px', marginRight: '4px' }} />;
       case 'shipped':
@@ -303,6 +292,14 @@ const ViewMyOrder = () => {
       maximumFractionDigits: 2
     }).format(amount);
   };
+
+  // Helper to save review to localStorage
+  function saveProductReview(productId, comment, userName) {
+    const key = 'productReviews';
+    const reviews = JSON.parse(localStorage.getItem(key) || '[]');
+    reviews.push({ productId, comment, createdAt: new Date().toISOString(), userName });
+    localStorage.setItem(key, JSON.stringify(reviews));
+  }
 
   return (
     <PageContainer>
@@ -344,54 +341,51 @@ const ViewMyOrder = () => {
         ) : (
           <div>
             {orders.map((order) => (
-              <OrderCard key={order.id} status={order.status}>
+              <OrderCard key={order._id || order.id} status={order.status}>
                 <OrderHeader>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                    <span style={{ fontSize: '14px', color: '#666' }}>{order.orderDate}</span>
+                    <span style={{ fontSize: '14px', color: '#666' }}>{new Date(order.createdAt).toLocaleString()}</span>
                     <StatusBadge status={order.status}>
-                      {getStatusIcon(order.orderStatusIcon)}
-                      {order.orderStatus}
+                      {getStatusIcon(order.status)}
+                      {order.status}
                     </StatusBadge>
                   </div>
                   <h3 style={{ margin: '8px 0', fontSize: '16px', fontWeight: 600 }}>
-                    Order #{order.orderNumber}
+                    Order #{order.orderNumber || order._id || order.id}
                   </h3>
                 </OrderHeader>
-                
                 <OrderBody>
-                  {order.items.slice(0, expandedOrder === order.id ? order.items.length : 2).map((item, index) => (
+                  {order.items && order.items.slice(0, expandedOrder === (order._id || order.id) ? order.items.length : 2).map((item, index) => (
                     <div key={index} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                      <span style={{ fontSize: '14px' }}>{item.quantity}x {item.name}</span>
+                      <span style={{ fontSize: '14px' }}>{item.quantity}x {item.name || item.product?.name}</span>
                       <span style={{ fontSize: '14px', fontWeight: 500 }}>
-                        {formatCurrency(item.price * item.quantity)}
+                        {formatCurrency((item.price || item.product?.price || 0) * item.quantity)}
                       </span>
                     </div>
                   ))}
-                  
-                  {order.items.length > 2 && expandedOrder !== order.id && (
+                  {order.items && order.items.length > 2 && expandedOrder !== (order._id || order.id) && (
                     <p style={{ fontSize: '13px', color: '#666', margin: '8px 0 0 0' }}>
                       +{order.items.length - 2} more items
                     </p>
                   )}
-                  
                   <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px dashed #e0e0e0' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
                       <span style={{ fontSize: '14px' }}>Subtotal</span>
-                      <span style={{ fontSize: '14px' }}>{formatCurrency(order.total - (order.deliveryFee || 0))}</span>
+                      <span style={{ fontSize: '14px' }}>{formatCurrency((order.totalAmount || order.total || 0) - (order.shippingFee || order.deliveryFee || 0))}</span>
                     </div>
-                    {order.deliveryFee > 0 && (
+                    {(order.shippingFee || order.deliveryFee) > 0 && (
                       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
                         <span style={{ fontSize: '14px' }}>Delivery Fee</span>
-                        <span style={{ fontSize: '14px' }}>{formatCurrency(order.deliveryFee)}</span>
+                        <span style={{ fontSize: '14px' }}>{formatCurrency(order.shippingFee || order.deliveryFee)}</span>
                       </div>
                     )}
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '8px', paddingTop: '8px', borderTop: '1px solid #f0f0f0' }}>
                       <span style={{ fontWeight: 600 }}>Total</span>
-                      <span style={{ fontWeight: 600, color: '#ff8c00' }}>{formatCurrency(order.total)}</span>
+                      <span style={{ fontWeight: 600, color: '#ff8c00' }}>{formatCurrency(order.totalAmount || order.total || 0)}</span>
                     </div>
                   </div>
-                  
-                  {expandedOrder === order.id && (
+                  {expandedOrder === (order._id || order.id) && (
+                    <>
                     <div style={{ marginTop: '16px', padding: '12px', backgroundColor: '#f9f9f9', borderRadius: '8px' }}>
                       <p style={{ fontSize: '14px', fontWeight: 600, margin: '0 0 12px 0' }}>Order Details</p>
                       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
@@ -410,7 +404,7 @@ const ViewMyOrder = () => {
                                   order.status === 'canceled' ? '#C62828' : '#E65100',
                             fontWeight: 500
                           }}>
-                            {order.orderStatus}
+                              {order.status}
                             {order.cancelReason && (
                               <span style={{ display: 'block', fontSize: '12px', color: '#666', marginTop: '2px' }}>
                                 Reason: {order.cancelReason}
@@ -421,38 +415,101 @@ const ViewMyOrder = () => {
                         <div>
                           <p style={{ fontSize: '12px', color: '#666', margin: '0 0 4px 0' }}>Estimated Delivery</p>
                           <p style={{ fontSize: '14px', margin: 0 }}>
-                            {new Date(order.estimatedDelivery).toLocaleString()}
+                              {order.estimatedDelivery ? new Date(order.estimatedDelivery).toLocaleString() : 'N/A'}
                           </p>
+                          </div>
                         </div>
                       </div>
-                    </div>
+                      <TimelineContainer>
+                        <TimelineTitle><TimelineIcon style={{ fontSize: 18, color: '#ff8c00' }} /> Order Status History</TimelineTitle>
+                        {historyLoading[order._id || order.id] ? (
+                          <span style={{ color: '#888', fontSize: 13 }}>Loading history...</span>
+                        ) : (orderHistories[order._id || order.id] && orderHistories[order._id || order.id].length > 0 ? (
+                          <TimelineList>
+                            {orderHistories[order._id || order.id].map((h, idx) => (
+                              <TimelineItem key={idx}>
+                                <TimelineDot><FiberManualRecord fontSize="small" /></TimelineDot>
+                                <TimelineContent>
+                                  <TimelineStatus>{getStatusIcon(h.status)} {h.status}</TimelineStatus>
+                                  <TimelineTime>{h.timestamp ? new Date(h.timestamp).toLocaleString() : ''}</TimelineTime>
+                                  {h.note && <TimelineNote>{h.note}</TimelineNote>}
+                                </TimelineContent>
+                              </TimelineItem>
+                            ))}
+                          </TimelineList>
+                        ) : (
+                          <span style={{ color: '#888', fontSize: 13 }}>No status history available.</span>
+                        ))}
+                      </TimelineContainer>
+                    </>
                   )}
                 </OrderBody>
-                
                 <OrderFooter>
                   <Button 
                     className="outline"
-                    onClick={() => toggleOrderDetails(order.id)}
+                    onClick={() => toggleOrderDetails(order._id || order.id)}
                     style={{ fontSize: '14px' }}
                   >
-                    {expandedOrder === order.id ? 'Hide Details' : 'View Details'}
+                    {expandedOrder === (order._id || order.id) ? 'Hide Details' : 'View Details'}
                   </Button>
                   <div style={{ display: 'flex', gap: '8px' }}>
                     <Button 
                       className="outline"
-                      onClick={() => console.log('Reordering order:', order.id)}
+                      onClick={() => console.log('Reordering order:', order._id || order.id)}
                       style={{ fontSize: '14px' }}
                     >
                       Reorder
                     </Button>
                     <Button 
                       className="primary"
-                      onClick={() => console.log('Tracking order:', order.id)}
+                      onClick={() => {
+                        setReviewingOrder(order._id || order.id);
+                        setReviewComment('');
+                      }}
                       style={{ fontSize: '14px' }}
                     >
-                      Track Order
+                      Add Review
                     </Button>
                   </div>
+                  {/* Review form modal/inline */}
+                  {reviewingOrder === (order._id || order.id) && (
+                    <div style={{ marginTop: '16px', background: '#fffbe6', border: '1px solid #ffe082', borderRadius: '8px', padding: '16px' }}>
+                      <h4 style={{ margin: '0 0 8px 0', fontSize: '15px' }}>Add a Review</h4>
+                      <textarea
+                        value={reviewComment}
+                        onChange={e => setReviewComment(e.target.value)}
+                        rows={3}
+                        style={{ width: '100%', borderRadius: '6px', border: '1px solid #ccc', padding: '8px', fontSize: '14px', resize: 'vertical' }}
+                        placeholder="Write your review here..."
+                      />
+                      <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
+                        <Button
+                          className="primary"
+                          onClick={() => {
+                            if (reviewComment.trim()) {
+                              // Save review to localStorage for the first product in the order
+                              const productId = order.items && order.items[0] && (order.items[0].product?._id || order.items[0].product || order.items[0]._id);
+                              const userName = (order.customer && order.customer.name) || 'You';
+                              saveProductReview(productId, reviewComment, userName);
+                              setReviewingOrder(null);
+                              setReviewComment('');
+                              alert('Review submitted!');
+                            }
+                          }}
+                          style={{ fontSize: '14px' }}
+                        >
+                          Submit
+                        </Button>
+                        <Button
+                          className="outline"
+                          onClick={() => setReviewingOrder(null)}
+                          style={{ fontSize: '14px' }}
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    </div>
+                  )}
                 </OrderFooter>
               </OrderCard>
             ))}

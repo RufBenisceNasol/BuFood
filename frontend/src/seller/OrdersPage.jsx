@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { MdArrowBack } from 'react-icons/md';
+import { order } from '../api';
 
 const OrdersPage = () => {
   const navigate = useNavigate();
@@ -19,16 +19,13 @@ const OrdersPage = () => {
   const fetchOrders = async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem('token');
-      const response = await axios.get('/api/orders/seller/placed', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      
-      if (response.data && Array.isArray(response.data.orders)) {
-        setOrders(response.data.orders);
-      } else {
-        setOrders([]);
+      const params = {};
+      if (statusFilter !== 'all') {
+        params.status = statusFilter;
       }
+      const result = await order.getSellerOrders(params);
+      const orders = result.data?.orders || result.orders || [];
+      setOrders(orders);
       setError(null);
     } catch (err) {
       setError('Failed to fetch orders. Please try again later.');
@@ -42,12 +39,7 @@ const OrdersPage = () => {
 
   const handleStatusUpdate = async (orderId, newStatus) => {
     try {
-      const token = localStorage.getItem('token');
-      await axios.patch(
-        `/api/orders/seller/manage/${orderId}`,
-        { action: 'updateStatus', status: newStatus },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      await order.updateOrderStatus(orderId, { status: newStatus });
       fetchOrders(); // Refresh orders after update
       toast.success(`Order marked as ${newStatus}`);
       setError(null);
@@ -61,12 +53,7 @@ const OrdersPage = () => {
   const handleCancelOrder = async (orderId) => {
     if (window.confirm('Are you sure you want to cancel this order?')) {
       try {
-        const token = localStorage.getItem('token');
-        await axios.patch(
-          `/api/orders/seller/manage/${orderId}`,
-          { action: 'cancel' },
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
+        await order.cancelOrder(orderId, { cancellationReason: 'Canceled by seller' });
         fetchOrders(); // Refresh orders after cancellation
         toast.success('Order cancelled successfully');
         setError(null);
@@ -85,9 +72,13 @@ const OrdersPage = () => {
   const statusBadgeColor = (status) => {
     switch(status) {
       case 'Pending': return '#f39c12';
-      case 'Placed': return '#3498db';
-      case 'Shipped': return '#2ecc71';
+      case 'Accepted': return '#3498db';
+      case 'Preparing': return '#8e44ad';
+      case 'Ready': return '#2980b9';
+      case 'Out for Delivery': return '#2ecc71';
+      case 'Ready for Pickup': return '#16a085';
       case 'Delivered': return '#27ae60';
+      case 'Rejected': return '#e67e22';
       case 'Canceled': return '#e74c3c';
       default: return '#95a5a6';
     }
@@ -115,8 +106,11 @@ const OrdersPage = () => {
           >
             <option value="all">All Orders</option>
             <option value="Pending">Pending</option>
-            <option value="Placed">Placed</option>
-            <option value="Shipped">Shipped</option>
+            <option value="Accepted">Accepted</option>
+            <option value="Preparing">Preparing</option>
+            <option value="Ready">Ready</option>
+            <option value="Out for Delivery">Out for Delivery</option>
+            <option value="Ready for Pickup">Ready for Pickup</option>
             <option value="Delivered">Delivered</option>
             <option value="Canceled">Canceled</option>
           </select>
@@ -156,7 +150,7 @@ const OrdersPage = () => {
                     </td>
                     <td style={styles.td} data-label="Customer">
                       <div style={styles.cellContent}>
-                        {order.customerName}
+                        {order.customer?.name || order.customerName || 'N/A'}
                       </div>
                     </td>
                     <td style={styles.td} data-label="Amount">
@@ -186,27 +180,72 @@ const OrdersPage = () => {
                     </td>
                     <td style={styles.td} data-label="Actions">
                       <div style={styles.cellContent}>
-                        {order.status !== 'Canceled' && order.status !== 'Delivered' && (
+                        {order.status !== 'Canceled' && order.status !== 'Delivered' && order.status !== 'Rejected' && (
                           <div style={styles.actionButtons}>
-                            {order.status === 'Placed' && (
+                            {order.status === 'Pending' && (
                               <button
-                                onClick={() => handleStatusUpdate(order._id, 'Shipped')}
+                                onClick={() => handleStatusUpdate(order._id, 'Accepted')}
                                 style={styles.actionButton}
-                                className="ship-button"
+                                className="accept-button"
                               >
-                                Ship
+                                Accept
                               </button>
                             )}
-                            {order.status === 'Shipped' && (
+                            {order.status === 'Accepted' && (
+                              <button
+                                onClick={() => handleStatusUpdate(order._id, 'Preparing')}
+                                style={styles.actionButton}
+                                className="prepare-button"
+                              >
+                                Start Preparing
+                              </button>
+                            )}
+                            {order.status === 'Preparing' && order.orderType === 'Delivery' && (
+                              <button
+                                onClick={() => handleStatusUpdate(order._id, 'Out for Delivery')}
+                                style={styles.actionButton}
+                                className="outfordelivery-button"
+                              >
+                                Out for Delivery
+                              </button>
+                            )}
+                            {order.status === 'Preparing' && order.orderType === 'Pickup' && (
+                              <button
+                                onClick={() => handleStatusUpdate(order._id, 'Ready')}
+                                style={styles.actionButton}
+                                className="ready-button"
+                              >
+                                Mark Ready
+                              </button>
+                            )}
+                            {order.status === 'Ready' && order.orderType === 'Pickup' && (
+                              <button
+                                onClick={() => handleStatusUpdate(order._id, 'Ready for Pickup')}
+                                style={styles.actionButton}
+                                className="readyforpickup-button"
+                              >
+                                Ready for Pickup
+                              </button>
+                            )}
+                            {order.status === 'Out for Delivery' && (
                               <button
                                 onClick={() => handleStatusUpdate(order._id, 'Delivered')}
                                 style={styles.deliverButton}
                                 className="deliver-button"
                               >
-                                Deliver
+                                Mark Delivered
                               </button>
                             )}
-                            {['Pending', 'Placed'].includes(order.status) && (
+                            {order.status === 'Ready for Pickup' && (
+                              <button
+                                onClick={() => handleStatusUpdate(order._id, 'Delivered')}
+                                style={styles.deliverButton}
+                                className="deliver-button"
+                              >
+                                Mark Picked Up
+                              </button>
+                            )}
+                            {['Pending', 'Accepted'].includes(order.status) && (
                               <button
                                 onClick={() => handleCancelOrder(order._id)}
                                 style={styles.cancelButton}

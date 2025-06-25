@@ -375,6 +375,7 @@ const SingleProductPage = () => {
     const [error, setError] = useState('');    
     const [quantity, setQuantity] = useState(1);
     const [isFavorite, setIsFavorite] = useState(false);
+    const [reviews, setReviews] = useState([]);
 
     const handleGoBack = () => {
         navigate('/customer/home');
@@ -394,6 +395,12 @@ const SingleProductPage = () => {
         };
 
         fetchProductDetails();
+    }, [productId]);
+
+    useEffect(() => {
+        // Load reviews for this product from localStorage
+        const allReviews = JSON.parse(localStorage.getItem('productReviews') || '[]');
+        setReviews(allReviews.filter(r => r.productId === productId));
     }, [productId]);
 
     const handleAddToCart = async () => {
@@ -521,6 +528,53 @@ const SingleProductPage = () => {
                             )}
                         </ProductInfo>
                     </ProductCard>
+
+                    <div style={{ marginTop: 32 }}>
+                        <h3 style={{ color: '#333', marginBottom: 12 }}>Reviews</h3>
+                        {reviews.length === 0 ? (
+                            <p style={{ color: '#888' }}>No reviews yet.</p>
+                        ) : (
+                            <ul style={{ listStyle: 'none', padding: 0 }}>
+                                {reviews.map((review, idx) => (
+                                    <li key={idx} style={{
+                                        background: '#f9f9f9',
+                                        borderRadius: 8,
+                                        padding: 16,
+                                        marginBottom: 12,
+                                        color: '#444',
+                                        fontSize: '1rem',
+                                        boxShadow: '0 1px 4px rgba(0,0,0,0.04)'
+                                    }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', marginBottom: 8 }}>
+                                            {/* Default avatar */}
+                                            <div style={{
+                                                width: 36,
+                                                height: 36,
+                                                borderRadius: '50%',
+                                                background: '#ff8c00',
+                                                color: 'white',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                fontWeight: 600,
+                                                fontSize: 18,
+                                                marginRight: 12
+                                            }}>
+                                                {review.userName ? review.userName.charAt(0).toUpperCase() : '?'}
+                                            </div>
+                                            <div style={{ fontWeight: 500, fontSize: 15, color: '#222' }}>
+                                                {review.userName || 'Anonymous'}
+                                            </div>
+                                        </div>
+                                        <div>{review.comment}</div>
+                                        <div style={{ fontSize: '0.85rem', color: '#aaa', marginTop: 4 }}>
+                                            {review.createdAt ? `on ${new Date(review.createdAt).toLocaleDateString()}` : ''}
+                                        </div>
+                                    </li>
+                                ))}
+                            </ul>
+                        )}
+                    </div>
                 </ContentContainer>
             </ScrollableContent>
         </PageContainer>

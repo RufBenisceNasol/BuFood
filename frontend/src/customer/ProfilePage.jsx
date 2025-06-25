@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { auth } from '../api';
+import { auth, customer } from '../api';
 import styled, { createGlobalStyle } from 'styled-components';
 import { MdArrowBack, MdEdit, MdPerson, MdEmail, MdPhone, MdDateRange } from 'react-icons/md';
 
@@ -213,6 +213,25 @@ const ErrorContainer = styled.div`
   text-align: center;
 `;
 
+const ChangeButton = styled.button`
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  background: rgba(0,0,0,0.7);
+  color: #fff;
+  border: none;
+  border-radius: 16px;
+  padding: 4px 12px;
+  font-size: 13px;
+  cursor: pointer;
+  z-index: 2;
+  transition: background 0.2s;
+  &:hover {
+    background: #ff8c00;
+    color: #fff;
+  }
+`;
+
 // Responsive styles
 const GlobalStyle = createGlobalStyle`
   @media (max-width: 480px) {
@@ -231,6 +250,12 @@ const ProfilePage = () => {
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [editing, setEditing] = useState(false);
+  const [editData, setEditData] = useState({ name: '', contactNumber: '', profileImage: '' });
+  const [editLoading, setEditLoading] = useState(false);
+  const [editError, setEditError] = useState('');
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState('');
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -283,6 +308,66 @@ const ProfilePage = () => {
     }
   };
 
+  const startEdit = () => {
+    setEditData({
+      name: userData.name || '',
+      contactNumber: userData.contactNumber || '',
+      profileImage: userData.profileImage || ''
+    });
+    setEditing(true);
+    setEditError('');
+  };
+
+  const cancelEdit = () => {
+    setEditing(false);
+    setEditError('');
+  };
+
+  const handleEditChange = e => {
+    setEditData({ ...editData, [e.target.name]: e.target.value });
+  };
+
+  const submitEdit = async e => {
+    e.preventDefault();
+    setEditLoading(true);
+    setEditError('');
+    try {
+      const updated = await customer.updateProfile(editData);
+      setUserData(prev => ({ ...prev, ...updated.user }));
+      setEditing(false);
+    } catch (err) {
+      setEditError(err.message || 'Failed to update profile');
+    } finally {
+      setEditLoading(false);
+    }
+  };
+
+  const handleFileChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setUploading(true);
+    setUploadError('');
+    try {
+      const result = await customer.uploadProfileImage(file);
+      // Auto-save profile with new image
+      const autoSaveData = {
+        name: editData.name,
+        contactNumber: editData.contactNumber,
+        profileImage: result.imageUrl
+      };
+      setEditLoading(true);
+      const updated = await customer.updateProfile(autoSaveData);
+      setUserData(prev => ({ ...prev, ...updated.user }));
+      setEditData(prev => ({ ...prev, profileImage: result.imageUrl }));
+      setEditLoading(false);
+    } catch (err) {
+      setUploadError(err.message || 'Failed to upload image');
+      setEditLoading(false);
+    } finally {
+      setUploading(false);
+    }
+  };
+
   if (loading) {
     return (
       <LoadingContainer>
@@ -323,7 +408,43 @@ const ProfilePage = () => {
           <AvatarSection>
             <ProfileAvatarWrapper>
               <ProfileAvatar>
-                {userData.name && (
+                {editing ? (
+                  <>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleFileChange}
+                      disabled={uploading}
+                      style={{ display: 'none' }}
+                      ref={fileInput => (window.profileFileInput = fileInput)}
+                    />
+                    <ChangeButton type="button" onClick={() => window.profileFileInput && window.profileFileInput.click()}>
+                      Change
+                    </ChangeButton>
+                    {editData.profileImage ? (
+                      <img src={editData.profileImage} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
+                    ) : userData.name ? (
+                      <div style={{
+                        width: '100%',
+                        height: '100%',
+                        display: 'flex',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        backgroundColor: '#ff8c00e0',
+                        color: 'white',
+                        fontSize: '48px',
+                        fontWeight: 'bold',
+                        borderRadius: '50%'
+                      }}>
+                        {userData.name.charAt(0).toUpperCase()}
+                      </div>
+                    ) : null}
+                    {uploading && <div style={{ color: '#888', fontSize: 13, marginTop: 6 }}>Uploading...</div>}
+                    {uploadError && <div style={{ color: 'red', fontSize: 13, marginTop: 6 }}>{uploadError}</div>}
+                  </>
+                ) : userData.profileImage ? (
+                  <img src={userData.profileImage} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                ) : userData.name ? (
                   <div style={{
                     width: '100%',
                     height: '100%',
@@ -337,7 +458,7 @@ const ProfilePage = () => {
                   }}>
                     {userData.name.charAt(0).toUpperCase()}
                   </div>
-                )}
+                ) : null}
               </ProfileAvatar>
             </ProfileAvatarWrapper>
             <UserInfo>
@@ -348,6 +469,74 @@ const ProfilePage = () => {
 
           <FormContainer>
             <ProfileDetails>
+              {editing ? (
+                <form onSubmit={submitEdit}>
+                  <DetailItem>
+                    <DetailLabel>
+                      <DetailIcon><MdPerson /></DetailIcon>
+                      Full Name
+                    </DetailLabel>
+                    <DetailValue>
+                      <input
+                        type="text"
+                        name="name"
+                        value={editData.name}
+                        onChange={handleEditChange}
+                        style={{ width: '100%', padding: 6, fontSize: 15 }}
+                        required
+                      />
+                    </DetailValue>
+                  </DetailItem>
+                  <DetailItem>
+                    <DetailLabel>
+                      <DetailIcon><MdPhone /></DetailIcon>
+                      Contact Number
+                    </DetailLabel>
+                    <DetailValue>
+                      <input
+                        type="text"
+                        name="contactNumber"
+                        value={editData.contactNumber}
+                        onChange={handleEditChange}
+                        style={{ width: '100%', padding: 6, fontSize: 15 }}
+                        required
+                      />
+                    </DetailValue>
+                  </DetailItem>
+                  <DetailItem>
+                    <DetailLabel>
+                      <DetailIcon><MdEmail /></DetailIcon>
+                      Email
+                    </DetailLabel>
+                    <DetailValue>{userData.email || '—'}</DetailValue>
+                  </DetailItem>
+                  <DetailItem>
+                    <DetailLabel>
+                      <DetailIcon><MdDateRange /></DetailIcon>
+                      Member Since
+                    </DetailLabel>
+                    <DetailValue>
+                      {userData.createdAt || userData.memberSince
+                        ? new Date(userData.createdAt || userData.memberSince).toLocaleDateString('en-US', {
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric'
+                          })
+                        : '—'}
+                    </DetailValue>
+                  </DetailItem>
+                  <ButtonRow>
+                    <EditButton type="submit" disabled={editLoading} style={{ minWidth: 120 }}>
+                      {editLoading ? 'Saving...' : 'Save'}
+                    </EditButton>
+                    <EditButton type="button" onClick={cancelEdit} style={{ background: '#ccc', color: '#333' }}>
+                      Cancel
+                    </EditButton>
+                  </ButtonRow>
+                  {editError && <div style={{ color: 'red', marginTop: 10 }}>{editError}</div>}
+                </form>
+              ) : (
+                <>
               <DetailItem>
                 <DetailLabel>
                   <DetailIcon><MdPerson /></DetailIcon>
@@ -355,7 +544,6 @@ const ProfilePage = () => {
                 </DetailLabel>
                 <DetailValue>{userData.name || '—'}</DetailValue>
               </DetailItem>
-
               <DetailItem>
                 <DetailLabel>
                   <DetailIcon><MdEmail /></DetailIcon>
@@ -363,7 +551,6 @@ const ProfilePage = () => {
                 </DetailLabel>
                 <DetailValue>{userData.email || '—'}</DetailValue>
               </DetailItem>
-
               <DetailItem>
                 <DetailLabel>
                   <DetailIcon><MdPhone /></DetailIcon>
@@ -387,11 +574,13 @@ const ProfilePage = () => {
                 </DetailValue>
               </DetailItem>
               <ButtonRow>
-                <EditButton>
+                    <EditButton type="button" onClick={startEdit}>
                   <MdEdit />
                   Edit Profile
                 </EditButton>
               </ButtonRow>
+                </>
+              )}
             </ProfileDetails>
           </FormContainer>
         </ContentContainer>

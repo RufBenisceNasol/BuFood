@@ -48,7 +48,11 @@ const userSchema = new mongoose.Schema({
     favorites: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Product'
-    }]
+    }],
+    profileImage: {
+        type: String,
+        default: ''
+    }
 }, { timestamps: true });
 
 // Add method to generate password reset token

@@ -9,7 +9,9 @@ const {
   acceptOrder,
   cancelOrder,
   createDirectOrder,
-  getCustomerOrders
+  getCustomerOrders,
+  checkoutWithGCash,
+  paymongoWebhook
 } = require('../controllers/orderController');
 const { 
   validateCreateOrderFromCart,
@@ -496,5 +498,11 @@ router.post('/:orderId/accept', validateAcceptOrder, acceptOrder);
  *         description: Not authorized
  */
 router.post('/:orderId/cancel', validateCancelOrder, cancelOrder);
+
+// GCash checkout route
+router.post('/gcash/checkout', checkoutWithGCash);
+
+// GCash webhook route
+router.post('/gcash/webhook', paymongoWebhook);
 
 module.exports = router; 

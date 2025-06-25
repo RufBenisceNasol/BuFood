@@ -9,7 +9,9 @@ const {
     checkEmailVerificationStatus,
     forgotPassword,
     resetPassword,
-    refreshToken
+    refreshToken,
+    updateProfile,
+    uploadProfileImage: uploadProfileImageController
 } = require('../controllers/authController');
 const { 
     registerValidation, 
@@ -21,6 +23,7 @@ const {
 } = require('../middlewares/validators/authValidator');
 const handleValidation = require('../middlewares/validators/handleValidation');
 const { authenticate } = require('../middlewares/authMiddleware');
+const uploadProfileImage = require('../middlewares/uploadProfileImage');
 
 const router = express.Router();
 
@@ -343,5 +346,67 @@ router.post('/reset-password', resetPasswordValidation, handleValidation, resetP
  *         description: Invalid refresh token
  */
 router.post('/refresh-token', refreshToken);
+
+/**
+ * @swagger
+ * /api/auth/me:
+ *   put:
+ *     tags: [Authentication]
+ *     summary: Update current user profile
+ *     description: Update the profile of the currently logged-in user (name, contactNumber, profileImage)
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *               contactNumber:
+ *                 type: string
+ *               profileImage:
+ *                 type: string
+ *                 description: URL of the profile image
+ *     responses:
+ *       200:
+ *         description: Profile updated
+ *       400:
+ *         description: Invalid input
+ *       401:
+ *         description: Unauthorized
+ */
+router.put('/me', authenticate, updateProfile);
+
+/**
+ * @swagger
+ * /api/auth/profile-image:
+ *   post:
+ *     tags: [Authentication]
+ *     summary: Upload user profile image
+ *     description: Upload a new profile image for the authenticated user. Returns the image URL.
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               image:
+ *                 type: string
+ *                 format: binary
+ *     responses:
+ *       200:
+ *         description: Profile image uploaded
+ *       400:
+ *         description: No image uploaded
+ *       401:
+ *         description: Unauthorized
+ */
+router.post('/profile-image', authenticate, uploadProfileImage.single('image'), uploadProfileImageController);
 
 module.exports = router;

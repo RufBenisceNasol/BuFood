@@ -25,6 +25,7 @@ import StoresPage from './customer/StoresPage'
 import StoreDetailPage from './customer/StoreDetailPage'
 import ViewMyOrder from './customer/ViewMyOrder'
 import FavoritesPage from './customer/FavoritesPage'
+import GCashCallback from './customer/GCashCallback'
 import { Box } from '@mui/material'
 import './App.css'
 
@@ -68,6 +69,7 @@ function App() {
           <Route path="/customer/products" element={<CustomerLayout><ProductPage /></CustomerLayout>} />
           <Route path="/customer/view-my-order" element={<CustomerLayout><ViewMyOrder /></CustomerLayout>} />
           <Route path="/customer/favorites" element={<CustomerLayout><FavoritesPage /></CustomerLayout>} />
+          <Route path="/gcash-callback" element={<GCashCallback />} />
 
           {/* Redirects for root-level customer routes to /customer/* */}
           <Route path="/home" element={<CustomerLayout><HomePage /></CustomerLayout>} />

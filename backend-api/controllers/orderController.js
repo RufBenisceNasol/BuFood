@@ -5,6 +5,7 @@ const Product = require('../models/productModel');
 const Store = require('../models/storeModel');
 const { validationResult } = require('express-validator');
 const ApiError = require('../utils/ApiError');
+const { createGCashSource } = require('../utils/paymongo');
 
 // Helper function for consistent response structure
 const createResponse = (success, message, data = null, error = null) => ({
@@ -951,6 +952,64 @@ const getCustomerOrders = async (req, res, next) => {
     }
 };
 
+// Create a PayMongo GCash source and return the checkout URL
+const checkoutWithGCash = async (req, res) => {
+  try {
+    const { amount, orderId, redirectUrl } = req.body;
+    if (!amount || !orderId || !redirectUrl) {
+      return res.status(400).json(createResponse(false, 'Missing required fields', null, 'amount, orderId, and redirectUrl are required'));
+    }
+    const checkoutUrl = await createGCashSource({ amount, redirectUrl, orderId });
+    res.json(createResponse(true, 'GCash checkout URL created', { checkoutUrl }));
+  } catch (err) {
+    console.error('PayMongo GCash error:', err.response?.data || err.message);
+    res.status(500).json(createResponse(false, 'Failed to create GCash payment source', null, err.response?.data || err.message));
+  }
+};
+
+// PayMongo webhook handler
+const paymongoWebhook = async (req, res) => {
+  try {
+    const event = req.body;
+    if (!event || !event.data || !event.data.id) {
+      return res.status(400).json({ message: 'Invalid webhook payload' });
+    }
+    const eventType = event.type;
+    // For payment.paid, update the order as paid
+    if (eventType === 'payment.paid') {
+      const payment = event.data.attributes;
+      // Try to get orderId from payment.source.redirect.success URL
+      let orderId = null;
+      if (payment.source && payment.source.redirect && payment.source.redirect.success) {
+        const url = payment.source.redirect.success;
+        const match = url.match(/[?&]orderId=([^&]+)/);
+        if (match) orderId = match[1];
+      }
+      if (!orderId) {
+        console.error('Order ID not found in payment.paid webhook');
+        return res.status(200).json({ message: 'No orderId, ignored' });
+      }
+      // Update the order
+      const order = await Order.findById(orderId);
+      if (order) {
+        order.paymentStatus = 'Paid';
+        order.status = 'Pending'; // or keep current status
+        await order.save();
+        console.log(`Order ${orderId} marked as Paid via PayMongo webhook.`);
+      } else {
+        console.error(`Order ${orderId} not found for PayMongo webhook.`);
+      }
+      return res.status(200).json({ message: 'Order payment status updated' });
+    }
+    // Log other event types for debugging
+    console.log('Unhandled PayMongo webhook event:', eventType);
+    res.status(200).json({ message: 'Event received' });
+  } catch (err) {
+    console.error('PayMongo webhook error:', err);
+    res.status(500).json({ error: 'Webhook handler error' });
+  }
+};
+
 module.exports = {
   createOrderFromCart,
   getSellerOrders,
@@ -959,5 +1018,7 @@ module.exports = {
   acceptOrder,
   cancelOrder,
   createDirectOrder,
-  getCustomerOrders
+  getCustomerOrders,
+  checkoutWithGCash,
+  paymongoWebhook
 }; 
