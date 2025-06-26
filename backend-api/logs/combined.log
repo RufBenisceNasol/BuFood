@@ -629,3 +629,21 @@
 {"level":"info","message":"MongoDB connection established successfully","timestamp":"2025-06-26T06:48:17.431Z"}
 {"level":"info","message":"✅ Successfully connected to MongoDB","timestamp":"2025-06-26T06:48:17.448Z"}
 {"level":"info","message":"Successfully dropped all indexes from cart collection","timestamp":"2025-06-26T06:48:17.564Z"}
+{"level":"info","message":"Running with in-memory cache (Redis disabled)","timestamp":"2025-06-26T07:03:57.878Z"}
+{"level":"info","message":"🚀 Server started on port 8000","timestamp":"2025-06-26T07:03:57.940Z"}
+{"level":"info","message":"📚 API Documentation available at http://[YOUR_IP]:8000/api-docs","timestamp":"2025-06-26T07:03:57.941Z"}
+{"level":"info","message":"MongoDB connection established successfully","timestamp":"2025-06-26T07:04:04.158Z"}
+{"level":"info","message":"✅ Successfully connected to MongoDB","timestamp":"2025-06-26T07:04:04.170Z"}
+{"level":"info","message":"Successfully dropped all indexes from cart collection","timestamp":"2025-06-26T07:04:04.213Z"}
+{"level":"info","message":"Running with in-memory cache (Redis disabled)","timestamp":"2025-06-26T07:12:48.781Z"}
+{"level":"info","message":"🚀 Server started on port 8000","timestamp":"2025-06-26T07:12:48.828Z"}
+{"level":"info","message":"📚 API Documentation available at http://[YOUR_IP]:8000/api-docs","timestamp":"2025-06-26T07:12:48.829Z"}
+{"level":"info","message":"MongoDB connection established successfully","timestamp":"2025-06-26T07:12:50.456Z"}
+{"level":"info","message":"✅ Successfully connected to MongoDB","timestamp":"2025-06-26T07:12:50.469Z"}
+{"level":"info","message":"Successfully dropped all indexes from cart collection","timestamp":"2025-06-26T07:12:50.556Z"}
+{"level":"info","message":"Running with in-memory cache (Redis disabled)","timestamp":"2025-06-26T07:13:47.915Z"}
+{"level":"info","message":"🚀 Server started on port 8000","timestamp":"2025-06-26T07:13:47.962Z"}
+{"level":"info","message":"📚 API Documentation available at http://[YOUR_IP]:8000/api-docs","timestamp":"2025-06-26T07:13:47.963Z"}
+{"level":"info","message":"MongoDB connection established successfully","timestamp":"2025-06-26T07:13:48.958Z"}
+{"level":"info","message":"✅ Successfully connected to MongoDB","timestamp":"2025-06-26T07:13:48.973Z"}
+{"level":"info","message":"Successfully dropped all indexes from cart collection","timestamp":"2025-06-26T07:13:49.064Z"}
