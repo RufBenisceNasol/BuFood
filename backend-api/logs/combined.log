@@ -623,3 +623,9 @@
 {"level":"info","message":{"duration":"225ms","method":"GET","requestId":"1eb26353-d245-41e3-ab30-4968a26b56c9","status":200,"url":"/my-orders"},"timestamp":"2025-06-24T07:35:54.102Z"}
 {"level":"info","message":{"duration":"222ms","method":"GET","requestId":"ab6fdbb1-c426-48ae-9532-61c088f14fe0","status":304,"url":"/my-orders"},"timestamp":"2025-06-24T07:35:54.326Z"}
 {"level":"info","message":{"duration":"76ms","method":"GET","requestId":"d9d44460-56ef-446c-abb3-c3d302a14edc","status":404,"url":"/api/orders/685a51b958322fde2dd56230/history"},"timestamp":"2025-06-24T07:35:57.190Z"}
+{"level":"info","message":"Running with in-memory cache (Redis disabled)","timestamp":"2025-06-26T06:48:06.290Z"}
+{"level":"info","message":"🚀 Server started on port 8000","timestamp":"2025-06-26T06:48:06.375Z"}
+{"level":"info","message":"📚 API Documentation available at http://[YOUR_IP]:8000/api-docs","timestamp":"2025-06-26T06:48:06.377Z"}
+{"level":"info","message":"MongoDB connection established successfully","timestamp":"2025-06-26T06:48:17.431Z"}
+{"level":"info","message":"✅ Successfully connected to MongoDB","timestamp":"2025-06-26T06:48:17.448Z"}
+{"level":"info","message":"Successfully dropped all indexes from cart collection","timestamp":"2025-06-26T06:48:17.564Z"}
