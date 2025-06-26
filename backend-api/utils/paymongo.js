@@ -1,6 +1,6 @@
 const axios = require('axios');
 
-const PAYMONGO_SECRET_KEY = 'sk_test_NHDtMbqJSumSeMpDq9GyMxpo'; // For production, use process.env.PAYMONGO_SECRET_KEY
+const PAYMONGO_SECRET_KEY = process.env.PAYMONGO_SECRET_KEY; // Set your PayMongo secret key in your environment variables
 
 /**
  * Creates a PayMongo GCash source and returns the checkout URL.
