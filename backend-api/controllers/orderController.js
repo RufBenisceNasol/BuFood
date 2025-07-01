@@ -111,8 +111,11 @@ const createOrderFromCart = async (req, res) => {
       // Calculate total amount for this store's items
       const totalAmount = items.reduce((sum, item) => sum + item.subtotal, 0);
 
-      // Calculate shipping fee if delivery
-      const shippingFee = orderType === 'Delivery' ? store.deliveryFee || 0 : 0;
+      // Calculate shipping fee if delivery (sum product shippingFee)
+      let shippingFee = 0;
+      if (orderType === 'Delivery') {
+        shippingFee = items.reduce((sum, item) => sum + (item.product.shippingFee || 0), 0);
+      }
 
       // Calculate estimated delivery time (in minutes) if delivery
       const estimatedDeliveryTime = orderType === 'Delivery' 
@@ -826,7 +829,14 @@ const createDirectOrder = async (req, res) => {
 
       // Calculate total amount and shipping fee
       const subtotal = storeItems.reduce((sum, item) => sum + item.subtotal, 0);
-      const shippingFee = orderType === 'Delivery' ? store.deliveryFee || 0 : 0;
+      // Calculate shipping fee if delivery (sum product shippingFee)
+      let shippingFee = 0;
+      if (orderType === 'Delivery') {
+        shippingFee = storeItems.reduce((sum, item) => {
+          const product = products.find(p => p._id.toString() === item.product.toString());
+          return sum + (product && product.shippingFee ? product.shippingFee : 0);
+        }, 0);
+      }
       const totalAmount = subtotal + shippingFee;
 
       // Validate delivery details for delivery orders

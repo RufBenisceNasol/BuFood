@@ -1788,3 +1788,27 @@
 {"level":"info","message":{"duration":"1ms","method":"GET","requestId":"533f4628-dd0d-4313-a7cd-822e6c0ee4ea","status":200,"url":"/my-store"},"timestamp":"2025-06-30T10:49:15.625Z"}
 {"level":"info","message":{"duration":"337ms","method":"GET","requestId":"1ae89f2b-2793-4b6a-8ddb-870b624394ad","status":200,"url":"/seller?page=1&limit=100&sortBy=createdAt&sortOrder=desc"},"timestamp":"2025-06-30T10:49:15.653Z"}
 {"level":"info","message":{"duration":"343ms","method":"GET","requestId":"f568660e-a1f5-4227-9100-f0b26c608cc8","status":200,"url":"/seller?page=1&limit=100&sortBy=createdAt&sortOrder=desc"},"timestamp":"2025-06-30T10:49:15.664Z"}
+{"level":"info","message":"Running with in-memory cache (Redis disabled)","timestamp":"2025-06-30T13:24:20.406Z"}
+{"level":"info","message":"🚀 Server started on port 8000","timestamp":"2025-06-30T13:24:20.435Z"}
+{"level":"info","message":"📚 API Documentation available at http://[YOUR_IP]:8000/api-docs","timestamp":"2025-06-30T13:24:20.436Z"}
+{"level":"info","message":"MongoDB connection established successfully","timestamp":"2025-06-30T13:24:21.870Z"}
+{"level":"info","message":"✅ Successfully connected to MongoDB","timestamp":"2025-06-30T13:24:21.875Z"}
+{"level":"info","message":"Successfully dropped all indexes from cart collection","timestamp":"2025-06-30T13:24:21.961Z"}
+{"level":"info","message":"Running with in-memory cache (Redis disabled)","timestamp":"2025-07-01T06:02:03.986Z"}
+{"level":"info","message":"🚀 Server started on port 8000","timestamp":"2025-07-01T06:02:04.053Z"}
+{"level":"info","message":"📚 API Documentation available at http://[YOUR_IP]:8000/api-docs","timestamp":"2025-07-01T06:02:04.056Z"}
+{"level":"info","message":"MongoDB connection established successfully","timestamp":"2025-07-01T06:02:08.396Z"}
+{"level":"info","message":"✅ Successfully connected to MongoDB","timestamp":"2025-07-01T06:02:08.404Z"}
+{"level":"info","message":"Successfully dropped all indexes from cart collection","timestamp":"2025-07-01T06:02:08.527Z"}
+{"level":"info","message":{"duration":"662ms","method":"POST","requestId":"f0bccc0a-d069-46ee-b54d-6f7af69cbf76","status":200,"url":"/login"},"timestamp":"2025-07-01T06:06:30.333Z"}
+{"level":"info","message":{"duration":"161ms","method":"GET","requestId":"8b8e9874-1f34-45fe-81b0-f3491984c58d","status":200,"url":"/"},"timestamp":"2025-07-01T06:06:30.530Z"}
+{"level":"info","message":{"duration":"304ms","method":"GET","requestId":"224e8d83-87c3-434b-9e49-d7065059266f","status":200,"url":"/"},"timestamp":"2025-07-01T06:06:30.843Z"}
+{"level":"info","message":{"duration":"71ms","method":"GET","requestId":"b0aabb5b-2ba8-4840-ab1c-8a24a876d390","status":200,"url":"/"},"timestamp":"2025-07-01T06:06:35.919Z"}
+{"level":"info","message":{"duration":"65ms","method":"GET","requestId":"87056e05-7663-459d-a44f-b86d4991db9f","status":304,"url":"/"},"timestamp":"2025-07-01T06:06:35.986Z"}
+{"level":"info","message":{"duration":"460ms","method":"POST","requestId":"e07ccd4b-a68a-48eb-844d-8dabbfab39c9","status":200,"url":"/add"},"timestamp":"2025-07-01T06:06:39.510Z"}
+{"level":"info","message":{"duration":"106ms","method":"GET","requestId":"60b4a6fc-6944-49cc-9093-31ae140ba3ba","status":200,"url":"/"},"timestamp":"2025-07-01T06:06:42.264Z"}
+{"level":"info","message":{"duration":"102ms","method":"GET","requestId":"1675d69b-def2-4c59-bd6e-1e26e6965f7b","status":304,"url":"/"},"timestamp":"2025-07-01T06:06:42.368Z"}
+{"level":"info","message":{"duration":"101ms","method":"GET","requestId":"5e17e4ec-3f85-4c89-858c-80ed4814c1fa","status":304,"url":"/"},"timestamp":"2025-07-01T06:06:54.097Z"}
+{"level":"info","message":{"duration":"99ms","method":"GET","requestId":"87e182ce-b80a-4eec-9fb6-7aa38e7f0231","status":304,"url":"/"},"timestamp":"2025-07-01T06:06:54.198Z"}
+{"level":"info","message":{"duration":"166ms","method":"PUT","requestId":"2f7522f0-3420-4248-957d-87956e4c8d84","status":200,"url":"/update"},"timestamp":"2025-07-01T06:07:01.430Z"}
+{"level":"info","message":{"duration":"100ms","method":"GET","requestId":"a1d7c125-8839-43f8-97cd-6f992850519d","status":200,"url":"/"},"timestamp":"2025-07-01T06:07:01.535Z"}
