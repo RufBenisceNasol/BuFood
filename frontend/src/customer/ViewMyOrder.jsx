@@ -12,6 +12,8 @@ import {
   FiberManualRecord
 } from '@mui/icons-material';
 import api from '../api'; // Assumes you have an api instance for requests
+import { customer } from '../api';
+import defPic from '../assets/delibup.png';
 
 // Styled Components
 const PageContainer = styled.div`
@@ -215,15 +217,81 @@ const TimelineNote = styled.div`
   margin-top: 2px;
 `;
 
+const ModalOverlay = styled.div`
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.25);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
+const ModalBox = styled.div`
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.18);
+  padding: 28px 24px 20px 24px;
+  min-width: 320px;
+  max-width: 90vw;
+  text-align: center;
+`;
+const ModalTitle = styled.h3`
+  margin: 0 0 12px 0;
+  font-size: 18px;
+  font-weight: 600;
+`;
+const ModalActions = styled.div`
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-top: 18px;
+`;
+
+const ProductImage = styled.img`
+  width: 48px;
+  height: 48px;
+  object-fit: cover;
+  border-radius: 8px;
+  margin-right: 12px;
+  background: #f0f0f0;
+`;
+
+const Notification = styled.div`
+  position: fixed;
+  top: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #323232;
+  color: #fff;
+  padding: 14px 32px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 500;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.12);
+  z-index: 2000;
+  opacity: 0.97;
+  animation: fadeInOut 3s forwards;
+
+  @keyframes fadeInOut {
+    0% { opacity: 0; transform: translateX(-50%) translateY(-16px); }
+    10% { opacity: 0.97; transform: translateX(-50%) translateY(0); }
+    90% { opacity: 0.97; transform: translateX(-50%) translateY(0); }
+    100% { opacity: 0; transform: translateX(-50%) translateY(-16px); }
+  }
+`;
+
 const ViewMyOrder = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [expandedOrder, setExpandedOrder] = useState(null);
-  const [orderHistories, setOrderHistories] = useState({}); // { orderId: [history] }
-  const [historyLoading, setHistoryLoading] = useState({}); // { orderId: bool }
   const [reviewingOrder, setReviewingOrder] = useState(null); // orderId being reviewed
   const [reviewComment, setReviewComment] = useState('');
+  const [cancelingOrderId, setCancelingOrderId] = useState(null);
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [orderToCancel, setOrderToCancel] = useState(null);
+  const [notificationMessage, setNotificationMessage] = useState('');
+  const [selectedProductId, setSelectedProductId] = useState('');
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -252,19 +320,6 @@ const ViewMyOrder = () => {
       return;
     }
     setExpandedOrder(orderId);
-    // Fetch order history if not already loaded
-    if (!orderHistories[orderId] && !historyLoading[orderId]) {
-      setHistoryLoading(prev => ({ ...prev, [orderId]: true }));
-      api.get(`/orders/${orderId}/history`)
-        .then(res => {
-          setOrderHistories(prev => ({ ...prev, [orderId]: res.data.history || [] }));
-          setHistoryLoading(prev => ({ ...prev, [orderId]: false }));
-        })
-        .catch(() => {
-          setOrderHistories(prev => ({ ...prev, [orderId]: [] }));
-          setHistoryLoading(prev => ({ ...prev, [orderId]: false }));
-        });
-    }
   };
 
   const getStatusIcon = (status) => {
@@ -294,12 +349,28 @@ const ViewMyOrder = () => {
   };
 
   // Helper to save review to localStorage
-  function saveProductReview(productId, comment, userName) {
+  function saveProductReview(productId, comment, userName, userImage) {
     const key = 'productReviews';
     const reviews = JSON.parse(localStorage.getItem(key) || '[]');
-    reviews.push({ productId, comment, createdAt: new Date().toISOString(), userName });
+    reviews.push({ productId, comment, createdAt: new Date().toISOString(), userName, userImage });
     localStorage.setItem(key, JSON.stringify(reviews));
   }
+
+  const handleCancelOrder = async (orderId) => {
+    setCancelingOrderId(orderId);
+    try {
+      await api.post(`/orders/${orderId}/cancel`, { cancellationReason: 'Canceled by customer' });
+      // Refresh orders after cancellation
+      const res = await api.get('/orders/my-orders');
+      setOrders(res.data.data?.orders || res.data.orders || []);
+      setShowCancelModal(false);
+      setOrderToCancel(null);
+    } catch (err) {
+      alert('Failed to cancel order. Please try again.');
+    } finally {
+      setCancelingOrderId(null);
+    }
+  };
 
   return (
     <PageContainer>
@@ -313,6 +384,9 @@ const ViewMyOrder = () => {
       </Header>
 
       <Content>
+        {notificationMessage && (
+          <Notification>{notificationMessage}</Notification>
+        )}
         {loading ? (
           <LoadingState>
             <Refresh style={{ fontSize: 40, color: '#ff8c00', animation: 'spin 1s linear infinite' }} />
@@ -355,14 +429,23 @@ const ViewMyOrder = () => {
                   </h3>
                 </OrderHeader>
                 <OrderBody>
-                  {order.items && order.items.slice(0, expandedOrder === (order._id || order.id) ? order.items.length : 2).map((item, index) => (
-                    <div key={index} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                      <span style={{ fontSize: '14px' }}>{item.quantity}x {item.name || item.product?.name}</span>
+                  {order.items && order.items.slice(0, expandedOrder === (order._id || order.id) ? order.items.length : 2).map((item, index) => {
+                    // Get product image and name
+                    const product = item.product || {};
+                    const imageUrl = product.image || defPic;
+                    const productName = product.name || item.name || 'Product';
+                    return (
+                      <div key={index} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', minWidth: 0, flex: 1 }}>
+                          <ProductImage src={imageUrl} alt={productName} onError={e => { e.target.onerror = null; e.target.src = defPic; }} />
+                          <span style={{ fontSize: '14px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.quantity}x {productName}</span>
+                        </div>
                       <span style={{ fontSize: '14px', fontWeight: 500 }}>
-                        {formatCurrency((item.price || item.product?.price || 0) * item.quantity)}
+                          {formatCurrency((item.price || product.price || 0) * item.quantity)}
                       </span>
                     </div>
-                  ))}
+                    );
+                  })}
                   {order.items && order.items.length > 2 && expandedOrder !== (order._id || order.id) && (
                     <p style={{ fontSize: '13px', color: '#666', margin: '8px 0 0 0' }}>
                       +{order.items.length - 2} more items
@@ -422,11 +505,9 @@ const ViewMyOrder = () => {
                       </div>
                       <TimelineContainer>
                         <TimelineTitle><TimelineIcon style={{ fontSize: 18, color: '#ff8c00' }} /> Order Status History</TimelineTitle>
-                        {historyLoading[order._id || order.id] ? (
-                          <span style={{ color: '#888', fontSize: 13 }}>Loading history...</span>
-                        ) : (orderHistories[order._id || order.id] && orderHistories[order._id || order.id].length > 0 ? (
+                        {order.statusHistory && order.statusHistory.length > 0 ? (
                           <TimelineList>
-                            {orderHistories[order._id || order.id].map((h, idx) => (
+                            {order.statusHistory.map((h, idx) => (
                               <TimelineItem key={idx}>
                                 <TimelineDot><FiberManualRecord fontSize="small" /></TimelineDot>
                                 <TimelineContent>
@@ -439,7 +520,7 @@ const ViewMyOrder = () => {
                           </TimelineList>
                         ) : (
                           <span style={{ color: '#888', fontSize: 13 }}>No status history available.</span>
-                        ))}
+                        )}
                       </TimelineContainer>
                     </>
                   )}
@@ -462,60 +543,143 @@ const ViewMyOrder = () => {
                     </Button>
                     <Button 
                       className="primary"
-                      onClick={() => {
+                      onClick={async () => {
                         setReviewingOrder(order._id || order.id);
                         setReviewComment('');
+                        const firstProductId = order.items && order.items[0] && (order.items[0].product?._id || order.items[0].product || order.items[0]._id);
+                        setSelectedProductId(firstProductId || '');
                       }}
                       style={{ fontSize: '14px' }}
                     >
                       Add Review
                     </Button>
+                    {order.status === 'Pending' && (
+                      <Button
+                        className="cancel"
+                        onClick={() => {
+                          setOrderToCancel(order._id || order.id);
+                          setShowCancelModal(true);
+                        }}
+                        style={{ fontSize: '14px', background: '#e74c3c', color: 'white', border: 'none' }}
+                        disabled={cancelingOrderId === (order._id || order.id)}
+                      >
+                        {cancelingOrderId === (order._id || order.id) ? 'Canceling...' : 'Cancel Order'}
+                      </Button>
+                    )}
                   </div>
-                  {/* Review form modal/inline */}
-                  {reviewingOrder === (order._id || order.id) && (
-                    <div style={{ marginTop: '16px', background: '#fffbe6', border: '1px solid #ffe082', borderRadius: '8px', padding: '16px' }}>
-                      <h4 style={{ margin: '0 0 8px 0', fontSize: '15px' }}>Add a Review</h4>
-                      <textarea
-                        value={reviewComment}
-                        onChange={e => setReviewComment(e.target.value)}
-                        rows={3}
-                        style={{ width: '100%', borderRadius: '6px', border: '1px solid #ccc', padding: '8px', fontSize: '14px', resize: 'vertical' }}
-                        placeholder="Write your review here..."
-                      />
-                      <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
-                        <Button
-                          className="primary"
-                          onClick={() => {
-                            if (reviewComment.trim()) {
-                              // Save review to localStorage for the first product in the order
-                              const productId = order.items && order.items[0] && (order.items[0].product?._id || order.items[0].product || order.items[0]._id);
-                              const userName = (order.customer && order.customer.name) || 'You';
-                              saveProductReview(productId, reviewComment, userName);
-                              setReviewingOrder(null);
-                              setReviewComment('');
-                              alert('Review submitted!');
-                            }
-                          }}
-                          style={{ fontSize: '14px' }}
-                        >
-                          Submit
-                        </Button>
-                        <Button
-                          className="outline"
-                          onClick={() => setReviewingOrder(null)}
-                          style={{ fontSize: '14px' }}
-                        >
-                          Cancel
-                        </Button>
-                      </div>
-                    </div>
-                  )}
                 </OrderFooter>
               </OrderCard>
             ))}
           </div>
         )}
       </Content>
+      {/* Modal for cancel confirmation */}
+      {showCancelModal && (
+        <ModalOverlay>
+          <ModalBox>
+            <ModalTitle>Cancel Order?</ModalTitle>
+            <p style={{ color: '#444', marginBottom: 0 }}>Are you sure you want to cancel this order?</p>
+            <ModalActions>
+              <Button
+                className="cancel"
+                style={{ background: '#e74c3c', color: 'white', border: 'none', minWidth: 90 }}
+                onClick={() => handleCancelOrder(orderToCancel)}
+                disabled={cancelingOrderId === orderToCancel}
+              >
+                {cancelingOrderId === orderToCancel ? 'Canceling...' : 'Yes, Cancel'}
+              </Button>
+              <Button
+                className="outline"
+                style={{ minWidth: 90 }}
+                onClick={() => { setShowCancelModal(false); setOrderToCancel(null); }}
+                disabled={cancelingOrderId === orderToCancel}
+              >
+                No, Go Back
+              </Button>
+            </ModalActions>
+          </ModalBox>
+        </ModalOverlay>
+      )}
+      {reviewingOrder && (
+        <ModalOverlay>
+          <ModalBox>
+            <ModalTitle>Add a Review</ModalTitle>
+            {/* Product selector */}
+            {(() => {
+              const order = orders.find(o => (o._id || o.id) === reviewingOrder);
+              if (!order) return null;
+              return (
+                <div style={{ marginBottom: 12 }}>
+                  <label htmlFor="product-select" style={{ fontWeight: 500, fontSize: 15, marginBottom: 4, display: 'block' }}>Select Product:</label>
+                  <select
+                    id="product-select"
+                    value={selectedProductId}
+                    onChange={e => setSelectedProductId(e.target.value)}
+                    style={{ width: '100%', padding: 8, borderRadius: 6, border: '1px solid #ccc', fontSize: 15, marginBottom: 8 }}
+                  >
+                    {order.items.map((item, idx) => {
+                      const product = item.product || {};
+                      const productId = product._id || item.product || item._id;
+                      const productName = product.name || 'Product';
+                      return (
+                        <option key={productId} value={productId}>{productName}</option>
+                      );
+                    })}
+                  </select>
+                </div>
+              );
+            })()}
+            <textarea
+              value={reviewComment}
+              onChange={e => setReviewComment(e.target.value)}
+              rows={3}
+              style={{ width: '100%', borderRadius: '6px', border: '1px solid #ccc', padding: '8px', fontSize: '14px', resize: 'vertical', marginBottom: 8 }}
+              placeholder="Write your review here..."
+            />
+            <ModalActions>
+              <Button
+                className="primary"
+                onClick={async () => {
+                  if (reviewComment.trim() && selectedProductId) {
+                    const order = orders.find(o => (o._id || o.id) === reviewingOrder);
+                    const product = order && order.items.find(item => {
+                      const pid = item.product?._id || item.product || item._id;
+                      return pid === selectedProductId;
+                    });
+                    // Get user info from localStorage
+                    let user = {};
+                    try {
+                      user = JSON.parse(localStorage.getItem('user') || '{}');
+                    } catch {}
+                    const userName = user.name || (order && order.customer && order.customer.name) || 'Anonymous';
+                    const userImage = user.profileImage || '';
+                    saveProductReview(selectedProductId, reviewComment, userName, userImage);
+                    setReviewingOrder(null);
+                    setReviewComment('');
+                    setSelectedProductId('');
+                    setNotificationMessage('Review submitted!');
+                    setTimeout(() => setNotificationMessage(''), 3000);
+                  }
+                }}
+                style={{ fontSize: '14px' }}
+              >
+                Submit
+              </Button>
+              <Button
+                className="outline"
+                onClick={() => {
+                  setReviewingOrder(null);
+                  setReviewComment('');
+                  setSelectedProductId('');
+                }}
+                style={{ fontSize: '14px' }}
+              >
+                Cancel
+              </Button>
+            </ModalActions>
+          </ModalBox>
+        </ModalOverlay>
+      )}
     </PageContainer>
   );
 };

@@ -3,7 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { MdArrowBack } from 'react-icons/md';
-import { order } from '../api';
+import { order, auth } from '../api';
+import './OrdersPage.css';
+import defPic from '../assets/delibup.png';
 
 const OrdersPage = () => {
   const navigate = useNavigate();
@@ -11,9 +13,24 @@ const OrdersPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [statusFilter, setStatusFilter] = useState('all');
+  const [userRole, setUserRole] = useState(null);
+  const [expandedOrderId, setExpandedOrderId] = useState(null);
+  const [orderDetails, setOrderDetails] = useState(null);
+  const [detailsLoading, setDetailsLoading] = useState(false);
+  const [detailsError, setDetailsError] = useState(null);
 
   useEffect(() => {
     fetchOrders();
+    // Fetch user role on mount
+    const fetchUserRole = async () => {
+      try {
+        const user = await auth.getMe();
+        setUserRole(user.role);
+      } catch (err) {
+        setUserRole(null);
+      }
+    };
+    fetchUserRole();
   }, []);
 
   const fetchOrders = async () => {
@@ -53,7 +70,7 @@ const OrdersPage = () => {
   const handleCancelOrder = async (orderId) => {
     if (window.confirm('Are you sure you want to cancel this order?')) {
       try {
-        await order.cancelOrder(orderId, { cancellationReason: 'Canceled by seller' });
+        await order.cancelOrder(orderId, { cancellationReason: 'Canceled by customer' });
         fetchOrders(); // Refresh orders after cancellation
         toast.success('Order cancelled successfully');
         setError(null);
@@ -62,6 +79,40 @@ const OrdersPage = () => {
         toast.error('Failed to cancel order. Please try again.');
         console.error('Error canceling order:', err);
       }
+    }
+  };
+
+  const handleMarkPaid = async (orderId) => {
+    try {
+      await order.updateOrderStatus(orderId, { paymentStatus: 'Paid' });
+      fetchOrders();
+      toast.success('Order marked as Paid');
+      setError(null);
+    } catch (err) {
+      setError('Failed to mark as paid. Please try again.');
+      toast.error('Failed to mark as paid. Please try again.');
+      console.error('Error marking as paid:', err);
+    }
+  };
+
+  const handleToggleDetails = async (orderId) => {
+    if (expandedOrderId === orderId) {
+      setExpandedOrderId(null);
+      setOrderDetails(null);
+      setDetailsError(null);
+      return;
+    }
+    setExpandedOrderId(orderId);
+    setDetailsLoading(true);
+    setDetailsError(null);
+    try {
+      const res = await order.getOrderDetails(orderId);
+      setOrderDetails(res.data?.order || res.order || null);
+    } catch (err) {
+      setDetailsError(err.message || 'Failed to load order details.');
+      setOrderDetails(null);
+    } finally {
+      setDetailsLoading(false);
     }
   };
 
@@ -85,23 +136,22 @@ const OrdersPage = () => {
   };
 
   return (
-    <div style={styles.mainContainer}>
+    <div className="orders-main-container">
       <ToastContainer position="top-right" autoClose={3000} />
       
-      <div style={styles.header}>
-        <div style={styles.backButton} onClick={() => navigate('/seller/dashboard')}>
-          <span style={styles.backArrow}>←</span>
-          <span style={styles.headerText}>Manage Orders</span>
+      <div className="orders-header">
+        <div className="orders-back-button" onClick={() => navigate('/seller/dashboard')}>
+          <span className="orders-back-arrow">←</span>
+          <span className="orders-header-text">Manage Orders</span>
         </div>
       </div>
 
-      <div style={styles.contentContainer}>
-        <div style={styles.filterContainer}>
-          <div style={styles.filterLabel}>Filter by Status:</div>
+      <div className="orders-content-container">
+        <div className="orders-filter-container">
+          <div className="orders-filter-label">Filter by Status:</div>
           <select 
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            style={styles.filterSelect}
             className="order-filter-select"
           >
             <option value="all">All Orders</option>
@@ -117,75 +167,46 @@ const OrdersPage = () => {
         </div>
 
         {loading ? (
-          <div style={styles.loadingContainer}>
-            <div style={styles.loadingSpinner}></div>
-            <p style={styles.loadingText}>Loading orders...</p>
+          <div className="orders-loading-container">
+            <div className="orders-loading-spinner"></div>
+            <p className="orders-loading-text">Loading orders...</p>
           </div>
         ) : error ? (
-          <div style={styles.error}>{error}</div>
+          <div className="orders-error">{error}</div>
         ) : filteredOrders.length === 0 ? (
-          <div style={styles.noOrders}>
+          <div className="orders-no-orders">
             <p>No orders found.</p>
           </div>
         ) : (
-          <div style={styles.tableWrapper}>
-            <table style={styles.table} className="orders-table">
+          <div className="orders-responsive-wrapper">
+            {/* Desktop Table */}
+            <table className="orders-table desktop-only">
               <thead>
                 <tr>
-                  <th style={styles.th}>Order ID</th>
-                  <th style={styles.th}>Customer</th>
-                  <th style={styles.th}>Amount</th>
-                  <th style={styles.th}>Status</th>
-                  <th style={styles.th}>Payment</th>
-                  <th style={styles.th}>Actions</th>
+                  <th>Order ID</th>
+                  <th>Customer</th>
+                  <th>Amount</th>
+                  <th>Status</th>
+                  <th>Payment</th>
+                  <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredOrders.map((order) => (
-                  <tr key={order._id} style={styles.tr}>
-                    <td style={styles.td} data-label="Order ID">
-                      <div style={styles.cellContent}>
-                        <span style={styles.orderId}>{order._id.slice(-8)}</span>
-                      </div>
-                    </td>
-                    <td style={styles.td} data-label="Customer">
-                      <div style={styles.cellContent}>
-                        {order.customer?.name || order.customerName || 'N/A'}
-                      </div>
-                    </td>
-                    <td style={styles.td} data-label="Amount">
-                      <div style={styles.cellContent}>
-                        <span style={styles.price}>₱{order.totalAmount.toFixed(2)}</span>
-                      </div>
-                    </td>
-                    <td style={styles.td} data-label="Status">
-                      <div style={styles.cellContent}>
-                        <span style={{
-                          ...styles.statusBadge,
-                          backgroundColor: statusBadgeColor(order.status)
-                        }}>
-                          {order.status}
-                        </span>
-                      </div>
-                    </td>
-                    <td style={styles.td} data-label="Payment">
-                      <div style={styles.cellContent}>
-                        <span style={{
-                          ...styles.paymentStatus,
-                          color: order.paymentStatus === 'Paid' ? '#27ae60' : '#e74c3c'
-                        }}>
-                          {order.paymentStatus}
-                        </span>
-                      </div>
-                    </td>
-                    <td style={styles.td} data-label="Actions">
-                      <div style={styles.cellContent}>
+                  <React.Fragment key={order._id}>
+                    <tr>
+                    <td>{order._id.slice(-8)}</td>
+                    <td>{order.customer?.name || order.customerName || 'N/A'}</td>
+                    <td><span className="order-amount">₱{order.totalAmount.toFixed(2)}</span></td>
+                    <td><span className="status-badge" style={{ backgroundColor: statusBadgeColor(order.status) }}>{order.status}</span></td>
+                    <td><span className={`payment-status ${order.paymentStatus === 'Paid' ? 'paid' : 'unpaid'}`}>{order.paymentStatus}</span></td>
+                    <td>
+                      <div className="action-buttons">
                         {order.status !== 'Canceled' && order.status !== 'Delivered' && order.status !== 'Rejected' && (
-                          <div style={styles.actionButtons}>
+                          <div>
                             {order.status === 'Pending' && (
                               <button
                                 onClick={() => handleStatusUpdate(order._id, 'Accepted')}
-                                style={styles.actionButton}
                                 className="accept-button"
                               >
                                 Accept
@@ -194,7 +215,6 @@ const OrdersPage = () => {
                             {order.status === 'Accepted' && (
                               <button
                                 onClick={() => handleStatusUpdate(order._id, 'Preparing')}
-                                style={styles.actionButton}
                                 className="prepare-button"
                               >
                                 Start Preparing
@@ -203,7 +223,6 @@ const OrdersPage = () => {
                             {order.status === 'Preparing' && order.orderType === 'Delivery' && (
                               <button
                                 onClick={() => handleStatusUpdate(order._id, 'Out for Delivery')}
-                                style={styles.actionButton}
                                 className="outfordelivery-button"
                               >
                                 Out for Delivery
@@ -212,7 +231,6 @@ const OrdersPage = () => {
                             {order.status === 'Preparing' && order.orderType === 'Pickup' && (
                               <button
                                 onClick={() => handleStatusUpdate(order._id, 'Ready')}
-                                style={styles.actionButton}
                                 className="ready-button"
                               >
                                 Mark Ready
@@ -221,7 +239,6 @@ const OrdersPage = () => {
                             {order.status === 'Ready' && order.orderType === 'Pickup' && (
                               <button
                                 onClick={() => handleStatusUpdate(order._id, 'Ready for Pickup')}
-                                style={styles.actionButton}
                                 className="readyforpickup-button"
                               >
                                 Ready for Pickup
@@ -230,7 +247,6 @@ const OrdersPage = () => {
                             {order.status === 'Out for Delivery' && (
                               <button
                                 onClick={() => handleStatusUpdate(order._id, 'Delivered')}
-                                style={styles.deliverButton}
                                 className="deliver-button"
                               >
                                 Mark Delivered
@@ -239,7 +255,6 @@ const OrdersPage = () => {
                             {order.status === 'Ready for Pickup' && (
                               <button
                                 onClick={() => handleStatusUpdate(order._id, 'Delivered')}
-                                style={styles.deliverButton}
                                 className="deliver-button"
                               >
                                 Mark Picked Up
@@ -247,8 +262,13 @@ const OrdersPage = () => {
                             )}
                             {['Pending', 'Accepted'].includes(order.status) && (
                               <button
-                                onClick={() => handleCancelOrder(order._id)}
-                                style={styles.cancelButton}
+                                onClick={() => {
+                                  if (userRole === 'Seller') {
+                                    handleStatusUpdate(order._id, 'Rejected');
+                                  } else {
+                                    handleCancelOrder(order._id);
+                                  }
+                                }}
                                 className="cancel-button"
                               >
                                 Cancel
@@ -256,334 +276,232 @@ const OrdersPage = () => {
                             )}
                           </div>
                         )}
+                        {order.status === 'Delivered' && order.paymentStatus !== 'Paid' && (
+                          <button
+                            onClick={() => handleMarkPaid(order._id)}
+                            className="action-button"
+                          >
+                            Mark Paid
+                          </button>
+                        )}
+                          <button
+                            className="details-button"
+                            onClick={() => handleToggleDetails(order._id)}
+                            style={{ marginTop: 4 }}
+                          >
+                            {expandedOrderId === order._id ? 'Hide Details' : 'View Details'}
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                    {/* Expandable details row */}
+                    {expandedOrderId === order._id && (
+                      <tr>
+                        <td colSpan={6} style={{ background: '#fafafa', padding: 0 }}>
+                          <div className="order-details-container">
+                            {detailsLoading ? (
+                              <div className="orders-loading-spinner" style={{ margin: '16px 0' }} />
+                            ) : detailsError ? (
+                              <div className="orders-error">{detailsError}</div>
+                            ) : orderDetails ? (
+                              <div style={{ padding: 16 }}>
+                                <div className="order-details-row"><b>Customer:</b> {orderDetails.customer?.name} ({orderDetails.customer?.email})</div>
+                                <div className="order-details-row"><b>Order Type:</b> {orderDetails.orderType}</div>
+                                <div className="order-details-row"><b>Payment:</b> {orderDetails.paymentMethod} ({orderDetails.paymentStatus})</div>
+                                {orderDetails.orderType === 'Delivery' && orderDetails.deliveryDetails && (
+                                  <div className="order-details-row"><b>Delivery:</b> {orderDetails.deliveryDetails.receiverName}, {orderDetails.deliveryDetails.contactNumber}, {orderDetails.deliveryDetails.building} {orderDetails.deliveryDetails.roomNumber}</div>
+                                )}
+                                {orderDetails.orderType === 'Pickup' && orderDetails.pickupDetails && (
+                                  <div className="order-details-row"><b>Pickup:</b> {orderDetails.pickupDetails.contactNumber}, {orderDetails.pickupDetails.pickupTime ? new Date(orderDetails.pickupDetails.pickupTime).toLocaleString() : ''}</div>
+                                )}
+                                <div className="order-details-row"><b>Items:</b></div>
+                                <ul style={{ margin: '4px 0 8px 16px' }}>
+                                  {orderDetails.items.map((item, idx) => {
+                                    const imageUrl = item.product?.image || defPic;
+                                    const productName = item.product?.name || 'Product';
+                                    return (
+                                      <li key={idx} style={{ display: 'flex', alignItems: 'center', marginBottom: 4 }}>
+                                        <img src={imageUrl} alt={productName} style={{ width: 36, height: 36, objectFit: 'cover', borderRadius: 6, marginRight: 8, background: '#f0f0f0' }} onError={e => { e.target.onerror = null; e.target.src = defPic; }} />
+                                        <span>{productName} x{item.quantity} @ ₱{item.price.toFixed(2)}</span>
+                                      </li>
+                                    );
+                                  })}
+                                </ul>
+                                <div className="order-details-row"><b>Notes:</b> {orderDetails.notes || 'None'}</div>
+                                <div className="order-details-row"><b>Status History:</b></div>
+                                <ul className="order-details-timeline" style={{ margin: '4px 0 0 16px' }}>
+                                  {orderDetails.statusHistory && orderDetails.statusHistory.length > 0 ? orderDetails.statusHistory.map((h, idx) => (
+                                    <li key={idx} style={{ marginBottom: 4 }}>
+                                      <b>{h.status}</b> <span style={{ color: '#888', fontSize: 12 }}>({h.timestamp ? new Date(h.timestamp).toLocaleString() : ''})</span>
+                                      {h.note && <div style={{ fontSize: 12, color: '#666' }}>{h.note}</div>}
+                                    </li>
+                                  )) : <li style={{ color: '#888', fontSize: 13 }}>No status history available.</li>}
+                                </ul>
+                              </div>
+                            ) : null}
                       </div>
                     </td>
                   </tr>
+                    )}
+                  </React.Fragment>
                 ))}
               </tbody>
             </table>
+            {/* Mobile Card Layout */}
+            <div className="mobile-only">
+              {filteredOrders.map((order) => (
+                <div className="order-card" key={order._id}>
+                  <div className="order-row"><span className="order-label">Order ID:</span> <span className="order-value">{order._id.slice(-8)}</span></div>
+                  <div className="order-row"><span className="order-label">Customer:</span> <span className="order-value">{order.customer?.name || order.customerName || 'N/A'}</span></div>
+                  <div className="order-row"><span className="order-label">Amount:</span> <span className="order-value order-amount">₱{order.totalAmount.toFixed(2)}</span></div>
+                  <div className="order-row"><span className="order-label">Status:</span> <span className="order-value status-badge" style={{ backgroundColor: statusBadgeColor(order.status) }}>{order.status}</span></div>
+                  <div className="order-row"><span className="order-label">Payment:</span> <span className={`order-value payment-status ${order.paymentStatus === 'Paid' ? 'paid' : 'unpaid'}`}>{order.paymentStatus}</span></div>
+                  <div className="order-row">
+                    <div className="action-buttons">
+                      {order.status !== 'Canceled' && order.status !== 'Delivered' && order.status !== 'Rejected' && (
+                        <>
+                          {order.status === 'Pending' && (
+                            <button
+                              onClick={() => handleStatusUpdate(order._id, 'Accepted')}
+                              className="accept-button"
+                            >
+                              Accept
+                            </button>
+                          )}
+                          {order.status === 'Accepted' && (
+                            <button
+                              onClick={() => handleStatusUpdate(order._id, 'Preparing')}
+                              className="prepare-button"
+                            >
+                              Start Preparing
+                            </button>
+                          )}
+                          {order.status === 'Preparing' && order.orderType === 'Delivery' && (
+                            <button
+                              onClick={() => handleStatusUpdate(order._id, 'Out for Delivery')}
+                              className="outfordelivery-button"
+                            >
+                              Out for Delivery
+                            </button>
+                          )}
+                          {order.status === 'Preparing' && order.orderType === 'Pickup' && (
+                            <button
+                              onClick={() => handleStatusUpdate(order._id, 'Ready')}
+                              className="ready-button"
+                            >
+                              Mark Ready
+                            </button>
+                          )}
+                          {order.status === 'Ready' && order.orderType === 'Pickup' && (
+                            <button
+                              onClick={() => handleStatusUpdate(order._id, 'Ready for Pickup')}
+                              className="readyforpickup-button"
+                            >
+                              Ready for Pickup
+                            </button>
+                          )}
+                          {order.status === 'Out for Delivery' && (
+                            <button
+                              onClick={() => handleStatusUpdate(order._id, 'Delivered')}
+                              className="deliver-button"
+                            >
+                              Mark Delivered
+                            </button>
+                          )}
+                          {order.status === 'Ready for Pickup' && (
+                            <button
+                              onClick={() => handleStatusUpdate(order._id, 'Delivered')}
+                              className="deliver-button"
+                            >
+                              Mark Picked Up
+                            </button>
+                          )}
+                          {['Pending', 'Accepted'].includes(order.status) && (
+                            <button
+                              onClick={() => {
+                                if (userRole === 'Seller') {
+                                  handleStatusUpdate(order._id, 'Rejected');
+                                } else {
+                                  handleCancelOrder(order._id);
+                                }
+                              }}
+                              className="cancel-button"
+                            >
+                              Cancel
+                            </button>
+                          )}
+                        </>
+                      )}
+                      {order.status === 'Delivered' && order.paymentStatus !== 'Paid' && (
+                        <button
+                          onClick={() => handleMarkPaid(order._id)}
+                          className="action-button"
+                        >
+                          Mark Paid
+                        </button>
+                      )}
+                      <button
+                        className="details-button"
+                        onClick={() => handleToggleDetails(order._id)}
+                        style={{ marginTop: 4 }}
+                      >
+                        {expandedOrderId === order._id ? 'Hide Details' : 'View Details'}
+                      </button>
+                    </div>
+                  </div>
+                  {/* Expandable details section */}
+                  {expandedOrderId === order._id && (
+                    <div className="order-details-container" style={{ background: '#fafafa', margin: '8px 0', borderRadius: 8, padding: 8 }}>
+                      {detailsLoading ? (
+                        <div className="orders-loading-spinner" style={{ margin: '16px 0' }} />
+                      ) : detailsError ? (
+                        <div className="orders-error">{detailsError}</div>
+                      ) : orderDetails ? (
+                        <div>
+                          <div className="order-details-row"><b>Customer:</b> {orderDetails.customer?.name} ({orderDetails.customer?.email})</div>
+                          <div className="order-details-row"><b>Order Type:</b> {orderDetails.orderType}</div>
+                          <div className="order-details-row"><b>Payment:</b> {orderDetails.paymentMethod} ({orderDetails.paymentStatus})</div>
+                          {orderDetails.orderType === 'Delivery' && orderDetails.deliveryDetails && (
+                            <div className="order-details-row"><b>Delivery:</b> {orderDetails.deliveryDetails.receiverName}, {orderDetails.deliveryDetails.contactNumber}, {orderDetails.deliveryDetails.building} {orderDetails.deliveryDetails.roomNumber}</div>
+                          )}
+                          {orderDetails.orderType === 'Pickup' && orderDetails.pickupDetails && (
+                            <div className="order-details-row"><b>Pickup:</b> {orderDetails.pickupDetails.contactNumber}, {orderDetails.pickupDetails.pickupTime ? new Date(orderDetails.pickupDetails.pickupTime).toLocaleString() : ''}</div>
+                          )}
+                          <div className="order-details-row"><b>Items:</b></div>
+                          <ul style={{ margin: '4px 0 8px 16px' }}>
+                            {orderDetails.items.map((item, idx) => {
+                              const imageUrl = item.product?.image || defPic;
+                              const productName = item.product?.name || 'Product';
+                              return (
+                                <li key={idx} style={{ display: 'flex', alignItems: 'center', marginBottom: 4 }}>
+                                  <img src={imageUrl} alt={productName} style={{ width: 36, height: 36, objectFit: 'cover', borderRadius: 6, marginRight: 8, background: '#f0f0f0' }} onError={e => { e.target.onerror = null; e.target.src = defPic; }} />
+                                  <span>{productName} x{item.quantity} @ ₱{item.price.toFixed(2)}</span>
+                                </li>
+                              );
+                            })}
+                          </ul>
+                          <div className="order-details-row"><b>Notes:</b> {orderDetails.notes || 'None'}</div>
+                          <div className="order-details-row"><b>Status History:</b></div>
+                          <ul className="order-details-timeline" style={{ margin: '4px 0 0 16px' }}>
+                            {orderDetails.statusHistory && orderDetails.statusHistory.length > 0 ? orderDetails.statusHistory.map((h, idx) => (
+                              <li key={idx} style={{ marginBottom: 4 }}>
+                                <b>{h.status}</b> <span style={{ color: '#888', fontSize: 12 }}>({h.timestamp ? new Date(h.timestamp).toLocaleString() : ''})</span>
+                                {h.note && <div style={{ fontSize: 12, color: '#666' }}>{h.note}</div>}
+                              </li>
+                            )) : <li style={{ color: '#888', fontSize: 13 }}>No status history available.</li>}
+                          </ul>
+                        </div>
+                      ) : null}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </div>
-      <ResponsiveStyle />
     </div>
   );
 };
-
-const styles = {
-  mainContainer: {
-    backgroundColor: '#f7f7f7',
-    minHeight: '100vh',
-    width: '100%',
-    position: 'relative',
-    overflow: 'hidden',
-    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
-  },
-  header: {
-    padding: '7px 15px',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: '#ff8c00e0',
-    color: 'white',
-    position: 'sticky',
-    top: 0,
-    zIndex: 10,
-    boxShadow: '0 3px 10px rgba(0, 0, 0, 0.4)',
-  },
-  backButton: {
-    display: 'flex',
-    alignItems: 'center',
-    cursor: 'pointer',
-    transition: 'transform 0.2s',
-  },
-  backArrow: {
-    fontSize: '20px',
-    marginRight: '10px',
-    color: 'white',
-  },
-  headerText: {
-    fontSize: '15px',
-    fontWeight: '600',
-    color: 'white',
-    textShadow: '0 1px 2px rgba(0, 0, 0, 0.2)',
-  },
-  contentContainer: {
-    padding: '20px',
-    maxWidth: '1200px',
-    margin: '0 auto',
-    overflowY: 'auto',
-    height: 'calc(100vh - 53px)',
-  },
-  filterContainer: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '15px',
-    marginBottom: '20px',
-    backgroundColor: 'white',
-    padding: '15px 20px',
-    borderRadius: '12px',
-    boxShadow: '0 4px 10px rgba(0, 0, 0, 0.1)',
-  },
-  filterLabel: {
-    fontWeight: '500',
-    fontSize: '15px',
-    color: '#555',
-  },
-  filterSelect: {
-    padding: '10px 15px',
-    borderRadius: '8px',
-    border: '1px solid #ddd',
-    minWidth: '180px',
-    fontSize: '14px',
-    backgroundColor: '#f9f9f9',
-    appearance: 'none',
-    backgroundImage: 'url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23555%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E")',
-    backgroundRepeat: 'no-repeat',
-    backgroundPosition: 'right 12px center',
-    backgroundSize: '10px',
-  },
-  tableWrapper: {
-    backgroundColor: 'white',
-    borderRadius: '12px',
-    boxShadow: '0 4px 10px rgba(0, 0, 0, 0.1)',
-    overflow: 'hidden',
-  },
-  table: {
-    width: '100%',
-    borderCollapse: 'collapse',
-    textAlign: 'left',
-  },
-  th: {
-    padding: '15px 20px',
-    fontWeight: '600',
-    fontSize: '14px',
-    color: '#333',
-    backgroundColor: '#f9f9f9',
-    borderBottom: '1px solid #eee',
-  },
-  tr: {
-    borderBottom: '1px solid #eee',
-    transition: 'background-color 0.2s',
-  },
-  td: {
-    padding: '15px 20px',
-    fontSize: '14px',
-    color: '#444',
-  },
-  cellContent: {
-    display: 'flex',
-    alignItems: 'center',
-  },
-  orderId: {
-    fontFamily: 'monospace',
-    fontWeight: '600',
-    letterSpacing: '0.5px',
-  },
-  price: {
-    fontWeight: '600',
-    color: '#ff8c00',
-  },
-  statusBadge: {
-    padding: '5px 10px',
-    borderRadius: '20px',
-    fontSize: '12px',
-    fontWeight: '600',
-    color: 'white',
-    textAlign: 'center',
-    minWidth: '80px',
-    display: 'inline-block',
-  },
-  paymentStatus: {
-    fontWeight: '600',
-  },
-  actionButtons: {
-    display: 'flex',
-    gap: '8px',
-    flexWrap: 'wrap',
-  },
-  actionButton: {
-    padding: '6px 12px',
-    backgroundColor: '#3498db',
-    color: 'white',
-    border: 'none',
-    borderRadius: '6px',
-    fontSize: '13px',
-    fontWeight: '500',
-    cursor: 'pointer',
-    transition: 'all 0.2s',
-  },
-  deliverButton: {
-    padding: '6px 12px',
-    backgroundColor: '#2ecc71',
-    color: 'white',
-    border: 'none',
-    borderRadius: '6px',
-    fontSize: '13px',
-    fontWeight: '500',
-    cursor: 'pointer',
-    transition: 'all 0.2s',
-  },
-  cancelButton: {
-    padding: '6px 12px',
-    backgroundColor: '#e74c3c',
-    color: 'white',
-    border: 'none',
-    borderRadius: '6px',
-    fontSize: '13px',
-    fontWeight: '500',
-    cursor: 'pointer',
-    transition: 'all 0.2s',
-  },
-  loadingContainer: {
-    display: 'flex',
-    flexDirection: 'column',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: '40px',
-    backgroundColor: 'white',
-    borderRadius: '12px',
-    boxShadow: '0 4px 10px rgba(0, 0, 0, 0.1)',
-  },
-  loadingSpinner: {
-    width: '40px',
-    height: '40px',
-    border: '3px solid #f3f3f3',
-    borderTop: '3px solid #ff8c00',
-    borderRadius: '50%',
-    animation: 'spin 1s linear infinite',
-    marginBottom: '15px',
-  },
-  loadingText: {
-    fontSize: '16px',
-    color: '#666',
-    margin: 0,
-  },
-  error: {
-    backgroundColor: '#fde8e8',
-    color: '#e53e3e',
-    padding: '15px 20px',
-    marginBottom: '20px',
-    textAlign: 'center',
-    borderRadius: '10px',
-    fontSize: '14px',
-    boxShadow: '0 2px 4px rgba(229, 62, 62, 0.1)',
-  },
-  noOrders: {
-    textAlign: 'center',
-    padding: '40px',
-    backgroundColor: 'white',
-    borderRadius: '12px',
-    boxShadow: '0 4px 10px rgba(0, 0, 0, 0.1)',
-  },
-};
-
-// Responsive media queries using a style tag
-const ResponsiveStyle = () => (
-  <style>{`
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-    
-    * {
-      box-sizing: border-box;
-    }
-    
-    body {
-      margin: 0;
-      padding: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    }
-    
-    .orders-table {
-      width: 100%;
-    }
-    
-    button:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-    }
-    
-    .order-filter-select:focus {
-      border-color: #ff8c00;
-      outline: none;
-      box-shadow: 0 0 0 3px rgba(255, 140, 0, 0.15);
-    }
-    
-    /* Scrollbar styling */
-    div[style*="contentContainer"]::-webkit-scrollbar {
-      width: 6px;
-    }
-    
-    div[style*="contentContainer"]::-webkit-scrollbar-track {
-      background: rgba(0, 0, 0, 0.05);
-      border-radius: 10px;
-    }
-    
-    div[style*="contentContainer"]::-webkit-scrollbar-thumb {
-      background: rgba(255, 140, 0, 0.3);
-      border-radius: 10px;
-    }
-    
-    div[style*="contentContainer"]::-webkit-scrollbar-thumb:hover {
-      background: rgba(255, 140, 0, 0.5);
-    }
-    
-    @media (max-width: 992px) {
-      .orders-table th, .orders-table td {
-        padding: 12px 15px;
-      }
-    }
-    
-    @media (max-width: 768px) {
-      .orders-table thead {
-        display: none;
-      }
-      
-      .orders-table, .orders-table tbody, .orders-table tr, .orders-table td {
-        display: block;
-        width: 100%;
-      }
-      
-      .orders-table tr {
-        margin-bottom: 20px;
-        border: 1px solid #eee;
-        border-radius: 8px;
-        overflow: hidden;
-      }
-      
-      .orders-table td {
-        text-align: right;
-        position: relative;
-        padding: 10px 15px;
-      }
-      
-      .orders-table td:before {
-        content: attr(data-label);
-        position: absolute;
-        left: 15px;
-        top: 50%;
-        transform: translateY(-50%);
-        font-weight: 600;
-        color: #555;
-      }
-      
-      .orders-table td div[style*="cellContent"] {
-        justify-content: flex-end;
-      }
-      
-      div[style*="filterContainer"] {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 10px;
-      }
-      
-      select[style*="filterSelect"] {
-        width: 100%;
-      }
-    }
-  `}</style>
-);
 
 export default OrdersPage;

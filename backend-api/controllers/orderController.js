@@ -335,32 +335,33 @@ const updateOrderStatus = async (req, res) => {
       ));
     }
 
-    // Validate status transition
-    const validTransitions = {
-      'Pending': ['Accepted', 'Rejected'],
-      'Accepted': ['Preparing'],
-      'Preparing': ['Ready', 'Out for Delivery'],
-      'Ready': ['Ready for Pickup'],
-      'Out for Delivery': ['Delivered'],
-      'Ready for Pickup': ['Delivered']
-    };
-
-    if (!validTransitions[order.status]?.includes(status)) {
-      return res.status(400).json(createResponse(
-        false,
-        'Invalid status transition',
-        null,
-        `Cannot transition from ${order.status} to ${status}`
-      ));
+    // Update order status if provided
+    if (status) {
+      // Validate status transition
+      const validTransitions = {
+        'Pending': ['Accepted', 'Rejected'],
+        'Accepted': ['Preparing'],
+        'Preparing': ['Ready', 'Out for Delivery'],
+        'Ready': ['Ready for Pickup'],
+        'Out for Delivery': ['Delivered'],
+        'Ready for Pickup': ['Delivered']
+      };
+      if (!validTransitions[order.status]?.includes(status)) {
+        return res.status(400).json(createResponse(
+          false,
+          'Invalid status transition',
+          null,
+          `Cannot transition from ${order.status} to ${status}`
+        ));
+      }
+      order.status = status;
+      // Update estimated time if provided
+      if (estimatedTime && ['Preparing', 'Out for Delivery'].includes(status)) {
+        order.estimatedDeliveryTime = estimatedTime;
+      }
     }
-
-    // Update order status
-    order.status = status;
-    
-    // Update estimated time if provided
-    if (estimatedTime && ['Preparing', 'Out for Delivery'].includes(status)) {
-      order.estimatedDeliveryTime = estimatedTime;
-    }
+    // Update payment status if provided
+    if (req.body.paymentStatus) order.paymentStatus = req.body.paymentStatus;
 
     // Save the updated order
     await order.save({ session });
@@ -407,7 +408,7 @@ const getOrderDetails = async (req, res) => {
     const order = await Order.findById(orderId)
       .populate('customer', 'name email')
       .populate('store', 'name location')
-      .populate('items.product', 'name price');
+      .populate('items.product', 'name price image');
 
     if (!order) {
       return res.status(404).json(createResponse(

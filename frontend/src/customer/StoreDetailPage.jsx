@@ -3,6 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowBack } from '@mui/icons-material';
 import axios from 'axios';
 import styled from 'styled-components';
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import ErrorBoundary from '../components/ErrorBoundary';
 import { isStoreInFavorites, toggleStoreFavorite } from '../utils/favoriteUtils';
 
@@ -612,6 +614,29 @@ const StoreDetailPage = () => {
     const isNowFavorite = toggleStoreFavorite(storeId);
     setIsFavorite(isNowFavorite);
 
+    // Show toast notification
+    if (isNowFavorite) {
+      toast.success('Added to favorites', {
+        position: "bottom-right",
+        autoClose: 2000,
+        hideProgressBar: true,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+      });
+    } else {
+      toast.info('Removed from favorites', {
+        position: "bottom-right",
+        autoClose: 2000,
+        hideProgressBar: true,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+      });
+    }
+
     // Update stored favorite stores list
     try {
       const storedFavorites = JSON.parse(localStorage.getItem('favoriteStores') || '[]');
@@ -638,6 +663,7 @@ const StoreDetailPage = () => {
       localStorage.setItem('favoriteStores', JSON.stringify(storedFavorites));
     } catch (error) {
       console.error('Error updating favorite stores:', error);
+      toast.error('Error updating favorites');
     }
   };
 
@@ -672,141 +698,144 @@ const StoreDetailPage = () => {
   const defaultStoreImage = 'https://via.placeholder.com/80x80/e0e0e0/999999?text=Store';
 
   return (
-    <ErrorBoundary>
-      <StoreDetailWrapper>
-        <Header>
-          <HeaderContent>
-            <BackButton 
-              onClick={() => navigate(-1)}
-              aria-label="Go back"
-              title="Go back"
-            >
-              <ArrowBack />
-            </BackButton>
-            <StoreTitleHeader>
-              {store.storeName}
-            </StoreTitleHeader>
-          </HeaderContent>
-        </Header>
-        <ScrollableContent>
-          <ContentWrapper>
-            <StoreBanner 
-              style={{ backgroundImage: `url(${store.bannerImage || defaultBannerImage})` }}
-              role="banner" 
-              aria-label={`${store.storeName} banner`}
-            >
-              <StoreHeader>
-                <StoreInfo>
-                  <StoreImage 
-                    src={store.image || defaultStoreImage} 
-                    alt={`${store.storeName} logo`}
-                  />
-                  <StoreText>
-                    <StoreTitle>{store.storeName}</StoreTitle>
-                    {store.description && (
-                      <StoreDescription>{store.description}</StoreDescription>
-                    )}
-                    <FavoriteButton 
-                      onClick={handleFavoriteClick}
-                      $isFavorite={isFavorite}
-                      aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
-                      title={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
-                    >
-                      {isFavorite ? '♥' : '♡'}
-                    </FavoriteButton>
-                  </StoreText>
-                </StoreInfo>
-              </StoreHeader>
-            </StoreBanner>
-
-            <StoreNav>
-              <NavButton 
-                $isActive={activeTab === 'Products'}
-                onClick={() => setActiveTab('Products')}
-                aria-pressed={activeTab === 'Products'}
-                aria-label="View all products"
+    <>
+      <ToastContainer />
+      <ErrorBoundary>
+        <StoreDetailWrapper>
+          <Header>
+            <HeaderContent>
+              <BackButton 
+                onClick={() => navigate(-1)}
+                aria-label="Go back"
+                title="Go back"
               >
-                All Products
-              </NavButton>
-              <NavButton 
-                $isActive={activeTab === 'Categories'}
-                onClick={() => setActiveTab('Categories')}
-                aria-pressed={activeTab === 'Categories'}
-                aria-label="View product categories"
+                <ArrowBack />
+              </BackButton>
+              <StoreTitleHeader>
+                {store.storeName}
+              </StoreTitleHeader>
+            </HeaderContent>
+          </Header>
+          <ScrollableContent>
+            <ContentWrapper>
+              <StoreBanner 
+                style={{ backgroundImage: `url(${store.bannerImage || defaultBannerImage})` }}
+                role="banner" 
+                aria-label={`${store.storeName} banner`}
               >
-                Categories
-              </NavButton>
-            </StoreNav>
-
-            <ProductsSection>
-              <ProductsGrid 
-                role="list"
-                aria-label="Products"
-              >
-                {products.length > 0 ? (
-                  products.map((product) => (
-                    <ProductCard 
-                      key={product._id}
-                      onClick={() => handleBuy(product)}
-                      onKeyDown={(e) => handleKeyDown(e, product)}
-                      tabIndex="0"
-                      role="listitem"
-                      aria-label={`${product.name}, ${product.price.toFixed(2)} pesos, ${product.availability}`}
-                    >
-                      <ProductImage 
-                        src={product.image || 'https://via.placeholder.com/300x200/f0f0f0/cccccc?text=No+Image'} 
-                        alt={product.name} 
-                      />
-                      {product.availability !== 'Available' && (
-                        <OutOfStockOverlay aria-hidden="true">
-                          <span>Out of Stock</span>
-                        </OutOfStockOverlay>
+                <StoreHeader>
+                  <StoreInfo>
+                    <StoreImage 
+                      src={store.image || defaultStoreImage} 
+                      alt={`${store.storeName} logo`}
+                    />
+                    <StoreText>
+                      <StoreTitle>{store.storeName}</StoreTitle>
+                      {store.description && (
+                        <StoreDescription>{store.description}</StoreDescription>
                       )}
-                      <ProductInfo>
-                        <ProductName>{product.name}</ProductName>
-                        {product.description && (
-                          <ProductDescription>{product.description}</ProductDescription>
+                      <FavoriteButton 
+                        onClick={handleFavoriteClick}
+                        $isFavorite={isFavorite}
+                        aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+                        title={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+                      >
+                        {isFavorite ? '♥' : '♡'}
+                      </FavoriteButton>
+                    </StoreText>
+                  </StoreInfo>
+                </StoreHeader>
+              </StoreBanner>
+
+              <StoreNav>
+                <NavButton 
+                  $isActive={activeTab === 'Products'}
+                  onClick={() => setActiveTab('Products')}
+                  aria-pressed={activeTab === 'Products'}
+                  aria-label="View all products"
+                >
+                  All Products
+                </NavButton>
+                <NavButton 
+                  $isActive={activeTab === 'Categories'}
+                  onClick={() => setActiveTab('Categories')}
+                  aria-pressed={activeTab === 'Categories'}
+                  aria-label="View product categories"
+                >
+                  Categories
+                </NavButton>
+              </StoreNav>
+
+              <ProductsSection>
+                <ProductsGrid 
+                  role="list"
+                  aria-label="Products"
+                >
+                  {products.length > 0 ? (
+                    products.map((product) => (
+                      <ProductCard 
+                        key={product._id}
+                        onClick={() => handleBuy(product)}
+                        onKeyDown={(e) => handleKeyDown(e, product)}
+                        tabIndex="0"
+                        role="listitem"
+                        aria-label={`${product.name}, ${product.price.toFixed(2)} pesos, ${product.availability}`}
+                      >
+                        <ProductImage 
+                          src={product.image || 'https://via.placeholder.com/300x200/f0f0f0/cccccc?text=No+Image'} 
+                          alt={product.name} 
+                        />
+                        {product.availability !== 'Available' && (
+                          <OutOfStockOverlay aria-hidden="true">
+                            <span>Out of Stock</span>
+                          </OutOfStockOverlay>
                         )}
-                        <ProductPrice>
-                          <span aria-label={`Price: ${product.price.toFixed(2)} pesos`}>
-                            ₱{product.price.toFixed(2)}
-                          </span>
-                        </ProductPrice>
-                        <ProductMeta>
-                          <Availability $available={product.availability === 'Available'}>
-                            {product.availability}
-                          </Availability>
-                          {product.category && (
-                            <Category aria-label={`Category: ${product.category}`}>
-                              {product.category}
-                            </Category>
+                        <ProductInfo>
+                          <ProductName>{product.name}</ProductName>
+                          {product.description && (
+                            <ProductDescription>{product.description}</ProductDescription>
                           )}
-                        </ProductMeta>
-                        {product.estimatedTime && (
-                          <EstimatedTime aria-label={`Preparation time: ${product.estimatedTime} minutes`}>
-                            ⏱ {product.estimatedTime} mins prep time
-                          </EstimatedTime>
-                        )}
-                        <ViewDetailsButton 
-                          disabled={product.availability !== 'Available'}
-                          aria-disabled={product.availability !== 'Available'}
-                        >
-                          {product.availability === 'Available' ? 'View Details' : 'Out of Stock'}
-                        </ViewDetailsButton>
-                      </ProductInfo>
-                    </ProductCard>
-                  ))
-                ) : (
-                  <NoProducts role="status">
-                    <p>No products available in this store yet</p>
-                  </NoProducts>
-                )}
-              </ProductsGrid>
-            </ProductsSection>
-          </ContentWrapper>
-        </ScrollableContent>
-      </StoreDetailWrapper>
-    </ErrorBoundary>
+                          <ProductPrice>
+                            <span aria-label={`Price: ${product.price.toFixed(2)} pesos`}>
+                              ₱{product.price.toFixed(2)}
+                            </span>
+                          </ProductPrice>
+                          <ProductMeta>
+                            <Availability $available={product.availability === 'Available'}>
+                              {product.availability}
+                            </Availability>
+                            {product.category && (
+                              <Category aria-label={`Category: ${product.category}`}>
+                                {product.category}
+                              </Category>
+                            )}
+                          </ProductMeta>
+                          {product.estimatedTime && (
+                            <EstimatedTime aria-label={`Preparation time: ${product.estimatedTime} minutes`}>
+                              ⏱ {product.estimatedTime} mins prep time
+                            </EstimatedTime>
+                          )}
+                          <ViewDetailsButton 
+                            disabled={product.availability !== 'Available'}
+                            aria-disabled={product.availability !== 'Available'}
+                          >
+                            {product.availability === 'Available' ? 'View Details' : 'Out of Stock'}
+                          </ViewDetailsButton>
+                        </ProductInfo>
+                      </ProductCard>
+                    ))
+                  ) : (
+                    <NoProducts role="status">
+                      <p>No products available in this store yet</p>
+                    </NoProducts>
+                  )}
+                </ProductsGrid>
+              </ProductsSection>
+            </ContentWrapper>
+          </ScrollableContent>
+        </StoreDetailWrapper>
+      </ErrorBoundary>
+    </>
   );
 };
 

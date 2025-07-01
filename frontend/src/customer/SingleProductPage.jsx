@@ -376,6 +376,17 @@ const SingleProductPage = () => {
     const [quantity, setQuantity] = useState(1);
     const [isFavorite, setIsFavorite] = useState(false);
     const [reviews, setReviews] = useState([]);
+    const [currentUser, setCurrentUser] = useState(null);
+
+    useEffect(() => {
+        // Load current user from localStorage
+        try {
+            const user = JSON.parse(localStorage.getItem('user') || '{}');
+            setCurrentUser(user && user.name ? user : null);
+        } catch {
+            setCurrentUser(null);
+        }
+    }, []);
 
     const handleGoBack = () => {
         navigate('/customer/home');
@@ -535,43 +546,59 @@ const SingleProductPage = () => {
                             <p style={{ color: '#888' }}>No reviews yet.</p>
                         ) : (
                             <ul style={{ listStyle: 'none', padding: 0 }}>
-                                {reviews.map((review, idx) => (
-                                    <li key={idx} style={{
-                                        background: '#f9f9f9',
-                                        borderRadius: 8,
-                                        padding: 16,
-                                        marginBottom: 12,
-                                        color: '#444',
-                                        fontSize: '1rem',
-                                        boxShadow: '0 1px 4px rgba(0,0,0,0.04)'
-                                    }}>
-                                        <div style={{ display: 'flex', alignItems: 'center', marginBottom: 8 }}>
-                                            {/* Default avatar */}
-                                            <div style={{
-                                                width: 36,
-                                                height: 36,
-                                                borderRadius: '50%',
-                                                background: '#ff8c00',
-                                                color: 'white',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center',
-                                                fontWeight: 600,
-                                                fontSize: 18,
-                                                marginRight: 12
-                                            }}>
-                                                {review.userName ? review.userName.charAt(0).toUpperCase() : '?'}
+                                {reviews.map((review, idx) => {
+                                    // If this review is by the current user, always use the latest profile
+                                    let displayName = review.userName || 'Anonymous';
+                                    let displayImage = review.userImage || '';
+                                    if (
+                                        currentUser &&
+                                        ((review.userName && review.userName === currentUser.name) ||
+                                         (review.userEmail && review.userEmail === currentUser.email))
+                                    ) {
+                                        displayName = currentUser.name || 'You';
+                                        displayImage = currentUser.profileImage || '';
+                                    }
+                                    return (
+                                        <li key={idx} style={{
+                                            background: '#f9f9f9',
+                                            borderRadius: 8,
+                                            padding: 16,
+                                            marginBottom: 12,
+                                            color: '#444',
+                                            fontSize: '1rem',
+                                            boxShadow: '0 1px 4px rgba(0,0,0,0.04)'
+                                        }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', marginBottom: 8 }}>
+                                                {displayImage ? (
+                                                    <img src={displayImage} alt={displayName || 'Reviewer'} style={{ width: 36, height: 36, borderRadius: '50%', objectFit: 'cover', marginRight: 12, background: '#eee' }} onError={e => { e.target.onerror = null; e.target.src = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(displayName || 'U'); }} />
+                                                ) : (
+                                                <div style={{
+                                                    width: 36,
+                                                    height: 36,
+                                                    borderRadius: '50%',
+                                                    background: '#ff8c00',
+                                                    color: 'white',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    fontWeight: 600,
+                                                    fontSize: 18,
+                                                    marginRight: 12
+                                                }}>
+                                                    {displayName ? displayName.charAt(0).toUpperCase() : '?'}
+                                                </div>
+                                                )}
+                                                <div style={{ fontWeight: 500, fontSize: 15, color: '#222' }}>
+                                                    {displayName}
+                                                </div>
                                             </div>
-                                            <div style={{ fontWeight: 500, fontSize: 15, color: '#222' }}>
-                                                {review.userName || 'Anonymous'}
+                                            <div>{review.comment}</div>
+                                            <div style={{ fontSize: '0.85rem', color: '#aaa', marginTop: 4 }}>
+                                                {review.createdAt ? `on ${new Date(review.createdAt).toLocaleDateString()}` : ''}
                                             </div>
-                                        </div>
-                                        <div>{review.comment}</div>
-                                        <div style={{ fontSize: '0.85rem', color: '#aaa', marginTop: 4 }}>
-                                            {review.createdAt ? `on ${new Date(review.createdAt).toLocaleDateString()}` : ''}
-                                        </div>
-                                    </li>
-                                ))}
+                                        </li>
+                                    );
+                                })}
                             </ul>
                         )}
                     </div>

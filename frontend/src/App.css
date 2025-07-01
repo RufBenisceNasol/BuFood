@@ -14,7 +14,7 @@
 }
 
 .app-container {
-  background-color: #110d0d;
+  background-color: #faf9f9;
   height: 100vh;
   height: 100dvh; /* Use dynamic viewport height for mobile browsers */
   width: 100vw;

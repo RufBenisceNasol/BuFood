@@ -11,6 +11,7 @@ import OrdersPage from './seller/OrdersPage'
 import ProfilePage from './seller/ProfilePage'
 import SellerProductDetailPage from './seller/SellerProductDetailPage'
 import EditProductPage from './seller/EditProductPage'
+import AnalyticsPage from './seller/AnalyticsPage'
 // Customer imports
 import HomePage from './customer/HomePage'
 import ProductPage from './customer/ProductPage'
@@ -54,6 +55,7 @@ function App() {
           <Route path="/seller/profile" element={<ProfilePage />} />
           <Route path="/seller/product/:productId" element={<SellerProductDetailPage />} />
           <Route path="/seller/edit-product/:productId" element={<EditProductPage />} />
+          <Route path="/seller/analytics" element={<AnalyticsPage />} />
 
           {/* Customer Routes */}
           <Route path="/customer/home" element={<CustomerLayout><HomePage /></CustomerLayout>} />

@@ -16,27 +16,58 @@ body {
   width: 100vw;
   margin: 0;
   position: relative;
-  background-color: white;
+  background-color: #faf9f9;
   border-left: 1px solid #e0e0e0;
   border-right: 1px solid #e0e0e0;
   min-width: 0;
   max-width: none;
+  box-shadow: none;
+  overflow: hidden;
+  overscroll-behavior: none;
 }
 
 .mainContainer {
-  overflow: auto;
-  max-height: 100vh;
-  padding-bottom: 30px;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  position: relative;
   -webkit-overflow-scrolling: touch;
-  scroll-behavior: smooth;
-  width: 100vw;
+  will-change: transform;
+  contain: layout style;
 }
 
 .scrollableContent {
   flex: 1;
   overflow-y: auto;
+  overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
-  padding-bottom: 20px;
+  scroll-behavior: smooth;
+  padding: 0 16px 100px;
+  margin-top: 10px;
+  width: 100%;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: smooth;
+  scroll-padding-top: 60px; /* Account for sticky header */
+  will-change: transform;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+  -webkit-transform-style: preserve-3d;
+  transform-style: preserve-3d;
+  -webkit-font-smoothing: subpixel-antialiased;
+}
+
+/* Ensure search bar stays fixed at the top */
+.searchContainer {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background-color: #faf9f9;
+  padding: 10px 16px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
 
 .loading-container {
@@ -473,7 +504,7 @@ body {
   .pageContainer {
     max-width: 900px;
     border-radius: 16px;
-    box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+    box-shadow: none;
   }
   .bannerContainer, .sectionContainer {
     padding-left: 32px;

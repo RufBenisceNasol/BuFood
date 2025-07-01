@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { order } from '../api';
 import { toast } from 'react-toastify';
@@ -245,10 +245,15 @@ const OrderSummaryPage = () => {
     const navigate = useNavigate();
     const { cartItems, totalAmount } = location.state || { cartItems: [], totalAmount: 0 };
     const [loading, setLoading] = useState(false);
+    
+    // Get user data from localStorage
+    const userData = JSON.parse(localStorage.getItem('user') || '{}');
+    const customerName = userData.name || '';
+    const customerContactNumber = userData.contactNumber || '';
 
     const getDefaultPickupTime = () => {
         const now = new Date();
-        now.setMinutes(now.getMinutes() + 15);
+        now.setMinutes(now.getMinutes() + 20);
         const hours = String(now.getHours()).padStart(2, '0');
         const minutes = String(now.getMinutes()).padStart(2, '0');
         return `${hours}:${minutes}`;
@@ -258,14 +263,14 @@ const OrderSummaryPage = () => {
         orderType: 'Delivery',
         paymentMethod: 'Cash on Delivery',
         deliveryDetails: {
-            receiverName: '',
-            contactNumber: '',
+            receiverName: customerName,
+            contactNumber: customerContactNumber,
             building: '',
             roomNumber: '',
             additionalInstructions: ''
         },
         pickupDetails: {
-            contactNumber: '',
+            contactNumber: customerContactNumber,
             pickupTime: getDefaultPickupTime()
         },
         notes: ''
@@ -304,8 +309,11 @@ const OrderSummaryPage = () => {
     };
 
     const handleSubmit = async () => {
+        toast.info('Place Order button clicked');
+        console.log('Place Order button clicked', formData);
         try {
             setLoading(true);
+            toast.info('Submitting order...');
             if (formData.paymentMethod === 'GCash') {
                 // GCash payment flow
                 // 1. Create a pending order for this store (reuse your order creation logic, but set paymentStatus to 'Pending')
@@ -370,7 +378,7 @@ const OrderSummaryPage = () => {
                 const pickupDateTime = new Date();
                 pickupDateTime.setHours(hours, minutes, 0, 0);
                 if (pickupDateTime <= new Date()) {
-                    toast.error('Please select a future time for pickup (at least 15 minutes from now)');
+                    toast.error('Please select a future time for pickup (at least 20 minutes from now)');
                     setLoading(false);
                     return;
                 }
@@ -400,19 +408,26 @@ const OrderSummaryPage = () => {
                 };
             }
             console.log('Submitting order data:', orderData);
-            await order.createOrderFromCart(orderData);
+            toast.info('Sending order to backend...');
+            const response = await order.createOrderFromCart(orderData);
+            console.log('Order response:', response);
             toast.success('Order placed successfully!');
             navigate('/customer/success-order');
         } catch (err) {
             // Enhanced error logging
             console.error('Order submission error:', err);
+            toast.error('Order submission error: ' + (err?.message || JSON.stringify(err)));
             if (err && err.response) {
                 console.error('Error response data:', err.response.data);
-                toast.error(err.response.data?.message || err.response.data?.error || (err.response.data?.errors && err.response.data.errors[0]?.msg) || 'Failed to create order');
+                if (err.response.data.errors) {
+                    toast.error('Backend: ' + err.response.data.errors[0].msg);
+                } else {
+                    toast.error('Backend: ' + (err.response.data?.message || err.response.data?.error || 'Failed to create order'));
+                }
             } else if (err && err.message) {
-                toast.error(err.message);
+                toast.error('Frontend: ' + err.message);
             } else {
-                toast.error('Failed to create order (unknown error)');
+                toast.error('Unknown error during order creation');
             }
             setLoading(false);
         }
@@ -585,7 +600,7 @@ const OrderSummaryPage = () => {
                                         step: 60,
                                         min: getDefaultPickupTime()
                                     }}
-                                    helperText="Please select a pickup time for today"
+                                    helperText="Please select a pickup time at least 20 minutes from now"
                                 />
                             </FormGroup>
                         </Section>

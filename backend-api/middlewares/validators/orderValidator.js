@@ -152,11 +152,17 @@ const validateUpdateOrderStatus = [
     .withMessage('Invalid order ID format'),
 
   body('status')
+    .if((value, { req }) => !req.body.paymentStatus)
     .trim()
     .notEmpty()
     .withMessage('Status is required')
     .isIn(['Accepted', 'Preparing', 'Ready', 'Out for Delivery', 'Ready for Pickup', 'Delivered', 'Rejected'])
     .withMessage('Invalid status'),
+
+  body('paymentStatus')
+    .optional()
+    .isIn(['Pending', 'Paid', 'Failed'])
+    .withMessage('Invalid payment status'),
 
   body('estimatedTime')
     .optional()

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MdSearch, MdHome, MdFavoriteBorder, MdShoppingCart, MdReceipt, MdPerson, MdFilterList, MdClose, MdMenuOpen, MdSettings, MdLogout, MdStore, MdAddShoppingCart } from 'react-icons/md';
 import Slider from 'react-slick';
@@ -263,6 +263,15 @@ const HomePage = () => {
     navigate(`/customer/store/${storeId}`);
   };
 
+  const dedupedStores = useMemo(() => {
+    const seen = new Set();
+    return stores.filter(store => {
+      if (seen.has(store._id)) return false;
+      seen.add(store._id);
+      return true;
+    });
+  }, [stores]);
+
   if (loading) {
     return <div className="loading-container">Loading...</div>;
   }
@@ -284,8 +293,7 @@ const HomePage = () => {
 
   return (
     <div className="pageContainer">
-      <ToastContainer position="top-right" autoClose={3000} />
-      
+      <ToastContainer position="top-center" autoClose={3000} />
       <div className="mainContainer">
         {/* Header */}
         <div className="header">
@@ -306,9 +314,9 @@ const HomePage = () => {
                 <MdPerson className="menuIcon" />
                 Profile
               </div>
-              <div className="menuItem" onClick={() => navigate('/customer/stores')}>
+              <div className="menuItem" onClick={() => navigate('/customer/view-my-order')}>
                 <MdStore className="menuIcon" />
-                Stores
+                My Orders
               </div>
               <div className="menuItem" onClick={() => navigate('/customer/settings')}>
                 <MdSettings className="menuIcon" />
@@ -322,8 +330,8 @@ const HomePage = () => {
           )}
         </div>
 
-        {/* Search Bar */}
-        <div className="searchContainer">
+        {/* Search Bar - Fixed at the top */}
+        <div className="searchContainer" style={{ position: 'sticky', top: 0, zIndex: 10, backgroundColor: '#faf9f9', padding: '10px 0' }}>
           <div className="searchBar">
             <MdSearch size={24} color="#999" />
             <input 
@@ -347,8 +355,14 @@ const HomePage = () => {
           </div>
         </div>
 
-        {/* Scrollable Content */}
-        <div className="scrollableContent">
+        {/* Main Scrollable Content */}
+        <div className="scrollableContent" style={{
+          flex: 1,
+          overflowY: 'auto',
+          WebkitOverflowScrolling: 'touch',
+          paddingBottom: '80px', // Space for bottom navigation
+          marginTop: '10px'
+        }}>
           {/* Filter Panel */}
           {showFilters && (
             <div className="filterPanel">
@@ -404,9 +418,9 @@ const HomePage = () => {
 
           {/* Banner/Promotional Slider */}
           <div style={styles.bannerContainer}>
-            {stores.length > 0 ? (
+            {dedupedStores.length > 0 ? (
               <Slider {...sliderSettings}>
-                {stores.map(store => (
+                {dedupedStores.map(store => (
                   <div key={store._id} style={styles.slide}>
                     <div 
                       style={styles.banner}

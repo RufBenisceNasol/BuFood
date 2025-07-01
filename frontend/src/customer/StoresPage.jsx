@@ -376,25 +376,6 @@ const StoresPage = () => {
                   <StoreContent>
                     <StoreName>
                       <StoreNameText>{store.storeName}</StoreNameText>
-                      <FavoriteButton 
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          // Toggle favorite status
-                          const newFavorites = new Set(favoriteStores);
-                          if (favoriteStores.has(store._id)) {
-                            newFavorites.delete(store._id);
-                          } else {
-                            newFavorites.add(store._id);
-                          }
-                          setFavoriteStores(newFavorites);
-                        }}
-                        aria-label={favoriteStores.has(store._id) ? 'Remove from favorites' : 'Add to favorites'}
-                      >
-                        {favoriteStores.has(store._id) ? 
-                          <Favorite style={{ color: '#ff4081' }} /> : 
-                          <FavoriteBorder style={{ color: '#999' }} />
-                        }
-                      </FavoriteButton>
                     </StoreName>
                     <StoreDescription>
                       {store.description ? 
@@ -403,10 +384,6 @@ const StoresPage = () => {
                           store.description) : 
                         'No description available'}
                     </StoreDescription>
-                    
-                    <StoreRating>
-                      <RatingText>Review: {store.rating || '0'}</RatingText>
-                    </StoreRating>
                     
                     {store.location && (
                       <StoreLocation>
