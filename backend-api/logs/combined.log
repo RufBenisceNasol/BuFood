@@ -1812,3 +1812,61 @@
 {"level":"info","message":{"duration":"99ms","method":"GET","requestId":"87e182ce-b80a-4eec-9fb6-7aa38e7f0231","status":304,"url":"/"},"timestamp":"2025-07-01T06:06:54.198Z"}
 {"level":"info","message":{"duration":"166ms","method":"PUT","requestId":"2f7522f0-3420-4248-957d-87956e4c8d84","status":200,"url":"/update"},"timestamp":"2025-07-01T06:07:01.430Z"}
 {"level":"info","message":{"duration":"100ms","method":"GET","requestId":"a1d7c125-8839-43f8-97cd-6f992850519d","status":200,"url":"/"},"timestamp":"2025-07-01T06:07:01.535Z"}
+{"level":"info","message":"Running with in-memory cache (Redis disabled)","timestamp":"2025-07-01T06:14:05.639Z"}
+{"level":"info","message":"🚀 Server started on port 8000","timestamp":"2025-07-01T06:14:05.698Z"}
+{"level":"info","message":"📚 API Documentation available at http://[YOUR_IP]:8000/api-docs","timestamp":"2025-07-01T06:14:05.699Z"}
+{"level":"info","message":"MongoDB connection established successfully","timestamp":"2025-07-01T06:14:07.012Z"}
+{"level":"info","message":"✅ Successfully connected to MongoDB","timestamp":"2025-07-01T06:14:07.022Z"}
+{"level":"info","message":"Successfully dropped all indexes from cart collection","timestamp":"2025-07-01T06:14:07.091Z"}
+{"level":"info","message":{"duration":"510ms","method":"PUT","requestId":"d9c3b65b-cfab-429f-bd6a-454c7529cfee","status":200,"url":"/update"},"timestamp":"2025-07-01T06:18:07.491Z"}
+{"level":"info","message":{"duration":"299ms","method":"GET","requestId":"29d15bbc-1515-400b-ae62-0f366316f9ec","status":200,"url":"/"},"timestamp":"2025-07-01T06:18:07.814Z"}
+{"level":"info","message":{"duration":"252ms","method":"PUT","requestId":"2cef8f00-0a9a-463e-b5c2-4783ff58dbdd","status":200,"url":"/update"},"timestamp":"2025-07-01T06:18:07.828Z"}
+{"level":"info","message":{"duration":"130ms","method":"GET","requestId":"2b6c2e17-a396-497d-a623-b83691c1c066","status":304,"url":"/"},"timestamp":"2025-07-01T06:18:08.256Z"}
+{"level":"info","message":{"duration":"180ms","method":"POST","requestId":"89920272-9b02-4c71-bb42-b20d8fceee7a","status":200,"url":"/remove"},"timestamp":"2025-07-01T06:18:08.857Z"}
+{"level":"info","message":{"duration":"95ms","method":"GET","requestId":"7e954981-93b7-482c-a152-1dda8cebc481","status":200,"url":"/"},"timestamp":"2025-07-01T06:18:08.968Z"}
+{"level":"info","message":{"duration":"79ms","method":"GET","requestId":"14d584af-a4be-4a88-aa08-0a2ebd9de164","status":304,"url":"/"},"timestamp":"2025-07-01T06:18:11.576Z"}
+{"level":"info","message":{"duration":"120ms","method":"GET","requestId":"35bb4ca5-6b54-41fe-a655-93e2d3d85fa1","status":304,"url":"/"},"timestamp":"2025-07-01T06:18:11.712Z"}
+{"level":"info","message":{"duration":"422ms","method":"GET","requestId":"566f4388-361b-4bb8-af13-461c8620b8aa","status":304,"url":"/"},"timestamp":"2025-07-01T06:18:13.448Z"}
+{"level":"info","message":{"duration":"182ms","method":"GET","requestId":"b93d92af-e5cb-4ccf-9bc9-6851c095d73d","status":304,"url":"/"},"timestamp":"2025-07-01T06:18:13.634Z"}
+{"level":"info","message":{"duration":"110ms","method":"GET","requestId":"6af87be1-9098-41d0-a535-e5d8345cea47","status":200,"url":"/685d1525f543cb5ec48b35b3?t=1751350696006"},"timestamp":"2025-07-01T06:18:16.205Z"}
+{"level":"info","message":{"duration":"166ms","method":"GET","requestId":"131728c9-e398-40c6-ac26-1ee54af372a3","status":200,"url":"/685d1525f543cb5ec48b35b3?t=1751350696003"},"timestamp":"2025-07-01T06:18:16.250Z"}
+{"level":"info","message":{"duration":"498ms","method":"POST","requestId":"7768d71e-abbf-4971-b155-db74d08ff264","status":200,"url":"/add"},"timestamp":"2025-07-01T06:18:19.567Z"}
+{"level":"info","message":{"duration":"259ms","method":"GET","requestId":"9a7b6118-82c0-4802-8b88-da49c91346da","status":200,"url":"/"},"timestamp":"2025-07-01T06:18:27.108Z"}
+{"level":"info","message":{"duration":"254ms","method":"GET","requestId":"f0dc82c3-ac1f-4041-81d8-ce3db20eb849","status":304,"url":"/"},"timestamp":"2025-07-01T06:18:27.367Z"}
+{"level":"info","message":{"duration":"244ms","method":"GET","requestId":"981489f3-cf98-4623-bb6c-5982663be6cd","status":304,"url":"/"},"timestamp":"2025-07-01T06:19:08.275Z"}
+{"level":"info","message":{"duration":"249ms","method":"GET","requestId":"e8b6dddb-bf28-4121-a519-462169bef82a","status":304,"url":"/"},"timestamp":"2025-07-01T06:19:08.536Z"}
+{"level":"info","message":{"duration":"305ms","method":"GET","requestId":"97d1ff64-7942-4256-baad-8faf9e3ccfce","status":200,"url":"/my-orders"},"timestamp":"2025-07-01T06:19:13.078Z"}
+{"level":"info","message":{"duration":"310ms","method":"GET","requestId":"f1b967f9-2682-4577-b620-b03db7da21fc","status":304,"url":"/my-orders"},"timestamp":"2025-07-01T06:19:13.393Z"}
+{"level":"info","message":{"duration":"553ms","method":"POST","requestId":"c64c89df-7328-4af9-a656-0f57013c3a50","status":200,"url":"/686261655e662bcc9fd1c6de/cancel"},"timestamp":"2025-07-01T06:19:33.139Z"}
+{"level":"info","message":{"duration":"256ms","method":"GET","requestId":"659e1c37-a6d9-46a7-807e-99232e50cbab","status":200,"url":"/my-orders"},"timestamp":"2025-07-01T06:19:33.406Z"}
+{"level":"info","message":{"duration":"501ms","method":"POST","requestId":"e21e5109-1488-401f-9693-4b4c0db575a0","status":200,"url":"/add"},"timestamp":"2025-07-01T06:19:56.406Z"}
+{"level":"info","message":{"duration":"254ms","method":"GET","requestId":"db13b6eb-1a09-4ce8-a3f0-6e1b4061ff10","status":200,"url":"/"},"timestamp":"2025-07-01T06:19:57.102Z"}
+{"level":"info","message":{"duration":"293ms","method":"GET","requestId":"05f27bee-ad44-4ba3-b29c-6bd0807cd6fe","status":304,"url":"/"},"timestamp":"2025-07-01T06:19:57.400Z"}
+{"level":"info","message":{"duration":"633ms","method":"POST","requestId":"c4a5e603-fefc-4cc2-aff0-8749a41ab17b","status":201,"url":"/create-from-cart"},"timestamp":"2025-07-01T06:20:13.170Z"}
+{"level":"info","message":{"duration":"288ms","method":"GET","requestId":"e6adbb05-e696-497a-ac6b-d6b913dad058","status":200,"url":"/my-orders"},"timestamp":"2025-07-01T06:20:15.286Z"}
+{"level":"info","message":{"duration":"309ms","method":"GET","requestId":"b01a934a-24bc-43c0-8a43-02e7668a2638","status":304,"url":"/my-orders"},"timestamp":"2025-07-01T06:20:15.601Z"}
+{"level":"info","message":{"duration":"111ms","method":"GET","requestId":"f49793af-dca2-4478-84cc-58730b3ff614","status":200,"url":"/685d1525f543cb5ec48b35b3?t=1751350842364"},"timestamp":"2025-07-01T06:20:42.563Z"}
+{"level":"info","message":{"duration":"169ms","method":"GET","requestId":"8bdaff07-7290-4ae1-b32d-1fbc5f3ad58c","status":200,"url":"/685d1525f543cb5ec48b35b3?t=1751350842359"},"timestamp":"2025-07-01T06:20:42.609Z"}
+{"level":"info","message":{"duration":"245ms","method":"POST","requestId":"303046f3-1dac-4d1d-a17a-06ea499379ba","status":200,"url":"/logout"},"timestamp":"2025-07-01T06:20:48.152Z"}
+{"level":"info","message":{"duration":"479ms","method":"POST","requestId":"52f29451-2923-4028-8562-55fa9b1bcdb3","status":200,"url":"/login"},"timestamp":"2025-07-01T06:20:53.142Z"}
+{"level":"info","message":{"duration":"267ms","method":"GET","requestId":"7f2f950f-b570-4e86-9218-27626436a2fb","status":200,"url":"/my-store"},"timestamp":"2025-07-01T06:20:53.549Z"}
+{"level":"info","message":{"duration":"265ms","method":"GET","requestId":"34af4fc0-4dd3-4431-9071-832e7769d425","status":200,"url":"/seller?page=1&limit=100&sortBy=createdAt&sortOrder=desc"},"timestamp":"2025-07-01T06:20:53.574Z"}
+{"level":"info","message":{"duration":"323ms","method":"GET","requestId":"2e4d1da5-da5b-4937-9f58-c665287091ee","status":304,"url":"/seller?page=1&limit=100&sortBy=createdAt&sortOrder=desc"},"timestamp":"2025-07-01T06:20:53.904Z"}
+{"level":"info","message":{"duration":"244ms","method":"GET","requestId":"034c6ebd-ce96-4b14-a872-97de83280c80","status":200,"url":"/products"},"timestamp":"2025-07-01T06:20:55.277Z"}
+{"level":"info","message":{"duration":"246ms","method":"GET","requestId":"f3109dae-793c-4ed5-9f0e-0c240eebdfff","status":304,"url":"/products"},"timestamp":"2025-07-01T06:20:55.528Z"}
+{"level":"info","message":{"duration":"374ms","method":"GET","requestId":"1d4ce58a-bf88-461b-9a16-76ff89fdeba0","status":304,"url":"/seller?page=1&limit=100&sortBy=createdAt&sortOrder=desc"},"timestamp":"2025-07-01T06:20:57.619Z"}
+{"level":"info","message":{"duration":"391ms","method":"GET","requestId":"e07026f0-9dd2-404b-bc40-58eae77ff273","status":304,"url":"/seller?page=1&limit=100&sortBy=createdAt&sortOrder=desc"},"timestamp":"2025-07-01T06:20:58.018Z"}
+{"level":"info","message":{"duration":"496ms","method":"POST","requestId":"7bc48243-f40b-403f-9295-f53de6716c2e","status":200,"url":"/login"},"timestamp":"2025-07-01T06:21:07.142Z"}
+{"level":"info","message":{"duration":"357ms","method":"GET","requestId":"cb29f839-d630-44ba-89d8-9bc23f6cc345","status":200,"url":"/seller?page=1&limit=100&sortBy=createdAt&sortOrder=desc"},"timestamp":"2025-07-01T06:21:07.667Z"}
+{"level":"info","message":{"duration":"333ms","method":"GET","requestId":"564143c2-4340-4531-bd21-5def57439166","status":304,"url":"/seller?page=1&limit=100&sortBy=createdAt&sortOrder=desc"},"timestamp":"2025-07-01T06:21:08.009Z"}
+{"level":"info","message":{"duration":"70ms","method":"GET","requestId":"29a66243-f437-4daa-bed3-c6f3a2121f76","status":200,"url":"/me"},"timestamp":"2025-07-01T06:21:09.642Z"}
+{"level":"info","message":{"duration":"66ms","method":"GET","requestId":"1337ee30-121b-4f71-bca4-b6dcc7441cb9","status":304,"url":"/me"},"timestamp":"2025-07-01T06:21:09.728Z"}
+{"level":"info","message":{"duration":"348ms","method":"GET","requestId":"065ad9c7-e7eb-4fc0-9c43-8b909e7e2cf1","status":200,"url":"/seller?page=1&limit=10&sortBy=createdAt&sortOrder=desc"},"timestamp":"2025-07-01T06:21:09.907Z"}
+{"level":"info","message":{"duration":"335ms","method":"GET","requestId":"519efdb6-582a-4625-a32c-33e91d95e425","status":304,"url":"/seller?page=1&limit=10&sortBy=createdAt&sortOrder=desc"},"timestamp":"2025-07-01T06:21:10.247Z"}
+{"level":"info","message":{"duration":"245ms","method":"GET","requestId":"66e4bf03-d0dc-47c3-8184-81c9fe842076","status":200,"url":"/68637e1cb366549eee1e8247"},"timestamp":"2025-07-01T06:21:13.553Z"}
+{"level":"info","message":{"duration":"339ms","method":"GET","requestId":"21a9995d-f5f3-49e5-a785-385969251cd9","status":304,"url":"/seller?page=1&limit=100&sortBy=createdAt&sortOrder=desc"},"timestamp":"2025-07-01T06:21:21.391Z"}
+{"level":"info","message":{"duration":"329ms","method":"GET","requestId":"3fe69063-0bc4-40fa-910a-0effec782e1a","status":304,"url":"/seller?page=1&limit=100&sortBy=createdAt&sortOrder=desc"},"timestamp":"2025-07-01T06:21:21.730Z"}
+{"level":"info","message":{"duration":"338ms","method":"GET","requestId":"2c0bda97-9758-47fc-975f-529007ebcc28","status":304,"url":"/seller?page=1&limit=100&sortBy=createdAt&sortOrder=desc"},"timestamp":"2025-07-01T06:21:30.477Z"}
+{"level":"info","message":{"duration":"339ms","method":"GET","requestId":"280e1ffe-bc15-4e36-8ba4-3895b6f7a9e3","status":304,"url":"/seller?page=1&limit=100&sortBy=createdAt&sortOrder=desc"},"timestamp":"2025-07-01T06:21:30.824Z"}
+{"level":"info","message":{"duration":"835ms","method":"GET","requestId":"dca8652a-f856-4448-aaaa-17c16c8465e0","status":304,"url":"/seller?page=1&limit=100&sortBy=createdAt&sortOrder=desc"},"timestamp":"2025-07-01T06:21:39.350Z"}
+{"level":"info","message":{"duration":"1346ms","method":"GET","requestId":"9eb3f844-bacd-4300-8b49-85255555f1b1","status":304,"url":"/seller?page=1&limit=100&sortBy=createdAt&sortOrder=desc"},"timestamp":"2025-07-01T06:21:40.703Z"}
