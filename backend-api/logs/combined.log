@@ -1870,3 +1870,16 @@
 {"level":"info","message":{"duration":"339ms","method":"GET","requestId":"280e1ffe-bc15-4e36-8ba4-3895b6f7a9e3","status":304,"url":"/seller?page=1&limit=100&sortBy=createdAt&sortOrder=desc"},"timestamp":"2025-07-01T06:21:30.824Z"}
 {"level":"info","message":{"duration":"835ms","method":"GET","requestId":"dca8652a-f856-4448-aaaa-17c16c8465e0","status":304,"url":"/seller?page=1&limit=100&sortBy=createdAt&sortOrder=desc"},"timestamp":"2025-07-01T06:21:39.350Z"}
 {"level":"info","message":{"duration":"1346ms","method":"GET","requestId":"9eb3f844-bacd-4300-8b49-85255555f1b1","status":304,"url":"/seller?page=1&limit=100&sortBy=createdAt&sortOrder=desc"},"timestamp":"2025-07-01T06:21:40.703Z"}
+{"level":"info","message":{"duration":"1852ms","method":"POST","requestId":"39a18b8c-2ca0-447d-94a8-b59d79cb2e27","status":200,"url":"/login"},"timestamp":"2025-07-01T06:27:44.274Z"}
+{"level":"info","message":{"duration":"2160ms","method":"GET","requestId":"3b10e2cf-7300-429c-97b2-81511413ab45","status":304,"url":"/"},"timestamp":"2025-07-01T06:27:46.609Z"}
+{"level":"info","message":{"duration":"2666ms","method":"GET","requestId":"aecf310e-c823-4c16-aef1-2226a3d9814a","status":304,"url":"/"},"timestamp":"2025-07-01T06:27:49.285Z"}
+{"level":"info","message":{"duration":"3540ms","method":"POST","requestId":"e5e3412c-237d-4620-977f-9c87088494f9","status":200,"url":"/logout"},"timestamp":"2025-07-01T06:27:55.878Z"}
+{"level":"info","message":{"duration":"3836ms","method":"POST","requestId":"bdba0dd8-e0c4-48d9-8be3-4b256c4181b8","status":200,"url":"/login"},"timestamp":"2025-07-01T06:28:00.326Z"}
+{"level":"info","message":{"duration":"4262ms","method":"GET","requestId":"28975499-233b-4e2e-9cae-4acdc306f5cf","status":200,"url":"/my-orders"},"timestamp":"2025-07-01T06:28:26.361Z"}
+{"level":"info","message":{"duration":"4747ms","method":"GET","requestId":"d9ef10e3-ba88-456b-b0f3-628192588987","status":304,"url":"/my-orders"},"timestamp":"2025-07-01T06:28:31.115Z"}
+{"level":"info","message":"Running with in-memory cache (Redis disabled)","timestamp":"2025-07-01T07:17:00.250Z"}
+{"level":"info","message":"🚀 Server started on port 8000","timestamp":"2025-07-01T07:17:00.315Z"}
+{"level":"info","message":"📚 API Documentation available at http://[YOUR_IP]:8000/api-docs","timestamp":"2025-07-01T07:17:00.318Z"}
+{"level":"info","message":"MongoDB connection established successfully","timestamp":"2025-07-01T07:17:11.064Z"}
+{"level":"info","message":"✅ Successfully connected to MongoDB","timestamp":"2025-07-01T07:17:11.081Z"}
+{"level":"info","message":"Successfully dropped all indexes from cart collection","timestamp":"2025-07-01T07:17:11.160Z"}
