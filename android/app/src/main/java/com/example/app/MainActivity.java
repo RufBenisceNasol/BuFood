@@ -1,4 +1,4 @@
-package com.delibup.myapp;
+package com.example.app;
 
 import com.getcapacitor.BridgeActivity;
 

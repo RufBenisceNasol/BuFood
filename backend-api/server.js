@@ -73,6 +73,7 @@ const allowedOrigins = [
     'https://capstonedelibup.onrender.com', // Production backend (if needed)
     'capacitor://localhost', // Capacitor Android/iOS
     'http://localhost', // Android emulator
+    'https://localhost', // Android WebView (for CORS)
     // Add your deployed frontend URL here if different
 ];
 

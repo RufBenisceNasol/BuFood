@@ -1,10 +1,10 @@
 apply plugin: 'com.android.application'
 
 android {
-    namespace "com.delibup.myapp"
+    namespace "com.example.app"
     compileSdk rootProject.ext.compileSdkVersion
     defaultConfig {
-        applicationId "com.delibup.myapp"
+        applicationId "com.example.app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
@@ -25,9 +25,9 @@ android {
 }
 
 repositories {
-    flatDir{
-        dirs '../capacitor-cordova-android-plugins/src/main/libs', 'libs'
-    }
+    // flatDir{
+    //     dirs '../capacitor-cordova-android-plugins/src/main/libs', 'libs'
+    // }
 }
 
 dependencies {
@@ -50,5 +50,9 @@ try {
         apply plugin: 'com.google.gms.google-services'
     }
 } catch(Exception e) {
+    // If google-services.json is not found, the plugin won't be applied
+    // This is to prevent build errors when the file is missing
+    // and to log a message for the user.
+    def logger = org.gradle.api.logging.Logging.getLogger("CapacitorApp")
     logger.info("google-services.json not found, google-services plugin not applied. Push Notifications won't work")
 }

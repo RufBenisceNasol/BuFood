@@ -2,6 +2,6 @@
 <resources>
     <string name="app_name">Delibup</string>
     <string name="title_activity_main">Delibup</string>
-    <string name="package_name">com.delibup.myapp</string>
-    <string name="custom_url_scheme">com.delibup.myapp</string>
+    <string name="package_name">com.example.app</string>
+    <string name="custom_url_scheme">com.example.app</string>
 </resources>
