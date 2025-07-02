@@ -21,24 +21,42 @@ const LoginPage = () => {
         setLoading(true);
 
         try {
-            const response = await auth.login(email, password);
-
-            // Store both tokens
-            localStorage.setItem('token', response.data.accessToken);
-            localStorage.setItem('refreshToken', response.data.refreshToken);
-            localStorage.setItem('user', JSON.stringify(response.data.user));
-
-            // Set authorization header
-            axios.defaults.headers.common['Authorization'] = `Bearer ${response.data.accessToken}`;
-
-            if (response.data.user.role === 'Seller') {
-                navigate('/seller/dashboard');
+            const data = await auth.login(email, password);
+            // Safely check for accessToken and refreshToken before using any data properties
+            if (data?.accessToken && data?.refreshToken) {
+                localStorage.setItem('token', data.accessToken);
+                localStorage.setItem('refreshToken', data.refreshToken);
+                localStorage.setItem('user', JSON.stringify(data.user));
+                axios.defaults.headers.common['Authorization'] = `Bearer ${data.accessToken}`;
+                if (data.user.role === 'Seller') {
+                    navigate('/seller/dashboard');
+                } else {
+                    navigate('/customer/home');
+                }
             } else {
-                navigate('/customer/home');
+                setError('Login failed: No tokens received. Please check your credentials or contact support.');
             }
         } catch (err) {
-            const errorMessage = err.response?.data?.message || 'An error occurred during login';
-            setError(errorMessage);
+            // Robust error handling for various backend error shapes
+            if (err.response?.data) {
+                if (typeof err.response.data === 'string') {
+                    setError(err.response.data);
+                } else if (err.response.data.message) {
+                    setError(err.response.data.message);
+                } else if (err.response.data.error) {
+                    let msg = err.response.data.error;
+                    if (err.response.data.details) {
+                        msg += ': ' + err.response.data.details;
+                    }
+                    setError(msg);
+                } else if (err.response.data.details) {
+                    setError(err.response.data.details);
+                } else {
+                    setError(JSON.stringify(err.response.data));
+                }
+            } else {
+                setError(err.message || 'An error occurred during login');
+            }
         } finally {
             setLoading(false);
         }

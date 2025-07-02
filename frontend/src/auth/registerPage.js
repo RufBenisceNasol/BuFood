@@ -43,20 +43,40 @@ const RegisterPage = () => {
         try {
             // Remove confirmPassword and create dataToSend in one step
             const { confirmPassword: _, ...dataToSend } = formData;
-            const response = await auth.register(dataToSend);
-
-            if (response.data.accessToken && response.data.refreshToken) {
-                localStorage.setItem('token', response.data.accessToken);
-                localStorage.setItem('refreshToken', response.data.refreshToken);
-                localStorage.setItem('user', JSON.stringify(response.data.user));
+            const data = await auth.register(dataToSend);
+            // Safely check for accessToken and refreshToken before using any data properties
+            if (data?.accessToken && data?.refreshToken) {
+                localStorage.setItem('token', data.accessToken);
+                localStorage.setItem('refreshToken', data.refreshToken);
+                localStorage.setItem('user', JSON.stringify(data.user));
+                setSuccess(data.message);
+                setTimeout(() => {
+                    navigate('/login');
+                }, 5000);
+            } else if (data?.message) {
+                setSuccess(data.message);
             }
-
-            setSuccess(response.data.message);
-            setTimeout(() => {
-                navigate('/login');
-            }, 5000);
         } catch (err) {
-            setError(err.response?.data?.message || 'Registration failed');
+            // Robust error handling for various backend error shapes
+            if (err.response?.data) {
+                if (typeof err.response.data === 'string') {
+                    setError(err.response.data);
+                } else if (err.response.data.message) {
+                    setError(err.response.data.message);
+                } else if (err.response.data.error) {
+                    let msg = err.response.data.error;
+                    if (err.response.data.details) {
+                        msg += ': ' + err.response.data.details;
+                    }
+                    setError(msg);
+                } else if (err.response.data.details) {
+                    setError(err.response.data.details);
+                } else {
+                    setError(JSON.stringify(err.response.data));
+                }
+            } else {
+                setError(err.message || 'Registration failed');
+            }
         } finally {
             setLoading(false);
         }
