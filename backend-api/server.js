@@ -129,6 +129,14 @@ app.get('/health', (req, res) => {
     });
 });
 
+// Root route handler
+app.get('/', (req, res) => {
+    res.status(200).json({
+        message: 'Welcome to the BuFood API backend!',
+        status: 'ok'
+    });
+});
+
 // Routes with caching where appropriate
 app.use('/api/auth', authRoutes);
 app.use('/api/products', cache('10 minutes'), productRoutes);

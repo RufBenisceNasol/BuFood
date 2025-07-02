@@ -9,6 +9,9 @@
     "concurrently": "^8.2.0"
   },
   "dependencies": {
+    "@capacitor/android": "^7.4.0",
+    "@capacitor/cli": "^7.4.0",
+    "@capacitor/core": "^7.4.0",
     "axios": "^1.10.0",
     "recharts": "^3.0.2"
   }

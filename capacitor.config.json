@@ -1,0 +1,5 @@
+{
+  "appId": "com.delibup.myapp",
+  "appName": "Delibup",
+  "webDir": "frontend/dist"
+}

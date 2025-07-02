@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Delibup</string>
+    <string name="title_activity_main">Delibup</string>
+    <string name="package_name">com.delibup.myapp</string>
+    <string name="custom_url_scheme">com.delibup.myapp</string>
+</resources>
