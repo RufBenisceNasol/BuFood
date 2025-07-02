@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import axios from 'axios';
+import { auth } from '../api';
 import { useNavigate } from 'react-router-dom';
 import { FiUser, FiMail, FiPhone, FiLock, FiBriefcase, FiEye, FiEyeOff } from 'react-icons/fi';
 import logod from '../assets/logod.png';
@@ -43,7 +43,7 @@ const RegisterPage = () => {
         try {
             // Remove confirmPassword and create dataToSend in one step
             const { confirmPassword: _, ...dataToSend } = formData;
-            const response = await axios.post('http://localhost:8000/api/auth/register', dataToSend);
+            const response = await auth.register(dataToSend);
 
             if (response.data.accessToken && response.data.refreshToken) {
                 localStorage.setItem('token', response.data.accessToken);

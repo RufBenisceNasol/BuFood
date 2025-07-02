@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import logod from '../assets/logod.png';
 import { MdMailOutline, MdLockOpen } from 'react-icons/md';
 import { FiEye, FiEyeOff } from 'react-icons/fi';
+import { auth } from '../api';
 
 const LoginPage = () => {
     const [email, setEmail] = useState('');
@@ -20,10 +21,7 @@ const LoginPage = () => {
         setLoading(true);
 
         try {
-            const response = await axios.post('http://localhost:8000/api/auth/login', {
-                email,
-                password
-            });
+            const response = await auth.login(email, password);
 
             // Store both tokens
             localStorage.setItem('token', response.data.accessToken);

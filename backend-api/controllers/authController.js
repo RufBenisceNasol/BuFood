@@ -102,7 +102,8 @@ const register = async (req, res) => {
       }
     }
 
-    const verificationLink = `http://localhost:8000/api/auth/verify/${verificationToken}`;
+    const baseUrl = process.env.BASE_URL || 'http://localhost:8000';
+    const verificationLink = `${baseUrl}/api/auth/verify/${verificationToken}`;
     await sendVerificationEmail(email, verificationLink);
 
     res.status(201).json({
@@ -213,7 +214,8 @@ const resendVerificationEmail = async (req, res) => {
     await user.save();
 
     // Send new verification email
-    const verificationLink = `http://localhost:8000/api/auth/verify/${verificationToken}`;
+    const baseUrl = process.env.BASE_URL || 'http://localhost:8000';
+    const verificationLink = `${baseUrl}/api/auth/verify/${verificationToken}`;
     await sendVerificationEmail(user.email, verificationLink);
 
     res.status(200).json({ message: 'Verification email resent successfully' });

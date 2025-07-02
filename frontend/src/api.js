@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // Use environment variable for API base URL, fallback to Render URL
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://capstonedelibup.onrender.com";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://capstonedelibup.onrender.com/api";
 
 // Create axios instance with default config
 const api = axios.create({
