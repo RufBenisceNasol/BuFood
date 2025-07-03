@@ -170,6 +170,17 @@ app.use('/api/seller', sellerRoutes);
 app.use('/api/cart', cartRoutes);
 app.use('/api/orders', orderRoutes);
 
+// --- Serve static frontend files and SPA fallback ---
+const path = require('path');
+const frontendDistPath = path.join(__dirname, '../frontend/dist');
+app.use(express.static(frontendDistPath));
+
+// SPA fallback: serve index.html for any route not starting with /api
+app.get(/^\/(?!api).*/, (req, res) => {
+  res.sendFile(path.join(frontendDistPath, 'index.html'));
+});
+// --- End SPA static serving ---
+
 // Error handling
 app.use(errorLogger);
 app.use((err, req, res, next) => {
