@@ -1,10 +1,12 @@
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://capstonedelibup.onrender.com/api";
+
 export const store = {
   // ... existing methods ...
   
   // Add the getSellerProfile method
   async getSellerProfile() {
     try {
-      const response = await fetch('/api/seller/profile', {
+      const response = await fetch(`${API_BASE_URL}/seller/profile`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',

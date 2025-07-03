@@ -68,12 +68,12 @@ app.use(compression()); // Compress responses
 
 // Allow CORS from specific origins
 const allowedOrigins = [
-    'http://localhost:5173', // Vite dev server
     'http://localhost:3000', // React dev server (if used)
     'https://capstonedelibup.onrender.com', // Production backend (if needed)
     'capacitor://localhost', // Capacitor Android/iOS
     'http://localhost', // Android emulator
     'https://localhost', // Android WebView (for CORS)
+    'https://dellibup.onrender.com', // Deployed frontend
     // Add your deployed frontend URL here if different
 ];
 
