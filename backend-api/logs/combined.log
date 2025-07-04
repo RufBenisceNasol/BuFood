@@ -1889,3 +1889,32 @@
 {"level":"info","message":"MongoDB connection established successfully","timestamp":"2025-07-02T03:25:41.423Z"}
 {"level":"info","message":"✅ Successfully connected to MongoDB","timestamp":"2025-07-02T03:25:41.426Z"}
 {"level":"info","message":"Successfully dropped all indexes from cart collection","timestamp":"2025-07-02T03:25:41.480Z"}
+{"level":"info","message":"Running with in-memory cache (Redis disabled)","timestamp":"2025-07-03T17:39:58.856Z"}
+{"level":"info","message":"🚀 Server started on port 8000","timestamp":"2025-07-03T17:39:58.944Z"}
+{"level":"info","message":"📚 API Documentation available at http://[YOUR_IP]:8000/api-docs","timestamp":"2025-07-03T17:39:58.947Z"}
+{"level":"info","message":"MongoDB connection established successfully","timestamp":"2025-07-03T17:39:59.941Z"}
+{"level":"info","message":"✅ Successfully connected to MongoDB","timestamp":"2025-07-03T17:39:59.953Z"}
+{"level":"info","message":"Successfully dropped all indexes from cart collection","timestamp":"2025-07-03T17:40:00.003Z"}
+{"level":"info","message":"Running with in-memory cache (Redis disabled)","timestamp":"2025-07-03T17:44:47.410Z"}
+{"level":"info","message":"🚀 Server started on port 8000","timestamp":"2025-07-03T17:44:47.494Z"}
+{"level":"info","message":"📚 API Documentation available at http://[YOUR_IP]:8000/api-docs","timestamp":"2025-07-03T17:44:47.496Z"}
+{"level":"info","message":"Running with in-memory cache (Redis disabled)","timestamp":"2025-07-03T17:44:58.053Z"}
+{"level":"info","message":"🚀 Server started on port 8000","timestamp":"2025-07-03T17:44:58.169Z"}
+{"level":"info","message":"📚 API Documentation available at http://[YOUR_IP]:8000/api-docs","timestamp":"2025-07-03T17:44:58.171Z"}
+{"level":"info","message":"MongoDB connection established successfully","timestamp":"2025-07-03T17:44:59.667Z"}
+{"level":"info","message":"✅ Successfully connected to MongoDB","timestamp":"2025-07-03T17:44:59.690Z"}
+{"level":"info","message":"Successfully dropped all indexes from cart collection","timestamp":"2025-07-03T17:44:59.803Z"}
+{"level":"info","message":"Received shutdown signal, starting graceful shutdown...","timestamp":"2025-07-03T17:46:10.996Z"}
+{"level":"info","message":"Running with in-memory cache (Redis disabled)","timestamp":"2025-07-03T17:46:25.695Z"}
+{"level":"info","message":"🚀 Server started on port 8000","timestamp":"2025-07-03T17:46:25.732Z"}
+{"level":"info","message":"📚 API Documentation available at http://[YOUR_IP]:8000/api-docs","timestamp":"2025-07-03T17:46:25.733Z"}
+{"level":"info","message":"MongoDB connection established successfully","timestamp":"2025-07-03T17:46:26.799Z"}
+{"level":"info","message":"✅ Successfully connected to MongoDB","timestamp":"2025-07-03T17:46:26.809Z"}
+{"level":"info","message":"Successfully dropped all indexes from cart collection","timestamp":"2025-07-03T17:46:26.878Z"}
+{"level":"info","message":"Received shutdown signal, starting graceful shutdown...","timestamp":"2025-07-03T17:49:37.868Z"}
+{"level":"info","message":"Running with in-memory cache (Redis disabled)","timestamp":"2025-07-03T17:49:50.995Z"}
+{"level":"info","message":"🚀 Server started on port 8000","timestamp":"2025-07-03T17:49:51.028Z"}
+{"level":"info","message":"📚 API Documentation available at http://[YOUR_IP]:8000/api-docs","timestamp":"2025-07-03T17:49:51.030Z"}
+{"level":"info","message":"MongoDB connection established successfully","timestamp":"2025-07-03T17:49:58.872Z"}
+{"level":"info","message":"✅ Successfully connected to MongoDB","timestamp":"2025-07-03T17:49:58.884Z"}
+{"level":"info","message":"Successfully dropped all indexes from cart collection","timestamp":"2025-07-03T17:49:58.967Z"}

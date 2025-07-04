@@ -35,6 +35,33 @@ const orderRoutes = require('./routes/orderRoutes');
 const app = express();
 const port = process.env.PORT || 8000;
 
+// Allow CORS from specific origins (MOVED TO TOP)
+const allowedOrigins = [
+    'http://localhost:5173', // React dev server (if used)
+    'http://localhost:3000', // React dev server (if used)
+    'https://capstonedelibup.onrender.com', // Production backend (if needed)
+    'capacitor://localhost', // Capacitor Android/iOS
+    'http://localhost', // Android emulator
+    'https://localhost', // Android WebView (for CORS)
+    'https://dellibup.onrender.com', // Deployed frontend
+    // Add your deployed frontend URL here if different
+];
+
+const corsHandler = cors({
+    origin: function (origin, callback) {
+        // allow requests with no origin (like mobile apps or curl)
+        if (!origin) return callback(null, true);
+        if (allowedOrigins.indexOf(origin) !== -1) {
+            return callback(null, true);
+        } else {
+            return callback(new Error('Not allowed by CORS'));
+        }
+    },
+    credentials: true,
+});
+
+app.use(corsHandler);
+
 // Security middleware
 app.use(helmet({
     contentSecurityPolicy: {
@@ -66,33 +93,8 @@ const speedLimiter = slowDown({
 // Middleware
 app.use(compression()); // Compress responses
 
-// Allow CORS from specific origins
-const allowedOrigins = [
-    'http://localhost:3000', // React dev server (if used)
-    'https://capstonedelibup.onrender.com', // Production backend (if needed)
-    'capacitor://localhost', // Capacitor Android/iOS
-    'http://localhost', // Android emulator
-    'https://localhost', // Android WebView (for CORS)
-    'https://dellibup.onrender.com', // Deployed frontend
-    // Add your deployed frontend URL here if different
-];
-
-app.use(cors({
-    origin: function (origin, callback) {
-        // allow requests with no origin (like mobile apps or curl)
-        if (!origin) return callback(null, true);
-        if (allowedOrigins.indexOf(origin) !== -1) {
-            return callback(null, true);
-        } else {
-            return callback(new Error('Not allowed by CORS'));
-        }
-    },
-    credentials: true,
-}));
-
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
-app.use(requestLogger); // Add request logging
+// Add request logging
+app.use(requestLogger);
 
 // Add request ID to each request
 app.use((req, res, next) => {
