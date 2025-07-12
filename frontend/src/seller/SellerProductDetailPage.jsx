@@ -6,6 +6,34 @@ import 'react-toastify/dist/ReactToastify.css';
 import { MdArrowBack, MdEdit, MdDelete, MdMoreVert } from 'react-icons/md';
 import { Modal, Button } from '@mui/material';
 
+import styled from 'styled-components';
+
+const ScrollableContent = styled.div`
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+  padding-bottom: 20px;
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  &::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 10px;
+    transition: background 0.3s ease;
+  }
+  &::-webkit-scrollbar-thumb:hover {
+    background: #555;
+  }
+  scrollbar-width: thin;
+  scrollbar-color: #888 #f1f1f1;
+`;
+
 const SellerProductDetailPage = () => {
     const { productId } = useParams();
     const navigate = useNavigate();
@@ -142,87 +170,89 @@ const SellerProductDetailPage = () => {
                 <h1 style={styles.headerTitle}>Product Details</h1>
             </div>
 
-            <div style={styles.contentContainer}>
-                {refreshing && (
-                    <div style={styles.refreshingIndicator}>Refreshing...</div>
-                )}
-                
-                {productData && (
-                    <div style={styles.productCard}>
-                        <div style={styles.imageContainer}>
-                            <img 
-                                src={`${productData.image}${productData.image.includes('?') ? '&' : '?'}t=${timestamp}&nocache=${Math.random()}`}
-                                alt={productData.name}
-                                style={styles.productImage}
-                                onError={(e) => {
-                                    // If image fails to load, try without cache busting
-                                    if (!e.target.dataset.retried) {
-                                        e.target.dataset.retried = true;
-                                        e.target.src = productData.image;
-                                    }
-                                }}
-                            />
-                            <div style={styles.availabilityBadge(productData.availability)}>
-                                {productData.availability === 'Available' ? 'Available' : productData.availability === 'Pending' ? 'Pending' : 'Out of Stock'}
+            <ScrollableContent>
+                <div style={styles.contentContainer}>
+                    {refreshing && (
+                        <div style={styles.refreshingIndicator}>Refreshing...</div>
+                    )}
+                    
+                    {productData && (
+                        <div style={styles.productCard}>
+                            <div style={styles.imageContainer}>
+                                <img 
+                                    src={`${productData.image}${productData.image.includes('?') ? '&' : '?'}t=${timestamp}&nocache=${Math.random()}`}
+                                    alt={productData.name}
+                                    style={styles.productImage}
+                                    onError={(e) => {
+                                        // If image fails to load, try without cache busting
+                                        if (!e.target.dataset.retried) {
+                                            e.target.dataset.retried = true;
+                                            e.target.src = productData.image;
+                                        }
+                                    }}
+                                />
+                                <div style={styles.availabilityBadge(productData.availability)}>
+                                    {productData.availability === 'Available' ? 'Available' : productData.availability === 'Pending' ? 'Pending' : 'Out of Stock'}
+                                </div>
                             </div>
-                        </div>
 
-                        <div style={styles.productInfo}>
-                            <div style={styles.productHeader}>
-                                <h2 style={styles.productName}>{productData.name}</h2>
-                                <div className="dropdown-container" style={styles.dropdownContainer}>
-                                    <button style={styles.dropdownButton} onClick={toggleDropdown}>
-                                        <MdMoreVert size={24} />
-                                    </button>
-                                    {showDropdown && (
-                                        <div style={styles.dropdownMenu}>
-                                            <button 
-                                                style={styles.dropdownItem}
-                                                onClick={() => navigate(`/seller/edit-product/${productId}`)}
-                                            >
-                                                <MdEdit size={20} />
-                                                Edit
-                                            </button>
-                                            <button 
-                                                style={{...styles.dropdownItem, color: '#dc3545'}}
-                                                onClick={handleDelete}
-                                            >
-                                                <MdDelete size={20} />
-                                                Delete
-                                            </button>
+                            <div style={styles.productInfo}>
+                                <div style={styles.productHeader}>
+                                    <h2 style={styles.productName}>{productData.name}</h2>
+                                    <div className="dropdown-container" style={styles.dropdownContainer}>
+                                        <button style={styles.dropdownButton} onClick={toggleDropdown}>
+                                            <MdMoreVert size={24} />
+                                        </button>
+                                        {showDropdown && (
+                                            <div style={styles.dropdownMenu}>
+                                                <button 
+                                                    style={styles.dropdownItem}
+                                                    onClick={() => navigate(`/seller/edit-product/${productId}`)}
+                                                >
+                                                    <MdEdit size={20} />
+                                                    Edit
+                                                </button>
+                                                <button 
+                                                    style={{...styles.dropdownItem, color: '#dc3545'}}
+                                                    onClick={handleDelete}
+                                                >
+                                                    <MdDelete size={20} />
+                                                    Delete
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                                
+                                <p style={styles.price}>₱{parseFloat(productData.price).toFixed(2)}</p>
+                                
+                                <div style={styles.description}>
+                                    <h3 style={styles.sectionTitle}>Description</h3>
+                                    <p style={styles.descriptionText}>{productData.description}</p>
+                                </div>
+
+                                <div style={styles.section}>
+                                    <h3 style={styles.sectionTitle}>Delivery Information</h3>
+                                    <div style={styles.deliveryInfo}>
+                                        <div style={styles.infoRow}>
+                                            <span style={styles.infoLabel}>Estimated Time:</span>
+                                            <span style={styles.infoValue}>
+                                                {productData.estimatedTime ? `${productData.estimatedTime} minutes` : 'Not specified'}
+                                            </span>
                                         </div>
-                                    )}
-                                </div>
-                            </div>
-                            
-                            <p style={styles.price}>₱{parseFloat(productData.price).toFixed(2)}</p>
-                            
-                            <div style={styles.description}>
-                                <h3 style={styles.sectionTitle}>Description</h3>
-                                <p style={styles.descriptionText}>{productData.description}</p>
-                            </div>
-
-                            <div style={styles.section}>
-                                <h3 style={styles.sectionTitle}>Delivery Information</h3>
-                                <div style={styles.deliveryInfo}>
-                                    <div style={styles.infoRow}>
-                                        <span style={styles.infoLabel}>Estimated Time:</span>
-                                        <span style={styles.infoValue}>
-                                            {productData.estimatedTime ? `${productData.estimatedTime} minutes` : 'Not specified'}
-                                        </span>
-                                    </div>
-                                    <div style={styles.infoRowLast}>
-                                        <span style={styles.infoLabel}>Shipping Fee:</span>
-                                        <span style={styles.infoValue}>
-                                            ₱{productData.shippingFee ? parseFloat(productData.shippingFee).toFixed(2) : '0.00'}
-                                        </span>
+                                        <div style={styles.infoRowLast}>
+                                            <span style={styles.infoLabel}>Shipping Fee:</span>
+                                            <span style={styles.infoValue}>
+                                                ₱{productData.shippingFee ? parseFloat(productData.shippingFee).toFixed(2) : '0.00'}
+                                            </span>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                )}
-            </div>
+                    )}
+                </div>
+            </ScrollableContent>
 
             <style>{`
                 .switch {

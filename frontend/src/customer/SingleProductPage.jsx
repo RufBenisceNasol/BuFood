@@ -7,6 +7,7 @@ import { MdArrowBack, MdShoppingCart, MdAdd, MdRemove } from 'react-icons/md';
 import { Favorite, FavoriteBorder } from '@mui/icons-material';
 import { toggleFavorite, isInFavorites } from '../utils/favoriteUtils';
 import styled from 'styled-components';
+import { getUser } from '../utils/tokenUtils';
 
 // Styled Components
 const PageContainer = styled.div`
@@ -381,7 +382,7 @@ const SingleProductPage = () => {
     useEffect(() => {
         // Load current user from localStorage
         try {
-            const user = JSON.parse(localStorage.getItem('user') || '{}');
+            const user = getUser() || {};
             setCurrentUser(user && user.name ? user : null);
         } catch {
             setCurrentUser(null);

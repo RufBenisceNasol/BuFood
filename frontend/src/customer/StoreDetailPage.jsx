@@ -7,6 +7,7 @@ import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import ErrorBoundary from '../components/ErrorBoundary';
 import { isStoreInFavorites, toggleStoreFavorite } from '../utils/favoriteUtils';
+import { getToken } from '../utils/tokenUtils';
 
 // Styled Components
 const StoreDetailWrapper = styled.div`
@@ -547,10 +548,10 @@ const StoreDetailPage = () => {
         console.log('Fetching store with ID:', storeId);
         
         // API base URL
-        const API_BASE_URL = 'http://localhost:8000/api';
+        const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://capstonedelibup.onrender.com/api';
         
         // Get auth token if available
-        const token = localStorage.getItem('token');
+        const token = getToken();
         const headers = token ? { Authorization: `Bearer ${token}` } : {};
         
         // Fetch store details directly

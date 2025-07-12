@@ -6,6 +6,7 @@ import { MdArrowBack } from 'react-icons/md';
 import { order, auth } from '../api';
 import './OrdersPage.css';
 import defPic from '../assets/delibup.png';
+import { FiRefreshCw } from 'react-icons/fi';
 
 const OrdersPage = () => {
   const navigate = useNavigate();
@@ -144,6 +145,37 @@ const OrdersPage = () => {
           <span className="orders-back-arrow">←</span>
           <span className="orders-header-text">Manage Orders</span>
         </div>
+        <button
+          className="orders-refresh-btn"
+          aria-label="Refresh"
+          onClick={fetchOrders}
+          disabled={loading}
+          tabIndex={0}
+          style={{
+            position: 'absolute',
+            right: 16,
+            top: 10,
+            background: 'none',
+            border: 'none',
+            padding: 0,
+            margin: 0,
+            cursor: loading ? 'not-allowed' : 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            borderRadius: '50%',
+            width: 40,
+            height: 40,
+            zIndex: 2
+          }}
+        >
+          <FiRefreshCw
+            size={24}
+            color={loading ? '#ff9800' : '#fff'}
+            className={loading ? 'spin' : ''}
+            aria-hidden="true"
+          />
+        </button>
       </div>
 
       <div className="orders-content-container">

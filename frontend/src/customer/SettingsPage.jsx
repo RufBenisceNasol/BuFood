@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { auth } from '../api';
+import { getToken, getUser } from '../utils/tokenUtils';
 import {
   Container,
   Box,
@@ -47,7 +48,7 @@ const SettingsPage = () => {
         setLoading(true);
         
         // Check if user is logged in by looking at localStorage token
-        const token = localStorage.getItem('token');
+        const token = getToken();
         
         if (!token) {
           // If no token, redirect to login
@@ -69,7 +70,7 @@ const SettingsPage = () => {
         } catch (err) {
           console.error('Failed to fetch user data:', err);
           // Fallback to localStorage user
-          const localUser = JSON.parse(localStorage.getItem('user') || '{}');
+          const localUser = getUser() || {};
           setUser(localUser);
         }
         
@@ -114,10 +115,8 @@ const SettingsPage = () => {
     window.open('mailto:support@bufood.com', '_blank');
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('refreshToken');
-    localStorage.removeItem('user');
+  const handleLogout = async () => {
+    await auth.logout();
     navigate('/login');
   };
 

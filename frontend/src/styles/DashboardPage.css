@@ -444,3 +444,8 @@ body {
 .analytics-label {
   color: #ff9800;
 }
+
+/* Refresh icon spin animation */
+.spin {
+  animation: spin 1s linear infinite;
+}

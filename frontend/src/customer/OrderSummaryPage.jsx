@@ -17,6 +17,7 @@ import {
     IconButton
 } from '@mui/material';
 import { ArrowBack } from '@mui/icons-material';
+import { getUser } from '../utils/tokenUtils';
 
 // Styled Components
 const PageContainer = styled.div`
@@ -247,7 +248,7 @@ const OrderSummaryPage = () => {
     const [loading, setLoading] = useState(false);
     
     // Get user data from localStorage
-    const userData = JSON.parse(localStorage.getItem('user') || '{}');
+    const userData = getUser() || {};
     const customerName = userData.name || '';
     const customerContactNumber = userData.contactNumber || '';
 

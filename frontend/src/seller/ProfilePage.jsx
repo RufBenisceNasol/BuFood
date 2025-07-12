@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { auth, store as storeApi } from '../api';
 import { MdArrowBack, MdEdit, MdPerson, MdEmail, MdPhone, MdBusiness, MdDateRange } from 'react-icons/md';
+import { getToken } from '../utils/tokenUtils';
 
 const ProfilePage = () => {
   const [userData, setUserData] = useState(null);
@@ -122,7 +123,7 @@ const ProfilePage = () => {
       console.log('Submitting form data:', formData);
       
       // Try a direct API call instead of using the auth module
-      const token = localStorage.getItem('token');
+      const token = getToken();
       const response = await fetch('http://localhost:8000/api/auth/profile', {
         method: 'PUT',
         headers: {
@@ -401,6 +402,7 @@ const styles = {
     backgroundColor: '#ff8c00e0',
     color: 'white',
     position: 'sticky',
+    height: '60px',
     top: 0,
     zIndex: 10,
     boxShadow: '0 3px 10px rgba(0, 0, 0, 0.4)',

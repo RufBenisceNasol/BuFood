@@ -104,7 +104,7 @@ body {
   box-shadow: 0 4px 6px rgba(0,0,0,0.1);
 }
 .header {
-  padding: 16px;
+  padding: 8px;
   background-color: white;
   display: flex;
   justify-content: space-between;
@@ -374,7 +374,7 @@ body {
 }
 
 .sectionContainer {
-  padding: 0 16px 16px;
+  padding: 0 1px 1px;
 }
 .sectionTitle {
   font-size: 18px;
@@ -551,4 +551,14 @@ body {
 
 body, html {
   overflow-x: hidden;
+}
+
+/* Refresh icon spin animation */
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }

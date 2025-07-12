@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { getToken, getRefreshToken, removeToken, removeRefreshToken, removeUser, setToken } from './utils/tokenUtils';
 
 // Use environment variable for API base URL, fallback to Render URL
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://capstonedelibup.onrender.com/api";
@@ -14,7 +15,7 @@ const api = axios.create({
 
 // Add auth token to requests if available
 api.interceptors.request.use((config) => {
-    const token = localStorage.getItem('token');
+    const token = getToken();
     if (token) {
         config.headers.Authorization = `Bearer ${token}`;
     }
@@ -32,7 +33,7 @@ api.interceptors.response.use(
         }
 
         try {
-            const refreshToken = localStorage.getItem('refreshToken');
+            const refreshToken = getRefreshToken();
             if (!refreshToken) {
                 throw new Error('No refresh token available');
             }
@@ -42,15 +43,15 @@ api.interceptors.response.use(
             });
 
             if (response.data.accessToken) {
-                localStorage.setItem('token', response.data.accessToken);
+                setToken(response.data.accessToken, true); // Always persist refreshed token
                 api.defaults.headers.common['Authorization'] = `Bearer ${response.data.accessToken}`;
                 originalRequest.headers['Authorization'] = `Bearer ${response.data.accessToken}`;
                 return api(originalRequest);
             }
         } catch (err) {
-            localStorage.removeItem('token');
-            localStorage.removeItem('refreshToken');
-            localStorage.removeItem('user');
+            removeToken();
+            removeRefreshToken();
+            removeUser();
             window.location.href = '/login';
             return Promise.reject(err);
         }
@@ -71,11 +72,6 @@ export const auth = {
     login: async (email, password) => {
         try {
             const response = await api.post('/auth/login', { email, password });
-            if (response.data.accessToken) {
-                localStorage.setItem('token', response.data.accessToken);
-                localStorage.setItem('refreshToken', response.data.refreshToken);
-                localStorage.setItem('user', JSON.stringify(response.data.user));
-            }
             return response.data;
         } catch (error) {
             throw error.response?.data || error.message;
@@ -85,9 +81,9 @@ export const auth = {
     logout: async () => {
         try {
             await api.post('/auth/logout');
-            localStorage.removeItem('token');
-            localStorage.removeItem('refreshToken');
-            localStorage.removeItem('user');
+            removeToken();
+            removeRefreshToken();
+            removeUser();
         } catch (error) {
             throw error.response?.data || error.message;
         }

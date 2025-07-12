@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MdSearch, MdHome, MdFavoriteBorder, MdShoppingCart, MdReceipt, MdPerson, MdFilterList, MdClose, MdMenuOpen, MdSettings, MdLogout, MdStore, MdAddShoppingCart } from 'react-icons/md';
+import { FiRefreshCw } from 'react-icons/fi';
 import Slider from 'react-slick';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -8,11 +9,12 @@ import 'slick-carousel/slick/slick.css';
 import 'slick-carousel/slick/slick-theme.css';
 import { store as storeApi, product as productApi, auth, cart } from '../api';
 import '../styles/HomePage.css';
+import { getUser } from '../utils/tokenUtils';
 
 const styles = {
   bannerContainer: {
     padding: '0 16px',
-    marginBottom: '20px',
+    marginBottom: '5px',
     maxWidth: '100%',
     overflow: 'hidden'
   },
@@ -86,7 +88,7 @@ const HomePage = () => {
   
   useEffect(() => {
     // Get user data from local storage
-    const userData = JSON.parse(localStorage.getItem('user'));
+    const userData = getUser();
     if (userData && userData.name) {
       setUserName(userData.name);
     } else if (userData && userData.username) {
@@ -331,7 +333,7 @@ const HomePage = () => {
         </div>
 
         {/* Search Bar - Fixed at the top */}
-        <div className="searchContainer" style={{ position: 'sticky', top: 0, zIndex: 10, backgroundColor: '#faf9f9', padding: '10px 0' }}>
+        <div className="searchContainer" style={{ position: 'sticky', top: 0, zIndex: 10, backgroundColor: '#faf9f9', padding: '8px' }}>
           <div className="searchBar">
             <MdSearch size={24} color="#999" />
             <input 
@@ -353,6 +355,35 @@ const HomePage = () => {
           <div className="filterButton" onClick={toggleFilters}>
             <MdFilterList size={24} color="#fff" />
           </div>
+          <button
+            className="refreshButton"
+            aria-label="Refresh"
+            onClick={fetchData}
+            disabled={loading}
+            style={{
+              background: '#ff9800',
+              border: 'none',
+              padding: 0,
+              marginLeft: '0px',
+              cursor: loading ? 'not-allowed' : 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              outline: 'none',
+              borderRadius: '50%',
+              width: '44px',
+              height: '44px',
+              position: 'relative',
+            }}
+            tabIndex={0}
+          >
+            <FiRefreshCw
+              size={20}
+              color={loading ? ' #ff9800' : 'rgba(255, 255, 255, 0.85)'}
+              className={loading ? 'spin' : ''}
+              aria-hidden="true"
+            />
+          </button>
         </div>
 
         {/* Main Scrollable Content */}

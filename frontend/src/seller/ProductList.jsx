@@ -181,6 +181,7 @@ const styles = {
         backgroundColor: '#ff8c00e0',
         color: 'white',
         position: 'sticky',
+        height: '60px',
         top: 0,
         zIndex: 10,
         boxShadow: '0 3px 10px rgba(0, 0, 0, 0.4)',

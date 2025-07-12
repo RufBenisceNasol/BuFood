@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { product as productApi } from '../api';
-import styled from 'styled-components';
+import styled, { keyframes } from 'styled-components';
 import {
   CircularProgress,
   IconButton
@@ -14,6 +14,7 @@ import {
   Favorite,
   FavoriteBorder
 } from '@mui/icons-material';
+import { FiRefreshCw } from 'react-icons/fi';
 import { 
   getAllFavorites, 
   toggleFavorite, 
@@ -93,6 +94,13 @@ const FavoritesPage = () => {
   const [favoriteStores, setFavoriteStores] = useState([]);
   const [filteredStores, setFilteredStores] = useState([]);
   const navigate = useNavigate();
+
+  const handleRefresh = () => {
+    setLoading(true);
+    setError('');
+    loadFavorites();
+    loadFavoriteStores();
+  };
 
   useEffect(() => {
     loadFavorites();
@@ -244,6 +252,19 @@ const FavoritesPage = () => {
           <ArrowBack />
         </BackButton>
         <Title>Favorites</Title>
+        <RefreshButton
+          aria-label="Refresh"
+          onClick={handleRefresh}
+          disabled={loading}
+          tabIndex={0}
+        >
+          <FiRefreshCw
+            size={20}
+            color={loading ? '#ff9800' : 'white'}
+            className={loading ? 'spin' : ''}
+            aria-hidden="true"
+          />
+        </RefreshButton>
       </Header>
       <ScrollableContent>
         <ContentWrapper>
@@ -392,7 +413,7 @@ const Header = styled.div`
   color: white;
   display: flex;
   align-items: center;
-  padding: 0 16px;
+  padding: 0 1px;
   z-index: 100;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 `;
@@ -422,7 +443,7 @@ const SearchBar = styled.div`
   border-radius: 8px;
   display: flex;
   align-items: center;
-  padding: 8px 16px;
+  padding: 8px 1px;
 `;
 
 const SearchIcon = styled.span`
@@ -683,6 +704,38 @@ const HeartButton = styled.button`
   display: flex;
   align-items: center;
   justify-content: center;
+`;
+
+const spin = keyframes`
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+`;
+
+const RefreshButton = styled.button`
+  background: none;
+  border: none;
+  color: white;
+  padding: 8px;
+  margin-left: auto;
+  margin-right: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  transition: background 0.2s;
+  position: absolute;
+  right: 8px;
+  top: 10px;
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.7;
+  }
+  .spin {
+    animation: ${spin} 1s linear infinite;
+  }
 `;
 
 export default FavoritesPage;

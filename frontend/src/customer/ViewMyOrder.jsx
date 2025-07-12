@@ -14,6 +14,7 @@ import {
 import api from '../api'; // Assumes you have an api instance for requests
 import { customer } from '../api';
 import defPic from '../assets/delibup.png';
+import { getUser } from '../utils/tokenUtils';
 
 // Styled Components
 const PageContainer = styled.div`
@@ -647,10 +648,7 @@ const ViewMyOrder = () => {
                       return pid === selectedProductId;
                     });
                     // Get user info from localStorage
-                    let user = {};
-                    try {
-                      user = JSON.parse(localStorage.getItem('user') || '{}');
-                    } catch {}
+                    let user = getUser() || {};
                     const userName = user.name || (order && order.customer && order.customer.name) || 'Anonymous';
                     const userImage = user.profileImage || '';
                     saveProductReview(selectedProductId, reviewComment, userName, userImage);

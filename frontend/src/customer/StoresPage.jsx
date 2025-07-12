@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { store as storeApi } from '../api';
-import styled from 'styled-components';
+import styled, { keyframes } from 'styled-components';
 import {
   Chip,
   CircularProgress,
@@ -14,8 +14,41 @@ import {
   Favorite,
   FavoriteBorder
 } from '@mui/icons-material';
+import { FiRefreshCw } from 'react-icons/fi';
 
 // Styled Components
+const spin = keyframes`
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+`;
+
+const RefreshButton = styled.button`
+  background: none;
+  border: none;
+  color: white;
+  padding: 8px;
+  margin-left: auto;
+  margin-right: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  transition: background 0.2s;
+  position: absolute;
+  right: 8px;
+  top: 10px;
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.7;
+  }
+  .spin {
+    animation: ${spin} 1s linear infinite;
+  }
+`;
+
 const PageContainer = styled.div`
   background-color: #ffffff;
   height: 100vh;
@@ -335,6 +368,19 @@ const StoresPage = () => {
           <ArrowBack />
         </BackButton>
         <HeaderTitle>Explore Stores</HeaderTitle>
+        <RefreshButton
+          aria-label="Refresh"
+          onClick={fetchStores}
+          disabled={loading}
+          tabIndex={0}
+        >
+          <FiRefreshCw
+            size={20}
+            color={loading ? '#ff9800' : 'white'}
+            className={loading ? 'spin' : ''}
+            aria-hidden="true"
+          />
+        </RefreshButton>
       </Header>
       <ToolbarSpacer />
 

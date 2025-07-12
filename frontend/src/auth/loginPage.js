@@ -5,6 +5,7 @@ import logod from '../assets/logod.png';
 import { MdMailOutline, MdLockOpen } from 'react-icons/md';
 import { FiEye, FiEyeOff } from 'react-icons/fi';
 import { auth } from '../api';
+import { setToken, setRefreshToken, setUser, getToken, getUser } from '../utils/tokenUtils';
 
 const LoginPage = () => {
     const [email, setEmail] = useState('');
@@ -15,18 +16,32 @@ const LoginPage = () => {
     const [rememberMe, setRememberMe] = useState(false);
     const navigate = useNavigate();
 
+    // Redirect if already logged in
+    React.useEffect(() => {
+        const token = getToken();
+        const user = getUser();
+        if (token && user && user.role) {
+            if (user.role === 'Seller') {
+                navigate('/seller/dashboard');
+            } else {
+                navigate('/customer/home');
+            }
+        }
+    }, [navigate]);
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
         setLoading(true);
 
+        console.log('Remember me value on submit:', rememberMe);
         try {
             const data = await auth.login(email, password);
             // Safely check for accessToken and refreshToken before using any data properties
             if (data?.accessToken && data?.refreshToken) {
-                localStorage.setItem('token', data.accessToken);
-                localStorage.setItem('refreshToken', data.refreshToken);
-                localStorage.setItem('user', JSON.stringify(data.user));
+                setToken(data.accessToken, rememberMe);
+                setRefreshToken(data.refreshToken, rememberMe);
+                setUser(data.user, rememberMe);
                 axios.defaults.headers.common['Authorization'] = `Bearer ${data.accessToken}`;
                 if (data.user.role === 'Seller') {
                     navigate('/seller/dashboard');

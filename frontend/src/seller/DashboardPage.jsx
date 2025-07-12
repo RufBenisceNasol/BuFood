@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { store, order } from '../api';
+import { store, order, auth } from '../api';
 import '../styles/DashboardPage.css';
 import { 
   MdMenuOpen, 
@@ -11,6 +11,7 @@ import {
   MdSettings, 
   MdLogout
 } from "react-icons/md";
+import { FiRefreshCw } from 'react-icons/fi';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
 
 const DashboardCard = ({ title, value, icon: Icon, to, onClick }) => (
@@ -77,8 +78,8 @@ const DashboardPage = () => {
     }
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('token');
+  const handleLogout = async () => {
+    await auth.logout();
     navigate('/login');
   };
 
@@ -219,6 +220,37 @@ const DashboardPage = () => {
     <div className="main-container">
       <div className="content-container">
         <div className="banner-wrapper">
+          <button
+            className="refresh-btn"
+            aria-label="Refresh"
+            onClick={() => { setLoading(true); fetchStoreData(); fetchOrderStats(); }}
+            disabled={loading}
+            tabIndex={0}
+            style={{
+              position: 'absolute',
+              left: 16,
+              top: 16,
+              background: 'none',
+              border: 'none',
+              padding: 0,
+              margin: 0,
+              cursor: loading ? 'not-allowed' : 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderRadius: '50%',
+              width: 40,
+              height: 40,
+              zIndex: 2
+            }}
+          >
+            <FiRefreshCw
+              size={26}
+              color={loading ? '#ff9800' : '#fff'}
+              className={loading ? 'spin' : ''}
+              aria-hidden="true"
+            />
+          </button>
           <img 
             src={storeData?.bannerImage || 'https://placehold.co/800x300/orange/white?text=Store+Banner'} 
             alt="Store Banner" 
