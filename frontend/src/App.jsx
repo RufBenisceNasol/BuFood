@@ -1,6 +1,8 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import LoginPage from './auth/loginPage'
 import RegisterPage from './auth/registerPage'
+import ForgotPasswordPage from './auth/ForgotPasswordPage'
+import ResetPasswordConfirmationPage from './auth/ResetPasswordConfirmationPage'
 import SplashScreen from './components/SplashScreen'
 // Seller imports
 import DashboardPage from './seller/DashboardPage'
@@ -45,6 +47,8 @@ function App() {
           <Route path="/" element={<SplashScreen />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/reset-password" element={<ResetPasswordConfirmationPage />} />
 
           {/* Seller Routes */}
           <Route path="/seller/dashboard" element={<DashboardPage />} />

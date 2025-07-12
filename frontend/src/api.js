@@ -116,9 +116,9 @@ export const auth = {
         }
     },
 
-    forgotPassword: async (email) => {
+    forgotPassword: async (email, newPassword) => {
         try {
-            const response = await api.post('/auth/forgot-password', { email });
+            const response = await api.post('/auth/forgot-password', { email, newPassword });
             return response.data;
         } catch (error) {
             throw error.response?.data || error.message;
