@@ -29,6 +29,7 @@ import {
 } from '@mui/icons-material';
 import OrderDetailsForm from '../components/OrderDetailsForm';
 import { FiRefreshCw } from 'react-icons/fi';
+import { MdHome, MdFavoriteBorder, MdShoppingCart, MdStore, MdPerson } from 'react-icons/md';
 
 // Styled Components
 const spin = keyframes`
@@ -272,7 +273,7 @@ const RemoveItemButton = styled(IconButton)`
 
 const Footer = styled.footer`
   position: fixed;
-  bottom: 0;
+  bottom: 70px;
   left: 0;
   right: 0;
   background-color: white;
@@ -689,6 +690,29 @@ const CartPage = () => {
                     />
                 </DialogContent>
             </Dialog>
+            {/* Bottom Navigation */}
+            <div className="bottomNav">
+              <div className="navItem" onClick={() => navigate('/customer/home')}>
+                <MdHome size={24} />
+                <span className="navText">Home</span>
+              </div>
+              <div className="navItem" onClick={() => navigate('/customer/favorites')}>
+                <MdFavoriteBorder size={24} />
+                <span className="navText">Favorites</span>
+              </div>
+              <div className="navItem activeNavItem" onClick={() => navigate('/customer/cart')}>
+                <MdShoppingCart size={24} className="activeNavIcon" />
+                <span className="navText">Cart</span>
+              </div>
+              <div className="navItem" onClick={() => navigate('/customer/stores')}>
+                <MdStore size={24} />
+                <span className="navText">Stores</span>
+              </div>
+              <div className="navItem" onClick={() => navigate('/customer/profile')}>
+                <MdPerson size={24} />
+                <span className="navText">Profile</span>
+              </div>
+            </div>
         </CartContainer>
     );
 };

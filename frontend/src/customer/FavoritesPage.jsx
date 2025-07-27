@@ -22,6 +22,7 @@ import {
   toggleStoreFavorite, 
   isStoreInFavorites 
 } from '../utils/favoriteUtils';
+import { MdHome, MdFavoriteBorder, MdShoppingCart, MdStore, MdPerson } from 'react-icons/md';
 
 // Styled Components
 const PageContainer = styled.div`
@@ -390,6 +391,29 @@ const FavoritesPage = () => {
           )}
         </ContentWrapper>
       </ScrollableContent>
+      {/* Bottom Navigation */}
+      <div className="bottomNav">
+        <div className="navItem" onClick={() => navigate('/customer/home')}>
+          <MdHome size={24} />
+          <span className="navText">Home</span>
+        </div>
+        <div className="navItem activeNavItem" onClick={() => navigate('/customer/favorites')}>
+          <MdFavoriteBorder size={24} className="activeNavIcon" />
+          <span className="navText">Favorites</span>
+        </div>
+        <div className="navItem" onClick={() => navigate('/customer/cart')}>
+          <MdShoppingCart size={24} />
+          <span className="navText">Cart</span>
+        </div>
+        <div className="navItem" onClick={() => navigate('/customer/stores')}>
+          <MdStore size={24} />
+          <span className="navText">Stores</span>
+        </div>
+        <div className="navItem" onClick={() => navigate('/customer/profile')}>
+          <MdPerson size={24} />
+          <span className="navText">Profile</span>
+        </div>
+      </div>
     </PageContainer>
   );
 };
