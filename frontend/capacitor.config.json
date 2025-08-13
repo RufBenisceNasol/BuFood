@@ -1,0 +1,9 @@
+{
+  "appId": "com.bufood.app",
+  "appName": "BuFood",
+  "webDir": "dist",
+  "bundledWebRuntime": false,
+  "server": {
+    "androidScheme": "https"
+  }
+}

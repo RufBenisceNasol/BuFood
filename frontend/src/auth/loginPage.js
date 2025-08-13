@@ -10,6 +10,7 @@ import { setToken, setRefreshToken, setUser, getToken, getUser } from '../utils/
 const LoginPage = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [passwordError, setPasswordError] = useState('');
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
@@ -33,6 +34,14 @@ const LoginPage = () => {
         e.preventDefault();
         setError('');
         setLoading(true);
+
+        // Validate password length
+        if (password.length < 8) {
+            setError('Password must be at least 8 characters long');
+            setPasswordError(`Password must be 8 characters (${password.length}/8)`);
+            setLoading(false);
+            return;
+        }
 
         console.log('Remember me value on submit:', rememberMe);
         try {
@@ -105,23 +114,42 @@ const LoginPage = () => {
                     <div style={styles.inputGroup}>
                         <div style={styles.inputWrapper}>
                         <span style={styles.inputIcon}><MdLockOpen /></span>
-                            <input
-                                type={showPassword ? "text" : "password"}
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                required
-                                style={styles.input}
-                                disabled={loading}
-                                placeholder="Password"
-                                autoComplete="current-password"
-                            />
-                            <button 
-                                type="button"
-                                onClick={() => setShowPassword(!showPassword)}
-                                style={styles.showPasswordButton}
-                            >
-                                {showPassword ? <FiEye /> : <FiEyeOff />}
-                            </button>
+                            <div style={{ width: '100%' }}>
+                                <input
+                                    type={showPassword ? "text" : "password"}
+                                    value={password}
+                                    onChange={(e) => {
+                                        const value = e.target.value.slice(0, 8); // Limit to 8 characters
+                                        setPassword(value);
+                                        
+                                        // Show error if less than 8 characters
+                                        if (value.length > 0) {
+                                            if (value.length < 8) {
+                                                setPasswordError(`Password must be 8 characters (${value.length}/8)`);
+                                            } else {
+                                                setPasswordError('');
+                                            }
+                                            setError(''); // Clear any previous error when typing
+                                        } else {
+                                            setPasswordError('');
+                                        }
+                                    }}
+                                    required
+                                    style={styles.input}
+                                    disabled={loading}
+                                    placeholder="Password"
+                                    autoComplete="current-password"
+                                    maxLength={8}
+                                />
+                                <button 
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    style={styles.showPasswordButton}
+                                >
+                                    {showPassword ? <FiEye /> : <FiEyeOff />}
+                                </button>
+                                {passwordError && <div style={styles.errorMessage}>{passwordError}</div>}
+                            </div>
                         </div>
                     </div>
 
@@ -240,12 +268,20 @@ const styles = {
     showPasswordButton: {
         position: 'absolute',
         right: '15px',
+        top: '50%',
+        transform: 'translateY(-50%)',
         background: 'none',
         border: 'none',
         cursor: 'pointer',
         padding: '0',
         fontSize: 'clamp(16px, 4vw, 20px)',
         color: '#666',
+    },
+    errorMessage: {
+        color: '#dc3545',
+        fontSize: '12px',
+        marginTop: '4px',
+        paddingLeft: '15px',
     },
     rememberForgot: {
         display: 'flex',

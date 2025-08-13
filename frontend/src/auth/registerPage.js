@@ -18,6 +18,8 @@ const RegisterPage = () => {
     const [loading, setLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+    const [passwordError, setPasswordError] = useState('');
+    const [confirmPasswordError, setConfirmPasswordError] = useState('');
     const navigate = useNavigate();
 
     const handleChange = (e) => {
@@ -31,10 +33,20 @@ const RegisterPage = () => {
         e.preventDefault();
         setError('');
         setSuccess('');
+        setPasswordError('');
+        setConfirmPasswordError('');
+
+        // Validate password length
+        if (formData.password.length < 8) {
+            setError('Password must be at least 8 characters long');
+            setPasswordError(`Password must be 8 characters (${formData.password.length}/8)`);
+            return;
+        }
 
         // Validate passwords match
         if (formData.password !== formData.confirmPassword) {
             setError('Passwords do not match');
+            setConfirmPasswordError('Passwords do not match');
             return;
         }
 
@@ -91,7 +103,7 @@ const RegisterPage = () => {
                     {error && <div style={styles.error}>{error}</div>}
                     {success && <div style={styles.success}>{success}</div>}
                 </div>
-                <div style={{ flex: 1, overflowY: 'auto', padding: '0 0.5rem' }}>
+                <div style={{ flex: 1, overflowY: 'auto', padding: '0 0.1rem' }}>
                     <form onSubmit={handleSubmit} style={styles.form}>
                         <div style={styles.inputGroup}>
                             <span style={styles.inputIcon}><FiUser /></span>
@@ -128,52 +140,78 @@ const RegisterPage = () => {
                         <div style={styles.inputGroup}>
                             <div style={styles.inputWrapper}>
                                 <span style={styles.inputIcon}><FiLock /></span>
-                                <input
-                                    type={showPassword ? "text" : "password"}
-                                    id="password"
-                                    name="password"
-                                    value={formData.password}
-                                    onChange={handleChange}
-                                    required
-                                    minLength={6}
-                                    style={styles.input}
-                                    disabled={loading}
-                                    autoComplete="new-password"
-                                    placeholder="Password"
-                                />
-                                <button 
-                                    type="button"
-                                    onClick={() => setShowPassword(!showPassword)}
-                                    style={styles.showPasswordButton}
-                                >
-                                    {showPassword ? <FiEye /> : <FiEyeOff />}
-                                </button>
+                                <div style={{ width: '100%' }}>
+                                    <input
+                                        type={showPassword ? "text" : "password"}
+                                        id="password"
+                                        name="password"
+                                        value={formData.password}
+                                        onChange={(e) => {
+                                            const value = e.target.value.slice(0, 8); // Limit to 8 characters
+                                            handleChange({ target: { name: 'password', value } });
+                                            
+                                            // Show error if less than 8 characters
+                                            if (value.length > 0 && value.length < 8) {
+                                                setPasswordError(`Password must be 8 characters (${value.length}/8)`);
+                                            } else {
+                                                setPasswordError('');
+                                            }
+                                        }}
+                                        required
+                                        minLength={8}
+                                        maxLength={8}
+                                        style={styles.input}
+                                        disabled={loading}
+                                        autoComplete="new-password"
+                                        placeholder="Password"
+                                    />
+                                    <button 
+                                        type="button"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                        style={styles.showPasswordButton}
+                                    >
+                                        {showPassword ? <FiEye /> : <FiEyeOff />}
+                                    </button>
+                                    {passwordError && <div style={styles.errorMessage}>{passwordError}</div>}
+                                </div>
                             </div>
                         </div>
 
                         <div style={styles.inputGroup}>
                             <div style={styles.inputWrapper}>
                                 <span style={styles.inputIcon}><FiLock /></span>
-                                <input
-                                    type={showConfirmPassword ? "text" : "password"}
-                                    id="confirmPassword"
-                                    name="confirmPassword"
-                                    value={formData.confirmPassword}
-                                    onChange={handleChange}
-                                    required
-                                    minLength={6}
-                                    style={styles.input}
-                                    disabled={loading}
-                                    autoComplete="new-password"
-                                    placeholder="Confirm Password"
-                                />
-                                <button 
-                                    type="button"
-                                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                                    style={styles.showPasswordButton}
-                                >
-                                    {showConfirmPassword ? <FiEye /> : <FiEyeOff />}
-                                </button>
+                                <div style={{ width: '100%' }}>
+                                    <input
+                                        type={showConfirmPassword ? "text" : "password"}
+                                        id="confirmPassword"
+                                        name="confirmPassword"
+                                        value={formData.confirmPassword}
+                                        onChange={(e) => {
+                                            const value = e.target.value.slice(0, 8); // Limit to 8 characters
+                                            handleChange({ target: { name: 'confirmPassword', value } });
+                                            
+                                            // Clear error when typing
+                                            if (confirmPasswordError) {
+                                                setConfirmPasswordError('');
+                                            }
+                                        }}
+                                        required
+                                        minLength={8}
+                                        maxLength={8}
+                                        style={styles.input}
+                                        disabled={loading}
+                                        autoComplete="new-password"
+                                        placeholder="Confirm Password"
+                                    />
+                                    <button 
+                                        type="button"
+                                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                        style={styles.showPasswordButton}
+                                    >
+                                        {showConfirmPassword ? <FiEye /> : <FiEyeOff />}
+                                    </button>
+                                    {confirmPasswordError && <div style={styles.errorMessage}>{confirmPasswordError}</div>}
+                                </div>
                             </div>
                         </div>
 
@@ -249,7 +287,7 @@ const styles = {
         alignItems: 'center',
         justifyContent: 'center',
         backgroundColor: '#f5f5f5',
-        padding: '15px',
+        padding: '1px',
         boxSizing: 'border-box',
     },
     formContainer: {
@@ -272,7 +310,7 @@ const styles = {
         fontSize: '24px',
         fontWeight: 'bold',
         color: '#333',
-        marginBottom: '30px',
+        marginBottom: '3px',
         textAlign: 'center',
     },
     form: {
@@ -389,12 +427,20 @@ const styles = {
     showPasswordButton: {
         position: 'absolute',
         right: '15px',
+        top: '50%',
+        transform: 'translateY(-50%)',
         background: 'none',
         border: 'none',
         cursor: 'pointer',
         padding: '0',
         fontSize: '20px',
         color: '#666',
+    },
+    errorMessage: {
+        color: '#dc3545',
+        fontSize: '12px',
+        marginTop: '4px',
+        paddingLeft: '15px',
     }
 }
 

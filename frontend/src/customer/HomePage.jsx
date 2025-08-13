@@ -300,8 +300,8 @@ const HomePage = () => {
         {/* Header */}
         <div className="header">
           <div>
-            <h1 className="greeting">Hello, {userName}</h1>
-            <p className="subGreeting">What do you want to eat today?</p>
+            <h1 style={{marginRight: '27px'}} className="greeting">Hello, {userName}</h1>
+            <p style={{marginLeft: '20px'}} className="subGreeting">What do you want to eat today?</p>
           </div>
           <button 
             className="menuToggle" 

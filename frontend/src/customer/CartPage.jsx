@@ -189,17 +189,32 @@ const ProductCard = styled(Card)`
 const ProductCardContent = styled(CardContent)`
   display: flex;
   padding: 12px 16px !important;
-  align-items: center;
-  background: #fff;
+  align-items: flex-start;
+  background:rgba(37, 20, 20, 0.08);
+  flex-wrap: wrap;
+  gap: 10px;
+  
+  @media (max-width: 480px) {
+    padding: 10px 12px !important;
+    gap: 10px;
+  }
 `;
 
 const ImageContainer = styled.div`
   width: 80px;
   height: 80px;
+  min-width: 80px;
   border-radius: 8px;
   overflow: hidden;
-  margin-right: 16px;
+  margin-right: 12px;
   flex-shrink: 0;
+  
+  @media (max-width: 480px) {
+    width: 70px;
+    height: 70px;
+    min-width: 70px;
+    margin-right: 10px;
+  }
 `;
 
 const ProductImage = styled.img`
@@ -211,9 +226,16 @@ const ProductImage = styled.img`
 
 const ProductInfo = styled.div`
   flex: 1;
+  min-width: 120px;
   display: flex;
   flex-direction: column;
   justify-content: center;
+  padding-right: 8px;
+  
+  @media (max-width: 480px) {
+    min-width: 0;
+    flex: 1 1 150px;
+  }
 `;
 
 const ProductName = styled.span`
@@ -225,6 +247,12 @@ const ProductName = styled.span`
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+  word-break: break-word;
+  
+  @media (max-width: 480px) {
+    font-size: 0.95rem;
+    -webkit-line-clamp: 2;
+  }
 `;
 
 const ProductRight = styled.div`
@@ -233,32 +261,68 @@ const ProductRight = styled.div`
   align-items: flex-end;
   margin-left: auto;
   gap: 8px;
+  min-width: 100px;
+  
+  @media (max-width: 480px) {
+    flex-direction: row;
+    align-items: center;
+    width: 100%;
+    justify-content: space-between;
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid #f0f0f0;
+  }
 `;
 
 const ProductPrice = styled.span`
   font-size: 1.1rem;
   font-weight: 600;
   color: #ff8c00e0;
+  white-space: nowrap;
+  
+  @media (max-width: 480px) {
+    font-size: 1rem;
+  }
 `;
 
 const QuantityControl = styled.div`
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
   background: #f5f5f5;
   border-radius: 20px;
-  padding: 2px 8px;
+  padding: 4px 10px;
+  min-width: 100px;
+  justify-content: space-between;
+  
+  @media (max-width: 480px) {
+    padding: 3px 8px;
+    min-width: 90px;
+  }
 `;
 
 const QuantityButton = styled(IconButton)`
-  padding: 4px !important;
+  padding: 6px !important;
   color: #ff8c00e0 !important;
+  
+  @media (max-width: 480px) {
+    padding: 4px !important;
+  }
+  
+  .MuiSvgIcon-root {
+    font-size: 1.1rem;
+  }
 `;
 
 const QuantityValue = styled.span`
-  min-width: 24px;
+  min-width: 28px;
   text-align: center;
   font-weight: 500;
+  font-size: 0.95rem;
+  
+  @media (max-width: 480px) {
+    min-width: 24px;
+  }
 `;
 
 const RemoveItemButton = styled(IconButton)`
@@ -540,7 +604,7 @@ const CartPage = () => {
                                         <Checkbox 
                                             checked={selectedItems[item.product._id]}
                                             onChange={() => handleSelectItem(item.product._id)}
-                                            style={{ marginRight: 16 }}
+                                            style={{ marginRight: 1 }}
                                         />
                                         <ImageContainer>
                                             <ProductImage 
@@ -588,7 +652,7 @@ const CartPage = () => {
                     <Typography variant="body2" color="text.secondary">
                         Selected Items: {getSelectedCount()}
                     </Typography>
-                    <Typography variant="h6" style={{ fontWeight: 'bold', color: '#FF385C' }}>
+                    <Typography variant="h6" style={{ fontWeight: 'bold', color: ' #FF385C' }}>
                         Total: ₱{getSelectedTotal().toFixed(2)}
                     </Typography>
                 </div>
