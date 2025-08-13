@@ -8,14 +8,8 @@ import { MdArrowBack, MdEdit, MdPerson, MdEmail, MdPhone, MdDateRange, MdHome, M
 const MainContainer = styled.div`
   background-color: #ffffff;
   height: 100vh;
-  height: 100dvh;
   width: 100vw;
   max-width: 100%;
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
   display: flex;
   flex-direction: column;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -30,7 +24,6 @@ const ScrollableContent = styled.div`
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
   scroll-behavior: smooth;
-  padding-bottom: 20px;
   &::-webkit-scrollbar {
     width: 6px;
   }
@@ -78,7 +71,7 @@ const HeaderText = styled.span`
 `;
 
 const ContentContainer = styled.div`
-  padding: 20px 0;
+  padding: 10px 0;
   max-width: 800px;
   margin: 0 auto;
   width: 100%;
@@ -93,7 +86,7 @@ const AvatarSection = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 30px 20px 20px;
+  padding: 10px 10px 2px;
   background: white;
   margin-bottom: 10px;
 `;
@@ -383,17 +376,21 @@ const ProfilePage = () => {
 
   if (loading) {
     return (
-      <LoadingContainer>
-        Loading...
-      </LoadingContainer>
+      <MainContainer>
+        <LoadingContainer>
+          Loading...
+        </LoadingContainer>
+      </MainContainer>
     );
   }
 
   if (error && !userData) {
     return (
-      <ErrorContainer>
-        {error}
-      </ErrorContainer>
+      <MainContainer>
+        <ErrorContainer>
+          {error}
+        </ErrorContainer>
+      </MainContainer>
     );
   }
 
@@ -409,13 +406,12 @@ const ProfilePage = () => {
     <MainContainer>
       <GlobalStyle />
       <Header>
-        <BackButton onClick={() => navigate(-1)}>
+        <BackButton onClick={handleGoBack}>
           <MdArrowBack size={24} />
         </BackButton>
         <h2 style={{ margin: '0 auto', fontSize: '18px', fontWeight: '600' }}>My Profile</h2>
         <div style={{ width: '40px' }}></div> {/* For balance */}
       </Header>
-
       <ScrollableContent>
         <ContentContainer>
           <AvatarSection>
@@ -481,6 +477,7 @@ const ProfilePage = () => {
           </AvatarSection>
 
           <FormContainer>
+          
             <ProfileDetails>
               {editing ? (
                 <form onSubmit={submitEdit}>
@@ -523,21 +520,7 @@ const ProfilePage = () => {
                     </DetailLabel>
                     <DetailValue>{userData.email || '—'}</DetailValue>
                   </DetailItem>
-                  <DetailItem>
-                    <DetailLabel>
-                      <DetailIcon><MdDateRange /></DetailIcon>
-                      Member Since
-                    </DetailLabel>
-                    <DetailValue>
-                      {userData.createdAt || userData.memberSince
-                        ? new Date(userData.createdAt || userData.memberSince).toLocaleDateString('en-US', {
-                            year: 'numeric',
-                            month: 'long',
-                            day: 'numeric'
-                          })
-                        : '—'}
-                    </DetailValue>
-                  </DetailItem>
+
                   <ButtonRow>
                     <EditButton type="submit" disabled={editLoading} style={{ minWidth: 120 }}>
                       {editLoading ? 'Saving...' : 'Save'}
@@ -571,21 +554,7 @@ const ProfilePage = () => {
                 </DetailLabel>
                 <DetailValue>{userData.contactNumber || '—'}</DetailValue>
               </DetailItem>
-              <DetailItem>
-                <DetailLabel>
-                  <DetailIcon><MdDateRange /></DetailIcon>
-                  Member Since
-                </DetailLabel>
-                <DetailValue>
-                  {userData.createdAt || userData.memberSince
-                    ? new Date(userData.createdAt || userData.memberSince).toLocaleDateString('en-US', {
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric'
-                      })
-                    : '—'}
-                </DetailValue>
-              </DetailItem>
+
               <ButtonRow>
                     <EditButton type="button" onClick={startEdit}>
                   <MdEdit />
@@ -595,34 +564,36 @@ const ProfilePage = () => {
                 </>
               )}
             </ProfileDetails>
+          
           </FormContainer>
         </ContentContainer>
       </ScrollableContent>
       {/* Bottom Navigation */}
       <div className="bottomNav">
-        <div className="navItem" onClick={() => navigate('/customer/home')}>
-          <MdHome size={24} />
-          <span className="navText">Home</span>
+          <div className="navItem" onClick={() => navigate('/customer/home')}>
+            <MdHome size={24} />
+            <span className="navText">Home</span>
+          </div>
+          <div className="navItem" onClick={() => navigate('/customer/favorites')}>
+            <MdFavoriteBorder size={24} />
+            <span className="navText">Favorites</span>
+          </div>
+          <div className="navItem" onClick={() => navigate('/customer/cart')}>
+            <MdShoppingCart size={24} />
+            <span className="navText">Cart</span>
+          </div>
+          <div className="navItem" onClick={() => navigate('/customer/stores')}>
+            <MdStore size={24} />
+            <span className="navText">Stores</span>
+          </div>
+          <div className="navItem activeNavItem" onClick={() => navigate('/customer/profile')}>
+            <MdPerson size={24} className="activeNavIcon" />
+            <span className="navText">Profile</span>
+          </div>
         </div>
-        <div className="navItem" onClick={() => navigate('/customer/favorites')}>
-          <MdFavoriteBorder size={24} />
-          <span className="navText">Favorites</span>
-        </div>
-        <div className="navItem" onClick={() => navigate('/customer/cart')}>
-          <MdShoppingCart size={24} />
-          <span className="navText">Cart</span>
-        </div>
-        <div className="navItem" onClick={() => navigate('/customer/stores')}>
-          <MdStore size={24} />
-          <span className="navText">Stores</span>
-        </div>
-        <div className="navItem activeNavItem" onClick={() => navigate('/customer/profile')}>
-          <MdPerson size={24} className="activeNavIcon" />
-          <span className="navText">Profile</span>
-        </div>
-      </div>
+      
     </MainContainer>
   );
 };
 
-export default ProfilePage; 
+export default ProfilePage;

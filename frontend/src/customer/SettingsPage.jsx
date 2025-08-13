@@ -188,81 +188,6 @@ const SettingsPage = () => {
         </IconButton>
       </Paper>
 
-      <Typography 
-        variant="h6" 
-        sx={{ 
-          mb: 2, 
-          fontWeight: 'bold', 
-          color: 'text.secondary' 
-        }}
-      >
-        Account
-      </Typography>
-      
-      <Paper 
-        elevation={3} 
-        sx={{ 
-          mb: 4,
-          borderRadius: 2,
-          overflow: 'hidden'
-        }}
-      >
-        <List disablePadding>
-          <ListItem button onClick={navigateToProfile}>
-            <ListItemIcon>
-              <Person sx={{ color: '#FF8C00' }} />
-            </ListItemIcon>
-            <ListItemText primary="Profile Information" />
-            <ListItemSecondaryAction>
-              <IconButton edge="end">
-                <ChevronRight />
-              </IconButton>
-            </ListItemSecondaryAction>
-          </ListItem>
-          
-          <Divider />
-          
-          <ListItem button onClick={navigateToChangePassword}>
-            <ListItemIcon>
-              <Lock sx={{ color: '#FF8C00' }} />
-            </ListItemIcon>
-            <ListItemText primary="Change Password" />
-            <ListItemSecondaryAction>
-              <IconButton edge="end">
-                <ChevronRight />
-              </IconButton>
-            </ListItemSecondaryAction>
-          </ListItem>
-          
-          <Divider />
-          
-          <ListItem button onClick={() => navigate('/addresses')}>
-            <ListItemIcon>
-              <LocationOn sx={{ color: '#FF8C00' }} />
-            </ListItemIcon>
-            <ListItemText primary="Delivery Addresses" />
-            <ListItemSecondaryAction>
-              <IconButton edge="end">
-                <ChevronRight />
-              </IconButton>
-            </ListItemSecondaryAction>
-          </ListItem>
-          
-          <Divider />
-          
-          <ListItem button onClick={() => navigate('/contact-info')}>
-            <ListItemIcon>
-              <Phone sx={{ color: '#FF8C00' }} />
-            </ListItemIcon>
-            <ListItemText primary="Contact Information" />
-            <ListItemSecondaryAction>
-              <IconButton edge="end">
-                <ChevronRight />
-              </IconButton>
-            </ListItemSecondaryAction>
-          </ListItem>
-        </List>
-      </Paper>
 
       <Typography 
         variant="h6" 
@@ -284,33 +209,6 @@ const SettingsPage = () => {
         }}
       >
         <List disablePadding>
-          <ListItem>
-            <ListItemIcon>
-              <DarkMode sx={{ color: '#FF8C00' }} />
-            </ListItemIcon>
-            <ListItemText primary="Dark Mode" />
-            <ListItemSecondaryAction>
-              <Switch
-                edge="end"
-                checked={darkMode}
-                onChange={handleToggleDarkMode}
-                sx={{
-                  '& .MuiSwitch-switchBase.Mui-checked': {
-                    color: '#FF8C00',
-                    '&:hover': {
-                      backgroundColor: 'rgba(255, 140, 0, 0.08)',
-                    },
-                  },
-                  '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
-                    backgroundColor: '#FF8C00',
-                  },
-                }}
-              />
-            </ListItemSecondaryAction>
-          </ListItem>
-          
-          <Divider />
-          
           <ListItem>
             <ListItemIcon>
               <Notifications sx={{ color: '#FF8C00' }} />
@@ -338,39 +236,7 @@ const SettingsPage = () => {
         </List>
       </Paper>
 
-      <Typography 
-        variant="h6" 
-        sx={{ 
-          mb: 2, 
-          fontWeight: 'bold', 
-          color: 'text.secondary' 
-        }}
-      >
-        Support
-      </Typography>
-      
-      <Paper 
-        elevation={3} 
-        sx={{ 
-          mb: 4,
-          borderRadius: 2,
-          overflow: 'hidden'
-        }}
-      >
-        <List disablePadding>
-          <ListItem button onClick={handleGetHelp}>
-            <ListItemIcon>
-              <Help sx={{ color: '#FF8C00' }} />
-            </ListItemIcon>
-            <ListItemText primary="Help & Support" />
-            <ListItemSecondaryAction>
-              <IconButton edge="end">
-                <ChevronRight />
-              </IconButton>
-            </ListItemSecondaryAction>
-          </ListItem>
-        </List>
-      </Paper>
+
 
       <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
         <Button

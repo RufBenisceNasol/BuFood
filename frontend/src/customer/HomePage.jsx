@@ -13,7 +13,7 @@ import { getUser } from '../utils/tokenUtils';
 
 const styles = {
   bannerContainer: {
-    padding: '0 16px',
+    padding: '0 1px',
     marginBottom: '5px',
     maxWidth: '100%',
     overflow: 'hidden'
@@ -333,9 +333,9 @@ const HomePage = () => {
         </div>
 
         {/* Search Bar - Fixed at the top */}
-        <div className="searchContainer" style={{ position: 'sticky', top: 0, zIndex: 10, backgroundColor: '#faf9f9', padding: '8px' }}>
+        <div className="searchContainer" style={{ position: 'sticky', right: '10px', top: 0, zIndex: 10, backgroundColor: ' #faf9f9', padding: '6px' }}>
           <div className="searchBar">
-            <MdSearch size={24} color="#999" />
+            <MdSearch size={24} color=" #999999" />
             <input 
               type="text" 
               placeholder="Search" 
@@ -346,13 +346,13 @@ const HomePage = () => {
             {searchQuery && (
               <MdClose 
                 size={20} 
-                color="#999" 
+                color=" #999999" 
                 onClick={clearSearch}
                 className="clearSearchIcon"
               />
             )}
           </div>
-          <div className="filterButton" onClick={toggleFilters}>
+          <div className="filterButton" onClick={toggleFilters} style={{ width: '33px', height: '33px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <MdFilterList size={24} color="#fff" />
           </div>
           <button
@@ -371,8 +371,8 @@ const HomePage = () => {
               justifyContent: 'center',
               outline: 'none',
               borderRadius: '50%',
-              width: '44px',
-              height: '44px',
+              width: '33px',
+              height: '33px',
               position: 'relative',
             }}
             tabIndex={0}
