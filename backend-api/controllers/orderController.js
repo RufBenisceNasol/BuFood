@@ -6,6 +6,8 @@ const Store = require('../models/storeModel');
 const { validationResult } = require('express-validator');
 const ApiError = require('../utils/ApiError');
 const { createGCashSource } = require('../utils/paymongo');
+const uploadToCloudinary = require('../utils/uploadToCloudinary');
+const fs = require('fs').promises;
 
 // Helper function for consistent response structure
 const createResponse = (success, message, data = null, error = null) => ({
@@ -205,6 +207,114 @@ const createOrderFromCart = async (req, res) => {
     ));
   } finally {
     session.endSession();
+  }
+};
+
+// Customer uploads manual GCash payment proof
+const uploadManualGcashProof = async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    const { gcashRef } = req.body;
+
+    if (!req.user || !req.user._id) {
+      return res.status(401).json(createResponse(false, 'Authentication required'));
+    }
+
+    const order = await Order.findById(orderId);
+    if (!order) {
+      return res.status(404).json(createResponse(false, 'Order not found'));
+    }
+
+    if (order.customer.toString() !== req.user._id.toString()) {
+      return res.status(403).json(createResponse(false, 'Unauthorized'));
+    }
+
+    if (order.paymentMethod !== 'GCash_Manual') {
+      return res.status(400).json(createResponse(false, 'Order is not using manual GCash payment'));
+    }
+
+    // Upload image if provided
+    let proofImageUrl = order.paymentProof?.proofImageUrl || '';
+    if (req.file && req.file.path) {
+      const result = await uploadToCloudinary(req.file.path, 'payment-proofs');
+      proofImageUrl = result.secure_url;
+      try { await fs.unlink(req.file.path); } catch (_) {}
+    }
+
+    order.paymentProof = {
+      gcashRef: gcashRef || order.paymentProof?.gcashRef || '',
+      proofImageUrl,
+      status: 'pending_verification',
+      uploadedAt: new Date()
+    };
+    await order.save();
+
+    return res.status(200).json(createResponse(true, 'Payment proof uploaded', { orderId: order._id, paymentProof: order.paymentProof }));
+  } catch (error) {
+    console.error('Upload manual GCash proof error:', error);
+    return res.status(500).json(createResponse(false, 'Failed to upload payment proof', null, error.message));
+  }
+};
+
+// Seller approves manual GCash payment
+const approveManualGcash = async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    if (!req.user || !req.user._id) {
+      return res.status(401).json(createResponse(false, 'Authentication required'));
+    }
+    const order = await Order.findById(orderId);
+    if (!order) return res.status(404).json(createResponse(false, 'Order not found'));
+    if (order.seller.toString() !== req.user._id.toString()) {
+      return res.status(403).json(createResponse(false, 'Unauthorized'));
+    }
+    if (order.paymentMethod !== 'GCash_Manual') {
+      return res.status(400).json(createResponse(false, 'Order is not using manual GCash payment'));
+    }
+    order.paymentStatus = 'Paid';
+    order.paymentProof = {
+      ...(order.paymentProof || {}),
+      status: 'approved',
+      reviewedAt: new Date(),
+      reviewedBy: req.user._id
+    };
+    await order.save();
+    return res.status(200).json(createResponse(true, 'Payment approved', { orderId: order._id }));
+  } catch (error) {
+    console.error('Approve manual GCash error:', error);
+    return res.status(500).json(createResponse(false, 'Failed to approve payment', null, error.message));
+  }
+};
+
+// Seller rejects manual GCash payment
+const rejectManualGcash = async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    const { reason } = req.body;
+    if (!req.user || !req.user._id) {
+      return res.status(401).json(createResponse(false, 'Authentication required'));
+    }
+    const order = await Order.findById(orderId);
+    if (!order) return res.status(404).json(createResponse(false, 'Order not found'));
+    if (order.seller.toString() !== req.user._id.toString()) {
+      return res.status(403).json(createResponse(false, 'Unauthorized'));
+    }
+    if (order.paymentMethod !== 'GCash_Manual') {
+      return res.status(400).json(createResponse(false, 'Order is not using manual GCash payment'));
+    }
+    order.paymentStatus = 'Failed';
+    order.paymentProof = {
+      ...(order.paymentProof || {}),
+      status: 'rejected',
+      reviewedAt: new Date(),
+      reviewedBy: req.user._id,
+      rejectionReason: reason || 'Invalid proof'
+    };
+    await order.save();
+    return res.status(200).json(createResponse(true, 'Payment rejected', { orderId: order._id }));
+  } catch (error) {
+    console.error('Reject manual GCash error:', error);
+    return res.status(500).json(createResponse(false, 'Failed to reject payment', null, error.message));
   }
 };
 
@@ -1031,5 +1141,8 @@ module.exports = {
   createDirectOrder,
   getCustomerOrders,
   checkoutWithGCash,
-  paymongoWebhook
+  paymongoWebhook,
+  uploadManualGcashProof,
+  approveManualGcash,
+  rejectManualGcash
 }; 

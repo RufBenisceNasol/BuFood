@@ -96,10 +96,19 @@ const orderSchema = new mongoose.Schema({
     },
     paymentMethod: {
         type: String,
-        enum: ['Cash on Delivery', 'GCash', 'Cash on Pickup'],
+        enum: ['Cash on Delivery', 'GCash', 'Cash on Pickup', 'GCash_Manual'],
         default: function() {
             return this.orderType === 'Pickup' ? 'Cash on Pickup' : 'Cash on Delivery';
         }
+    },
+    paymentProof: {
+        gcashRef: { type: String, trim: true },
+        proofImageUrl: { type: String, trim: true },
+        status: { type: String, enum: ['pending_verification', 'approved', 'rejected'], default: 'pending_verification' },
+        uploadedAt: { type: Date },
+        reviewedAt: { type: Date },
+        reviewedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+        rejectionReason: { type: String, trim: true }
     },
     deliveryDetails: {
         receiverName: {

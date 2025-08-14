@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { auth, store } from '../api';
 import { useNavigate } from 'react-router-dom';
 
@@ -50,7 +50,6 @@ const StoreSettings = () => {
       });
     } catch (err) {
       setError(err.message || 'Failed to fetch store/profile details');
-      console.error('Error fetching store/profile data:', err);
     } finally {
       setLoading(false);
     }
@@ -75,7 +74,7 @@ const StoreSettings = () => {
     return Object.keys(errors).length === 0;
   };
 
-  const handleInputChange = (e) => {
+  const handleInputChange = useCallback((e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
     
@@ -86,29 +85,61 @@ const StoreSettings = () => {
         [name]: ''
       });
     }
-  };
+  }, [validationErrors]);
 
-  const handleBannerChange = (e) => {
+  const handleBannerChange = useCallback((e) => {
     const file = e.target.files[0];
     if (file) {
       setFormData((prev) => ({ ...prev, bannerImage: file }));
     }
-  };
+  }, []);
 
-  const handleProfileChange = (e) => {
+  const handleProfileChange = useCallback((e) => {
     const file = e.target.files[0];
     if (file) {
       setFormData((prev) => ({ ...prev, image: file }));
     }
-  };
+  }, []);
 
-  const handleEdit = () => {
+  // Memoized preview URLs to avoid recreating blob URLs every render
+  const bannerPreviewUrl = useMemo(() => {
+    if (formData.bannerImage && typeof formData.bannerImage !== 'string') {
+      return URL.createObjectURL(formData.bannerImage);
+    }
+    return formData.bannerImage || '/default-banner.jpg';
+  }, [formData.bannerImage]);
+
+  const profilePreviewUrl = useMemo(() => {
+    if (formData.image && typeof formData.image !== 'string') {
+      return URL.createObjectURL(formData.image);
+    }
+    return formData.image || '';
+  }, [formData.image]);
+
+  // Revoke blob URLs when they change to prevent memory leaks and jank
+  useEffect(() => {
+    return () => {
+      if (bannerPreviewUrl && bannerPreviewUrl.startsWith('blob:')) {
+        URL.revokeObjectURL(bannerPreviewUrl);
+      }
+    };
+  }, [bannerPreviewUrl]);
+
+  useEffect(() => {
+    return () => {
+      if (profilePreviewUrl && profilePreviewUrl.startsWith('blob:')) {
+        URL.revokeObjectURL(profilePreviewUrl);
+      }
+    };
+  }, [profilePreviewUrl]);
+
+  const handleEdit = useCallback(() => {
     setEditMode(true);
     setSaving(false);
     setSuccess('');
     setError('');
     setValidationErrors({});
-  };
+  }, []);
 
   const handleSave = async (e) => {
     e.preventDefault();
@@ -141,7 +172,21 @@ const StoreSettings = () => {
       setStoreData(updated);
       setEditMode(false);
       setSuccess('Store details updated successfully!');
-      fetchAllDetails();
+      // Notify other views (e.g., Dashboard) to refresh without forcing full reload
+      try {
+        window.dispatchEvent(new Event('store-updated'));
+      } catch (_) {}
+      try {
+        // Store info about which store and which images changed for cache-busting
+        const payload = {
+          ts: Date.now(),
+          banner: Boolean(formData.bannerImage),
+          image: Boolean(formData.image),
+          storeId: storeData?._id
+        };
+        localStorage.setItem('bufood:store-updated', JSON.stringify(payload));
+      } catch (_) {}
+      await fetchAllDetails();
     } catch (err) {
       setError(err.message || 'Failed to update store');
     } finally {
@@ -158,17 +203,17 @@ const StoreSettings = () => {
     setValidationErrors({});
   };
 
-  const changeBanner = () => {
+  const changeBanner = useCallback(() => {
     document.getElementById('banner-input').click();
-  };
+  }, []);
 
-  const changeProfile = () => {
+  const changeProfile = useCallback(() => {
     document.getElementById('profile-input').click();
-  };
+  }, []);
 
-  const handleBack = () => {
+  const handleBack = useCallback(() => {
     navigate(-1); // Navigate to previous page
-  };
+  }, [navigate]);
 
   if (loading) {
     return <div style={styles.loadingContainer}>Loading...</div>;
@@ -188,12 +233,8 @@ const StoreSettings = () => {
       
       <div style={styles.contentContainer}>
       <div style={styles.bannerWrapper}>
-        <img
-          src={
-            formData.bannerImage && typeof formData.bannerImage !== 'string'
-              ? URL.createObjectURL(formData.bannerImage)
-              : formData.bannerImage || '/default-banner.jpg'
-          }
+          <img
+          src={bannerPreviewUrl}
           alt="Banner"
           style={styles.bannerImg}
         />
@@ -211,15 +252,9 @@ const StoreSettings = () => {
           )}
           
         <div style={styles.profileAvatarWrapper}>
-          {formData.image && typeof formData.image !== 'string' ? (
+          {profilePreviewUrl ? (
             <img
-              src={URL.createObjectURL(formData.image)}
-              alt="Profile"
-              style={styles.profileAvatar}
-            />
-          ) : formData.image ? (
-            <img
-              src={formData.image}
+              src={profilePreviewUrl}
               alt="Profile"
               style={styles.profileAvatar}
             />

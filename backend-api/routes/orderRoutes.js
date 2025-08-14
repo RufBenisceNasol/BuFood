@@ -11,7 +11,10 @@ const {
   createDirectOrder,
   getCustomerOrders,
   checkoutWithGCash,
-  paymongoWebhook
+  paymongoWebhook,
+  uploadManualGcashProof,
+  approveManualGcash,
+  rejectManualGcash
 } = require('../controllers/orderController');
 const { 
   validateCreateOrderFromCart,
@@ -504,5 +507,14 @@ router.post('/gcash/checkout', checkoutWithGCash);
 
 // GCash webhook route
 router.post('/gcash/webhook', paymongoWebhook);
+
+// Manual GCash routes
+const multer = require('multer');
+const upload = multer({ dest: 'uploads/' });
+// Customer upload proof
+router.post('/:orderId/gcash-manual/proof', authenticate, checkRole('Customer'), upload.single('proof'), uploadManualGcashProof);
+// Seller approve/reject
+router.post('/:orderId/gcash-manual/approve', authenticate, checkRole('Seller'), approveManualGcash);
+router.post('/:orderId/gcash-manual/reject', authenticate, checkRole('Seller'), rejectManualGcash);
 
 module.exports = router; 

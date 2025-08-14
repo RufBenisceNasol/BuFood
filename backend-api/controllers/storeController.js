@@ -23,12 +23,24 @@ const updateStore = async (req, res) => {
     updates.storeName = req.body.storeName;
   }
 
+  // Optional manual GCash fields
+  if (typeof req.body.gcashName === 'string') {
+    updates.gcashName = req.body.gcashName;
+  }
+  if (typeof req.body.gcashNumber === 'string') {
+    updates.gcashNumber = req.body.gcashNumber;
+  }
+
   if (req.files) {
     if (req.files['image']) {
       updates.image = req.files['image'][0].path;
     }
     if (req.files['bannerImage']) {
       updates.bannerImage = req.files['bannerImage'][0].path;
+    }
+    // Accept optional GCash QR upload via field name 'gcashQr'
+    if (req.files['gcashQr']) {
+      updates.gcashQrUrl = req.files['gcashQr'][0].path;
     }
   }
 

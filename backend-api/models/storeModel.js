@@ -22,6 +22,22 @@ const storeSchema = new mongoose.Schema({
     bannerImage: {
         type: String,
         default: 'https://res.cloudinary.com/dflcnd7z3/image/upload/v1745655986/icrooeomu8t1tigzwgio.png'
+    },
+    // Manual GCash details for offline payments
+    gcashName: {
+        type: String,
+        trim: true,
+        default: ''
+    },
+    gcashNumber: {
+        type: String,
+        trim: true,
+        default: ''
+    },
+    gcashQrUrl: {
+        type: String,
+        trim: true,
+        default: ''
     }
 }, { timestamps: true });
 

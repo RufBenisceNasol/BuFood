@@ -3,7 +3,6 @@ import { getToken, getRefreshToken, removeToken, removeRefreshToken, removeUser,
 
 // Use environment variable for API base URL, fallback to Render URL
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://capstonedelibup.onrender.com/api";
-console.log("API_BASE_URL (build):", API_BASE_URL);
 
 // Create axios instance with default config
 const api = axios.create({
@@ -152,7 +151,9 @@ export const store = {
     // Get seller's own store
     getMyStore: async () => {
         try {
-            const response = await api.get('/store/my-store');
+            const response = await api.get('/store/my-store', {
+                params: { _t: Date.now() }
+            });
             return response.data;
         } catch (error) {
             throw error.response?.data || error.message;
@@ -515,6 +516,39 @@ export const order = {
         try {
             const response = await api.post('/orders/gcash/checkout', { amount, orderId, redirectUrl });
             return response.data.data.checkoutUrl;
+        } catch (error) {
+            throw error.response?.data || error.message;
+        }
+    },
+
+    // Manual GCash: customer upload proof
+    uploadManualGcashProof: async (orderId, { file, gcashRef }) => {
+        try {
+            const form = new FormData();
+            if (file) form.append('proof', file);
+            if (gcashRef) form.append('gcashRef', gcashRef);
+            const response = await api.post(`/orders/${orderId}/gcash-manual/proof`, form, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+            return response.data;
+        } catch (error) {
+            throw error.response?.data || error.message;
+        }
+    },
+
+    // Manual GCash: seller approve/reject
+    approveManualGcash: async (orderId) => {
+        try {
+            const response = await api.post(`/orders/${orderId}/gcash-manual/approve`);
+            return response.data;
+        } catch (error) {
+            throw error.response?.data || error.message;
+        }
+    },
+    rejectManualGcash: async (orderId, reason) => {
+        try {
+            const response = await api.post(`/orders/${orderId}/gcash-manual/reject`, { reason });
+            return response.data;
         } catch (error) {
             throw error.response?.data || error.message;
         }

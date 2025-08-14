@@ -161,7 +161,8 @@ router.put('/:id',
   checkStoreOwnership, 
   uploadStoreImage.fields([
     { name: 'image', maxCount: 1 },
-    { name: 'bannerImage', maxCount: 1 }
+    { name: 'bannerImage', maxCount: 1 },
+    { name: 'gcashQr', maxCount: 1 }
   ]),
   updateStore
 );

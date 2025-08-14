@@ -510,11 +510,13 @@ const OrderSummaryPage = () => {
                                 label="Cash on Pickup"
                                 disabled={formData.orderType === 'Delivery'}
                             />
+                            {/* Temporarily hiding GCash payment option
                             <FormControlLabel 
                                 value="GCash" 
                                 control={<Radio />} 
                                 label="GCash" 
                             />
+                            */}
                         </RadioGroup>
                     </Section>
 

@@ -39,10 +39,94 @@ const DashboardPage = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const navigate = useNavigate();
   const [ordersForChart, setOrdersForChart] = useState([]);
+  const [cacheBuster, setCacheBuster] = useState('');
+
+  const appendCacheBuster = (url) => {
+    if (!url) return url;
+    if (!cacheBuster) return url;
+    return url.includes('?') ? `${url}&_=${cacheBuster}` : `${url}?_=${cacheBuster}`;
+  };
 
   useEffect(() => {
     fetchStoreData();
     fetchOrderStats();
+  }, []);
+
+  // Smooth auto-refresh: react to tab focus/visibility changes and cross-tab events
+  useEffect(() => {
+    let visibilityTimer = null;
+    const smoothRefresh = async (fromUpdateEvent = false) => {
+      // Soft refresh: do not show full-screen loader; instead, just update quietly
+      try {
+        if (fromUpdateEvent) {
+          setCacheBuster(String(Date.now()));
+        }
+        const [data, stats] = await Promise.all([
+          store.getMyStore(),
+          (async () => {
+            const ordersRes = await order.getSellerOrders({ page: 1, limit: 100, sortBy: 'createdAt', sortOrder: 'desc' });
+            return ordersRes;
+          })()
+        ]);
+        setStoreData(data);
+        const orders = stats.data?.orders || stats.orders || [];
+        let pending = 0, completed = 0, earnings = 0;
+        for (const o of orders) {
+          if (!['Delivered', 'Canceled', 'Rejected'].includes(o.status)) pending++;
+          if (o.status === 'Delivered') {
+            completed++;
+            if (o.paymentStatus === 'Paid') earnings += o.totalAmount;
+          }
+        }
+        setOrderStats({ pending, completed, earnings, orders });
+        setOrdersForChart(orders);
+      } catch (_) {}
+    };
+
+    const onFocus = () => smoothRefresh();
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        // Debounce to avoid double-calls on some browsers
+        if (visibilityTimer) clearTimeout(visibilityTimer);
+        visibilityTimer = setTimeout(smoothRefresh, 120);
+      }
+    };
+    const onStoreUpdated = () => {
+      // Small delay to let backend finish uploading and CDN propagate
+      setTimeout(() => smoothRefresh(true), 200);
+      // Extra retries for image/CDN propagation
+      setTimeout(() => smoothRefresh(true), 1000);
+      setTimeout(() => smoothRefresh(true), 2500);
+    };
+    const onStorage = (e) => {
+      if (e.key === 'bufood:store-updated') {
+        setTimeout(() => smoothRefresh(true), 200);
+        setTimeout(() => smoothRefresh(true), 1000);
+        setTimeout(() => smoothRefresh(true), 2500);
+      }
+    };
+
+    window.addEventListener('focus', onFocus);
+    document.addEventListener('visibilitychange', onVisibility);
+    window.addEventListener('store-updated', onStoreUpdated);
+    window.addEventListener('storage', onStorage);
+    return () => {
+      if (visibilityTimer) clearTimeout(visibilityTimer);
+      window.removeEventListener('focus', onFocus);
+      document.removeEventListener('visibilitychange', onVisibility);
+      window.removeEventListener('store-updated', onStoreUpdated);
+      window.removeEventListener('storage', onStorage);
+    };
+  }, []);
+
+  // On initial mount, if there was a recent update flagged, force a soft refresh and cache-bust media
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('bufood:store-updated');
+      if (raw) {
+        setCacheBuster(String(Date.now()));
+      }
+    } catch (_) {}
   }, []);
 
   const fetchStoreData = async () => {
@@ -252,7 +336,8 @@ const DashboardPage = () => {
             />
           </button>
           <img 
-            src={storeData?.bannerImage || 'https://placehold.co/800x300/orange/white?text=Store+Banner'} 
+            key={cacheBuster ? `banner-${cacheBuster}` : 'banner'}
+            src={appendCacheBuster(storeData?.bannerImage || 'https://placehold.co/800x300/orange/white?text=Store+Banner')} 
             alt="Store Banner" 
             className="banner-img"
           />
@@ -281,7 +366,8 @@ const DashboardPage = () => {
           <div className="profile-avatar-wrapper">
             {storeData?.image ? (
               <img 
-                src={storeData.image} 
+                key={cacheBuster ? `avatar-${cacheBuster}` : 'avatar'}
+                src={appendCacheBuster(storeData.image)} 
                 alt={`${storeData.storeName || 'Store'} logo`} 
                 className="profile-avatar"
               />
