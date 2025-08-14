@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MdSearch, MdHome, MdFavoriteBorder, MdShoppingCart, MdReceipt, MdPerson, MdFilterList, MdClose, MdMenuOpen, MdSettings, MdLogout, MdStore, MdAddShoppingCart } from 'react-icons/md';
-import { FiRefreshCw } from 'react-icons/fi';
 import Slider from 'react-slick';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -155,8 +154,10 @@ const HomePage = () => {
     setFilteredProducts(result);
   }, [searchQuery, filters, allProducts]);
 
-  const fetchData = async () => {
-    setLoading(true);
+  const fetchData = async ({ showLoader = true } = {}) => {
+    if (showLoader) {
+      setLoading(true);
+    }
     setError(null);
 
     try {
@@ -198,9 +199,35 @@ const HomePage = () => {
       console.error('Error fetching data:', err);
       setError(err.message || 'Failed to load data');
     } finally {
-      setLoading(false);
+      if (showLoader) {
+        setLoading(false);
+      }
     }
   };
+
+  // Auto-refresh: interval + when tab gains focus/visibility
+  useEffect(() => {
+    const refreshSilently = () => fetchData({ showLoader: false });
+
+    const intervalId = setInterval(refreshSilently, 30000);
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        refreshSilently();
+      }
+    };
+    const handleFocus = () => {
+      refreshSilently();
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', handleFocus);
+
+    return () => {
+      clearInterval(intervalId);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, []);
 
   const handleAddToCart = async (product) => {
     try {
@@ -263,6 +290,41 @@ const HomePage = () => {
 
   const handleStoreClick = (storeId) => {
     navigate(`/customer/store/${storeId}`);
+  };
+
+  const formatPeakTimes = (peak) => {
+    if (!peak) return '';
+    if (Array.isArray(peak)) {
+      const segments = peak
+        .map(seg => {
+          if (typeof seg === 'string') return seg;
+          if (typeof seg === 'number') {
+            const hour = String(seg).padStart(2, '0');
+            return `${hour}:00`;
+          }
+          if (seg && typeof seg === 'object') {
+            const start = seg.start ?? seg.from ?? seg.begin;
+            const end = seg.end ?? seg.to ?? seg.finish;
+            const fmt = (v) => typeof v === 'number' ? `${String(v).padStart(2, '0')}:00` : v;
+            if (start != null && end != null) return `${fmt(start)}-${fmt(end)}`;
+          }
+          return null;
+        })
+        .filter(Boolean);
+      return segments.join(', ');
+    }
+    if (typeof peak === 'number') {
+      return `${String(peak).padStart(2, '0')}:00`;
+    }
+    if (typeof peak === 'object') {
+      const start = peak.start ?? peak.from;
+      const end = peak.end ?? peak.to;
+      const fmt = (v) => typeof v === 'number' ? `${String(v).padStart(2, '0')}:00` : v;
+      if (start != null && end != null) {
+        return `${fmt(start)}-${fmt(end)}`;
+      }
+    }
+    return String(peak);
   };
 
   const dedupedStores = useMemo(() => {
@@ -355,35 +417,7 @@ const HomePage = () => {
           <div className="filterButton" onClick={toggleFilters} style={{ width: '33px', height: '33px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <MdFilterList size={24} color="#fff" />
           </div>
-          <button
-            className="refreshButton"
-            aria-label="Refresh"
-            onClick={fetchData}
-            disabled={loading}
-            style={{
-              background: '#ff9800',
-              border: 'none',
-              padding: 0,
-              marginLeft: '0px',
-              cursor: loading ? 'not-allowed' : 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              outline: 'none',
-              borderRadius: '50%',
-              width: '33px',
-              height: '33px',
-              position: 'relative',
-            }}
-            tabIndex={0}
-          >
-            <FiRefreshCw
-              size={20}
-              color={loading ? ' #ff9800' : 'rgba(255, 255, 255, 0.85)'}
-              className={loading ? 'spin' : ''}
-              aria-hidden="true"
-            />
-          </button>
+          {/* Auto-refresh enabled; manual refresh button removed */}
         </div>
 
         {/* Main Scrollable Content */}
@@ -515,6 +549,13 @@ const HomePage = () => {
                     </div>
                     <div className="productInfo">
                       <h3 className="productName">{product.name || 'Chicken With Rice'}</h3>
+                         {(product.soldCount != null || product.peakOrderTimes) && (
+                           <div style={{ fontSize: '12px', color: '#777', marginTop: '2px' }}>
+                             {product.soldCount != null
+                               ? `Sold: ${product.soldCount}`
+                               : `Peak: ${formatPeakTimes(product.peakOrderTimes)}`}
+                           </div>
+                         )}
                       <div className="productPriceRow">
                         <p className="productPrice">₱{product.price || '49'}</p>
                         <button 
@@ -608,6 +649,13 @@ const HomePage = () => {
                     </div>
                     <div className="productInfo">
                       <h3 className="productName">{product.name || 'Product Name'}</h3>
+                        {(product.soldCount != null || product.peakOrderTimes) && (
+                          <div style={{ fontSize: '12px', color: '#777', marginTop: '2px' }}>
+                            {product.soldCount != null
+                              ? `Sold: ${product.soldCount}`
+                              : `Peak: ${formatPeakTimes(product.peakOrderTimes)}`}
+                          </div>
+                        )}
                       <div className="productPriceRow">
                         <p className="productPrice">₱{product.price || '0'}</p>
                         <button 

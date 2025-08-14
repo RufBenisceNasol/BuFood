@@ -31,6 +31,7 @@ const customerRoutes = require('./routes/customerRoutes');
 const sellerRoutes = require('./routes/sellerRoutes');
 const cartRoutes = require('./routes/cartRoutes');
 const orderRoutes = require('./routes/orderRoutes');
+const storeMemberRoutes = require('./routes/storeMemberRoutes');
 
 const app = express();
 const port = process.env.PORT || 8000;
@@ -166,6 +167,7 @@ app.get('/', (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/products', cache('10 minutes'), productRoutes);
 app.use('/api/store', cache('15 minutes'), storeRoutes);
+app.use('/api/store', storeMemberRoutes);
 app.use('/api/customers', customerRoutes);
 app.use('/api/seller', sellerRoutes);
 app.use('/api/cart', cartRoutes);

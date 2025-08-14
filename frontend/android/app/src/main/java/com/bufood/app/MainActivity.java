@@ -1,5 +1,0 @@
-package com.bufood.app;
-
-import com.getcapacitor.BridgeActivity;
-
-public class MainActivity extends BridgeActivity {}

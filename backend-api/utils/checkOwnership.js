@@ -1,4 +1,5 @@
 const Store = require('../models/storeModel');
+const StoreMember = require('../models/storeMemberModel');
 
 const checkStoreOwnership = async (req, res, next) => {
   try {
@@ -10,8 +11,15 @@ const checkStoreOwnership = async (req, res, next) => {
     console.log('Authenticated User ID:', req.user._id); // Log the user ID
     console.log('Store Owner ID:', store.owner.toString()); // Log the store owner ID
 
-    // Make sure to check if the user ID matches the store's owner
-    if (store.owner.toString() !== req.user._id.toString()) {
+    // Allow access for owner or active store members (Owner/Manager/Staff)
+    const isOwner = store.owner.toString() === req.user._id.toString();
+    let isMember = false;
+    if (!isOwner) {
+      const membership = await StoreMember.findOne({ store: store._id, user: req.user._id, status: 'Active' });
+      isMember = Boolean(membership);
+    }
+
+    if (!isOwner && !isMember) {
       return res.status(403).json({ message: 'Not authorized to access this store' });
     }
 

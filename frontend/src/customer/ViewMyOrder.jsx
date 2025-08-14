@@ -530,7 +530,7 @@ const ViewMyOrder = () => {
                   <Button 
                     className="outline"
                     onClick={() => toggleOrderDetails(order._id || order.id)}
-                    style={{ fontSize: '14px' }}
+                    style={{ fontSize: '9px' }}
                   >
                     {expandedOrder === (order._id || order.id) ? 'Hide Details' : 'View Details'}
                   </Button>
@@ -538,7 +538,7 @@ const ViewMyOrder = () => {
                     <Button 
                       className="outline"
                       onClick={() => console.log('Reordering order:', order._id || order.id)}
-                      style={{ fontSize: '14px' }}
+                      style={{ fontSize: '9px' }}
                     >
                       Reorder
                     </Button>
@@ -550,7 +550,7 @@ const ViewMyOrder = () => {
                         const firstProductId = order.items && order.items[0] && (order.items[0].product?._id || order.items[0].product || order.items[0]._id);
                         setSelectedProductId(firstProductId || '');
                       }}
-                      style={{ fontSize: '14px' }}
+                      style={{ fontSize: '9px' }}
                     >
                       Add Review
                     </Button>
@@ -561,7 +561,7 @@ const ViewMyOrder = () => {
                           setOrderToCancel(order._id || order.id);
                           setShowCancelModal(true);
                         }}
-                        style={{ fontSize: '14px', background: '#e74c3c', color: 'white', border: 'none' }}
+                          style={{ fontSize: '9px', background: '#e74c3c', color: 'white', border: 'none' }}
                         disabled={cancelingOrderId === (order._id || order.id)}
                       >
                         {cancelingOrderId === (order._id || order.id) ? 'Canceling...' : 'Cancel Order'}
@@ -583,7 +583,7 @@ const ViewMyOrder = () => {
             <ModalActions>
               <Button
                 className="cancel"
-                style={{ background: '#e74c3c', color: 'white', border: 'none', minWidth: 90 }}
+                style={{ background: '#e74c3c', color: 'white', border: 'none', minWidth: 90, fontSize: '9px' }}
                 onClick={() => handleCancelOrder(orderToCancel)}
                 disabled={cancelingOrderId === orderToCancel}
               >
@@ -591,7 +591,7 @@ const ViewMyOrder = () => {
               </Button>
               <Button
                 className="outline"
-                style={{ minWidth: 90 }}
+                style={{ minWidth: 90, fontSize: '9px' }}
                 onClick={() => { setShowCancelModal(false); setOrderToCancel(null); }}
                 disabled={cancelingOrderId === orderToCancel}
               >
@@ -659,7 +659,7 @@ const ViewMyOrder = () => {
                     setTimeout(() => setNotificationMessage(''), 3000);
                   }
                 }}
-                style={{ fontSize: '14px' }}
+                  style={{ fontSize: '9px' }}
               >
                 Submit
               </Button>
@@ -670,7 +670,7 @@ const ViewMyOrder = () => {
                   setReviewComment('');
                   setSelectedProductId('');
                 }}
-                style={{ fontSize: '14px' }}
+                  style={{ fontSize: '9px' }}
               >
                 Cancel
               </Button>

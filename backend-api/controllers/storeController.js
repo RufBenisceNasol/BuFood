@@ -1,5 +1,6 @@
 // /controllers/storeController.js
 const Store = require('../models/storeModel');
+const StoreMember = require('../models/storeMemberModel');
 
 // Create store for seller (used during registration)
 const createStoreForSeller = async (user) => {
@@ -12,6 +13,12 @@ const createStoreForSeller = async (user) => {
   });
 
   await newStore.save();
+  // Ensure owner membership exists
+  await StoreMember.findOneAndUpdate(
+    { store: newStore._id, user: user._id },
+    { role: 'Owner', status: 'Active' },
+    { upsert: true, new: true, setDefaultsOnInsert: true }
+  );
   return newStore;
 };
 

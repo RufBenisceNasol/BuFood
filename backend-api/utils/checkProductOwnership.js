@@ -1,11 +1,19 @@
 const Product = require('../models/productModel');
+const StoreMember = require('../models/storeMemberModel');
 
 const checkProductOwnership = async (req, res, next) => {
   try {
     const product = await Product.findById(req.params.id);
     if (!product) return res.status(404).json({ message: 'Product not found' });
 
-    if (product.sellerId.toString() !== req.user._id.toString()) {
+    const isProductOwner = product.sellerId.toString() === req.user._id.toString();
+    let isStoreMember = false;
+    if (!isProductOwner) {
+      const membership = await StoreMember.findOne({ store: product.storeId, user: req.user._id, status: 'Active' });
+      isStoreMember = Boolean(membership);
+    }
+
+    if (!isProductOwner && !isStoreMember) {
       return res.status(403).json({ message: 'Not authorized to modify this product' });
     }
 

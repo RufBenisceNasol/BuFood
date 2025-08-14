@@ -1,5 +1,6 @@
 const Product = require('../models/productModel');
 const Store = require('../models/storeModel');
+const Order = require('../models/orderModel');
 const uploadToCloudinary = require('../utils/uploadToCloudinary');
 const fs = require('fs').promises;  // Use fs.promises for cleaner async file handling
 
@@ -83,7 +84,51 @@ const getAllProducts = async (req, res) => {
     const products = await Product.find()
       .populate('storeId', 'storeName')
       .populate('sellerId', 'name email');
-    res.json(products);
+
+    // Aggregate sales stats per product from orders delivered
+    const stats = await Order.aggregate([
+      { $match: { status: 'Delivered' } },
+      { $unwind: '$items' },
+      {
+        $project: {
+          product: '$items.product',
+          quantity: '$items.quantity',
+          hour: { $hour: '$createdAt' }
+        }
+      },
+      { $group: { _id: { product: '$product', hour: '$hour' }, qty: { $sum: '$quantity' } } },
+      {
+        $group: {
+          _id: '$_id.product',
+          totalSold: { $sum: '$qty' },
+          hours: { $push: { hour: '$_id.hour', qty: '$qty' } }
+        }
+      }
+    ]);
+
+    const statsMap = new Map();
+    for (const s of stats) {
+      const hours = Array.isArray(s.hours) ? s.hours : [];
+      let maxQty = 0;
+      for (const h of hours) {
+        if (h.qty > maxQty) maxQty = h.qty;
+      }
+      const peakHours = hours.filter(h => h.qty === maxQty).map(h => h.hour).sort((a, b) => a - b);
+      statsMap.set(String(s._id), {
+        soldCount: s.totalSold || 0,
+        peakOrderTimes: peakHours
+      });
+    }
+
+    const productsWithStats = products.map(p => {
+      const obj = p.toObject();
+      const stat = statsMap.get(String(p._id));
+      obj.soldCount = stat ? stat.soldCount : 0;
+      obj.peakOrderTimes = stat ? stat.peakOrderTimes : [];
+      return obj;
+    });
+
+    res.json(productsWithStats);
   } catch (err) {
     res.status(500).json({ message: 'Server error' });
   }
@@ -96,7 +141,34 @@ const getProductById = async (req, res) => {
       .populate('storeId', 'storeName')
       .populate('sellerId', 'name email');
     if (!product) return res.status(404).json({ message: 'Product not found' });
-    res.json(product);
+
+    // Attach stats for single product
+    const stats = await Order.aggregate([
+      { $match: { status: 'Delivered' } },
+      { $unwind: '$items' },
+      { $match: { 'items.product': product._id } },
+      {
+        $project: {
+          quantity: '$items.quantity',
+          hour: { $hour: '$createdAt' }
+        }
+      },
+      { $group: { _id: '$hour', qty: { $sum: '$quantity' } } },
+      { $sort: { _id: 1 } }
+    ]);
+
+    let soldCount = 0;
+    let maxQty = 0;
+    for (const s of stats) {
+      soldCount += s.qty || 0;
+      if (s.qty > maxQty) maxQty = s.qty;
+    }
+    const peakOrderTimes = stats.filter(s => s.qty === maxQty).map(s => s._id);
+
+    const result = product.toObject();
+    result.soldCount = soldCount;
+    result.peakOrderTimes = peakOrderTimes;
+    res.json(result);
   } catch (err) {
     res.status(500).json({ message: 'Server error' });
   }
