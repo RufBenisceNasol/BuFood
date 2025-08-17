@@ -225,81 +225,81 @@ const OrdersPage = () => {
                 </tr>
               </thead>
               <tbody>
-                {filteredOrders.map((order) => (
-                  <React.Fragment key={order._id}>
+                {filteredOrders.map((ord) => (
+                  <React.Fragment key={ord._id}>
                     <tr>
-                    <td>{order._id.slice(-8)}</td>
-                    <td>{order.customer?.name || order.customerName || 'N/A'}</td>
-                    <td><span className="order-amount">₱{order.totalAmount.toFixed(2)}</span></td>
-                    <td><span className="status-badge" style={{ backgroundColor: statusBadgeColor(order.status) }}>{order.status}</span></td>
-                    <td><span className={`payment-status ${order.paymentStatus === 'Paid' ? 'paid' : 'unpaid'}`}>{order.paymentStatus}</span></td>
+                    <td>{ord._id.slice(-8)}</td>
+                    <td>{ord.customer?.name || ord.customerName || 'N/A'}</td>
+                    <td><span className="order-amount">₱{ord.totalAmount.toFixed(2)}</span></td>
+                    <td><span className="status-badge" style={{ backgroundColor: statusBadgeColor(ord.status) }}>{ord.status}</span></td>
+                    <td><span className={`payment-status ${ord.paymentStatus === 'Paid' ? 'paid' : 'unpaid'}`}>{ord.paymentStatus}</span></td>
                     <td>
                       <div className="action-buttons">
-                        {order.status !== 'Canceled' && order.status !== 'Delivered' && order.status !== 'Rejected' && (
+                        {ord.status !== 'Canceled' && ord.status !== 'Delivered' && ord.status !== 'Rejected' && (
                           <div>
-                            {order.status === 'Pending' && (
+                            {ord.status === 'Pending' && (
                               <button
-                                onClick={() => handleStatusUpdate(order._id, 'Accepted')}
+                                onClick={() => handleStatusUpdate(ord._id, 'Accepted')}
                                 className="accept-button"
                               >
                                 Accept
                               </button>
                             )}
-                            {order.status === 'Accepted' && (
+                            {ord.status === 'Accepted' && (
                               <button
-                                onClick={() => handleStatusUpdate(order._id, 'Preparing')}
+                                onClick={() => handleStatusUpdate(ord._id, 'Preparing')}
                                 className="prepare-button"
                               >
                                 Start Preparing
                               </button>
                             )}
-                            {order.status === 'Preparing' && order.orderType === 'Delivery' && (
+                            {ord.status === 'Preparing' && ord.orderType === 'Delivery' && (
                               <button
-                                onClick={() => handleStatusUpdate(order._id, 'Out for Delivery')}
+                                onClick={() => handleStatusUpdate(ord._id, 'Out for Delivery')}
                                 className="outfordelivery-button"
                               >
                                 Out for Delivery
                               </button>
                             )}
-                            {order.status === 'Preparing' && order.orderType === 'Pickup' && (
+                            {ord.status === 'Preparing' && ord.orderType === 'Pickup' && (
                               <button
-                                onClick={() => handleStatusUpdate(order._id, 'Ready')}
+                                onClick={() => handleStatusUpdate(ord._id, 'Ready')}
                                 className="ready-button"
                               >
                                 Mark Ready
                               </button>
                             )}
-                            {order.status === 'Ready' && order.orderType === 'Pickup' && (
+                            {ord.status === 'Ready' && ord.orderType === 'Pickup' && (
                               <button
-                                onClick={() => handleStatusUpdate(order._id, 'Ready for Pickup')}
+                                onClick={() => handleStatusUpdate(ord._id, 'Ready for Pickup')}
                                 className="readyforpickup-button"
                               >
                                 Ready for Pickup
                               </button>
                             )}
-                            {order.status === 'Out for Delivery' && (
+                            {ord.status === 'Out for Delivery' && (
                               <button
-                                onClick={() => handleStatusUpdate(order._id, 'Delivered')}
+                                onClick={() => handleStatusUpdate(ord._id, 'Delivered')}
                                 className="deliver-button"
                               >
                                 Mark Delivered
                               </button>
                             )}
-                            {order.status === 'Ready for Pickup' && (
+                            {ord.status === 'Ready for Pickup' && (
                               <button
-                                onClick={() => handleStatusUpdate(order._id, 'Delivered')}
+                                onClick={() => handleStatusUpdate(ord._id, 'Delivered')}
                                 className="deliver-button"
                               >
                                 Mark Picked Up
                               </button>
                             )}
-                            {['Pending', 'Accepted'].includes(order.status) && (
+                            {['Pending', 'Accepted'].includes(ord.status) && (
                               <button
                                 onClick={() => {
                                   if (userRole === 'Seller') {
-                                    handleStatusUpdate(order._id, 'Rejected');
+                                    handleStatusUpdate(ord._id, 'Rejected');
                                   } else {
-                                    handleCancelOrder(order._id);
+                                    handleCancelOrder(ord._id);
                                   }
                                 }}
                                 className="cancel-button"
@@ -309,9 +309,9 @@ const OrdersPage = () => {
                             )}
                           </div>
                         )}
-                        {order.status === 'Delivered' && order.paymentStatus !== 'Paid' && (
+                        {ord.status === 'Delivered' && ord.paymentStatus !== 'Paid' && (
                           <button
-                            onClick={() => handleMarkPaid(order._id)}
+                            onClick={() => handleMarkPaid(ord._id)}
                             className="action-button"
                           >
                             Mark Paid
@@ -319,16 +319,16 @@ const OrdersPage = () => {
                         )}
                           <button
                             className="details-button"
-                            onClick={() => handleToggleDetails(order._id)}
+                            onClick={() => handleToggleDetails(ord._id)}
                             style={{ marginTop: 4 }}
                           >
-                            {expandedOrderId === order._id ? 'Hide Details' : 'View Details'}
+                            {expandedOrderId === ord._id ? 'Hide Details' : 'View Details'}
                           </button>
                         </div>
                       </td>
                     </tr>
                     {/* Expandable details row */}
-                    {expandedOrderId === order._id && (
+                    {expandedOrderId === ord._id && (
                       <tr>
                         <td colSpan={6} style={{ background: '#fafafa', padding: 0 }}>
                           <div className="order-details-container">
@@ -344,9 +344,9 @@ const OrdersPage = () => {
                                 {/* Manual GCash Proof (Desktop) */}
                                 {orderDetails.paymentMethod === 'GCash_Manual' && (
                                   (() => {
-                                    const mg = orderDetails.manualGcash || orderDetails.manualGcashProof || orderDetails.gcashManual || orderDetails.gcashManualProof || {};
-                                    const proofUrl = mg.proofUrl || mg.url || mg.imageUrl || mg.image || (mg.proof && mg.proof.url);
-                                    const gcashRef = mg.gcashRef || mg.reference || mg.referenceNo || mg.referenceNumber;
+                                    const mg = orderDetails.paymentProof || {};
+                                    const proofUrl = mg.proofImageUrl || '';
+                                    const gcashRef = mg.gcashRef || '';
                                     const proofStatus = (mg.status || '').toString();
                                     const canAct = !!proofUrl && orderDetails.paymentStatus !== 'Paid' && !/^approved|rejected$/i.test(proofStatus);
                                     return (
@@ -458,80 +458,80 @@ const OrdersPage = () => {
             </table>
             {/* Mobile Card Layout */}
             <div className="mobile-only">
-              {filteredOrders.map((order) => (
-                <div className="order-card" key={order._id}>
-                  <div className="order-row"><span className="order-label">Order ID:</span> <span className="order-value">{order._id.slice(-8)}</span></div>
-                  <div className="order-row"><span className="order-label">Customer:</span> <span className="order-value">{order.customer?.name || order.customerName || 'N/A'}</span></div>
-                  <div className="order-row"><span className="order-label">Amount:</span> <span className="order-value order-amount">₱{order.totalAmount.toFixed(2)}</span></div>
-                  <div className="order-row"><span className="order-label">Status:</span> <span className="order-value status-badge" style={{ backgroundColor: statusBadgeColor(order.status) }}>{order.status}</span></div>
-                  <div className="order-row"><span className="order-label">Payment:</span> <span className={`order-value payment-status ${order.paymentStatus === 'Paid' ? 'paid' : 'unpaid'}`}>{order.paymentStatus}</span></div>
+              {filteredOrders.map((ord) => (
+                <div className="order-card" key={ord._id}>
+                  <div className="order-row"><span className="order-label">Order ID:</span> <span className="order-value">{ord._id.slice(-8)}</span></div>
+                  <div className="order-row"><span className="order-label">Customer:</span> <span className="order-value">{ord.customer?.name || ord.customerName || 'N/A'}</span></div>
+                  <div className="order-row"><span className="order-label">Amount:</span> <span className="order-value order-amount">₱{ord.totalAmount.toFixed(2)}</span></div>
+                  <div className="order-row"><span className="order-label">Status:</span> <span className="order-value status-badge" style={{ backgroundColor: statusBadgeColor(ord.status) }}>{ord.status}</span></div>
+                  <div className="order-row"><span className="order-label">Payment:</span> <span className={`order-value payment-status ${ord.paymentStatus === 'Paid' ? 'paid' : 'unpaid'}`}>{ord.paymentStatus}</span></div>
                   <div className="order-row">
                     <div className="action-buttons">
-                      {order.status !== 'Canceled' && order.status !== 'Delivered' && order.status !== 'Rejected' && (
+                      {ord.status !== 'Canceled' && ord.status !== 'Delivered' && ord.status !== 'Rejected' && (
                         <>
-                          {order.status === 'Pending' && (
+                          {ord.status === 'Pending' && (
                             <button
-                              onClick={() => handleStatusUpdate(order._id, 'Accepted')}
+                              onClick={() => handleStatusUpdate(ord._id, 'Accepted')}
                               className="accept-button"
                             >
                               Accept
                             </button>
                           )}
-                          {order.status === 'Accepted' && (
+                          {ord.status === 'Accepted' && (
                             <button
-                              onClick={() => handleStatusUpdate(order._id, 'Preparing')}
+                              onClick={() => handleStatusUpdate(ord._id, 'Preparing')}
                               className="prepare-button"
                             >
                               Start Preparing
                             </button>
                           )}
-                          {order.status === 'Preparing' && order.orderType === 'Delivery' && (
+                          {ord.status === 'Preparing' && ord.orderType === 'Delivery' && (
                             <button
-                              onClick={() => handleStatusUpdate(order._id, 'Out for Delivery')}
+                              onClick={() => handleStatusUpdate(ord._id, 'Out for Delivery')}
                               className="outfordelivery-button"
                             >
                               Out for Delivery
                             </button>
                           )}
-                          {order.status === 'Preparing' && order.orderType === 'Pickup' && (
+                          {ord.status === 'Preparing' && ord.orderType === 'Pickup' && (
                             <button
-                              onClick={() => handleStatusUpdate(order._id, 'Ready')}
+                              onClick={() => handleStatusUpdate(ord._id, 'Ready')}
                               className="ready-button"
                             >
                               Mark Ready
                             </button>
                           )}
-                          {order.status === 'Ready' && order.orderType === 'Pickup' && (
+                          {ord.status === 'Ready' && ord.orderType === 'Pickup' && (
                             <button
-                              onClick={() => handleStatusUpdate(order._id, 'Ready for Pickup')}
+                              onClick={() => handleStatusUpdate(ord._id, 'Ready for Pickup')}
                               className="readyforpickup-button"
                             >
                               Ready for Pickup
                             </button>
                           )}
-                          {order.status === 'Out for Delivery' && (
+                          {ord.status === 'Out for Delivery' && (
                             <button
-                              onClick={() => handleStatusUpdate(order._id, 'Delivered')}
+                              onClick={() => handleStatusUpdate(ord._id, 'Delivered')}
                               className="deliver-button"
                             >
                               Mark Delivered
                             </button>
                           )}
-                          {order.status === 'Ready for Pickup' && (
+                          {ord.status === 'Ready for Pickup' && (
                             <button
-                              onClick={() => handleStatusUpdate(order._id, 'Delivered')}
+                              onClick={() => handleStatusUpdate(ord._id, 'Delivered')}
                               className="deliver-button"
                             >
                               Mark Picked Up
                             </button>
                           )}
-                          {['Pending', 'Accepted'].includes(order.status) && (
+                          {['Pending', 'Accepted'].includes(ord.status) && (
                             <button
                               onClick={() => {
                                 if (userRole === 'Seller') {
-                                  handleStatusUpdate(order._id, 'Rejected');
+                                  handleStatusUpdate(ord._id, 'Rejected');
                                 } else {
-                                  handleCancelOrder(order._id);
+                                  handleCancelOrder(ord._id);
                                 }
                               }}
                               className="cancel-button"
@@ -541,9 +541,9 @@ const OrdersPage = () => {
                           )}
                         </>
                       )}
-                      {order.status === 'Delivered' && order.paymentStatus !== 'Paid' && (
+                      {ord.status === 'Delivered' && ord.paymentStatus !== 'Paid' && (
                         <button
-                          onClick={() => handleMarkPaid(order._id)}
+                          onClick={() => handleMarkPaid(ord._id)}
                           className="action-button"
                         >
                           Mark Paid
@@ -551,15 +551,15 @@ const OrdersPage = () => {
                       )}
                       <button
                         className="details-button"
-                        onClick={() => handleToggleDetails(order._id)}
+                        onClick={() => handleToggleDetails(ord._id)}
                         style={{ marginTop: 4 }}
                       >
-                        {expandedOrderId === order._id ? 'Hide Details' : 'View Details'}
+                        {expandedOrderId === ord._id ? 'Hide Details' : 'View Details'}
                       </button>
                     </div>
                   </div>
                   {/* Expandable details section */}
-                  {expandedOrderId === order._id && (
+                  {expandedOrderId === ord._id && (
                     <div className="order-details-container" style={{ background: '#fafafa', margin: '8px 0', borderRadius: 8, padding: 8 }}>
                       {detailsLoading ? (
                         <div className="orders-loading-spinner" style={{ margin: '16px 0' }} />
@@ -573,9 +573,9 @@ const OrdersPage = () => {
                           {/* Manual GCash Proof (Mobile) */}
                           {orderDetails.paymentMethod === 'GCash_Manual' && (
                             (() => {
-                              const mg = orderDetails.manualGcash || orderDetails.manualGcashProof || orderDetails.gcashManual || orderDetails.gcashManualProof || {};
-                              const proofUrl = mg.proofUrl || mg.url || mg.imageUrl || mg.image || (mg.proof && mg.proof.url);
-                              const gcashRef = mg.gcashRef || mg.reference || mg.referenceNo || mg.referenceNumber;
+                              const mg = orderDetails.paymentProof || {};
+                              const proofUrl = mg.proofImageUrl || '';
+                              const gcashRef = mg.gcashRef || '';
                               const proofStatus = (mg.status || '').toString();
                               const canAct = !!proofUrl && orderDetails.paymentStatus !== 'Paid' && !/^approved|rejected$/i.test(proofStatus);
                               return (

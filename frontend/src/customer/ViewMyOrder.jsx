@@ -317,6 +317,19 @@ const ViewMyOrder = () => {
       });
   }, []);
 
+  // Periodically refresh orders while page is open so payment status updates (e.g., after seller approves proof)
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      try {
+        const res = await api.get('/orders/my-orders');
+        setOrders(res.data.data?.orders || res.data.orders || []);
+      } catch {
+        // silent refresh failure
+      }
+    }, 15000); // every 15 seconds
+    return () => clearInterval(interval);
+  }, []);
+
   const handleGoBack = () => {
     navigate('/customer/home');
   };
@@ -474,6 +487,12 @@ const ViewMyOrder = () => {
                         <div>
                           <p style={{ fontSize: '12px', color: '#666', margin: '0 0 4px 0' }}>Payment Method</p>
                           <p style={{ fontSize: '14px', margin: 0 }}>{order.paymentMethod}</p>
+                        </div>
+                        <div>
+                          <p style={{ fontSize: '12px', color: '#666', margin: '0 0 4px 0' }}>Payment Status</p>
+                          <p style={{ fontSize: '14px', margin: 0 }}>
+                            {order.paymentStatus || 'Pending'}
+                          </p>
                         </div>
                         <div>
                           <p style={{ fontSize: '12px', color: '#666', margin: '0 0 4px 0' }}>Status</p>

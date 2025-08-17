@@ -25,6 +25,21 @@ const createStoreForSeller = async (user) => {
 const updateStore = async (req, res) => {
   const storeId = req.params.id;
   const updates = {};
+  // Temporary diagnostic logging
+  try {
+    console.log(`[Store Update][${req.id}] Incoming update for store:`, storeId);
+    console.log(`[Store Update][${req.id}] Body keys:`, Object.keys(req.body || {}));
+    if (req.files) {
+      console.log(`[Store Update][${req.id}] File fields:`, Object.keys(req.files));
+      console.log(`[Store Update][${req.id}] image?`, Boolean(req.files['image']));
+      console.log(`[Store Update][${req.id}] bannerImage?`, Boolean(req.files['bannerImage']));
+      console.log(`[Store Update][${req.id}] gcashQr?`, Boolean(req.files['gcashQr']));
+    } else {
+      console.log(`[Store Update][${req.id}] No files attached`);
+    }
+  } catch (logErr) {
+    // Swallow logging errors to avoid affecting request flow
+  }
 
   if (req.body.storeName) {
     updates.storeName = req.body.storeName;
@@ -59,6 +74,7 @@ const updateStore = async (req, res) => {
     }
     res.status(200).json(updatedStore);
   } catch (error) {
+    console.error(`[Store Update][${req.id}] Error updating store ${storeId}:`, error && error.stack ? error.stack : error);
     res.status(500).json({ message: 'Failed to update store', error: error.message });
   }
 };

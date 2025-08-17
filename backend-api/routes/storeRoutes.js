@@ -41,6 +41,7 @@ const {
 const { authenticate, checkRole } = require('../middlewares/authMiddleware');
 const checkStoreOwnership = require('../utils/checkOwnership');
 const uploadStoreImage = require('../middlewares/uploadStoreMiddleware'); 
+const { cache } = require('../utils/cacheConfig');
 
 /**
  * @swagger
@@ -64,7 +65,7 @@ const uploadStoreImage = require('../middlewares/uploadStoreMiddleware');
  *               items:
  *                 $ref: '#/components/schemas/Store'
  */
-router.get('/', getAllStores);
+router.get('/', cache('15 minutes'), getAllStores);
 
 /**
  * @swagger
@@ -107,7 +108,7 @@ router.get(
  *       404:
  *         description: Store not found
  */
-router.get('/view/:id', getStoreById);
+router.get('/view/:id', cache('15 minutes'), getStoreById);
 
 /**
  * @swagger
@@ -127,7 +128,7 @@ router.get('/view/:id', getStoreById);
  *       404:
  *         description: Store not found
  */
-router.get('/:id/products', getStoreProducts);
+router.get('/:id/products', cache('15 minutes'), getStoreProducts);
 
 /**
  * @swagger
