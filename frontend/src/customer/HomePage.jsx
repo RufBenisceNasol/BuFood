@@ -283,9 +283,13 @@ const HomePage = () => {
       [filterType]: value
     });
   };
-  const handleLogout = () => {
-    auth.logout();
-    navigate('/login');
+  const handleLogout = async () => {
+    try {
+      setIsMenuOpen(false);
+      await auth.logout();
+    } finally {
+      navigate('/login', { replace: true });
+    }
   };
 
   const handleProductClick = (productId) => {
@@ -544,12 +548,18 @@ const HomePage = () => {
                     onClick={() => handleProductClick(product._id)}
                     style={{ cursor: 'pointer' }}
                   >
-                    <div className="productImageContainer">
+                    <div className="productImageContainer" style={{ position: 'relative' }}>
                       <img 
                         src={product.image || 'https://i.ibb.co/YZDGnfr/chicken-rice.jpg'} 
                         alt={product.name || 'Chicken With Rice'} 
                         className="productImage"
+                        style={{ filter: product.availability === 'Out of Stock' ? 'blur(1.5px) grayscale(60%) brightness(0.85)' : 'none', transition: 'filter 0.2s ease' }}
                       />
+                      {product.availability === 'Out of Stock' && (
+                        <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700, fontSize: '1.05rem', pointerEvents: 'none' }}>
+                          Out of Stock
+                        </div>
+                      )}
                     </div>
                     <div className="productInfo">
                       <h3 className="productName">{product.name || 'Chicken With Rice'}</h3>
@@ -644,12 +654,18 @@ const HomePage = () => {
                     onClick={() => handleProductClick(product._id)}
                     style={{ cursor: 'pointer' }}
                   >
-                    <div className="productImageContainer">
+                    <div className="productImageContainer" style={{ position: 'relative' }}>
                       <img 
                         src={product.image || 'https://i.ibb.co/YZDGnfr/chicken-rice.jpg'} 
                         alt={product.name || 'Product'} 
                         className="productImage"
+                        style={{ filter: product.availability === 'Out of Stock' ? 'blur(1.5px) grayscale(60%) brightness(0.85)' : 'none', transition: 'filter 0.2s ease' }}
                       />
+                      {product.availability === 'Out of Stock' && (
+                        <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700, fontSize: '1.05rem', pointerEvents: 'none' }}>
+                          Out of Stock
+                        </div>
+                      )}
                     </div>
                     <div className="productInfo">
                       <h3 className="productName">{product.name || 'Product Name'}</h3>

@@ -144,18 +144,21 @@ const ProductImage = styled.img`
   height: 100%;
   object-fit: cover;
   margin-bottom: 50px;
+  filter: ${props => props.$isOut ? 'blur(1.5px) grayscale(60%) brightness(0.85)' : 'none'};
+  transition: filter 0.2s ease;
 `;
 
-const OutOfStockBadge = styled.div`
+const OutOfStockOverlay = styled.div`
   position: absolute;
-  top: 16px;
-  right: 16px;
-  background: rgba(0, 0, 0, 0.7);
-  color: white;
-  padding: 6px 12px;
-  border-radius: 20px;
-  font-size: 0.875rem;
-  font-weight: 500;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-weight: 700;
+  font-size: 1.1rem;
+  pointer-events: none;
 `;
 
 const ProductInfo = styled.div`
@@ -174,10 +177,11 @@ const ProductHeader = styled.div`
 `;
 
 const ProductName = styled.h2`
-  font-size: 1.75rem;
-  margin: 0;
+  font-size: 23px;
+  margin: 1px;
   color: #333;
   flex-grow: 1;
+  margin-left: 40px;
 `;
 
 const FavoriteButton = styled.button`
@@ -185,7 +189,6 @@ const FavoriteButton = styled.button`
   border: none;
   cursor: pointer;
   padding: 8px;
-  margin-left: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -201,10 +204,10 @@ const FavoriteButton = styled.button`
 `;
 
 const Price = styled.p`
-  font-size: 1.5rem;
+  font-size: 18px;
   font-weight: 600;
   color: #ff8c00;
-  margin: 0 0 24px 0;
+  margin: 0 0 10px 0;
   
   @media (max-width: 480px) {
     font-size: 1.25rem;
@@ -212,13 +215,13 @@ const Price = styled.p`
 `;
 
 const SoldCount = styled.div`
-  font-size: 0.95rem;
+  font-size: 12px;
   color: #777;
-  margin: -8px 0 16px;
+  margin: -8px 0 7px;
 `;
 
 const Section = styled.div`
-  margin-bottom: 24px;
+  margin-bottom: 5px;
 `;
 
 const SectionTitle = styled.h3`
@@ -255,7 +258,7 @@ const DeliveryInfo = styled.div`
 const InfoGrid = styled.div`
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 12px;
+  gap: 5px;
   
   @media (max-width: 480px) {
     grid-template-columns: 1fr;
@@ -287,7 +290,7 @@ const AddToCartSection = styled.div`
   
   @media (max-width: 480px) {
     flex-direction: column;
-    gap: 16px;
+    gap: 7px;
   }
 `;
 
@@ -339,7 +342,7 @@ const AddToCartButton = styled.button`
   cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 1px;
   transition: transform 0.2s, box-shadow 0.2s;
   
   &:hover {
@@ -470,9 +473,10 @@ const SingleProductPage = () => {
                             <ProductImage 
                                 src={productData.image} 
                                 alt={productData.name}
+                                $isOut={productData.availability === 'Out of Stock'}
                             />
                             {productData.availability === 'Out of Stock' && (
-                                <OutOfStockBadge>Out of Stock</OutOfStockBadge>
+                                <OutOfStockOverlay>Out of Stock</OutOfStockOverlay>
                             )}
                         </ImageContainer>
 
@@ -506,7 +510,7 @@ const SingleProductPage = () => {
 
                             <Section>
                                 <SectionTitle>Store</SectionTitle>
-                                <StoreText>{productData.storeName}</StoreText>
+                                <StoreText>{productData?.storeId?.storeName || productData?.storeName || 'Unknown store'}</StoreText>
                             </Section>
 
                             <Section>

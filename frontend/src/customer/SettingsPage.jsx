@@ -85,6 +85,19 @@ const SettingsPage = () => {
     loadUserData();
   }, [navigate]);
 
+  // Ask for browser notification permission when enabling notifications
+  const requestNotificationPermission = async () => {
+    try {
+      if (typeof window === 'undefined' || !('Notification' in window)) {
+        return { ok: false, reason: 'Notifications are not supported in this browser.' };
+      }
+      const permission = await Notification.requestPermission();
+      return { ok: permission === 'granted', permission };
+    } catch (e) {
+      return { ok: false, reason: 'Failed to request notification permission.' };
+    }
+  };
+
   const handleGoBack = () => {
     navigate('/customer/home');
   };
@@ -104,8 +117,18 @@ const SettingsPage = () => {
     // Apply dark mode to the app (implementation depends on your app's theme system)
   };
 
-  const handleToggleNotifications = () => {
+  const handleToggleNotifications = async () => {
     const newValue = !notificationsEnabled;
+    if (newValue) {
+      // Attempt to enable: request permission first
+      const result = await requestNotificationPermission();
+      if (!result.ok) {
+        setError(result.reason || 'Notifications permission was not granted.');
+        setNotificationsEnabled(false);
+        localStorage.setItem('notifications', 'false');
+        return;
+      }
+    }
     setNotificationsEnabled(newValue);
     localStorage.setItem('notifications', newValue.toString());
   };
