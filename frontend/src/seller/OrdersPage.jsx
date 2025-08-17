@@ -354,7 +354,7 @@ const OrdersPage = () => {
                                         <b>Manual GCash Proof:</b>
                                         <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, marginTop: 6 }}>
                                           {proofUrl ? (
-                                            <img src={proofUrl} alt="GCash Proof" style={{ width: 160, height: 160, objectFit: 'contain', borderRadius: 8, background: '#fafafa', border: '1px solid #eee' }} />
+                                            <img src={proofUrl} alt="GCash Proof" style={{ width: 160, height: 160, objectFit: 'contain', position: 'relative', borderRadius: 8, background: '#fafafa', border: '1px solid #eee' }} />
                                           ) : (
                                             <span style={{ color: '#888' }}>No proof submitted yet.</span>
                                           )}
@@ -441,10 +441,10 @@ const OrdersPage = () => {
                                 <ul className="order-details-timeline" style={{ margin: '4px 0 0 16px' }}>
                                   {orderDetails.statusHistory && orderDetails.statusHistory.length > 0 ? orderDetails.statusHistory.map((h, idx) => (
                                     <li key={idx} style={{ marginBottom: 4 }}>
-                                      <b>{h.status}</b> <span style={{ color: '#888', fontSize: 12 }}>({h.timestamp ? new Date(h.timestamp).toLocaleString() : ''})</span>
-                                      {h.note && <div style={{ fontSize: 12, color: '#666' }}>{h.note}</div>}
+                                      <b>{h.status}</b> <span style={{ color: '#888', fontSize: 9 }}>({h.timestamp ? new Date(h.timestamp).toLocaleString() : ''})</span>
+                                      {h.note && <div style={{ fontSize: 9, color: '#666' }}>{h.note}</div>}
                                     </li>
-                                  )) : <li style={{ color: '#888', fontSize: 13 }}>No status history available.</li>}
+                                  )) : <li style={{ color: '#888', fontSize: 10 }}>No status history available.</li>}
                                 </ul>
                               </div>
                             ) : null}
@@ -667,10 +667,10 @@ const OrdersPage = () => {
                           <ul className="order-details-timeline" style={{ margin: '4px 0 0 16px' }}>
                             {orderDetails.statusHistory && orderDetails.statusHistory.length > 0 ? orderDetails.statusHistory.map((h, idx) => (
                               <li key={idx} style={{ marginBottom: 4 }}>
-                                <b>{h.status}</b> <span style={{ color: '#888', fontSize: 12 }}>({h.timestamp ? new Date(h.timestamp).toLocaleString() : ''})</span>
-                                {h.note && <div style={{ fontSize: 12, color: '#666' }}>{h.note}</div>}
+                                <b>{h.status}</b> <span style={{ color: '#888', fontSize: 9 }}>({h.timestamp ? new Date(h.timestamp).toLocaleString() : ''})</span>
+                                {h.note && <div style={{ fontSize: 9, color: '#666' }}>{h.note}</div>}
                               </li>
-                            )) : <li style={{ color: '#888', fontSize: 13 }}>No status history available.</li>}
+                            )) : <li style={{ color: '#888', fontSize: 10 }}>No status history available.</li>}
                           </ul>
                         </div>
                       ) : null}

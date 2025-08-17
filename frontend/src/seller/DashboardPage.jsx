@@ -384,6 +384,7 @@ const DashboardPage = () => {
           </div>
         </div>
 
+        <h2 className="dashboard-title">DASHBOARD</h2>
         <div className="form-container">
           <div className="dashboard-content">
             {/* Summary Cards - quick stats */}
@@ -400,7 +401,7 @@ const DashboardPage = () => {
             </section>
 
             <section>
-              <h2 className="dashboard-title">DASHBOARD</h2>
+             
               <div className="dashboard-grid">
                 {dashboardItems.map((item, index) => (
                   <DashboardCard 

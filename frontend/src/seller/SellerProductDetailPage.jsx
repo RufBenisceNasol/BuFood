@@ -338,13 +338,13 @@ const styles = {
     },
     headerTitle: {
         margin: 0,
-        fontSize: '20px',
+        fontSize: '17px',
         fontWeight: '600',
     },
     contentContainer: {
         padding: '20px',
         maxWidth: '800px',
-        margin: '0 auto',
+        margin: '1px',
     },
     productCard: {
         backgroundColor: 'white',
@@ -406,7 +406,7 @@ const styles = {
         color: 'white',
         padding: '8px 16px',
         borderRadius: '4px',
-        fontSize: '14px',
+        fontSize: '11px',
         fontWeight: '500',
     }),
     productInfo: {
@@ -416,11 +416,11 @@ const styles = {
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'flex-start',
-        marginBottom: '16px',
+        marginBottom: '1px',
     },
     productName: {
         margin: '0',
-        fontSize: '24px',
+        fontSize: '20px',
         fontWeight: '600',
         color: '#333',
         flex: 1,
@@ -449,13 +449,13 @@ const styles = {
     dropdownItem: {
         display: 'flex',
         alignItems: 'center',
-        gap: '6px',
+        gap: '1px',
         padding: '10px 16px',
         backgroundColor: 'white',
         color: '#333',
         border: 'none',
         cursor: 'pointer',
-        fontSize: '14px',
+        fontSize: '11px',
         fontWeight: '500',
         width: '100%',
         textAlign: 'left',
@@ -465,28 +465,28 @@ const styles = {
         backgroundColor: '#f8f8f8',
     },
     price: {
-        fontSize: '22px',
-        fontWeight: '600',
-        color: '#ff8c00',
-        margin: '0 0 20px 0',
-    },
-    description: {
-        marginBottom: '24px',
-    },
-    sectionTitle: {
         fontSize: '18px',
         fontWeight: '600',
+        color: '#ff8c00',
+        margin: '0 0 2px 0',
+    },
+    description: {
+        marginBottom: '-2px',
+    },
+    sectionTitle: {
+        fontSize: '16px',
+        fontWeight: '600',
         color: '#444',
-        marginBottom: '12px',
+        marginBottom: '1px',
     },
     descriptionText: {
-        fontSize: '16px',
+        fontSize: '14px',
         color: '#666',
         lineHeight: '1.5',
         margin: 0,
     },
     availabilitySection: {
-        marginTop: '24px',
+        marginTop: '2px',
         padding: '20px',
         backgroundColor: '#f8f8f8',
         borderRadius: '8px',
@@ -494,7 +494,7 @@ const styles = {
     availabilityToggle: {
         display: 'flex',
         alignItems: 'center',
-        gap: '12px',
+        gap: '1px',
     },
     availabilityLabel: {
         fontSize: '14px',
@@ -505,7 +505,7 @@ const styles = {
         justifyContent: 'center',
         alignItems: 'center',
         height: '100vh',
-        fontSize: '16px',
+        fontSize: '14px',
         color: '#666',
     },
     errorContainer: {
@@ -513,13 +513,13 @@ const styles = {
         justifyContent: 'center',
         alignItems: 'center',
         height: '100vh',
-        fontSize: '16px',
+        fontSize: '14px',
         color: '#e53e3e',
         padding: '0 20px',
         textAlign: 'center',
     },
     section: {
-        marginBottom: '24px',
+        marginBottom: '2px',
     },
     deliveryInfo: {
         backgroundColor: '#f8f8f8',
@@ -540,11 +540,11 @@ const styles = {
     },
     infoLabel: {
         color: '#666',
-        fontSize: '15px',
+        fontSize: '13px',
     },
     infoValue: {
         color: '#333',
-        fontSize: '15px',
+        fontSize: '13px',
         fontWeight: '500',
     },
 };

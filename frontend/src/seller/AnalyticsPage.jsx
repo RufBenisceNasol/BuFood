@@ -110,7 +110,7 @@ const AnalyticsPage = () => {
         x={x}
         y={y}
         fill="#fff"
-        fontSize={15}
+        fontSize={12}
         fontWeight="bold"
         textAnchor="middle"
         dominantBaseline="central"
@@ -156,18 +156,18 @@ const AnalyticsPage = () => {
               <h2>Analytics</h2>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 32, justifyContent: 'center', alignItems: 'center', marginBottom: 24 }}>
                 <div style={{ width: 320, height: 220, background: 'white', borderRadius: 16, padding: '1px 1px' }}>
-                  <h3 style={{ textAlign: 'center', fontSize: 16, margin: 0, color: ' #ff9800' }}>Sales (Last 7 Days)</h3>
+                  <h3 style={{ textAlign: 'center', fontSize: 14, margin: 0, color: ' #ff9800' }}>Sales (Last 7 Days)</h3>
                   <ResponsiveContainer width="100%" height={160}>
                     <BarChart data={salesLast7Days}>
-                      <XAxis dataKey="date" tick={{ fontSize: 12 }} />
-                      <YAxis tick={{ fontSize: 12 }} />
+                      <XAxis dataKey="date" tick={{ fontSize: 9 }} />
+                      <YAxis tick={{ fontSize: 9 }} />
                       <Tooltip formatter={v => `₱ ${v.toLocaleString()}`} />
                       <Bar dataKey="sales" fill=" #ff9800" radius={[8,8,0,0]} />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
                 <div style={{ width: 320, height: 260, background: 'white', borderRadius: 16, padding: 16, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-                  <h3 style={{ textAlign: 'center', fontSize: 16, margin: 0, color: ' #ff9800', marginBottom: 8 }}>Order Status</h3>
+                  <h3 style={{ textAlign: 'center', fontSize: 14, margin: 0, color: ' #ff9800', marginBottom: 8 }}>Order Status</h3>
                   <ResponsiveContainer width="100%" height={180}>
                     <PieChart>
                       <Pie
@@ -190,7 +190,7 @@ const AnalyticsPage = () => {
                         verticalAlign="bottom"
                         height={36}
                         iconType="circle"
-                        wrapperStyle={{ fontSize: 13, marginTop: 8 }}
+                        wrapperStyle={{ fontSize: 10, marginTop: 8 }}
                       />
                       <Tooltip formatter={(v, n) => [`${v} orders`, n]} />
                     </PieChart>

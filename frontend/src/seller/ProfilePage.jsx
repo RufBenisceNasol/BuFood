@@ -272,21 +272,24 @@ const ProfilePage = () => {
                 </div>
               )}
 
-              <div style={styles.detailItem}>
-                <div style={styles.detailLabel}>
-                  <MdDateRange style={styles.detailIcon} />
-                  Member Since
+              {/* Temporarily hidden: Member Since */}
+              {false && (
+                <div style={styles.detailItem}>
+                  <div style={styles.detailLabel}>
+                    <MdDateRange style={styles.detailIcon} />
+                    Member Since
+                  </div>
+                  <div style={styles.detailValue}>
+                    {userData.createdAt || userData.memberSince
+                      ? new Date(userData.createdAt || userData.memberSince).toLocaleDateString('en-US', {
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric'
+                        })
+                      : '—'}
+                  </div>
                 </div>
-                <div style={styles.detailValue}>
-                  {userData.createdAt || userData.memberSince
-                    ? new Date(userData.createdAt || userData.memberSince).toLocaleDateString('en-US', {
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric'
-                      })
-                    : '—'}
-                </div>
-              </div>
+              )}
               
               <div style={styles.buttonRow}>
                 <button

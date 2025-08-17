@@ -348,6 +348,28 @@ const ProductsGrid = styled.div`
   }
 `;
 
+// Categories UI
+const CategoriesGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 14px;
+  margin-top: 15px;
+
+  @media (max-width: 480px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+`;
+
+const CategoryCard = styled.div`
+  background: #fff7f0;
+  border: 1px solid #ffe0c2;
+  color: #e65100;
+  padding: 16px;
+  border-radius: 10px;
+  text-align: center;
+  font-weight: 600;
+`;
+
 const ProductCard = styled.div`
   background: white;
   border-radius: 10px;
@@ -529,316 +551,221 @@ const ErrorState = styled.main`
 const StoreDetailPage = () => {
   const { storeId } = useParams();
   const navigate = useNavigate();
+
   const [store, setStore] = useState(null);
   const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [activeTab, setActiveTab] = useState('Products');
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [isFavorite, setIsFavorite] = useState(false);
 
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://capstonedelibup.onrender.com/api';
+
   useEffect(() => {
-    if (storeId) {
-      setIsFavorite(isStoreInFavorites(storeId));
-    }
+    // Check favorite state
+    setIsFavorite(isStoreInFavorites(storeId));
   }, [storeId]);
 
   useEffect(() => {
-    const fetchStoreDetails = async () => {
-      setIsLoading(true);
-      setError(null);
+    const fetchStore = async () => {
       try {
-        console.log('Fetching store with ID:', storeId);
-        
-        // API base URL
-        const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://capstonedelibup.onrender.com/api';
-        
-        // Get auth token if available
-        const token = getToken();
-        const headers = token ? { Authorization: `Bearer ${token}` } : {};
-        
-        // Fetch store details directly
-        const storeResponse = await axios.get(`${API_BASE_URL}/store/view/${storeId}`, { headers });
-        console.log('Store data received:', storeResponse.data);
-        
-        if (!storeResponse.data) {
-          throw new Error('Store not found');
-        }
-        setStore(storeResponse.data);
-        
-        console.log('Fetching products for store ID:', storeId);
-        // Fetch products directly
-        const productsResponse = await axios.get(`${API_BASE_URL}/store/${storeId}/products`, { headers });
-        console.log('Products data received:', productsResponse.data);
-        
-        // Ensure we have an array of products and sort them
-        let products = Array.isArray(productsResponse.data) ? productsResponse.data : [];
-        if (productsResponse.data && typeof productsResponse.data === 'object' && productsResponse.data.products) {
-          products = productsResponse.data.products;
-        }
-        
-        // Sort products by availability (Available first)
-        const sortedProducts = products.sort((a, b) => {
-          if (a.availability === 'Available' && b.availability !== 'Available') return -1;
-          if (a.availability !== 'Available' && b.availability === 'Available') return 1;
-          return 0;
-        });
-        
-        console.log('Sorted products:', sortedProducts);
-        setProducts(sortedProducts);
+        setLoading(true);
+        setError('');
+        const res = await fetch(`${API_BASE_URL}/customers/store/${storeId}`);
+        if (!res.ok) throw new Error('Failed to load store');
+        const data = await res.json();
+        setStore(data);
+        setProducts(Array.isArray(data.products) ? data.products : []);
       } catch (err) {
-        console.error('Error fetching store details:', err);
-        setError(err.response?.data?.message || 'Failed to load store data');
+        console.error('Error fetching store:', err);
+        setError('Failed to load store. Please try again.');
       } finally {
-        setIsLoading(false);
+        setLoading(false);
       }
     };
+    fetchStore();
+  }, [API_BASE_URL, storeId]);
 
-    if (storeId) {
-      fetchStoreDetails();
-    }
-  }, [storeId]);
-
-  const handleBuy = (product) => {
-    // Navigate to product detail page
-    navigate(`/customer/product/${product._id}`);
+  const handleGoBack = () => navigate('/customer/stores');
+  const handleToggleFavorite = () => {
+    const next = toggleStoreFavorite(storeId);
+    setIsFavorite(next);
+    toast[next ? 'success' : 'info'](next ? 'Added to favorites' : 'Removed from favorites');
   };
 
-  const handleKeyDown = (event, product) => {
-    // Handle keyboard navigation for product cards
-    if (event.key === 'Enter' || event.key === ' ') {
-      event.preventDefault();
+  const handleKeyDown = (e, product) => {
+    if (e.key === 'Enter') {
       handleBuy(product);
     }
   };
 
-  const handleFavoriteClick = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    const isNowFavorite = toggleStoreFavorite(storeId);
-    setIsFavorite(isNowFavorite);
-
-    // Show toast notification
-    if (isNowFavorite) {
-      toast.success('Added to favorites', {
-        position: "bottom-right",
-        autoClose: 2000,
-        hideProgressBar: true,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progress: undefined,
-      });
-    } else {
-      toast.info('Removed from favorites', {
-        position: "bottom-right",
-        autoClose: 2000,
-        hideProgressBar: true,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progress: undefined,
-      });
-    }
-
-    // Update stored favorite stores list
-    try {
-      const storedFavorites = JSON.parse(localStorage.getItem('favoriteStores') || '[]');
-      
-      if (isNowFavorite) {
-        // Add store to favorites if not already present
-        if (!storedFavorites.find(s => s.id === storeId)) {
-          storedFavorites.push({
-            id: storeId,
-            name: store.storeName,
-            image: store.image || defaultStoreImage,
-            description: store.description,
-            bannerImage: store.bannerImage || defaultBannerImage
-          });
-        }
-      } else {
-        // Remove store from favorites
-        const index = storedFavorites.findIndex(s => s.id === storeId);
-        if (index !== -1) {
-          storedFavorites.splice(index, 1);
-        }
-      }
-      
-      localStorage.setItem('favoriteStores', JSON.stringify(storedFavorites));
-    } catch (error) {
-      console.error('Error updating favorite stores:', error);
-      toast.error('Error updating favorites');
-    }
+  const handleBuy = (product) => {
+    navigate(`/customer/product/${product._id}`);
   };
 
-  if (isLoading) {
+  const categories = Array.from(new Set((products || []).map(p => p.category).filter(Boolean)));
+
+  if (loading) {
     return (
-      <LoadingState aria-live="polite" aria-busy="true">
-        <div className="loader" aria-hidden="true"></div>
-        <p>Loading store details...</p>
+      <LoadingState>
+        <div className="loader" aria-label="Loading" />
+        <p>Loading store...</p>
       </LoadingState>
     );
   }
 
   if (error) {
     return (
-      <ErrorState aria-live="polite">
-        <p role="alert">{error}</p>
-        <button onClick={() => window.location.reload()}>Try Again</button>
+      <ErrorState>
+        <p>{error}</p>
+        <button onClick={() => window.location.reload()}>Retry</button>
       </ErrorState>
     );
   }
 
-  if (!store) {
-    return (
-      <ErrorState aria-live="polite">
-        <p role="alert">Store not found</p>
-        <button onClick={() => navigate('/customer/stores')}>Back to Stores</button>
-      </ErrorState>
-    );
-  }
-
-  const defaultBannerImage = 'https://via.placeholder.com/1200x300/f5f5f5/cccccc?text=No+Banner+Image';
-  const defaultStoreImage = 'https://via.placeholder.com/80x80/e0e0e0/999999?text=Store';
+  if (!store) return null;
 
   return (
-    <>
-      <ToastContainer />
-      <ErrorBoundary>
-        <StoreDetailWrapper>
-          <Header>
-            <HeaderContent>
-              <BackButton 
-                onClick={() => navigate(-1)}
-                aria-label="Go back"
-                title="Go back"
-              >
-                <ArrowBack />
-              </BackButton>
-              <StoreTitleHeader>
-                {store.storeName}
-              </StoreTitleHeader>
-            </HeaderContent>
-          </Header>
-          <ScrollableContent>
-            <ContentWrapper>
-              <StoreBanner 
-                style={{ backgroundImage: `url(${store.bannerImage || defaultBannerImage})` }}
-                role="banner" 
-                aria-label={`${store.storeName} banner`}
-              >
-                <StoreHeader>
-                  <StoreInfo>
-                    <StoreImage 
-                      src={store.image || defaultStoreImage} 
-                      alt={`${store.storeName} logo`}
-                    />
-                    <StoreText>
-                      <StoreTitle>{store.storeName}</StoreTitle>
-                      {store.description && (
-                        <StoreDescription>{store.description}</StoreDescription>
-                      )}
-                      <FavoriteButton 
-                        onClick={handleFavoriteClick}
-                        $isFavorite={isFavorite}
-                        aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
-                        title={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
-                      >
-                        {isFavorite ? '♥' : '♡'}
-                      </FavoriteButton>
-                    </StoreText>
-                  </StoreInfo>
-                </StoreHeader>
-              </StoreBanner>
+    <StoreDetailWrapper>
+      <Header>
+        <HeaderContent>
+          <BackButton onClick={handleGoBack} aria-label="Go back">
+            <ArrowBack />
+          </BackButton>
+          <StoreTitleHeader>{store.storeName || 'Store'}</StoreTitleHeader>
+        </HeaderContent>
+      </Header>
 
-              <StoreNav>
-                <NavButton 
-                  $isActive={activeTab === 'Products'}
-                  onClick={() => setActiveTab('Products')}
-                  aria-pressed={activeTab === 'Products'}
-                  aria-label="View all products"
-                >
-                  All Products
-                </NavButton>
-                <NavButton 
-                  $isActive={activeTab === 'Categories'}
-                  onClick={() => setActiveTab('Categories')}
-                  aria-pressed={activeTab === 'Categories'}
-                  aria-label="View product categories"
-                >
-                  Categories
-                </NavButton>
-              </StoreNav>
-
-              <ProductsSection>
-                <ProductsGrid 
-                  role="list"
-                  aria-label="Products"
-                >
-                  {products.length > 0 ? (
-                    products.map((product) => (
-                      <ProductCard 
-                        key={product._id}
-                        onClick={() => handleBuy(product)}
-                        onKeyDown={(e) => handleKeyDown(e, product)}
-                        tabIndex="0"
-                        role="listitem"
-                        aria-label={`${product.name}, ${product.price.toFixed(2)} pesos, ${product.availability}`}
-                      >
-                        <ProductImage 
-                          src={product.image || 'https://via.placeholder.com/300x200/f0f0f0/cccccc?text=No+Image'} 
-                          alt={product.name} 
-                        />
-                        {product.availability !== 'Available' && (
-                          <OutOfStockOverlay aria-hidden="true">
-                            <span>Out of Stock</span>
-                          </OutOfStockOverlay>
-                        )}
-                        <ProductInfo>
-                          <ProductName>{product.name}</ProductName>
-                          {product.description && (
-                            <ProductDescription>{product.description}</ProductDescription>
-                          )}
-                          <ProductPrice>
-                            <span aria-label={`Price: ${product.price.toFixed(2)} pesos`}>
-                              ₱{product.price.toFixed(2)}
-                            </span>
-                          </ProductPrice>
-                          <ProductMeta>
-                            <Availability $available={product.availability === 'Available'}>
-                              {product.availability}
-                            </Availability>
-                            {product.category && (
-                              <Category aria-label={`Category: ${product.category}`}>
-                                {product.category}
-                              </Category>
-                            )}
-                          </ProductMeta>
-                          {product.estimatedTime && (
-                            <EstimatedTime aria-label={`Preparation time: ${product.estimatedTime} minutes`}>
-                              ⏱ {product.estimatedTime} mins prep time
-                            </EstimatedTime>
-                          )}
-                          <ViewDetailsButton 
-                            disabled={product.availability !== 'Available'}
-                            aria-disabled={product.availability !== 'Available'}
-                          >
-                            {product.availability === 'Available' ? 'View Details' : 'Out of Stock'}
-                          </ViewDetailsButton>
-                        </ProductInfo>
-                      </ProductCard>
-                    ))
-                  ) : (
-                    <NoProducts role="status">
-                      <p>No products available in this store yet</p>
-                    </NoProducts>
+      <ScrollableContent>
+        <ContentWrapper>
+          <StoreBanner style={{ backgroundImage: `url(${store.bannerImage || 'https://placehold.co/1200x400/orange/white?text=Store+Banner'})` }}>
+            <StoreHeader>
+              <StoreInfo>
+                <StoreImage
+                  src={store.image || store.logo || 'https://placehold.co/140x140/ff8c00/ffffff?text=Store'}
+                  alt={store.storeName}
+                />
+                <StoreText>
+                  <StoreTitle>{store.storeName}</StoreTitle>
+                  {store.description && (
+                    <StoreDescription title={store.description}>{store.description}</StoreDescription>
                   )}
-                </ProductsGrid>
-              </ProductsSection>
-            </ContentWrapper>
-          </ScrollableContent>
-        </StoreDetailWrapper>
-      </ErrorBoundary>
-    </>
+                </StoreText>
+                <FavoriteButton
+                  $isFavorite={isFavorite}
+                  onClick={handleToggleFavorite}
+                  aria-pressed={isFavorite}
+                  aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+                >
+                  {isFavorite ? '♥' : '♡'}
+                </FavoriteButton>
+              </StoreInfo>
+            </StoreHeader>
+          </StoreBanner>
+
+          <StoreNav role="tablist" aria-label="Store sections">
+            <NavButton
+              role="tab"
+              aria-selected={activeTab === 'Products'}
+              $isActive={activeTab === 'Products'}
+              onClick={() => setActiveTab('Products')}
+            >
+              Products
+            </NavButton>
+            <NavButton
+              role="tab"
+              aria-selected={activeTab === 'Categories'}
+              $isActive={activeTab === 'Categories'}
+              onClick={() => setActiveTab('Categories')}
+            >
+              View product categories
+            </NavButton>
+          </StoreNav>
+
+          {activeTab === 'Products' ? (
+            <ProductsSection>
+              <ProductsGrid role="list" aria-label="Products">
+                {products.length > 0 ? (
+                  products.map((product) => (
+                    <ProductCard
+                      key={product._id}
+                      onClick={() => handleBuy(product)}
+                      onKeyDown={(e) => handleKeyDown(e, product)}
+                      tabIndex="0"
+                      role="listitem"
+                      aria-label={`${product.name}, ${Number(product.price).toFixed(2)} pesos, ${product.availability || 'Available'}`}
+                    >
+                      <ProductImage
+                        src={product.image || 'https://placehold.co/300x200/f0f0f0/cccccc?text=No+Image'}
+                        alt={product.name}
+                        loading="lazy"
+                      />
+                      {product.availability && product.availability !== 'Available' && (
+                        <OutOfStockOverlay aria-hidden="true">
+                          <span>Out of Stock</span>
+                        </OutOfStockOverlay>
+                      )}
+                      <ProductInfo>
+                        <ProductName>{product.name}</ProductName>
+                        {product.description && (
+                          <ProductDescription>{product.description}</ProductDescription>
+                        )}
+                        <ProductPrice>
+                          <span aria-label={`Price: ${Number(product.price).toFixed(2)} pesos`}>
+                            ₱{Number(product.price).toFixed(2)}
+                          </span>
+                        </ProductPrice>
+                        <ProductMeta>
+                          <Availability $available={(product.availability || 'Available') === 'Available'}>
+                            {product.availability || 'Available'}
+                          </Availability>
+                          {product.category && (
+                            <Category aria-label={`Category: ${product.category}`}>{product.category}</Category>
+                          )}
+                        </ProductMeta>
+                        {product.estimatedTime && (
+                          <EstimatedTime aria-label={`Preparation time: ${product.estimatedTime} minutes`}>
+                            ⏱ {product.estimatedTime} mins prep time
+                          </EstimatedTime>
+                        )}
+                        <ViewDetailsButton
+                          disabled={product.availability && product.availability !== 'Available'}
+                          aria-disabled={product.availability && product.availability !== 'Available'}
+                        >
+                          {product.availability && product.availability !== 'Available' ? 'Out of Stock' : 'View Details'}
+                        </ViewDetailsButton>
+                      </ProductInfo>
+                    </ProductCard>
+                  ))
+                ) : (
+                  <NoProducts role="status">
+                    <p>No products available in this store yet</p>
+                  </NoProducts>
+                )}
+              </ProductsGrid>
+            </ProductsSection>
+          ) : (
+            <ProductsSection>
+              <CategoriesGrid role="list" aria-label="Categories">
+                {categories.length > 0 ? (
+                  categories.map((cat) => (
+                    <CategoryCard key={cat} role="listitem" aria-label={cat}>
+                      {cat}
+                    </CategoryCard>
+                  ))
+                ) : (
+                  <NoProducts role="status">
+                    <p>No categories available</p>
+                  </NoProducts>
+                )}
+              </CategoriesGrid>
+            </ProductsSection>
+          )}
+
+          <ToastContainer position="bottom-center" />
+        </ContentWrapper>
+      </ScrollableContent>
+    </StoreDetailWrapper>
   );
 };
 
