@@ -43,6 +43,26 @@ const checkStoreOwnership = require('../utils/checkOwnership');
 const uploadStoreImage = require('../middlewares/uploadStoreMiddleware'); 
 const { cache } = require('../utils/cacheConfig');
 
+// Safe multer wrapper to surface upload errors clearly
+const uploadStoreFields = uploadStoreImage.fields([
+  { name: 'image', maxCount: 1 },
+  { name: 'bannerImage', maxCount: 1 },
+  { name: 'gcashQr', maxCount: 1 }
+]);
+
+const safeUpload = (req, res, next) => {
+  uploadStoreFields(req, res, (err) => {
+    if (err) {
+      console.error(`[Store Upload][${req.id}] Multer error:`, err);
+      return res.status(400).json({
+        message: 'File upload error',
+        error: err.message || 'Failed to process uploaded files'
+      });
+    }
+    next();
+  });
+};
+
 /**
  * @swagger
  * /api/store:
@@ -160,11 +180,7 @@ router.get('/:id/products', cache('15 minutes'), getStoreProducts);
 router.put('/:id', 
   authenticate, 
   checkStoreOwnership, 
-  uploadStoreImage.fields([
-    { name: 'image', maxCount: 1 },
-    { name: 'bannerImage', maxCount: 1 },
-    { name: 'gcashQr', maxCount: 1 }
-  ]),
+  safeUpload,
   updateStore
 );
 

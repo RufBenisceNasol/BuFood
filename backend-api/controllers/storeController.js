@@ -53,6 +53,22 @@ const updateStore = async (req, res) => {
     updates.gcashNumber = req.body.gcashNumber;
   }
 
+  // If files are present, ensure Cloudinary is configured to avoid opaque 500s
+  const filesPresent = req.files && (req.files['image'] || req.files['bannerImage'] || req.files['gcashQr']);
+  if (filesPresent) {
+    const missing = [];
+    if (!process.env.CLOUDINARY_CLOUD_NAME) missing.push('CLOUDINARY_CLOUD_NAME');
+    if (!process.env.CLOUDINARY_API_KEY) missing.push('CLOUDINARY_API_KEY');
+    if (!process.env.CLOUDINARY_API_SECRET) missing.push('CLOUDINARY_API_SECRET');
+    if (missing.length) {
+      console.error(`[Store Update][${req.id}] Missing Cloudinary env vars: ${missing.join(', ')}`);
+      return res.status(500).json({
+        message: 'Cloudinary is not configured on the server',
+        error: `Missing env vars: ${missing.join(', ')}`
+      });
+    }
+  }
+
   if (req.files) {
     if (req.files['image']) {
       updates.image = req.files['image'][0].path;
