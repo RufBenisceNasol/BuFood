@@ -36,7 +36,7 @@ const validateCreateOrderFromCart = [
   body('paymentMethod')
     .optional()
     .trim()
-    .isIn(['Cash on Delivery', 'Cash on Pickup', 'GCash'])
+    .isIn(['Cash on Delivery', 'Cash on Pickup', 'GCash', 'GCash_Manual'])
     .withMessage('Invalid payment method'),
 
   // Delivery details validation

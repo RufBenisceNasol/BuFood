@@ -12,7 +12,7 @@ import {
   FiberManualRecord
 } from '@mui/icons-material';
 import api from '../api'; // Assumes you have an api instance for requests
-import { customer, review } from '../api';
+import { customer, review, order as orderApi } from '../api';
 
 import defPic from '../assets/delibup.png';
 import { getUser } from '../utils/tokenUtils';
@@ -294,6 +294,11 @@ const ViewMyOrder = () => {
   const [orderToCancel, setOrderToCancel] = useState(null);
   const [notificationMessage, setNotificationMessage] = useState('');
   const [selectedProductId, setSelectedProductId] = useState('');
+  // Manual GCash proof modal state
+  const [proofOrderId, setProofOrderId] = useState(null);
+  const [proofFile, setProofFile] = useState(null);
+  const [proofRef, setProofRef] = useState('');
+  const [uploadingProof, setUploadingProof] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -547,6 +552,19 @@ const ViewMyOrder = () => {
                     >
                       Add Review
                     </Button>
+                    {order.paymentMethod === 'GCash_Manual' && (
+                      <Button
+                        className="outline"
+                        onClick={() => {
+                          setProofOrderId(order._id || order.id);
+                          setProofFile(null);
+                          setProofRef('');
+                        }}
+                        style={{ fontSize: '9px' }}
+                      >
+                        Upload GCash Proof
+                      </Button>
+                    )}
                     {order.status === 'Pending' && (
                       <Button
                         className="cancel"
@@ -567,6 +585,80 @@ const ViewMyOrder = () => {
           </div>
         )}
       </Content>
+      {/* Modal: Upload Manual GCash Proof */}
+      {proofOrderId && (
+        <ModalOverlay>
+          <ModalBox>
+            <ModalTitle>Upload GCash Payment Proof</ModalTitle>
+            <div style={{ textAlign: 'left' }}>
+              <label style={{ display: 'block', fontWeight: 600, fontSize: 14, margin: '6px 0' }}>Screenshot/Image</label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => {
+                  const file = e.target.files && e.target.files[0];
+                  setProofFile(file || null);
+                }}
+              />
+              {proofFile && (
+                <div style={{ marginTop: 8 }}>
+                  <img
+                    src={URL.createObjectURL(proofFile)}
+                    alt="Preview"
+                    style={{ width: 160, height: 160, objectFit: 'contain', borderRadius: 8, background: '#fafafa', border: '1px solid #eee' }}
+                  />
+                </div>
+              )}
+              <label style={{ display: 'block', fontWeight: 600, fontSize: 14, margin: '12px 0 6px' }}>GCash Reference No. (optional)</label>
+              <input
+                type="text"
+                value={proofRef}
+                onChange={(e) => setProofRef(e.target.value)}
+                placeholder="e.g., 1234-5678-9012"
+                style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid #ddd' }}
+              />
+            </div>
+            <ModalActions>
+              <button
+                className="primary"
+                style={{ padding: '10px 16px', borderRadius: 8, border: 'none', background: '#ff8c00', color: '#fff', fontWeight: 600, fontSize: 13, minWidth: 110, opacity: uploadingProof ? 0.7 : 1 }}
+                disabled={uploadingProof || !proofFile}
+                onClick={async () => {
+                  if (!proofFile) return;
+                  setUploadingProof(true);
+                  try {
+                    await orderApi.uploadManualGcashProof(proofOrderId, { file: proofFile, gcashRef: proofRef });
+                    // Refresh orders
+                    const res = await api.get('/orders/my-orders');
+                    setOrders(res.data.data?.orders || res.data.orders || []);
+                    setNotificationMessage('Proof uploaded. Awaiting seller confirmation.');
+                    setTimeout(() => setNotificationMessage(''), 3000);
+                    setProofOrderId(null);
+                    setProofFile(null);
+                    setProofRef('');
+                  } catch (e) {
+                    const msg = (e && (e.message || e.error || e.details)) || 'Upload failed';
+                    setNotificationMessage(msg);
+                    setTimeout(() => setNotificationMessage(''), 3500);
+                  } finally {
+                    setUploadingProof(false);
+                  }
+                }}
+              >
+                {uploadingProof ? 'Uploading...' : 'Submit Proof'}
+              </button>
+              <button
+                className="outline"
+                style={{ padding: '10px 16px', borderRadius: 8, border: '1px solid #ddd', background: '#fff', fontWeight: 600, fontSize: 13, minWidth: 110 }}
+                onClick={() => { setProofOrderId(null); setProofFile(null); setProofRef(''); }}
+                disabled={uploadingProof}
+              >
+                Cancel
+              </button>
+            </ModalActions>
+          </ModalBox>
+        </ModalOverlay>
+      )}
       {/* Modal for cancel confirmation */}
       {showCancelModal && (
         <ModalOverlay>

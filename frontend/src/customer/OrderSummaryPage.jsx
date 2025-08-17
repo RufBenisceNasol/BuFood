@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { order } from '../api';
+import { order, store as storeApi } from '../api';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import styled from 'styled-components';
@@ -277,6 +277,46 @@ const OrderSummaryPage = () => {
         notes: ''
     });
 
+    // Store GCash details when manual GCash is selected
+    const [gcashStoreDetails, setGcashStoreDetails] = useState({}); // { [storeId]: { storeName, gcashName, gcashNumber, gcashQrUrl } }
+
+    // When payment method switches to GCash_Manual, fetch unique store details for items in cart
+    useEffect(() => {
+        const fetchGcashDetails = async () => {
+            try {
+                const uniqueStoreIds = Array.from(new Set((cartItems || []).map(ci => ci?.product?.storeId).filter(Boolean)));
+                if (uniqueStoreIds.length === 0) return;
+                const results = await Promise.all(uniqueStoreIds.map(async (sid) => {
+                    try {
+                        const data = await storeApi.getStoreById(sid);
+                        return [sid, data];
+                    } catch (err) {
+                        console.error('Failed to fetch store', sid, err);
+                        return [sid, null];
+                    }
+                }));
+                const mapped = {};
+                results.forEach(([sid, data]) => {
+                    if (data) {
+                        mapped[sid] = {
+                            storeName: data.storeName || data.name || 'Store',
+                            gcashName: data.gcashName || '',
+                            gcashNumber: data.gcashNumber || '',
+                            gcashQrUrl: data.gcashQrUrl || ''
+                        };
+                    }
+                });
+                setGcashStoreDetails(mapped);
+            } catch (e) {
+                console.error('Error fetching GCash details:', e);
+            }
+        };
+        if (formData.paymentMethod === 'GCash_Manual') {
+            fetchGcashDetails();
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [formData.paymentMethod]);
+
     const handleGoBack = () => {
         navigate('/customer/cart');
     };
@@ -510,15 +550,50 @@ const OrderSummaryPage = () => {
                                 label="Cash on Pickup"
                                 disabled={formData.orderType === 'Delivery'}
                             />
-                            {/* Temporarily hiding GCash payment option
                             <FormControlLabel 
-                                value="GCash" 
+                                value="GCash_Manual" 
                                 control={<Radio />} 
-                                label="GCash" 
+                                label="GCash (Manual)"
                             />
-                            */}
                         </RadioGroup>
                     </Section>
+
+                    {/* Seller GCash Details (visible when manual GCash is selected) */}
+                    {formData.paymentMethod === 'GCash_Manual' && (
+                        <Section>
+                            <SectionTitle>Pay via GCash (Manual)</SectionTitle>
+                            <Typography variant="body2" color="text.secondary" style={{ marginBottom: 12 }}>
+                                Please pay to the seller(s) using the details below. After placing the order, upload your payment screenshot and/or reference number in the orders page.
+                            </Typography>
+                            {(() => {
+                                const uniqueStoreIds = Array.from(new Set((cartItems || []).map(ci => ci?.product?.storeId).filter(Boolean)));
+                                if (uniqueStoreIds.length === 0) {
+                                    return <Typography variant="body2">No store information available.</Typography>;
+                                }
+                                return uniqueStoreIds.map((sid) => {
+                                    const info = gcashStoreDetails[sid] || {};
+                                    return (
+                                        <div key={sid} style={{ border: '1px solid #eee', borderRadius: 8, padding: 12, marginBottom: 12 }}>
+                                            <Typography variant="subtitle1" style={{ fontWeight: 600 }}>{info.storeName || 'Store'}</Typography>
+                                            <div style={{ display: 'flex', gap: 16, alignItems: 'center', flexWrap: 'wrap', marginTop: 8 }}>
+                                                <div style={{ minWidth: 220 }}>
+                                                    <Typography variant="body2">GCash Name: <b>{info.gcashName || '—'}</b></Typography>
+                                                    <Typography variant="body2">GCash Number: <b style={{ cursor: info.gcashNumber ? 'pointer' : 'default' }} onClick={() => { if (info.gcashNumber) { navigator.clipboard.writeText(info.gcashNumber); toast.info('GCash number copied'); } }}>{info.gcashNumber || '—'}</b></Typography>
+                                                </div>
+                                                {info.gcashQrUrl ? (
+                                                    <img src={info.gcashQrUrl} alt="GCash QR" style={{ width: 140, height: 140, objectFit: 'contain', borderRadius: 8, background: '#fafafa', border: '1px solid #eee' }} />
+                                                ) : (
+                                                    <div style={{ width: 140, height: 140, border: '1px dashed #ddd', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#aaa' }}>
+                                                        No QR Provided
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    );
+                                });
+                            })()}
+                        </Section>
+                    )}
 
                     {/* Delivery Details */}
                     {formData.orderType === 'Delivery' && (

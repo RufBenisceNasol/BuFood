@@ -19,6 +19,7 @@ const OrdersPage = () => {
   const [orderDetails, setOrderDetails] = useState(null);
   const [detailsLoading, setDetailsLoading] = useState(false);
   const [detailsError, setDetailsError] = useState(null);
+  const [gcashActionLoading, setGcashActionLoading] = useState(false);
 
   useEffect(() => {
     fetchOrders();
@@ -340,6 +341,82 @@ const OrdersPage = () => {
                                 <div className="order-details-row"><b>Customer:</b> {orderDetails.customer?.name} ({orderDetails.customer?.email})</div>
                                 <div className="order-details-row"><b>Order Type:</b> {orderDetails.orderType}</div>
                                 <div className="order-details-row"><b>Payment:</b> {orderDetails.paymentMethod} ({orderDetails.paymentStatus})</div>
+                                {/* Manual GCash Proof (Desktop) */}
+                                {orderDetails.paymentMethod === 'GCash_Manual' && (
+                                  (() => {
+                                    const mg = orderDetails.manualGcash || orderDetails.manualGcashProof || orderDetails.gcashManual || orderDetails.gcashManualProof || {};
+                                    const proofUrl = mg.proofUrl || mg.url || mg.imageUrl || mg.image || (mg.proof && mg.proof.url);
+                                    const gcashRef = mg.gcashRef || mg.reference || mg.referenceNo || mg.referenceNumber;
+                                    const proofStatus = (mg.status || '').toString();
+                                    const canAct = !!proofUrl && orderDetails.paymentStatus !== 'Paid' && !/^approved|rejected$/i.test(proofStatus);
+                                    return (
+                                      <div className="order-details-row" style={{ marginTop: 8 }}>
+                                        <b>Manual GCash Proof:</b>
+                                        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, marginTop: 6 }}>
+                                          {proofUrl ? (
+                                            <img src={proofUrl} alt="GCash Proof" style={{ width: 160, height: 160, objectFit: 'contain', borderRadius: 8, background: '#fafafa', border: '1px solid #eee' }} />
+                                          ) : (
+                                            <span style={{ color: '#888' }}>No proof submitted yet.</span>
+                                          )}
+                                          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                                            {gcashRef && <div><b>Ref:</b> {gcashRef}</div>}
+                                            {proofStatus && <div><b>Proof Status:</b> {proofStatus}</div>}
+                                            {canAct && (
+                                              <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
+                                                <button
+                                                  className="accept-button"
+                                                  disabled={gcashActionLoading}
+                                                  onClick={async () => {
+                                                    try {
+                                                      setGcashActionLoading(true);
+                                                      await order.approveManualGcash(orderDetails._id);
+                                                      toast.success('Manual GCash approved');
+                                                      await fetchOrders();
+                                                      // refresh expanded details
+                                                      try {
+                                                        const res = await order.getOrderDetails(orderDetails._id);
+                                                        setOrderDetails(res.data?.order || res.order || null);
+                                                      } catch {}
+                                                    } catch (err) {
+                                                      toast.error(err?.message || 'Failed to approve');
+                                                    } finally {
+                                                      setGcashActionLoading(false);
+                                                    }
+                                                  }}
+                                                >
+                                                  Approve
+                                                </button>
+                                                <button
+                                                  className="cancel-button"
+                                                  disabled={gcashActionLoading}
+                                                  onClick={async () => {
+                                                    const reason = window.prompt('Reason for rejection? (optional)') || '';
+                                                    try {
+                                                      setGcashActionLoading(true);
+                                                      await order.rejectManualGcash(orderDetails._id, reason);
+                                                      toast.success('Manual GCash rejected');
+                                                      await fetchOrders();
+                                                      try {
+                                                        const res = await order.getOrderDetails(orderDetails._id);
+                                                        setOrderDetails(res.data?.order || res.order || null);
+                                                      } catch {}
+                                                    } catch (err) {
+                                                      toast.error(err?.message || 'Failed to reject');
+                                                    } finally {
+                                                      setGcashActionLoading(false);
+                                                    }
+                                                  }}
+                                                >
+                                                  Reject
+                                                </button>
+                                              </div>
+                                            )}
+                                          </div>
+                                        </div>
+                                      </div>
+                                    );
+                                  })()
+                                )}
                                 {orderDetails.orderType === 'Delivery' && orderDetails.deliveryDetails && (
                                   <div className="order-details-row"><b>Delivery:</b> {orderDetails.deliveryDetails.receiverName}, {orderDetails.deliveryDetails.contactNumber}, {orderDetails.deliveryDetails.building} {orderDetails.deliveryDetails.roomNumber}</div>
                                 )}
@@ -371,9 +448,9 @@ const OrdersPage = () => {
                                 </ul>
                               </div>
                             ) : null}
-                      </div>
-                    </td>
-                  </tr>
+                          </div>
+                        </td>
+                      </tr>
                     )}
                   </React.Fragment>
                 ))}
@@ -493,6 +570,79 @@ const OrdersPage = () => {
                           <div className="order-details-row"><b>Customer:</b> {orderDetails.customer?.name} ({orderDetails.customer?.email})</div>
                           <div className="order-details-row"><b>Order Type:</b> {orderDetails.orderType}</div>
                           <div className="order-details-row"><b>Payment:</b> {orderDetails.paymentMethod} ({orderDetails.paymentStatus})</div>
+                          {/* Manual GCash Proof (Mobile) */}
+                          {orderDetails.paymentMethod === 'GCash_Manual' && (
+                            (() => {
+                              const mg = orderDetails.manualGcash || orderDetails.manualGcashProof || orderDetails.gcashManual || orderDetails.gcashManualProof || {};
+                              const proofUrl = mg.proofUrl || mg.url || mg.imageUrl || mg.image || (mg.proof && mg.proof.url);
+                              const gcashRef = mg.gcashRef || mg.reference || mg.referenceNo || mg.referenceNumber;
+                              const proofStatus = (mg.status || '').toString();
+                              const canAct = !!proofUrl && orderDetails.paymentStatus !== 'Paid' && !/^approved|rejected$/i.test(proofStatus);
+                              return (
+                                <div className="order-details-row" style={{ marginTop: 8 }}>
+                                  <b>Manual GCash Proof:</b>
+                                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 6 }}>
+                                    {proofUrl ? (
+                                      <img src={proofUrl} alt="GCash Proof" style={{ width: '100%', maxWidth: 260, height: 'auto', objectFit: 'contain', borderRadius: 8, background: '#fafafa', border: '1px solid #eee' }} />
+                                    ) : (
+                                      <span style={{ color: '#888' }}>No proof submitted yet.</span>
+                                    )}
+                                    {gcashRef && <div><b>Ref:</b> {gcashRef}</div>}
+                                    {proofStatus && <div><b>Proof Status:</b> {proofStatus}</div>}
+                                    {canAct && (
+                                      <div style={{ display: 'flex', gap: 8 }}>
+                                        <button
+                                          className="accept-button"
+                                          disabled={gcashActionLoading}
+                                          onClick={async () => {
+                                            try {
+                                              setGcashActionLoading(true);
+                                              await order.approveManualGcash(orderDetails._id);
+                                              toast.success('Manual GCash approved');
+                                              await fetchOrders();
+                                              try {
+                                                const res = await order.getOrderDetails(orderDetails._id);
+                                                setOrderDetails(res.data?.order || res.order || null);
+                                              } catch {}
+                                            } catch (err) {
+                                              toast.error(err?.message || 'Failed to approve');
+                                            } finally {
+                                              setGcashActionLoading(false);
+                                            }
+                                          }}
+                                        >
+                                          Approve
+                                        </button>
+                                        <button
+                                          className="cancel-button"
+                                          disabled={gcashActionLoading}
+                                          onClick={async () => {
+                                            const reason = window.prompt('Reason for rejection? (optional)') || '';
+                                            try {
+                                              setGcashActionLoading(true);
+                                              await order.rejectManualGcash(orderDetails._id, reason);
+                                              toast.success('Manual GCash rejected');
+                                              await fetchOrders();
+                                              try {
+                                                const res = await order.getOrderDetails(orderDetails._id);
+                                                setOrderDetails(res.data?.order || res.order || null);
+                                              } catch {}
+                                            } catch (err) {
+                                              toast.error(err?.message || 'Failed to reject');
+                                            } finally {
+                                              setGcashActionLoading(false);
+                                            }
+                                          }}
+                                        >
+                                          Reject
+                                        </button>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              );
+                            })()
+                          )}
                           {orderDetails.orderType === 'Delivery' && orderDetails.deliveryDetails && (
                             <div className="order-details-row"><b>Delivery:</b> {orderDetails.deliveryDetails.receiverName}, {orderDetails.deliveryDetails.contactNumber}, {orderDetails.deliveryDetails.building} {orderDetails.deliveryDetails.roomNumber}</div>
                           )}

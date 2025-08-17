@@ -14,6 +14,11 @@ const StoreSettings = () => {
     openTime: '',
     image: '',
     bannerImage: '',
+    // Manual GCash fields
+    gcashName: '',
+    gcashNumber: '',
+    gcashQr: null, // File or null
+    gcashQrUrl: '', // existing URL for preview
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -47,6 +52,10 @@ const StoreSettings = () => {
         openTime: data.openTime || '',
         image: data.image || '',
         bannerImage: data.bannerImage || '',
+        gcashName: data.gcashName || '',
+        gcashNumber: data.gcashNumber || '',
+        gcashQr: null,
+        gcashQrUrl: data.gcashQrUrl || '',
       });
     } catch (err) {
       setError(err.message || 'Failed to fetch store/profile details');
@@ -101,6 +110,14 @@ const StoreSettings = () => {
     }
   }, []);
 
+  // Handle GCash QR change
+  const handleGcashQrChange = useCallback((e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setFormData((prev) => ({ ...prev, gcashQr: file }));
+    }
+  }, []);
+
   // Memoized preview URLs to avoid recreating blob URLs every render
   const bannerPreviewUrl = useMemo(() => {
     if (formData.bannerImage && typeof formData.bannerImage !== 'string') {
@@ -115,6 +132,13 @@ const StoreSettings = () => {
     }
     return formData.image || '';
   }, [formData.image]);
+
+  const gcashQrPreviewUrl = useMemo(() => {
+    if (formData.gcashQr && typeof formData.gcashQr !== 'string') {
+      return URL.createObjectURL(formData.gcashQr);
+    }
+    return formData.gcashQrUrl || '';
+  }, [formData.gcashQr, formData.gcashQrUrl]);
 
   // Revoke blob URLs when they change to prevent memory leaks and jank
   useEffect(() => {
@@ -132,6 +156,14 @@ const StoreSettings = () => {
       }
     };
   }, [profilePreviewUrl]);
+
+  useEffect(() => {
+    return () => {
+      if (gcashQrPreviewUrl && gcashQrPreviewUrl.startsWith('blob:')) {
+        URL.revokeObjectURL(gcashQrPreviewUrl);
+      }
+    };
+  }, [gcashQrPreviewUrl]);
 
   const handleEdit = useCallback(() => {
     setEditMode(true);
@@ -167,6 +199,12 @@ const StoreSettings = () => {
       }
       if (formData.image && formData.image instanceof File) {
         submitData.append('image', formData.image);
+      }
+      // GCash fields
+      submitData.append('gcashName', formData.gcashName || '');
+      submitData.append('gcashNumber', formData.gcashNumber || '');
+      if (formData.gcashQr && formData.gcashQr instanceof File) {
+        submitData.append('gcashQr', formData.gcashQr);
       }
       const updated = await store.updateStore(storeData._id, submitData);
       setStoreData(updated);
@@ -378,6 +416,61 @@ const StoreSettings = () => {
             className="store-settings-input"
             required
           />
+        </div>
+
+        {/* GCash Payment Settings */}
+        <div style={{ marginTop: 10, paddingTop: 10, borderTop: '1px solid #eee' }}>
+          <div style={{ fontWeight: 600, color: '#333', marginBottom: 6 }}>GCash Payment Settings</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <div style={styles.inputGroup}>
+              <label style={styles.label}>GCash Name</label>
+              <input
+                type="text"
+                name="gcashName"
+                value={formData.gcashName}
+                onChange={handleInputChange}
+                disabled={!editMode}
+                style={styles.input}
+                className="store-settings-input"
+                placeholder="e.g., Juan Dela Cruz"
+              />
+            </div>
+            <div style={styles.inputGroup}>
+              <label style={styles.label}>GCash Number</label>
+              <input
+                type="text"
+                name="gcashNumber"
+                value={formData.gcashNumber}
+                onChange={handleInputChange}
+                disabled={!editMode}
+                style={styles.input}
+                className="store-settings-input"
+                placeholder="09XXXXXXXXX"
+              />
+            </div>
+            <div style={styles.inputGroup}>
+              <label style={styles.label}>GCash QR</label>
+              {gcashQrPreviewUrl ? (
+                <img src={gcashQrPreviewUrl} alt="GCash QR" style={{ width: 180, height: 180, objectFit: 'contain', border: '1px solid #eee', borderRadius: 10, background: '#fafafa', marginBottom: 8 }} />
+              ) : (
+                <div style={{ color: '#888', fontSize: 13, marginBottom: 8 }}>No QR uploaded</div>
+              )}
+              {editMode && (
+                <div>
+                  <input
+                    id="gcash-qr-input"
+                    type="file"
+                    accept="image/*"
+                    style={styles.hiddenInput}
+                    onChange={handleGcashQrChange}
+                  />
+                  <button type="button" className="store-settings-button" style={{ ...styles.editButton, maxWidth: 180 }} onClick={() => document.getElementById('gcash-qr-input').click()}>
+                    {formData.gcashQr ? 'Change QR' : 'Upload QR'}
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
             
         <div style={styles.buttonRow}>
