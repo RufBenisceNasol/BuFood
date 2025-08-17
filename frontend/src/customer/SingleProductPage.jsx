@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { product, cart } from '../api';
+import { product, cart, review } from '../api';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { MdArrowBack, MdShoppingCart, MdAdd, MdRemove } from 'react-icons/md';
@@ -417,9 +417,19 @@ const SingleProductPage = () => {
     }, [productId]);
 
     useEffect(() => {
-        // Load reviews for this product from localStorage
-        const allReviews = JSON.parse(localStorage.getItem('productReviews') || '[]');
-        setReviews(allReviews.filter(r => r.productId === productId));
+        // Load reviews for this product from backend
+        let isMounted = true;
+        (async () => {
+            try {
+                const data = await review.listByProduct(productId);
+                if (isMounted) setReviews(data);
+            } catch (err) {
+                // Silently ignore for UI, or you can toast
+                // toast.error(err.message || 'Failed to load reviews');
+                if (isMounted) setReviews([]);
+            }
+        })();
+        return () => { isMounted = false; };
     }, [productId]);
 
     const handleAddToCart = async () => {

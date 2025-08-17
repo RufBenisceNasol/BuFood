@@ -32,6 +32,7 @@ const sellerRoutes = require('./routes/sellerRoutes');
 const cartRoutes = require('./routes/cartRoutes');
 const orderRoutes = require('./routes/orderRoutes');
 const storeMemberRoutes = require('./routes/storeMemberRoutes');
+const reviewRoutes = require('./routes/reviewRoutes');
 
 const app = express();
 const port = process.env.PORT || 8000;
@@ -172,6 +173,7 @@ app.use('/api/customers', customerRoutes);
 app.use('/api/seller', sellerRoutes);
 app.use('/api/cart', cartRoutes);
 app.use('/api/orders', orderRoutes);
+app.use('/api', reviewRoutes);
 
 // Error handling
 app.use(errorLogger);

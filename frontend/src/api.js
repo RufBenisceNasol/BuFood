@@ -557,6 +557,7 @@ export const order = {
 
 // Customer API endpoints
 export const customer = {
+
     getProfile: async () => {
         try {
             const response = await api.get('/customers/profile');
@@ -667,6 +668,29 @@ export const customer = {
         try {
             const response = await api.get('/customers/addresses');
             return response.data;
+        } catch (error) {
+            throw error.response?.data || error.message;
+        }
+    }
+};
+
+// Review API endpoints
+export const review = {
+    // List reviews for a product
+    listByProduct: async (productId) => {
+        try {
+            const response = await api.get(`/products/${productId}/reviews`);
+            return response.data?.data || [];
+        } catch (error) {
+            throw error.response?.data || error.message;
+        }
+    },
+
+    // Create a review for a product
+    create: async (productId, { comment, rating }) => {
+        try {
+            const response = await api.post(`/products/${productId}/reviews`, { comment, rating });
+            return response.data?.data;
         } catch (error) {
             throw error.response?.data || error.message;
         }

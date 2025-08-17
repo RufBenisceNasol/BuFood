@@ -12,7 +12,8 @@ import {
   FiberManualRecord
 } from '@mui/icons-material';
 import api from '../api'; // Assumes you have an api instance for requests
-import { customer } from '../api';
+import { customer, review } from '../api';
+
 import defPic from '../assets/delibup.png';
 import { getUser } from '../utils/tokenUtils';
 
@@ -349,14 +350,6 @@ const ViewMyOrder = () => {
     }).format(amount);
   };
 
-  // Helper to save review to localStorage
-  function saveProductReview(productId, comment, userName, userImage) {
-    const key = 'productReviews';
-    const reviews = JSON.parse(localStorage.getItem(key) || '[]');
-    reviews.push({ productId, comment, createdAt: new Date().toISOString(), userName, userImage });
-    localStorage.setItem(key, JSON.stringify(reviews));
-  }
-
   const handleCancelOrder = async (orderId) => {
     setCancelingOrderId(orderId);
     try {
@@ -647,19 +640,22 @@ const ViewMyOrder = () => {
                       const pid = item.product?._id || item.product || item._id;
                       return pid === selectedProductId;
                     });
-                    // Get user info from localStorage
-                    let user = getUser() || {};
-                    const userName = user.name || (order && order.customer && order.customer.name) || 'Anonymous';
-                    const userImage = user.profileImage || '';
-                    saveProductReview(selectedProductId, reviewComment, userName, userImage);
-                    setReviewingOrder(null);
-                    setReviewComment('');
-                    setSelectedProductId('');
-                    setNotificationMessage('Review submitted!');
-                    setTimeout(() => setNotificationMessage(''), 3000);
+                    try {
+                      await review.create(selectedProductId, { comment: reviewComment });
+                      setReviewingOrder(null);
+                      setReviewComment('');
+                      setSelectedProductId('');
+                      setNotificationMessage('Review submitted!');
+                      setTimeout(() => setNotificationMessage(''), 3000);
+                    } catch (e) {
+                      setNotificationMessage(
+                        (e && (e.message || e.error || e.details)) || 'Failed to submit review'
+                      );
+                      setTimeout(() => setNotificationMessage(''), 3000);
+                    }
                   }
                 }}
-                  style={{ fontSize: '9px' }}
+                style={{ fontSize: '9px' }}
               >
                 Submit
               </Button>
