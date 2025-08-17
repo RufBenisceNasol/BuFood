@@ -17,7 +17,7 @@ const PageContainer = styled.div`
   width: 100vw;
   max-width: 100%;
   position: fixed;
-  top: 0;
+  top: -20px;
   left: 0;
   right: 0;
   bottom: 0;
@@ -143,6 +143,7 @@ const ProductImage = styled.img`
   width: 100%;
   height: 100%;
   object-fit: cover;
+  margin-bottom: 50px;
 `;
 
 const OutOfStockBadge = styled.div`
@@ -208,6 +209,12 @@ const Price = styled.p`
   @media (max-width: 480px) {
     font-size: 1.25rem;
   }
+`;
+
+const SoldCount = styled.div`
+  font-size: 0.95rem;
+  color: #777;
+  margin: -8px 0 16px;
 `;
 
 const Section = styled.div`
@@ -478,6 +485,9 @@ const SingleProductPage = () => {
                                 </FavoriteButton>
                             </ProductHeader>
                             <Price>₱{productData.price.toFixed(2)}</Price>
+                            {productData.soldCount != null && (
+                                <SoldCount>Sold: {productData.soldCount}</SoldCount>
+                            )}
                             
                             <Section>
                                 <SectionTitle>Description</SectionTitle>
@@ -542,7 +552,7 @@ const SingleProductPage = () => {
                     </ProductCard>
 
                     <div style={{ marginTop: 32 }}>
-                        <h3 style={{ color: '#333', marginBottom: 12 }}>Reviews</h3>
+                        <h3 style={{ color: ' #333333', marginBottom: 12 }}>Reviews</h3>
                         {reviews.length === 0 ? (
                             <p style={{ color: '#888' }}>No reviews yet.</p>
                         ) : (
@@ -561,7 +571,7 @@ const SingleProductPage = () => {
                                     }
                                     return (
                                         <li key={idx} style={{
-                                            background: '#f9f9f9',
+                                            background: ' #f9f9f9',
                                             borderRadius: 8,
                                             padding: 16,
                                             marginBottom: 12,
@@ -571,7 +581,7 @@ const SingleProductPage = () => {
                                         }}>
                                             <div style={{ display: 'flex', alignItems: 'center', marginBottom: 8 }}>
                                                 {displayImage ? (
-                                                    <img src={displayImage} alt={displayName || 'Reviewer'} style={{ width: 36, height: 36, borderRadius: '50%', objectFit: 'cover', marginRight: 12, background: '#eee' }} onError={e => { e.target.onerror = null; e.target.src = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(displayName || 'U'); }} />
+                                                    <img src={displayImage} alt={displayName || 'Reviewer'} style={{ width: 36, height: 36, borderRadius: '50%', objectFit: 'cover', marginRight: 12, background: ' #eeeeee' }} onError={e => { e.target.onerror = null; e.target.src = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(displayName || 'U'); }} />
                                                 ) : (
                                                 <div style={{
                                                     width: 36,

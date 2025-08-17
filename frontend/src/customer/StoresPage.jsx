@@ -17,6 +17,12 @@ import {
 import { FiRefreshCw } from 'react-icons/fi';
 import { MdHome, MdFavoriteBorder, MdShoppingCart, MdStore, MdPerson } from 'react-icons/md';
 
+const styles = {
+  bottomNav: {
+    borderRadius: '29px 29px 0 0',
+    boxShadow: '0 2px 5px rgba(0,0,0,0.5)'
+  }
+};
 // Styled Components
 const spin = keyframes`
   0% { transform: rotate(0deg); }
@@ -463,7 +469,7 @@ const StoresPage = () => {
         </Container>
       </ScrollableContent>
       {/* Bottom Navigation */}
-      <div className="bottomNav">
+      <div className="bottomNav" style={styles.bottomNav}>
         <div className="navItem" onClick={() => navigate('/customer/home')}>
           <MdHome size={24} />
           <span className="navText">Home</span>

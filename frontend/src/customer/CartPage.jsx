@@ -31,6 +31,12 @@ import OrderDetailsForm from '../components/OrderDetailsForm';
 import { FiRefreshCw } from 'react-icons/fi';
 import { MdHome, MdFavoriteBorder, MdShoppingCart, MdStore, MdPerson } from 'react-icons/md';
 
+const styles = {
+  bottomNav: {
+    borderRadius: '29px 29px 0 0',
+    boxShadow: '0 2px 5px rgba(0,0,0,0.5)'
+  }
+};
 // Styled Components
 const spin = keyframes`
   0% { transform: rotate(0deg); }
@@ -65,7 +71,7 @@ const RefreshButton = styled.button`
 `;
 
 const CartContainer = styled.div`
-  background-color: rgb(255, 255, 255);
+  background-color:rgba(255, 255, 255, 0.58);
   height: 100vh;
   height: 100dvh; /* Use dynamic viewport height for mobile browsers */
   width: 100vw;
@@ -213,7 +219,7 @@ const ImageContainer = styled.div`
     width: 70px;
     height: 70px;
     min-width: 70px;
-    margin-right: 10px;
+    margin-right: 1px;
   }
 `;
 
@@ -337,10 +343,10 @@ const RemoveItemButton = styled(IconButton)`
 
 const Footer = styled.footer`
   position: fixed;
-  bottom: 70px;
+  bottom: 62px;
   left: 0;
   right: 0;
-  background-color: white;
+background-color: #ffffff;
   padding: 16px;
   display: flex;
   justify-content: space-between;
@@ -755,7 +761,7 @@ const CartPage = () => {
                 </DialogContent>
             </Dialog>
             {/* Bottom Navigation */}
-            <div className="bottomNav">
+            <div className="bottomNav" style={styles.bottomNav}>
               <div className="navItem" onClick={() => navigate('/customer/home')}>
                 <MdHome size={24} />
                 <span className="navText">Home</span>

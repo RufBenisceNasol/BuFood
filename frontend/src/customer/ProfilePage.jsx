@@ -4,6 +4,12 @@ import { auth, customer } from '../api';
 import styled, { createGlobalStyle } from 'styled-components';
 import { MdArrowBack, MdEdit, MdPerson, MdEmail, MdPhone, MdDateRange, MdHome, MdFavoriteBorder, MdShoppingCart, MdStore } from 'react-icons/md';
 
+const styles = {
+  bottomNav: {
+    borderRadius: '29px 29px 0 0',
+    boxShadow: '0 2px 5px rgba(0,0,0,0.5)'
+  }
+};
 // Styled Components
 const MainContainer = styled.div`
   background-color: #ffffff;
@@ -569,7 +575,7 @@ const ProfilePage = () => {
         </ContentContainer>
       </ScrollableContent>
       {/* Bottom Navigation */}
-      <div className="bottomNav">
+      <div className="bottomNav" style={styles.bottomNav}>
           <div className="navItem" onClick={() => navigate('/customer/home')}>
             <MdHome size={24} />
             <span className="navText">Home</span>

@@ -470,6 +470,7 @@ body {
   z-index: 10;
   max-width: none;
   transform: none;
+  border-radius:0 0 12px 12px;
 }
 .navItem {
   flex: 1;

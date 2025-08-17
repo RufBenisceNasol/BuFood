@@ -163,12 +163,14 @@ const StoreBanner = styled.header`
   border-radius: 12px;
   overflow: hidden;
   margin: 10px 0 20px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.5);
   
   @media (max-width: 768px) {
     height: 150px;
     border-radius: 0;
     margin: 0 0 15px;
+    margin-top: -14px;
+    border-radius: 0 0 20px 20px;
   }
   
   &::before {
@@ -260,7 +262,7 @@ const FavoriteButton = styled.button`
   transform: translateY(-50%);
   background: none;
   border: none;
-  color: ${props => props.$isFavorite ? '#ff4444' : 'white'};
+  color: ${props => props.$isFavorite ? ' #ff4444' : ' white'};
   font-size: 24px;
   cursor: pointer;
   padding: 10px;
@@ -268,7 +270,7 @@ const FavoriteButton = styled.button`
   transition: all 0.3s ease;
   
   &:hover {
-    background: rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.08);
   }
 `;
 
