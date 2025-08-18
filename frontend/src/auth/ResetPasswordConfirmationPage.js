@@ -1,44 +1,75 @@
-import React, { useEffect, useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import React, { useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { auth } from '../api';
 import logod from '../assets/logod.png';
 
 const ResetPasswordConfirmationPage = () => {
-  const [status, setStatus] = useState('pending'); // 'pending', 'success', 'error'
-  const [message, setMessage] = useState('');
+  const { token } = useParams();
   const navigate = useNavigate();
-  const location = useLocation();
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState('');
+  const [error, setError] = useState('');
 
-  useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    const token = params.get('token');
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    setMessage('');
     if (!token) {
-      setStatus('error');
-      setMessage('Invalid or missing confirmation token.');
+      setError('Invalid or missing token.');
       return;
     }
-    const confirmReset = async () => {
-      try {
-        await auth.resetPassword(token);
-        setStatus('success');
-        setMessage('Your password has been reset and confirmed! You can now log in with your new password.');
-        setTimeout(() => navigate('/login'), 4000);
-      } catch (err) {
-        setStatus('error');
-        setMessage(err.message || 'Failed to confirm password reset. The link may have expired or is invalid.');
-      }
-    };
-    confirmReset();
-  }, [location.search, navigate]);
+    if (newPassword !== confirmPassword) {
+      setError('Passwords do not match');
+      return;
+    }
+    setLoading(true);
+    try {
+      await auth.resetPassword(token, newPassword);
+      setMessage('Your password has been reset. You can now log in with your new password.');
+      setTimeout(() => navigate('/login'), 3000);
+    } catch (err) {
+      setError(err.message || 'Failed to reset password. The link may have expired or is invalid.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div style={styles.pageContainer}>
       <div style={styles.container}>
         <img src={logod} alt="Logo" style={styles.logo} />
-        <h1 style={styles.title}>Password Reset Confirmation</h1>
-        {status === 'pending' && <div style={styles.info}>Confirming your password reset...</div>}
-        {status === 'success' && <div style={styles.success}>{message}</div>}
-        {status === 'error' && <div style={styles.error}>{message}</div>}
+        <h1 style={styles.title}>Set New Password</h1>
+        {error && <div style={styles.error}>{error}</div>}
+        {message && <div style={styles.success}>{message}</div>}
+        <form onSubmit={handleSubmit} style={styles.form}>
+          <input
+            type="password"
+            value={newPassword}
+            onChange={(e) => setNewPassword(e.target.value)}
+            placeholder="New password"
+            required
+            disabled={loading}
+            maxLength={8}
+            style={styles.input}
+            autoComplete="new-password"
+          />
+          <input
+            type="password"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            placeholder="Confirm new password"
+            required
+            disabled={loading}
+            maxLength={8}
+            style={styles.input}
+            autoComplete="new-password"
+          />
+          <button type="submit" style={styles.button} disabled={loading}>
+            {loading ? 'Saving...' : 'Reset Password'}
+          </button>
+        </form>
         <div style={styles.links}>
           <a href="/login" style={styles.loginLink}>Back to Login</a>
         </div>
@@ -81,15 +112,32 @@ const styles = {
     marginBottom: 'clamp(20px, 5vw, 30px)',
     textAlign: 'center',
   },
-  info: {
-    color: '#333',
-    backgroundColor: '#fffbe6',
-    padding: 'clamp(10px, 2.5vw, 12px)',
-    borderRadius: '8px',
-    fontSize: 'clamp(12px, 3vw, 14px)',
-    marginBottom: 'clamp(15px, 4vw, 20px)',
-    textAlign: 'center',
+  form: {
     width: '100%',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 'clamp(15px, 4vw, 20px)'
+  },
+  input: {
+    width: '100%',
+    padding: 'clamp(12px, 3vw, 15px)',
+    fontSize: 'clamp(14px, 3.5vw, 16px)',
+    border: '1px solid #ddd',
+    borderRadius: '50px',
+    backgroundColor: '#fff',
+    boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+    outline: 'none',
+    transition: 'all 0.2s ease'
+  },
+  button: {
+    padding: 'clamp(12px, 3vw, 15px)',
+    fontSize: 'clamp(14px, 3.5vw, 16px)',
+    border: 'none',
+    borderRadius: '50px',
+    backgroundColor: '#ff8c00',
+    color: '#fff',
+    cursor: 'pointer',
+    transition: 'all 0.2s ease'
   },
   error: {
     color: '#dc3545',

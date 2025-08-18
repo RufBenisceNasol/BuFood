@@ -52,6 +52,34 @@ const sendVerificationEmail = async (email, verificationLink) => {
   }
 };
 
+// Password changed confirmation email
+const sendPasswordChangedEmail = async (email) => {
+  try {
+    await transporter.sendMail({
+      to: email,
+      subject: 'Your BuFood password was changed',
+      html: `
+        <div style="font-family: Arial, sans-serif; background-color: #f9f9f9; padding: 20px;">
+          <div style="max-width: 600px; margin: auto; background-color: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);">
+            <h2 style="color: #333;">Password changed successfully ✅</h2>
+            <p style="font-size: 16px; color: #555;">
+              This is a confirmation that your BuFood account password was just changed. If this was you, no further action is needed.
+            </p>
+            <p style="font-size: 14px; color: #777;">
+              If you did not perform this action, please reset your password immediately using the "Forgot Password" link on the login page.
+            </p>
+            <p style="font-size: 14px; color: #aaa; margin-top: 30px;">— The BuFood Team</p>
+          </div>
+        </div>
+      `,
+    });
+    console.log('Password change confirmation email sent');
+  } catch (error) {
+    // Do not block the flow if email fails
+    console.error('Error sending password change confirmation email:', error.message);
+  }
+};
+
 const generateTokens = (userId) => {
   const accessToken = jwt.sign({ id: userId }, process.env.JWT_SECRET, { expiresIn: '1h' });
   const refreshToken = jwt.sign({ id: userId }, process.env.REFRESH_TOKEN_SECRET, { expiresIn: '7d' });
@@ -275,8 +303,8 @@ const forgotPassword = async (req, res) => {
 
     const resetToken = user.createPasswordResetToken();
     await user.save();
-
-    const resetUrl = `${process.env.FRONTEND_URL}/reset-password/${resetToken}`;
+    const frontendBase = process.env.FRONTEND_URL || 'http://localhost:5173';
+    const resetUrl = `${frontendBase}/reset-password/${resetToken}`;
     
     await transporter.sendMail({
       to: user.email,
@@ -323,6 +351,8 @@ const resetPassword = async (req, res) => {
     user.passwordResetToken = undefined;
     user.passwordResetExpires = undefined;
     await user.save();
+    // Send confirmation email (non-blocking in terms of flow)
+    await sendPasswordChangedEmail(user.email);
 
     res.status(200).json({ message: 'Password reset successful' });
   } catch (error) {
@@ -401,6 +431,7 @@ module.exports = {
   logout,
   verifyEmail,
   sendVerificationEmail,
+  sendPasswordChangedEmail,
   getMe,
   resendVerificationEmail,
   checkEmailVerificationStatus,

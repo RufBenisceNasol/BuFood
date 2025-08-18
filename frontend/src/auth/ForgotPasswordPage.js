@@ -19,14 +19,10 @@ const ForgotPasswordPage = () => {
     e.preventDefault();
     setError('');
     setSuccess('');
-    if (newPassword !== confirmPassword) {
-      setError('Passwords do not match');
-      return;
-    }
     setLoading(true);
     try {
-      await auth.forgotPassword(email, newPassword);
-      setSuccess('If this email is registered, a password reset link has been sent. Please check your email to confirm the reset.');
+      await auth.forgotPassword(email);
+      setSuccess('If this email is registered, a password reset link has been sent. Please check your email.');
       setTimeout(() => navigate('/login'), 4000);
     } catch (err) {
       setError(err.message || 'Failed to send reset email.');
@@ -60,12 +56,14 @@ const ForgotPasswordPage = () => {
               type={showNewPassword ? 'text' : 'password'}
               value={newPassword}
               onChange={e => setNewPassword(e.target.value)}
-              required
+              required={false}
               style={styles.input}
               placeholder="New password"
               disabled={loading}
+              maxLength={8}
               autoComplete="new-password"
             />
+
             <button
               type="button"
               onClick={() => setShowNewPassword(v => !v)}
@@ -76,17 +74,24 @@ const ForgotPasswordPage = () => {
               {showNewPassword ? <FiEyeOff /> : <FiEye />}
             </button>
           </div>
+          {(
+            <div style={newPassword && newPassword.length < 8 ? styles.hintError : styles.hint} aria-live="polite">
+              Password must be 8 characters ({newPassword.length}/8)
+            </div>
+          )}
           <div style={styles.inputGroup}>
             <input
               type={showConfirmPassword ? 'text' : 'password'}
               value={confirmPassword}
               onChange={e => setConfirmPassword(e.target.value)}
-              required
+              required={false}
               style={styles.input}
               placeholder="Confirm new password"
               disabled={loading}
+              maxLength={8}
               autoComplete="new-password"
             />
+
             <button
               type="button"
               onClick={() => setShowConfirmPassword(v => !v)}
@@ -97,6 +102,11 @@ const ForgotPasswordPage = () => {
               {showConfirmPassword ? <FiEyeOff /> : <FiEye />}
             </button>
           </div>
+          {(
+            <div style={confirmPassword && confirmPassword.length < 8 ? styles.hintError : styles.hint} aria-live="polite">
+              Confirm password must be 8 characters ({confirmPassword.length}/8)
+            </div>
+          )}
           <button
             type="submit"
             style={{
@@ -219,6 +229,16 @@ const styles = {
     marginBottom: 'clamp(15px, 4vw, 20px)',
     textAlign: 'center',
     width: '100%',
+  },
+  hint: {
+    color: '#666',
+    fontSize: '12px',
+    marginTop: '6px'
+  },
+  hintError: {
+    color: '#dc3545',
+    fontSize: '12px',
+    marginTop: '6px'
   },
   links: {
     marginTop: '20px',
