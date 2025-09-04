@@ -5,7 +5,9 @@ import logod from '../assets/logod.png';
 import { FiEye, FiEyeOff } from 'react-icons/fi';
 
 const ForgotPasswordPage = () => {
+  const [step, setStep] = useState('email'); // 'email' | 'otp'
   const [email, setEmail] = useState('');
+  const [otp, setOtp] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showNewPassword, setShowNewPassword] = useState(false);
@@ -13,21 +15,92 @@ const ForgotPasswordPage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [resendCooldown, setResendCooldown] = useState(0);
+  const [resendIntervalId, setResendIntervalId] = useState(null);
   const navigate = useNavigate();
 
-  const handleSubmit = async (e) => {
+  const startCooldown = (seconds = 60) => {
+    setResendCooldown(seconds);
+    if (resendIntervalId) {
+      clearInterval(resendIntervalId);
+    }
+    const id = setInterval(() => {
+      setResendCooldown(prev => {
+        if (prev <= 1) {
+          clearInterval(id);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    setResendIntervalId(id);
+  };
+
+  const handleSubmitEmail = async (e) => {
     e.preventDefault();
     setError('');
     setSuccess('');
     setLoading(true);
     try {
-      await auth.forgotPassword(email);
-      setSuccess('If this email is registered, a password reset link has been sent. Please check your email.');
-      setTimeout(() => navigate('/login'), 4000);
+      await auth.sendPasswordResetOtp(email);
+      setSuccess('If this email is registered, an OTP has been sent. Please check your inbox.');
+      setStep('otp');
+      startCooldown(60);
     } catch (err) {
-      setError(err.message || 'Failed to send reset email.');
+      setError(err?.message || 'Failed to send OTP.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const validatePassword = (pwd) => {
+    if (!pwd || pwd.length !== 8) return 'Password must be exactly 8 characters';
+    if (!/[A-Z]/.test(pwd)) return 'Password must contain an uppercase letter';
+    if (!/\d/.test(pwd)) return 'Password must contain a number';
+    return '';
+  };
+
+  const handleSubmitOtp = async (e) => {
+    e.preventDefault();
+    setError('');
+    setSuccess('');
+    // Frontend validation
+    const pwdErr = validatePassword(newPassword);
+    if (pwdErr) {
+      setError(pwdErr);
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setError('Passwords do not match');
+      return;
+    }
+    if (!otp || otp.length !== 6) {
+      setError('Please enter the 6-digit OTP');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await auth.resetPasswordWithOtp({ email, otp, newPassword });
+      setSuccess('Password reset successful. Redirecting to login...');
+      setTimeout(() => navigate('/login'), 2000);
+    } catch (err) {
+      setError(err?.message || 'Failed to reset password with OTP.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResend = async () => {
+    if (resendCooldown > 0) return;
+    setError('');
+    setSuccess('');
+    try {
+      await auth.resendPasswordResetOtp(email);
+      setSuccess('A new OTP has been sent to your email.');
+      startCooldown(60);
+    } catch (err) {
+      setError(err?.message || 'Failed to resend OTP.');
     }
   };
 
@@ -38,87 +111,124 @@ const ForgotPasswordPage = () => {
         <h1 style={styles.title}>Forgot Password</h1>
         {error && <div style={styles.error}>{error}</div>}
         {success && <div style={styles.success}>{success}</div>}
-        <form onSubmit={handleSubmit} style={styles.form}>
-          <div style={styles.inputGroup}>
-            <input
-              type="email"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              required
-              style={styles.input}
-              placeholder="Enter your email"
+        {step === 'email' && (
+          <form onSubmit={handleSubmitEmail} style={styles.form}>
+            <div style={styles.inputGroup}>
+              <input
+                type="email"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                required
+                style={styles.input}
+                placeholder="Enter your email"
+                disabled={loading}
+                autoComplete="email"
+              />
+            </div>
+            <button
+              type="submit"
+              style={{
+                ...styles.button,
+                opacity: loading ? 0.7 : 1,
+                cursor: loading ? 'not-allowed' : 'pointer'
+              }}
               disabled={loading}
-              autoComplete="email"
-            />
-          </div>
-          <div style={styles.inputGroup}>
-            <input
-              type={showNewPassword ? 'text' : 'password'}
-              value={newPassword}
-              onChange={e => setNewPassword(e.target.value)}
-              required={false}
-              style={styles.input}
-              placeholder="New password"
-              disabled={loading}
-              maxLength={8}
-              autoComplete="new-password"
-            />
+            >
+              {loading ? 'Sending...' : 'Send OTP'}
+            </button>
+          </form>
+        )}
+
+        {step === 'otp' && (
+          <form onSubmit={handleSubmitOtp} style={styles.form}>
+            <div style={styles.inputGroup}>
+              <input
+                type="text"
+                value={otp}
+                onChange={e => setOtp(e.target.value.replace(/[^0-9]/g, '').slice(0, 6))}
+                required
+                style={styles.input}
+                placeholder="Enter 6-digit OTP"
+                disabled={loading}
+                inputMode="numeric"
+              />
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', width: '100%' }}>
+              <button
+                type="button"
+                onClick={handleResend}
+                style={{ ...styles.linkButton, opacity: resendCooldown > 0 ? 0.6 : 1 }}
+                disabled={resendCooldown > 0}
+              >
+                {resendCooldown > 0 ? `Resend OTP in ${resendCooldown}s` : 'Resend OTP'}
+              </button>
+            </div>
+
+            <div style={styles.inputGroup}>
+              <input
+                type={showNewPassword ? 'text' : 'password'}
+                value={newPassword}
+                onChange={e => setNewPassword(e.target.value)}
+                required
+                style={styles.input}
+                placeholder="New password"
+                disabled={loading}
+                maxLength={8}
+                autoComplete="new-password"
+              />
+              <button
+                type="button"
+                onClick={() => setShowNewPassword(v => !v)}
+                style={styles.showPasswordButton}
+                tabIndex={-1}
+                aria-label={showNewPassword ? 'Hide password' : 'Show password'}
+              >
+                {showNewPassword ? <FiEyeOff /> : <FiEye />}
+              </button>
+            </div>
+            <div style={newPassword && newPassword.length !== 8 ? styles.hintError : styles.hint} aria-live="polite">
+              Password must be exactly 8 characters ({newPassword.length}/8)
+            </div>
+
+            <div style={styles.inputGroup}>
+              <input
+                type={showConfirmPassword ? 'text' : 'password'}
+                value={confirmPassword}
+                onChange={e => setConfirmPassword(e.target.value)}
+                required
+                style={styles.input}
+                placeholder="Confirm new password"
+                disabled={loading}
+                maxLength={8}
+                autoComplete="new-password"
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword(v => !v)}
+                style={styles.showPasswordButton}
+                tabIndex={-1}
+                aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
+              >
+                {showConfirmPassword ? <FiEyeOff /> : <FiEye />}
+              </button>
+            </div>
+            <div style={(confirmPassword && confirmPassword !== newPassword) ? styles.hintError : styles.hint} aria-live="polite">
+              {confirmPassword && confirmPassword !== newPassword ? 'Passwords do not match' : ' '}
+            </div>
 
             <button
-              type="button"
-              onClick={() => setShowNewPassword(v => !v)}
-              style={styles.showPasswordButton}
-              tabIndex={-1}
-              aria-label={showNewPassword ? 'Hide password' : 'Show password'}
-            >
-              {showNewPassword ? <FiEyeOff /> : <FiEye />}
-            </button>
-          </div>
-          {(
-            <div style={newPassword && newPassword.length < 8 ? styles.hintError : styles.hint} aria-live="polite">
-              Password must be 8 characters ({newPassword.length}/8)
-            </div>
-          )}
-          <div style={styles.inputGroup}>
-            <input
-              type={showConfirmPassword ? 'text' : 'password'}
-              value={confirmPassword}
-              onChange={e => setConfirmPassword(e.target.value)}
-              required={false}
-              style={styles.input}
-              placeholder="Confirm new password"
+              type="submit"
+              style={{
+                ...styles.button,
+                opacity: loading ? 0.7 : 1,
+                cursor: loading ? 'not-allowed' : 'pointer'
+              }}
               disabled={loading}
-              maxLength={8}
-              autoComplete="new-password"
-            />
-
-            <button
-              type="button"
-              onClick={() => setShowConfirmPassword(v => !v)}
-              style={styles.showPasswordButton}
-              tabIndex={-1}
-              aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
             >
-              {showConfirmPassword ? <FiEyeOff /> : <FiEye />}
+              {loading ? 'Resetting...' : 'Reset Password'}
             </button>
-          </div>
-          {(
-            <div style={confirmPassword && confirmPassword.length < 8 ? styles.hintError : styles.hint} aria-live="polite">
-              Confirm password must be 8 characters ({confirmPassword.length}/8)
-            </div>
-          )}
-          <button
-            type="submit"
-            style={{
-              ...styles.button,
-              opacity: loading ? 0.7 : 1,
-              cursor: loading ? 'not-allowed' : 'pointer'
-            }}
-            disabled={loading}
-          >
-            {loading ? 'Sending...' : 'Send Reset Link'}
-          </button>
-        </form>
+          </form>
+        )}
         <div style={styles.links}>
           <a href="/login" style={styles.loginLink}>Back to Login</a>
         </div>
@@ -249,6 +359,14 @@ const styles = {
     textDecoration: 'none',
     fontWeight: '600',
   },
+  linkButton: {
+    background: 'none',
+    border: 'none',
+    color: '#ff8c00',
+    fontWeight: 600,
+    cursor: 'pointer',
+    padding: 0
+  }
 };
 
-export default ForgotPasswordPage; 
+export default ForgotPasswordPage;

@@ -11,7 +11,11 @@ const {
     resetPassword,
     refreshToken,
     updateProfile,
-    uploadProfileImage: uploadProfileImageController
+    uploadProfileImage: uploadProfileImageController,
+    // OTP-based handlers
+    forgotPasswordOtp,
+    resetPasswordOtp,
+    resendPasswordOtp
 } = require('../controllers/authController');
 const { 
     registerValidation, 
@@ -19,7 +23,11 @@ const {
     resendVerificationValidation, 
     checkVerificationValidation,
     resetPasswordValidation,
-    forgotPasswordValidation
+    forgotPasswordValidation,
+    // OTP validators
+    forgotPasswordOtpValidation,
+    resetPasswordOtpValidation,
+    resendPasswordOtpValidation
 } = require('../middlewares/validators/authValidator');
 const handleValidation = require('../middlewares/validators/handleValidation');
 const { authenticate } = require('../middlewares/authMiddleware');
@@ -286,6 +294,31 @@ router.post('/forgot-password', forgotPasswordValidation, handleValidation, forg
 
 /**
  * @swagger
+ * /api/auth/forgot-password-otp:
+ *   post:
+ *     tags: [Authentication]
+ *     summary: Request password reset OTP
+ *     description: Send a 6-digit OTP to user's email for password reset
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *     responses:
+ *       200:
+ *         description: OTP sent if email exists
+ */
+router.post('/forgot-password-otp', forgotPasswordOtpValidation, handleValidation, forgotPasswordOtp);
+
+/**
+ * @swagger
  * /api/auth/reset-password:
  *   post:
  *     tags: [Authentication]
@@ -313,6 +346,65 @@ router.post('/forgot-password', forgotPasswordValidation, handleValidation, forg
  *         description: Invalid or expired token
  */
 router.post('/reset-password', resetPasswordValidation, handleValidation, resetPassword);
+
+/**
+ * @swagger
+ * /api/auth/reset-password-otp:
+ *   post:
+ *     tags: [Authentication]
+ *     summary: Reset password using OTP
+ *     description: Verify OTP and set a new password
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - otp
+ *               - newPassword
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *               otp:
+ *                 type: string
+ *               newPassword:
+ *                 type: string
+ *                 format: password
+ *     responses:
+ *       200:
+ *         description: Password reset successful
+ *       400:
+ *         description: Invalid or expired OTP
+ */
+router.post('/reset-password-otp', resetPasswordOtpValidation, handleValidation, resetPasswordOtp);
+
+/**
+ * @swagger
+ * /api/auth/resend-password-otp:
+ *   post:
+ *     tags: [Authentication]
+ *     summary: Resend password reset OTP
+ *     description: Resend a new OTP to the user's email
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *     responses:
+ *       200:
+ *         description: OTP resent if eligible
+ */
+router.post('/resend-password-otp', resendPasswordOtpValidation, handleValidation, resendPasswordOtp);
 
 /**
  * @swagger

@@ -136,6 +136,34 @@ export const auth = {
         }
     },
 
+    // OTP-based password reset
+    sendPasswordResetOtp: async (email) => {
+        try {
+            const response = await api.post('/auth/forgot-password-otp', { email });
+            return response.data;
+        } catch (error) {
+            throw error.response?.data || error.message;
+        }
+    },
+
+    resetPasswordWithOtp: async ({ email, otp, newPassword }) => {
+        try {
+            const response = await api.post('/auth/reset-password-otp', { email, otp, newPassword });
+            return response.data;
+        } catch (error) {
+            throw error.response?.data || error.message;
+        }
+    },
+
+    resendPasswordResetOtp: async (email) => {
+        try {
+            const response = await api.post('/auth/resend-password-otp', { email });
+            return response.data;
+        } catch (error) {
+            throw error.response?.data || error.message;
+        }
+    },
+
     getMe: async () => {
         try {
             const response = await api.get('/auth/me');

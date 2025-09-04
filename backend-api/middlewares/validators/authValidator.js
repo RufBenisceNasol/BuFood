@@ -55,11 +55,41 @@ const resetPasswordValidation = [
         .matches(/[A-Z]/).withMessage('Password must contain an uppercase letter')
 ];
 
+// OTP-based password reset validators
+const forgotPasswordOtpValidation = [
+    body('email')
+        .isEmail().withMessage('Please enter a valid email')
+        .notEmpty().withMessage('Email is required'),
+];
+
+const resetPasswordOtpValidation = [
+    body('email')
+        .isEmail().withMessage('Please enter a valid email')
+        .notEmpty().withMessage('Email is required'),
+    body('otp')
+        .notEmpty().withMessage('OTP is required')
+        .isLength({ min: 6, max: 6 }).withMessage('OTP must be 6 digits')
+        .isNumeric().withMessage('OTP must be numeric'),
+    body('newPassword')
+        .isLength({ min: 6 }).withMessage('Password must be at least 6 characters long')
+        .matches(/\d/).withMessage('Password must contain a number')
+        .matches(/[A-Z]/).withMessage('Password must contain an uppercase letter'),
+];
+
+const resendPasswordOtpValidation = [
+    body('email')
+        .isEmail().withMessage('Please enter a valid email')
+        .notEmpty().withMessage('Email is required'),
+];
+
 module.exports = {
     registerValidation,
     loginValidation,
     resendVerificationValidation,
     checkVerificationValidation,
     forgotPasswordValidation,
-    resetPasswordValidation
+    resetPasswordValidation,
+    forgotPasswordOtpValidation,
+    resetPasswordOtpValidation,
+    resendPasswordOtpValidation
 };

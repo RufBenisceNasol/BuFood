@@ -52,6 +52,106 @@ const sendVerificationEmail = async (email, verificationLink) => {
   }
 };
 
+// ======= OTP Password Reset Flow =======
+// Helper to send OTP email
+const sendPasswordResetOTPEmail = async (email, otp) => {
+  try {
+    await transporter.sendMail({
+      to: email,
+      subject: `Your BuFood password reset code: ${otp}`,
+      text: `Your password reset code is ${otp}. It expires in 10 minutes. If you didn't request this, ignore this email.`,
+      html: `
+        <div style="font-family: Arial, sans-serif; background:#f9f9f9; padding:20px;">
+          <div style="max-width:600px; margin:auto; background:#fff; padding:24px; border-radius:8px;">
+            <h2 style="margin:0 0 12px; color:#333;">Password reset code</h2>
+            <p style="color:#555; margin:0 0 16px;">Use the following code to reset your BuFood password. This code expires in 10 minutes.</p>
+            <div style="font-size:28px; font-weight:700; letter-spacing:6px; text-align:center; color:#111;">${otp}</div>
+            <p style="color:#777; margin-top:16px; font-size:14px;">If you didn't request this, you can safely ignore this email.</p>
+          </div>
+        </div>
+      `,
+    });
+  } catch (err) {
+    console.error('Error sending OTP email:', err.message);
+    throw new Error('Failed to send OTP email');
+  }
+};
+
+// POST /api/auth/forgot-password-otp
+const forgotPasswordOtp = async (req, res) => {
+  try {
+    const { email } = req.body;
+    const user = await User.findOne({ email });
+    // Always respond 200 to avoid account enumeration
+    if (!user) {
+      return res.status(200).json({ message: 'If the email exists, an OTP has been sent' });
+    }
+
+    const otp = user.createPasswordResetOTP();
+    await user.save();
+    await sendPasswordResetOTPEmail(user.email, otp);
+    return res.status(200).json({ message: 'OTP sent to email' });
+  } catch (error) {
+    console.error('Forgot password OTP error:', error);
+    return res.status(500).json({ message: 'Error sending OTP' });
+  }
+};
+
+// POST /api/auth/reset-password-otp
+const resetPasswordOtp = async (req, res) => {
+  try {
+    const { email, otp, newPassword } = req.body;
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(400).json({ message: 'Invalid email or OTP' });
+    }
+    const hashedOtp = crypto.createHash('sha256').update(otp).digest('hex');
+    const isValid =
+      user.passwordResetOTP &&
+      user.passwordResetOTP === hashedOtp &&
+      user.passwordResetOTPExpires &&
+      user.passwordResetOTPExpires > Date.now();
+
+    if (!isValid) {
+      return res.status(400).json({ message: 'Invalid or expired OTP' });
+    }
+
+    user.password = await bcrypt.hash(newPassword, 10);
+    user.passwordResetOTP = undefined;
+    user.passwordResetOTPExpires = undefined;
+    user.passwordResetToken = undefined;
+    user.passwordResetExpires = undefined;
+    await user.save();
+    await sendPasswordChangedEmail(user.email);
+
+    return res.status(200).json({ message: 'Password reset successful' });
+  } catch (error) {
+    console.error('Reset password via OTP error:', error);
+    return res.status(500).json({ message: 'Error resetting password' });
+  }
+};
+
+// POST /api/auth/resend-password-otp
+const resendPasswordOtp = async (req, res) => {
+  try {
+    const { email } = req.body;
+    const user = await User.findOne({ email });
+    // Always 200 to prevent enumeration
+    if (!user) {
+      return res.status(200).json({ message: 'If the email exists, a new OTP has been sent' });
+    }
+
+    const otp = user.createPasswordResetOTP();
+    await user.save();
+    await sendPasswordResetOTPEmail(user.email, otp);
+
+    return res.status(200).json({ message: 'OTP resent' });
+  } catch (error) {
+    console.error('Resend OTP error:', error);
+    return res.status(500).json({ message: 'Error resending OTP' });
+  }
+};
+
 // Password changed confirmation email
 const sendPasswordChangedEmail = async (email) => {
   try {
@@ -437,6 +537,10 @@ module.exports = {
   checkEmailVerificationStatus,
   forgotPassword,
   resetPassword,
+  // OTP-based reset
+  forgotPasswordOtp,
+  resetPasswordOtp,
+  resendPasswordOtp,
   refreshToken,
   updateProfile,
   uploadProfileImage,

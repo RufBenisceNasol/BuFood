@@ -45,6 +45,13 @@ const userSchema = new mongoose.Schema({
     passwordResetExpires: {
         type: Date
     },
+    // OTP-based password reset fields
+    passwordResetOTP: {
+        type: String, // store hashed otp
+    },
+    passwordResetOTPExpires: {
+        type: Date,
+    },
     favorites: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Product'
@@ -65,6 +72,19 @@ userSchema.methods.createPasswordResetToken = function() {
     
     this.passwordResetExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
     return resetToken;
+};
+
+// Add method to generate an OTP for password reset
+userSchema.methods.createPasswordResetOTP = function() {
+    // Generate a 6-digit numeric OTP as string with leading zeros if needed
+    const otp = (Math.floor(100000 + Math.random() * 900000)).toString();
+    // Hash the OTP before storing
+    this.passwordResetOTP = crypto
+        .createHash('sha256')
+        .update(otp)
+        .digest('hex');
+    this.passwordResetOTPExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
+    return otp;
 };
 
 const User = mongoose.model('User', userSchema);
