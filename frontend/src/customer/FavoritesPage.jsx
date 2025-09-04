@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { product as productApi } from '../api';
+import { product as productApi, cart } from '../api';
 import styled, { keyframes } from 'styled-components';
 import {
   CircularProgress,
@@ -101,6 +101,7 @@ const FavoritesPage = () => {
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [favoriteStores, setFavoriteStores] = useState([]);
   const [filteredStores, setFilteredStores] = useState([]);
+  const [cartCount, setCartCount] = useState(0);
   const navigate = useNavigate();
 
   const handleRefresh = () => {
@@ -113,7 +114,46 @@ const FavoritesPage = () => {
   useEffect(() => {
     loadFavorites();
     loadFavoriteStores();
+    fetchCartCount();
   }, []);
+
+  // Auto-refresh cart count: interval + when tab gains focus/visibility
+  useEffect(() => {
+    const refreshCartSilently = () => {
+      fetchCartCount();
+    };
+
+    const intervalId = setInterval(refreshCartSilently, 30000);
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        refreshCartSilently();
+      }
+    };
+    const handleFocus = () => {
+      refreshCartSilently();
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', handleFocus);
+
+    return () => {
+      clearInterval(intervalId);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, []);
+
+  const fetchCartCount = async () => {
+    try {
+      const cartData = await cart.viewCart();
+      const count = Array.isArray(cartData?.items)
+        ? cartData.items.reduce((sum, item) => sum + (item.quantity || 0), 0)
+        : 0;
+      setCartCount(count);
+    } catch (e) {
+      // silently ignore errors to avoid UI disruption
+    }
+  };
 
   useEffect(() => {
     setFilteredProducts(
@@ -186,27 +226,17 @@ const FavoritesPage = () => {
     navigate(`/customer/product/${productId}`);
   };
 
-  const handleAddToCart = (product) => {
+  const handleAddToCart = async (product) => {
     try {
-      const existingCart = JSON.parse(localStorage.getItem('cart') || '[]');
-      const existingItemIndex = existingCart.findIndex(item => item.id === product._id);
-      if (existingItemIndex >= 0) {
-        existingCart[existingItemIndex].quantity += 1;
-      } else {
-        existingCart.push({
-          id: product._id,
-          name: product.name,
-          price: product.price,
-          image: product.image,
-          storeName: product.storeName,
-          quantity: 1
-        });
-      }
-      localStorage.setItem('cart', JSON.stringify(existingCart));
+      await cart.addToCart(product._id, 1);
+      // Optimistically update badge
+      setCartCount(prev => (Number.isFinite(prev) ? prev + 1 : 1));
       alert(`${product.name} added to cart!`);
     } catch (error) {
       console.error('Error adding product to cart:', error);
       alert('Failed to add product to cart. Please try again.');
+      // Attempt to refresh count in case of mismatch
+      fetchCartCount();
     }
   };
 
@@ -408,8 +438,30 @@ const FavoritesPage = () => {
           <MdFavoriteBorder size={24} className="activeNavIcon" />
           <span className="navText">Favorites</span>
         </div>
-        <div className="navItem" onClick={() => navigate('/customer/cart')}>
+        <div className="navItem" onClick={() => navigate('/customer/cart')} style={{ position: 'relative' }}>
           <MdShoppingCart size={24} />
+          {cartCount > 0 && (
+            <span
+              style={{
+                position: 'absolute',
+                top: 2,
+                right: 16,
+                minWidth: 16,
+                height: 16,
+                padding: '0 4px',
+                borderRadius: 8,
+                backgroundColor: '#ff3b30',
+                color: '#fff',
+                fontSize: 10,
+                lineHeight: '16px',
+                textAlign: 'center',
+                fontWeight: 700,
+                boxShadow: '0 0 0 2px #fff'
+              }}
+            >
+              {cartCount}
+            </span>
+          )}
           <span className="navText">Cart</span>
         </div>
         <div className="navItem" onClick={() => navigate('/customer/stores')}>

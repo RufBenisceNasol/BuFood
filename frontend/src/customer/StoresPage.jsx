@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { store as storeApi } from '../api';
+import { store as storeApi, cart } from '../api';
 import styled, { keyframes } from 'styled-components';
 import {
   Chip,
@@ -308,10 +308,12 @@ const StoresPage = () => {
   const [error, setError] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [favoriteStores, setFavoriteStores] = useState(new Set());
+  const [cartCount, setCartCount] = useState(0);
   const navigate = useNavigate();
 
   useEffect(() => {
     fetchStores();
+    fetchCartCount();
   }, []);
 
   useEffect(() => {
@@ -353,6 +355,43 @@ const StoresPage = () => {
   const handleSearch = (e) => {
     setSearchQuery(e.target.value);
   };
+
+  const fetchCartCount = async () => {
+    try {
+      const cartData = await cart.viewCart();
+      const count = Array.isArray(cartData?.items)
+        ? cartData.items.reduce((sum, item) => sum + (item.quantity || 0), 0)
+        : 0;
+      setCartCount(count);
+    } catch (e) {
+      // silently ignore errors
+    }
+  };
+
+  useEffect(() => {
+    const refreshCartSilently = () => {
+      fetchCartCount();
+    };
+
+    const intervalId = setInterval(refreshCartSilently, 30000);
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        refreshCartSilently();
+      }
+    };
+    const handleFocus = () => {
+      refreshCartSilently();
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', handleFocus);
+
+    return () => {
+      clearInterval(intervalId);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, []);
 
   if (loading) {
     return (
@@ -478,8 +517,30 @@ const StoresPage = () => {
           <MdFavoriteBorder size={24} />
           <span className="navText">Favorites</span>
         </div>
-        <div className="navItem" onClick={() => navigate('/customer/cart')}>
+        <div className="navItem" onClick={() => navigate('/customer/cart')} style={{ position: 'relative' }}>
           <MdShoppingCart size={24} />
+          {cartCount > 0 && (
+            <span
+              style={{
+                position: 'absolute',
+                top: 2,
+                right: 16,
+                minWidth: 16,
+                height: 16,
+                padding: '0 4px',
+                borderRadius: 8,
+                backgroundColor: '#ff3b30',
+                color: '#fff',
+                fontSize: 10,
+                lineHeight: '16px',
+                textAlign: 'center',
+                fontWeight: 700,
+                boxShadow: '0 0 0 2px #fff'
+              }}
+            >
+              {cartCount}
+            </span>
+          )}
           <span className="navText">Cart</span>
         </div>
         <div className="navItem activeNavItem" onClick={() => navigate('/customer/stores')}>

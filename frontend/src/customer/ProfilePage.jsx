@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { auth, customer } from '../api';
+import { auth, customer, cart } from '../api';
 import styled, { createGlobalStyle } from 'styled-components';
 import { MdArrowBack, MdEdit, MdPerson, MdEmail, MdPhone, MdDateRange, MdHome, MdFavoriteBorder, MdShoppingCart, MdStore } from 'react-icons/md';
 
@@ -268,11 +268,51 @@ const ProfilePage = () => {
   const [editError, setEditError] = useState('');
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState('');
+  const [cartCount, setCartCount] = useState(0);
   const navigate = useNavigate();
 
   useEffect(() => {
     fetchUserProfile();
+    fetchCartCount();
   }, []);
+
+  // Auto-refresh cart count: interval + when tab gains focus/visibility
+  useEffect(() => {
+    const refreshCartSilently = () => {
+      fetchCartCount();
+    };
+
+    const intervalId = setInterval(refreshCartSilently, 30000);
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        refreshCartSilently();
+      }
+    };
+    const handleFocus = () => {
+      refreshCartSilently();
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', handleFocus);
+
+    return () => {
+      clearInterval(intervalId);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, []);
+
+  const fetchCartCount = async () => {
+    try {
+      const cartData = await cart.viewCart();
+      const count = Array.isArray(cartData?.items)
+        ? cartData.items.reduce((sum, item) => sum + (item.quantity || 0), 0)
+        : 0;
+      setCartCount(count);
+    } catch (e) {
+      // silently ignore errors
+    }
+  };
 
   const fetchUserProfile = async () => {
     setLoading(true);
@@ -584,8 +624,30 @@ const ProfilePage = () => {
             <MdFavoriteBorder size={24} />
             <span className="navText">Favorites</span>
           </div>
-          <div className="navItem" onClick={() => navigate('/customer/cart')}>
+          <div className="navItem" onClick={() => navigate('/customer/cart')} style={{ position: 'relative' }}>
             <MdShoppingCart size={24} />
+            {cartCount > 0 && (
+              <span
+                style={{
+                  position: 'absolute',
+                  top: 2,
+                  right: 16,
+                  minWidth: 16,
+                  height: 16,
+                  padding: '0 4px',
+                  borderRadius: 8,
+                  backgroundColor: '#ff3b30',
+                  color: '#fff',
+                  fontSize: 10,
+                  lineHeight: '16px',
+                  textAlign: 'center',
+                  fontWeight: 700,
+                  boxShadow: '0 0 0 2px #fff'
+                }}
+              >
+                {cartCount}
+              </span>
+            )}
             <span className="navText">Cart</span>
           </div>
           <div className="navItem" onClick={() => navigate('/customer/stores')}>

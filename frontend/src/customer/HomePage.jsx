@@ -106,10 +106,26 @@ const HomePage = () => {
     availability: 'all'
   });
   const [categories, setCategories] = useState(['All']);
+  const [cartCount, setCartCount] = useState(0);
 
   useEffect(() => {
     fetchData();
+    // Fetch initial cart count
+    fetchCartCount();
   }, []);
+
+  const fetchCartCount = async () => {
+    try {
+      const cartData = await cart.viewCart();
+      const count = Array.isArray(cartData?.items)
+        ? cartData.items.reduce((sum, item) => sum + (item.quantity || 0), 0)
+        : 0;
+      setCartCount(count);
+    } catch (e) {
+      // silently ignore count errors
+      setCartCount(0);
+    }
+  };
 
   // Apply filters and search
   useEffect(() => {
@@ -211,7 +227,10 @@ const HomePage = () => {
 
   // Auto-refresh: interval + when tab gains focus/visibility
   useEffect(() => {
-    const refreshSilently = () => fetchData({ showLoader: false });
+    const refreshSilently = () => {
+      fetchData({ showLoader: false });
+      fetchCartCount();
+    };
 
     const intervalId = setInterval(refreshSilently, 30000);
     const handleVisibilityChange = () => {
@@ -238,6 +257,8 @@ const HomePage = () => {
       await cart.addToCart(product._id, 1);
       // Show success message
       toast.success('Product added to cart successfully');
+      // Update cart badge count
+      setCartCount((prev) => (Number.isFinite(prev) ? prev + 1 : 1));
      } catch (err) {
                 const errorMessage = err.message || err.error || 'Failed to add product to cart';
                 toast.error(errorMessage);
@@ -725,8 +746,30 @@ const HomePage = () => {
           <MdFavoriteBorder size={24} />
           <span className="navText">Favorites</span>
         </div>
-        <div className="navItem" onClick={() => navigate('/customer/cart')}>
+        <div className="navItem" onClick={() => navigate('/customer/cart')} style={{ position: 'relative' }}>
           <MdShoppingCart size={24} />
+          {cartCount > 0 && (
+            <span
+              style={{
+                position: 'absolute',
+                top: 2,
+                right: 16,
+                minWidth: 16,
+                height: 16,
+                padding: '0 4px',
+                borderRadius: 8,
+                backgroundColor: '#ff3b30',
+                color: '#fff',
+                fontSize: 10,
+                lineHeight: '16px',
+                textAlign: 'center',
+                fontWeight: 700,
+                boxShadow: '0 0 0 2px #fff'
+              }}
+            >
+              {cartCount}
+            </span>
+          )}
           <span className="navText">Cart</span>
         </div>
         <div className="navItem" onClick={() => navigate('/customer/stores')}>
