@@ -95,7 +95,7 @@ const ScrollableContent = styled.div`
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
   scroll-behavior: smooth;
-  padding-bottom: 80px; /* Space for the fixed footer */
+  padding-bottom: 120px; /* Space for the fixed footer */
   
   /* Custom scrollbar for WebKit browsers */
   &::-webkit-scrollbar {
@@ -347,7 +347,7 @@ const Footer = styled.footer`
   left: 0;
   right: 0;
 background-color: #ffffff;
-  padding: 16px;
+  padding: 13px;
   display: flex;
   justify-content: space-between;
   align-items: center;

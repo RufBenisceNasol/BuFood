@@ -183,7 +183,7 @@ const Footer = styled.footer`
   left: 0;
   right: 0;
   background: white;
-  padding: 16px;
+  padding: 13px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -193,11 +193,17 @@ const Footer = styled.footer`
 `;
 
 const FooterContent = styled.div`
-  max-width: 900px;
-  margin: 0 auto;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+background-color: #ffffff;
+  padding: 13px;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
 `;
 
 const TotalAmount = styled.div`
@@ -246,6 +252,7 @@ const OrderSummaryPage = () => {
     const navigate = useNavigate();
     const { cartItems, totalAmount } = location.state || { cartItems: [], totalAmount: 0 };
     const [loading, setLoading] = useState(false);
+    const [qrPreview, setQrPreview] = useState({ open: false, src: '' });
     
     // Get user data from localStorage
     const userData = getUser() || {};
@@ -320,6 +327,12 @@ const OrderSummaryPage = () => {
     const handleGoBack = () => {
         navigate('/customer/cart');
     };
+
+    const openQrModal = (src) => {
+        console.log('Opening QR modal with src:', src);
+        setQrPreview({ open: true, src });
+    };
+    const closeQrModal = () => setQrPreview({ open: false, src: '' });
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -581,7 +594,18 @@ const OrderSummaryPage = () => {
                                                     <Typography variant="body2">GCash Number: <b style={{ cursor: info.gcashNumber ? 'pointer' : 'default' }} onClick={() => { if (info.gcashNumber) { navigator.clipboard.writeText(info.gcashNumber); toast.info('GCash number copied'); } }}>{info.gcashNumber || '—'}</b></Typography>
                                                 </div>
                                                 {info.gcashQrUrl ? (
-                                                    <img src={info.gcashQrUrl} alt="GCash QR" style={{ width: 140, height: 140, objectFit: 'contain', borderRadius: 8, background: '#fafafa', border: '1px solid #eee' }} />
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                                                        <img
+                                                            src={info.gcashQrUrl}
+                                                            alt="GCash QR"
+                                                            onClick={() => openQrModal(info.gcashQrUrl)}
+                                                            title="Click to view QR"
+                                                            style={{ width: 140, height: 140, objectFit: 'contain', borderRadius: 8, background: '#fafafa', border: '1px solid #eee', cursor: 'pointer' }}
+                                                        />
+                                                        <Button variant="outlined" size="small" onClick={() => openQrModal(info.gcashQrUrl)}>
+                                                            View QR
+                                                        </Button>
+                                                    </div>
                                                 ) : (
                                                     <div style={{ width: 140, height: 140, border: '1px dashed #ddd', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#aaa' }}>
                                                         No QR Provided
@@ -699,6 +723,48 @@ const OrderSummaryPage = () => {
                     </Section>
                 </Container>
             </ContentWrapper>
+
+            {/* QR Preview Overlay (custom) */}
+            {qrPreview.open && (
+                <div
+                    onClick={closeQrModal}
+                    style={{
+                        position: 'fixed',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        background: 'rgba(0,0,0,0.8)',
+                        zIndex: 20000,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        padding: 16
+                    }}
+                >
+                    <div
+                        onClick={(e) => e.stopPropagation()}
+                        style={{ position: 'relative', maxWidth: '90vw', maxHeight: '90vh' }}
+                    >
+                        {qrPreview.src && (
+                            <img
+                                src={qrPreview.src}
+                                alt="GCash QR Preview"
+                                style={{ maxWidth: '90vw', maxHeight: '85vh', width: '100%', height: 'auto', display: 'block', borderRadius: 8, boxShadow: '0 8px 24px rgba(0,0,0,0.4)' }}
+                            />
+                        )}
+                        <Button
+                            onClick={closeQrModal}
+                            variant="contained"
+                            color="primary"
+                            size="small"
+                            style={{ position: 'absolute', top: -8, right: -8 }}
+                        >
+                            Close
+                        </Button>
+                    </div>
+                </div>
+            )}
 
             {/* Fixed Footer */}
             <Footer>
