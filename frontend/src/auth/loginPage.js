@@ -88,6 +88,23 @@ const LoginPage = () => {
 
     return (
         <div style={styles.pageContainer}>
+            {/* Loading overlay and keyframes definition */}
+            <style>
+                {`
+                @keyframes spin {
+                    0% { transform: rotate(0deg); }
+                    100% { transform: rotate(360deg); }
+                }
+                `}
+            </style>
+            {loading && (
+                <div style={styles.loadingOverlay}>
+                    <div style={styles.loadingBox}>
+                        <div style={styles.spinner} />
+                        <div style={styles.loadingText}>Signing in...</div>
+                    </div>
+                </div>
+            )}
             <div style={styles.container}>
                 <img src={logod} alt="Logo" style={styles.logo} />
                 <h1 style={styles.title}>SIGN IN</h1>
@@ -359,6 +376,40 @@ const styles = {
         marginBottom: 'clamp(15px, 4vw, 20px)',
         textAlign: 'center',
         width: '100%',
+    },
+    loadingOverlay: {
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0,0,0,0.35)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 9999,
+        backdropFilter: 'blur(1px)'
+    },
+    loadingBox: {
+        backgroundColor: '#fff',
+        borderRadius: '12px',
+        padding: '20px 24px',
+        boxShadow: '0 10px 30px rgba(0,0,0,0.2)',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '12px'
+    },
+    spinner: {
+        width: '28px',
+        height: '28px',
+        border: '3px solid #f3f3f3',
+        borderTop: '3px solid #ff8c00',
+        borderRadius: '50%',
+        animation: 'spin 1s linear infinite'
+    },
+    loadingText: {
+        color: '#333',
+        fontWeight: 600
     }
 }
 
