@@ -48,8 +48,35 @@ const DashboardPage = () => {
   };
 
   useEffect(() => {
+    // Fetch store data immediately for fast first paint
     fetchStoreData();
-    fetchOrderStats();
+
+    // Defer orders fetching until after first paint/idle
+    const defer = (fn) => {
+      if ('requestIdleCallback' in window) {
+        // @ts-ignore
+        return window.requestIdleCallback(fn, { timeout: 800 });
+      }
+      return setTimeout(fn, 0);
+    };
+
+    const idleId = defer(async () => {
+      try {
+        // Light fetch to render quick stats
+        await fetchOrderStatsLight(20);
+        // Then load the rest in the background
+        setTimeout(() => {
+          fetchOrderStatsFull();
+        }, 300);
+      } catch (_) {
+        // ignore; light fetch failures will be retried by user refresh or next mount
+      }
+    });
+
+    return () => {
+      if (typeof idleId === 'number') clearTimeout(idleId);
+      // requestIdleCallback cancel not standardized across browsers; safe to ignore
+    };
   }, []);
 
   // Smooth auto-refresh: react to tab focus/visibility changes and cross-tab events
@@ -142,23 +169,39 @@ const DashboardPage = () => {
     }
   };
 
-  const fetchOrderStats = async () => {
+  // Helper to compute and set stats from orders
+  const applyOrderStats = (orders) => {
+    let pending = 0, completed = 0, earnings = 0;
+    for (const o of orders) {
+      if (!['Delivered', 'Canceled', 'Rejected'].includes(o.status)) pending++;
+      if (o.status === 'Delivered') {
+        completed++;
+        if (o.paymentStatus === 'Paid') earnings += o.totalAmount;
+      }
+    }
+    setOrderStats({ pending, completed, earnings, orders });
+    setOrdersForChart(orders);
+  };
+
+  // Light, quick fetch for initial paint
+  const fetchOrderStatsLight = async (limit = 20) => {
     try {
-      // Fetch all seller orders (use backend max limit 100)
+      const ordersRes = await order.getSellerOrders({ page: 1, limit, sortBy: 'createdAt', sortOrder: 'desc' });
+      const orders = ordersRes.data?.orders || ordersRes.orders || [];
+      applyOrderStats(orders);
+    } catch (_) {
+      // silent; not critical for first paint
+    }
+  };
+
+  // Full background fetch to hydrate analytics
+  const fetchOrderStatsFull = async () => {
+    try {
       const ordersRes = await order.getSellerOrders({ page: 1, limit: 100, sortBy: 'createdAt', sortOrder: 'desc' });
       const orders = ordersRes.data?.orders || ordersRes.orders || [];
-      let pending = 0, completed = 0, earnings = 0;
-      for (const o of orders) {
-        if (!['Delivered', 'Canceled', 'Rejected'].includes(o.status)) pending++;
-        if (o.status === 'Delivered') {
-          completed++;
-          if (o.paymentStatus === 'Paid') earnings += o.totalAmount;
-        }
-      }
-      setOrderStats({ pending, completed, earnings, orders });
-      setOrdersForChart(orders);
-    } catch (err) {
-      // Optionally handle error
+      applyOrderStats(orders);
+    } catch (_) {
+      // silent; user can manually refresh if needed
     }
   };
 
@@ -307,7 +350,16 @@ const DashboardPage = () => {
           <button
             className="refresh-btn"
             aria-label="Refresh"
-            onClick={() => { setLoading(true); fetchStoreData(); fetchOrderStats(); }}
+            onClick={() => {
+              setLoading(true);
+              fetchStoreData();
+              // Run staged orders refresh similar to mount
+              fetchOrderStatsLight(20).finally(() => {
+                setTimeout(() => {
+                  fetchOrderStatsFull();
+                }, 300);
+              });
+            }}
             disabled={loading}
             tabIndex={0}
             style={{

@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import logod from '../assets/logod.png';
 import { MdMailOutline, MdLockOpen } from 'react-icons/md';
 import { FiEye, FiEyeOff } from 'react-icons/fi';
-import { auth } from '../api';
+import { auth, warmup } from '../api';
 import { setToken, setRefreshToken, setUser, getToken, getUser } from '../utils/tokenUtils';
 
 const LoginPage = () => {
@@ -31,6 +31,11 @@ const LoginPage = () => {
             }
         }
     }, [navigate]);
+
+    // Non-blocking warmup ping on mount to help wake sleeping servers
+    React.useEffect(() => {
+        warmup();
+    }, []);
 
     const handleSubmit = async (e) => {
         e.preventDefault();

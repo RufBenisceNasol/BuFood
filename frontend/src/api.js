@@ -727,3 +727,17 @@ export const review = {
 
 export default api;
 export { API_BASE_URL };
+
+// Lightweight warmup ping to reduce perceived cold start latency
+// Intentionally ignores errors and times out quickly
+export const warmup = async () => {
+    try {
+        // Prefer a very light endpoint; if /health doesn't exist, any 404 still wakes the server
+        await api.get('/health', {
+            timeout: 2500,
+            params: { _t: Date.now() } // cache buster
+        });
+    } catch (e) {
+        // ignore any error; goal is to just trigger the server to wake up
+    }
+};
