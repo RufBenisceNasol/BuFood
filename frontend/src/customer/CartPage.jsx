@@ -406,6 +406,7 @@ const CartPage = () => {
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const [showCheckoutForm, setShowCheckoutForm] = useState(false);
     const [orderId, setOrderId] = useState(null);
+    const [cartCount, setCartCount] = useState(0);
 
     useEffect(() => {
         fetchCart();
@@ -418,6 +419,10 @@ const CartPage = () => {
             const response = await cart.viewCart();
             console.log('Cart response:', response); // Debug log
             setCartData(response);
+            const count = Array.isArray(response?.items)
+                ? response.items.reduce((sum, item) => sum + (item.quantity || 0), 0)
+                : 0;
+            setCartCount(count);
             const initialSelected = {};
             if (response?.items) {
                 response.items.forEach(item => {
@@ -770,8 +775,30 @@ const CartPage = () => {
                 <MdFavoriteBorder size={24} />
                 <span className="navText">Favorites</span>
               </div>
-              <div className="navItem activeNavItem" onClick={() => navigate('/customer/cart')}>
+              <div className="navItem activeNavItem" onClick={() => navigate('/customer/cart')} style={{ position: 'relative' }}>
                 <MdShoppingCart size={24} className="activeNavIcon" />
+                {cartCount > 0 && (
+                  <span
+                    style={{
+                      position: 'absolute',
+                      top: 2,
+                      right: 16,
+                      minWidth: 16,
+                      height: 16,
+                      padding: '0 4px',
+                      borderRadius: 8,
+                      backgroundColor: '#ff3b30',
+                      color: '#fff',
+                      fontSize: 10,
+                      lineHeight: '16px',
+                      textAlign: 'center',
+                      fontWeight: 700,
+                      boxShadow: '0 0 0 2px #fff'
+                    }}
+                  >
+                    {cartCount}
+                  </span>
+                )}
                 <span className="navText">Cart</span>
               </div>
               <div className="navItem" onClick={() => navigate('/customer/stores')}>

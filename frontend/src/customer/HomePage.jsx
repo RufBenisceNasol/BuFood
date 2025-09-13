@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MdSearch, MdHome, MdFavoriteBorder, MdShoppingCart, MdReceipt, MdPerson, MdFilterList, MdClose, MdMenuOpen, MdSettings, MdLogout, MdStore, MdAddShoppingCart } from 'react-icons/md';
+import { MdSearch, MdHome, MdFavoriteBorder, MdShoppingCart, MdReceipt, MdPerson, MdFilterList, MdClose, MdMenuOpen, MdSettings, MdLogout, MdStore, MdAddShoppingCart, MdCheckCircle } from 'react-icons/md';
 import Slider from 'react-slick';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -107,6 +107,7 @@ const HomePage = () => {
   });
   const [categories, setCategories] = useState(['All']);
   const [cartCount, setCartCount] = useState(0);
+  const [successModal, setSuccessModal] = useState({ open: false, message: '' });
 
   useEffect(() => {
     fetchData();
@@ -181,38 +182,49 @@ const HomePage = () => {
     setError(null);
 
     try {
-      // Fetch stores data
-      try {
-        const storesData = await storeApi.getAllStores();
+      // Fire both requests concurrently
+      const [storesRes, productsRes] = await Promise.allSettled([
+        storeApi.getAllStores(),
+        productApi.getAllProducts()
+      ]);
+
+      // Handle stores result
+      if (storesRes.status === 'fulfilled') {
+        const storesData = storesRes.value;
         setStores(storesData || []);
-      } catch (storeErr) {
+      } else {
+        const storeErr = storesRes.reason;
         console.error('Error fetching stores:', storeErr);
-        setError(storeErr.message || 'Failed to load stores');
         setStores([]);
+        // Prefer not to override an existing error from products if that one also fails
+        setError(prev => prev || storeErr?.message || 'Failed to load stores');
       }
 
-      // Fetch all products
-      try {
-        const allProductsData = await productApi.getAllProducts();
+      // Handle products result
+      if (productsRes.status === 'fulfilled') {
+        const allProductsData = productsRes.value;
         setAllProducts(allProductsData || []);
         setFilteredProducts(allProductsData || []);
-        
+
         // For popular products, take the first 4 products
         setPopularProducts(allProductsData?.slice(0, 4) || []);
 
         // Extract unique categories
         if (allProductsData && allProductsData.length > 0) {
-          const uniqueCategories = ['All', ...new Set(allProductsData
-            .filter(product => product.category)
-            .map(product => product.category))];
+          const uniqueCategories = ['All', ...new Set(
+            allProductsData
+              .filter(product => product.category)
+              .map(product => product.category)
+          )];
           setCategories(uniqueCategories);
         }
-      } catch (productErr) {
+      } else {
+        const productErr = productsRes.reason;
         console.error('Error fetching products:', productErr);
-        setError(productErr.message || 'Failed to load products');
         setAllProducts([]);
         setFilteredProducts([]);
         setPopularProducts([]);
+        setError(prev => prev || productErr?.message || 'Failed to load products');
       }
 
     } catch (err) {
@@ -255,8 +267,10 @@ const HomePage = () => {
   const handleAddToCart = async (product) => {
     try {
       await cart.addToCart(product._id, 1);
-      // Show success message
-      toast.success('Product added to cart successfully');
+      // Show success modal message
+      setSuccessModal({ open: true, message: 'Product added to cart successfully' });
+      // Auto-close the modal after a short delay
+      setTimeout(() => setSuccessModal({ open: false, message: '' }), 1200);
       // Update cart badge count
       setCartCount((prev) => (Number.isFinite(prev) ? prev + 1 : 1));
      } catch (err) {
@@ -387,6 +401,46 @@ const HomePage = () => {
   return (
     <div className="pageContainer">
       <ToastContainer position="top-center" autoClose={3000} />
+      {/* Success Modal */}
+      {successModal.open && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0,0,0,0.25)',
+            zIndex: 2000,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}
+          onClick={() => setSuccessModal({ open: false, message: '' })}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: '#fff',
+              borderRadius: 12,
+              boxShadow: '0 8px 24px rgba(0,0,0,0.18)',
+              padding: '22px 28px',
+              minWidth: 260,
+              maxWidth: '90vw',
+              textAlign: 'center',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 10,
+              alignItems: 'center'
+            }}
+          >
+            <MdCheckCircle size={44} color="#2E7D32" />
+            <div style={{ fontSize: 16, fontWeight: 600, color: '#2E7D32', marginTop: 6 }}>
+              {successModal.message || 'Success'}
+            </div>
+          </div>
+        </div>
+      )}
       <div className="mainContainer">
         {/* Header */}
         <div className="header">

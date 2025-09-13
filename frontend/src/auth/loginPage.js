@@ -13,6 +13,8 @@ const LoginPage = () => {
     const [passwordError, setPasswordError] = useState('');
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
+    const [loadingMessage, setLoadingMessage] = useState('Signing in...');
+    const wakeTimerRef = React.useRef(null);
     const [showPassword, setShowPassword] = useState(false);
     const [rememberMe, setRememberMe] = useState(false);
     const navigate = useNavigate();
@@ -34,6 +36,15 @@ const LoginPage = () => {
         e.preventDefault();
         setError('');
         setLoading(true);
+        setLoadingMessage('Signing in...');
+
+        // If the request takes too long, inform the user the server may be waking up
+        if (wakeTimerRef.current) {
+            clearTimeout(wakeTimerRef.current);
+        }
+        wakeTimerRef.current = setTimeout(() => {
+            setLoadingMessage('Waking server... This first login can take up to a minute.');
+        }, 4000);
 
         // Validate password length
         if (password.length < 8) {
@@ -82,7 +93,12 @@ const LoginPage = () => {
                 setError(err.message || 'An error occurred during login');
             }
         } finally {
+            if (wakeTimerRef.current) {
+                clearTimeout(wakeTimerRef.current);
+                wakeTimerRef.current = null;
+            }
             setLoading(false);
+            setLoadingMessage('Signing in...');
         }
     };
 
@@ -101,7 +117,7 @@ const LoginPage = () => {
                 <div style={styles.loadingOverlay}>
                     <div style={styles.loadingBox}>
                         <div style={styles.spinner} />
-                        <div style={styles.loadingText}>Signing in...</div>
+                        <div style={styles.loadingText}>{loadingMessage}</div>
                     </div>
                 </div>
             )}

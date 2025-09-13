@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { product as productApi, cart } from '../api';
+import { product as productApi, cart, store as storeApi } from '../api';
 import styled, { keyframes } from 'styled-components';
 import {
   CircularProgress,
@@ -22,7 +22,7 @@ import {
   toggleStoreFavorite, 
   isStoreInFavorites 
 } from '../utils/favoriteUtils';
-import { MdHome, MdFavoriteBorder, MdShoppingCart, MdStore, MdPerson } from 'react-icons/md';
+import { MdHome, MdFavoriteBorder, MdShoppingCart, MdStore, MdPerson, MdCheckCircle } from 'react-icons/md';
 
 const styles = {
   bottomNav: {
@@ -102,6 +102,7 @@ const FavoritesPage = () => {
   const [favoriteStores, setFavoriteStores] = useState([]);
   const [filteredStores, setFilteredStores] = useState([]);
   const [cartCount, setCartCount] = useState(0);
+  const [successModal, setSuccessModal] = useState({ open: false, message: '' });
   const navigate = useNavigate();
 
   const handleRefresh = () => {
@@ -204,14 +205,31 @@ const FavoritesPage = () => {
     }
   };
 
-  const loadFavoriteStores = () => {
+  const loadFavoriteStores = async () => {
     try {
       const storeIds = getAllStoreFavorites();
-      // Note: This is a placeholder. In a real implementation, you would 
-      // fetch store details from the API using these IDs
-      // For now we're just loading from localStorage
-      const stored = JSON.parse(localStorage.getItem('favoriteStores') || '[]');
-      setFavoriteStores(stored);
+      if (!storeIds || storeIds.length === 0) {
+        setFavoriteStores([]);
+        return;
+      }
+      // Fetch details for each store ID
+      const results = await Promise.all(
+        storeIds.map(async (sid) => {
+          try {
+            const data = await storeApi.getStoreById(sid);
+            return {
+              id: data._id || sid,
+              name: data.storeName || data.name || 'Store',
+              image: data.image || data.logo || 'https://via.placeholder.com/300x200/f0f0f0/cccccc?text=Store',
+              description: data.description || ''
+            };
+          } catch (e) {
+            // If a store fetch fails, still return an entry so UI remains consistent
+            return { id: sid, name: 'Store', image: 'https://via.placeholder.com/300x200/f0f0f0/cccccc?text=Store', description: '' };
+          }
+        })
+      );
+      setFavoriteStores(results);
     } catch (err) {
       console.error('Error loading favorite stores:', err);
       setFavoriteStores([]);
@@ -231,7 +249,9 @@ const FavoritesPage = () => {
       await cart.addToCart(product._id, 1);
       // Optimistically update badge
       setCartCount(prev => (Number.isFinite(prev) ? prev + 1 : 1));
-      alert(`${product.name} added to cart!`);
+      // Show success modal
+      setSuccessModal({ open: true, message: 'Product added to cart successfully' });
+      setTimeout(() => setSuccessModal({ open: false, message: '' }), 1200);
     } catch (error) {
       console.error('Error adding product to cart:', error);
       alert('Failed to add product to cart. Please try again.');
@@ -243,24 +263,14 @@ const FavoritesPage = () => {
   const handleRemoveFavorite = (productId) => {
     toggleFavorite(productId);
     setFavorites(prev => prev.filter(product => product._id !== productId));
-    alert('Product removed from favorites!');
+    setSuccessModal({ open: true, message: 'Product removed from favorites' });
+    setTimeout(() => setSuccessModal({ open: false, message: '' }), 1200);
   };
 
-  const handleRemoveStoreFavorite = (storeId) => {
-    // Remove from favorites list
-    const isNowFavorite = toggleStoreFavorite(storeId);
-    
-    // Update UI state
-    setFavoriteStores(prev => prev.filter(store => store.id !== storeId));
-
-    // Update localStorage
-    try {
-      const storedFavorites = JSON.parse(localStorage.getItem('favoriteStores') || '[]');
-      const updatedFavorites = storedFavorites.filter(store => store.id !== storeId);
-      localStorage.setItem('favoriteStores', JSON.stringify(updatedFavorites));
-    } catch (error) {
-      console.error('Error updating favorite stores:', error);
-    }
+  const handleRemoveStoreFavorite = async (storeId) => {
+    // Toggle favorite off and refresh the list from IDs
+    toggleStoreFavorite(storeId);
+    await loadFavoriteStores();
   };
 
   const handleViewStore = (storeId) => {
@@ -285,6 +295,46 @@ const FavoritesPage = () => {
 
   return (
     <PageContainer>
+      {/* Success Modal */}
+      {successModal.open && (
+        <div
+          onClick={() => setSuccessModal({ open: false, message: '' })}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0,0,0,0.25)',
+            zIndex: 2000,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: '#fff',
+              borderRadius: 12,
+              boxShadow: '0 8px 24px rgba(0,0,0,0.18)',
+              padding: '22px 28px',
+              minWidth: 260,
+              maxWidth: '90vw',
+              textAlign: 'center',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 10,
+              alignItems: 'center'
+            }}
+          >
+            <MdCheckCircle size={44} color="#2E7D32" />
+            <div style={{ fontSize: 16, fontWeight: 600, color: '#2E7D32', marginTop: 6 }}>
+              {successModal.message || 'Success'}
+            </div>
+          </div>
+        </div>
+      )}
       <Header>
         <BackButton onClick={handleGoBack}>
           <ArrowBack />

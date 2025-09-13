@@ -12,7 +12,8 @@ import {
   FiberManualRecord
 } from '@mui/icons-material';
 import api from '../api'; // Assumes you have an api instance for requests
-import { customer, review, order as orderApi } from '../api';
+import { customer, review, order as orderApi, cart } from '../api';
+import { MdCheckCircle } from 'react-icons/md';
 
 import defPic from '../assets/delibup.png';
 import { getUser } from '../utils/tokenUtils';
@@ -293,6 +294,7 @@ const ViewMyOrder = () => {
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [orderToCancel, setOrderToCancel] = useState(null);
   const [notificationMessage, setNotificationMessage] = useState('');
+  const [successModal, setSuccessModal] = useState({ open: false, message: '' });
   const [selectedProductId, setSelectedProductId] = useState('');
   // Manual GCash proof modal state
   const [proofOrderId, setProofOrderId] = useState(null);
@@ -377,6 +379,8 @@ const ViewMyOrder = () => {
       setOrders(res.data.data?.orders || res.data.orders || []);
       setShowCancelModal(false);
       setOrderToCancel(null);
+      setSuccessModal({ open: true, message: 'Order canceled successfully' });
+      setTimeout(() => setSuccessModal({ open: false, message: '' }), 1200);
     } catch (err) {
       alert('Failed to cancel order. Please try again.');
     } finally {
@@ -386,6 +390,16 @@ const ViewMyOrder = () => {
 
   return (
     <PageContainer>
+      {successModal.open && (
+        <ModalOverlay onClick={() => setSuccessModal({ open: false, message: '' })}>
+          <ModalBox onClick={(e) => e.stopPropagation()}>
+            <MdCheckCircle size={44} color="#2E7D32" />
+            <div style={{ fontSize: 16, fontWeight: 600, color: '#2E7D32', marginTop: 6 }}>
+              {successModal.message || 'Success'}
+            </div>
+          </ModalBox>
+        </ModalOverlay>
+      )}
       <Header>
         <BackButton onClick={handleGoBack}>
           <ArrowBack />
@@ -554,7 +568,26 @@ const ViewMyOrder = () => {
                   <div style={{ display: 'flex', gap: '8px' }}>
                     <Button 
                       className="outline"
-                      onClick={() => console.log('Reordering order:', order._id || order.id)}
+                      onClick={async () => {
+                        try {
+                          const items = Array.isArray(order.items) ? order.items : [];
+                          if (items.length === 0) return;
+                          await Promise.all(
+                            items.map(async (it) => {
+                              const pid = it.product?._id || it.product || it._id;
+                              const qty = it.quantity || 1;
+                              if (pid) {
+                                try { await cart.addToCart(pid, qty); } catch {}
+                              }
+                            })
+                          );
+                          setSuccessModal({ open: true, message: 'Items added to cart' });
+                          setTimeout(() => setSuccessModal({ open: false, message: '' }), 1200);
+                        } catch (e) {
+                          setNotificationMessage('Failed to reorder');
+                          setTimeout(() => setNotificationMessage(''), 3000);
+                        }
+                      }}
                       style={{ fontSize: '9px' }}
                     >
                       Reorder
@@ -756,8 +789,8 @@ const ViewMyOrder = () => {
                       setReviewingOrder(null);
                       setReviewComment('');
                       setSelectedProductId('');
-                      setNotificationMessage('Review submitted!');
-                      setTimeout(() => setNotificationMessage(''), 3000);
+                      setSuccessModal({ open: true, message: 'Review submitted successfully' });
+                      setTimeout(() => setSuccessModal({ open: false, message: '' }), 1200);
                     } catch (e) {
                       setNotificationMessage(
                         (e && (e.message || e.error || e.details)) || 'Failed to submit review'

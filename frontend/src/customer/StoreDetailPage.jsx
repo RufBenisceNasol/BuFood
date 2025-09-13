@@ -8,6 +8,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import ErrorBoundary from '../components/ErrorBoundary';
 import { isStoreInFavorites, toggleStoreFavorite } from '../utils/favoriteUtils';
 import { getToken } from '../utils/tokenUtils';
+import { MdCheckCircle } from 'react-icons/md';
 
 // Styled Components
 const StoreDetailWrapper = styled.div`
@@ -558,6 +559,7 @@ const StoreDetailPage = () => {
   const [error, setError] = useState('');
   const [activeTab, setActiveTab] = useState('Products');
   const [isFavorite, setIsFavorite] = useState(false);
+  const [successModal, setSuccessModal] = useState({ open: false, message: '' });
 
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://capstonedelibup.onrender.com/api';
 
@@ -590,7 +592,9 @@ const StoreDetailPage = () => {
   const handleToggleFavorite = () => {
     const next = toggleStoreFavorite(storeId);
     setIsFavorite(next);
-    toast[next ? 'success' : 'info'](next ? 'Added to favorites' : 'Removed from favorites');
+    const msg = next ? 'Added to favorites' : 'Removed from favorites';
+    setSuccessModal({ open: true, message: msg });
+    setTimeout(() => setSuccessModal({ open: false, message: '' }), 1200);
   };
 
   const handleKeyDown = (e, product) => {
@@ -627,6 +631,46 @@ const StoreDetailPage = () => {
 
   return (
     <StoreDetailWrapper>
+      {/* Success Modal */}
+      {successModal.open && (
+        <div
+          onClick={() => setSuccessModal({ open: false, message: '' })}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0,0,0,0.25)',
+            zIndex: 2000,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: '#fff',
+              borderRadius: 12,
+              boxShadow: '0 8px 24px rgba(0,0,0,0.18)',
+              padding: '22px 28px',
+              minWidth: 260,
+              maxWidth: '90vw',
+              textAlign: 'center',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 10,
+              alignItems: 'center'
+            }}
+          >
+            <MdCheckCircle size={44} color="#2E7D32" />
+            <div style={{ fontSize: 16, fontWeight: 600, color: '#2E7D32', marginTop: 6 }}>
+              {successModal.message || 'Success'}
+            </div>
+          </div>
+        </div>
+      )}
       <Header>
         <HeaderContent>
           <BackButton onClick={handleGoBack} aria-label="Go back">

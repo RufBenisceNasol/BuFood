@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { product, cart, review } from '../api';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { MdArrowBack, MdShoppingCart, MdAdd, MdRemove } from 'react-icons/md';
+import { MdArrowBack, MdShoppingCart, MdAdd, MdRemove, MdCheckCircle } from 'react-icons/md';
 import { Favorite, FavoriteBorder } from '@mui/icons-material';
 import { toggleFavorite, isInFavorites } from '../utils/favoriteUtils';
 import styled from 'styled-components';
@@ -388,6 +388,7 @@ const SingleProductPage = () => {
     const [isFavorite, setIsFavorite] = useState(false);
     const [reviews, setReviews] = useState([]);
     const [currentUser, setCurrentUser] = useState(null);
+    const [successModal, setSuccessModal] = useState({ open: false, message: '' });
 
     useEffect(() => {
         // Load current user from localStorage
@@ -438,7 +439,8 @@ const SingleProductPage = () => {
     const handleAddToCart = async () => {
         try {
             await cart.addToCart(productId, quantity);
-            toast.success('Product added to cart successfully');
+            setSuccessModal({ open: true, message: 'Product added to cart successfully' });
+            setTimeout(() => setSuccessModal({ open: false, message: '' }), 1200);
         } catch (err) {
             const errorMessage = err.message || err.error || 'Failed to add product to cart';
             toast.error(errorMessage);
@@ -457,6 +459,46 @@ const SingleProductPage = () => {
     return (
         <PageContainer>
             <ToastContainer position="top-right" autoClose={3000} />
+            {/* Success Modal */}
+            {successModal.open && (
+                <div
+                    onClick={() => setSuccessModal({ open: false, message: '' })}
+                    style={{
+                        position: 'fixed',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        background: 'rgba(0,0,0,0.25)',
+                        zIndex: 2000,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                    }}
+                >
+                    <div
+                        onClick={(e) => e.stopPropagation()}
+                        style={{
+                            background: '#fff',
+                            borderRadius: 12,
+                            boxShadow: '0 8px 24px rgba(0,0,0,0.18)',
+                            padding: '22px 28px',
+                            minWidth: 260,
+                            maxWidth: '90vw',
+                            textAlign: 'center',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: 10,
+                            alignItems: 'center'
+                        }}
+                    >
+                        <MdCheckCircle size={44} color="#2E7D32" />
+                        <div style={{ fontSize: 16, fontWeight: 600, color: '#2E7D32', marginTop: 6 }}>
+                            {successModal.message || 'Success'}
+                        </div>
+                    </div>
+                </div>
+            )}
             
             <Header>
                 <BackButton onClick={handleGoBack}>
@@ -488,7 +530,9 @@ const SingleProductPage = () => {
                                         e.stopPropagation();
                                         const newFavoriteStatus = toggleFavorite(productId);
                                         setIsFavorite(newFavoriteStatus);
-                                        toast.success(newFavoriteStatus ? 'Added to favorites' : 'Removed from favorites');
+                                        const msg = newFavoriteStatus ? 'Added to favorites' : 'Removed from favorites';
+                                        setSuccessModal({ open: true, message: msg });
+                                        setTimeout(() => setSuccessModal({ open: false, message: '' }), 1200);
                                     }}
                                     aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
                                 >
