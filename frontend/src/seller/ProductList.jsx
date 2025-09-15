@@ -1,32 +1,66 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { product } from '../api';
+import { product, auth } from '../api';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { MdAdd, MdMoreVert, MdEdit, MdDelete } from 'react-icons/md';
+import { SkeletonCard } from '../components/Skeletons';
+import useDebouncedRefresh from '../hooks/useDebouncedRefresh';
 
 const ProductList = () => {
     const navigate = useNavigate();
     const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
     const [error, setError] = useState('');
 
-
   useEffect(() => {
-    fetchProducts();
+    // Cache-first hydration for fast first paint
+    let hadCache = false;
+    try {
+      const raw = localStorage.getItem('bufood:seller:products');
+      if (raw) {
+        const cached = JSON.parse(raw);
+        if (Array.isArray(cached)) {
+          setProducts(cached);
+          setLoading(false);
+          hadCache = true;
+        }
+      }
+    } catch (_) {}
+
+    fetchProducts({ showLoader: !hadCache });
   }, []);
 
-  const fetchProducts = async () => {
+  const fetchProducts = async ({ showLoader = true } = {}) => {
     try {
+            if (showLoader) setLoading(true);
             const data = await product.getSellerProducts();
             setProducts(data || []);
+            try { localStorage.setItem('bufood:seller:products', JSON.stringify(data || [])); } catch (_) {}
     } catch (err) {
+      const status = err?.response?.status || err?.status;
+      if (status === 401) {
+        try { await auth.logout(); } catch (_) {}
+        navigate('/login', { replace: true, state: { message: 'Your session expired. Please sign in again.' } });
+        return;
+      }
       setError(err.message || 'Failed to fetch products');
             toast.error(err.message || 'Failed to fetch products');
     } finally {
-      setLoading(false);
+      if (showLoader) setLoading(false);
     }
   };
+
+  // Debounced background refresh (focus/visibility/interval)
+  useDebouncedRefresh(async () => {
+    setIsRefreshing(true);
+    try {
+      await fetchProducts();
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, { delayMs: 600, intervalMs: 30000 });
 
 
 
@@ -35,7 +69,26 @@ const ProductList = () => {
     };
 
   if (loading) {
-        return <div style={styles.loadingContainer}>Loading...</div>;
+    return (
+      <div style={styles.mainContainer}>
+        <div style={styles.header}>
+          <div style={styles.backButton} onClick={() => navigate('/seller/dashboard')}>
+            <span style={styles.backArrow}>←</span>
+            <span style={styles.headerText}>Product List</span>
+          </div>
+          <button style={styles.addButton} disabled>
+            <MdAdd size={18} /> Add Product
+          </button>
+        </div>
+        <div style={styles.contentContainer}>
+          <div style={styles.productGrid}>
+            {Array.from({ length: 8 }).map((_, i) => (
+              <SkeletonCard key={`prod-skel-${i}`} height={280} />
+            ))}
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -57,6 +110,14 @@ const ProductList = () => {
 
             <div style={styles.contentContainer}>
                 {error && <div style={styles.error}>{error}</div>}
+
+                {isRefreshing && products.length > 0 && (
+                  <div style={styles.productGrid}>
+                    {Array.from({ length: Math.min(6, products.length) }).map((_, i) => (
+                      <SkeletonCard key={`prod-refresh-skel-${i}`} height={280} />
+                    ))}
+                  </div>
+                )}
 
                 {products.length === 0 ? (
                     <div style={styles.noProducts}>

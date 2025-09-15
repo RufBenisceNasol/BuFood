@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import useDebouncedRefresh from '../hooks/useDebouncedRefresh';
+import { SkeletonCard } from '../components/Skeletons';
 import { useNavigate } from 'react-router-dom';
 import { store as storeApi, cart } from '../api';
 import styled, { keyframes } from 'styled-components';
@@ -310,9 +312,24 @@ const StoresPage = () => {
   const [favoriteStores, setFavoriteStores] = useState(new Set());
   const [cartCount, setCartCount] = useState(0);
   const navigate = useNavigate();
+  const STORES_CACHE_KEY = 'bufood:stores';
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   useEffect(() => {
-    fetchStores();
+    // Cache-first render
+    let hadCache = false;
+    try {
+      const cachedStores = JSON.parse(localStorage.getItem(STORES_CACHE_KEY) || 'null');
+      if (Array.isArray(cachedStores)) {
+        hadCache = true;
+        setStores(cachedStores);
+        setFilteredStores(cachedStores);
+        setLoading(false);
+      }
+    } catch (_) {}
+
+    // Always fetch fresh data; show loader only if no cache
+    fetchStores({ showLoader: !hadCache });
     fetchCartCount();
   }, []);
 
@@ -329,18 +346,19 @@ const StoresPage = () => {
     }
   }, [searchQuery, stores]);
 
-  const fetchStores = async () => {
+  const fetchStores = async ({ showLoader = true } = {}) => {
     try {
-      setLoading(true);
+      if (showLoader) setLoading(true);
       const storesData = await storeApi.getAllStores();
       setStores(storesData || []);
       setFilteredStores(storesData || []);
+      try { localStorage.setItem(STORES_CACHE_KEY, JSON.stringify(storesData || [])); } catch (_) {}
       setError('');
     } catch (err) {
       console.error('Error fetching stores:', err);
       setError('Failed to load stores. Please try again.');
     } finally {
-      setLoading(false);
+      if (showLoader) setLoading(false);
     }
   };
 
@@ -368,30 +386,18 @@ const StoresPage = () => {
     }
   };
 
-  useEffect(() => {
-    const refreshCartSilently = () => {
-      fetchCartCount();
-    };
-
-    const intervalId = setInterval(refreshCartSilently, 30000);
-    const handleVisibilityChange = () => {
-      if (!document.hidden) {
-        refreshCartSilently();
-      }
-    };
-    const handleFocus = () => {
-      refreshCartSilently();
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    window.addEventListener('focus', handleFocus);
-
-    return () => {
-      clearInterval(intervalId);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-      window.removeEventListener('focus', handleFocus);
-    };
-  }, []);
+  // Debounced background refresh: refresh stores and cart silently
+  useDebouncedRefresh(async () => {
+    setIsRefreshing(true);
+    try {
+      await Promise.all([
+        fetchStores({ showLoader: false }),
+        fetchCartCount(),
+      ]);
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, { delayMs: 600, intervalMs: 30000 });
 
   if (loading) {
     return (
@@ -458,12 +464,18 @@ const StoresPage = () => {
           )}
 
           <StoresGrid>
+            {isRefreshing && filteredStores.length > 0 && (
+              Array.from({ length: Math.min(6, filteredStores.length) }).map((_, i) => (
+                <SkeletonCard key={`skeleton-store-${i}`} height={220} />
+              ))
+            )}
             {filteredStores.length > 0 ? (
               filteredStores.map(store => (
                 <StoreCard key={store._id} onClick={() => navigateToStore(store._id)}>
                   <StoreImage 
                     src={store.bannerImage || 'https://placehold.co/600x400/orange/white?text=Store'} 
                     alt={store.storeName}
+                    loading="lazy"
                   />
                   <StoreContent>
                     <StoreName>

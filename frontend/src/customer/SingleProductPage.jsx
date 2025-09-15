@@ -405,19 +405,35 @@ const SingleProductPage = () => {
     };
 
     useEffect(() => {
-        const fetchProductDetails = async () => {
+        const CACHE_KEY = `bufood:product:${productId}`;
+        let hadCache = false;
+
+        // Cache-first render
+        try {
+            const cached = JSON.parse(localStorage.getItem(CACHE_KEY) || 'null');
+            if (cached && typeof cached === 'object') {
+                hadCache = true;
+                setProductData(cached);
+                setLoading(false);
+            }
+        } catch (_) {}
+
+        const fetchProductDetails = async ({ showLoader = true } = {}) => {
             try {
+                if (showLoader) setLoading(true);
                 const data = await product.getProductById(productId);
                 setProductData(data);
+                try { localStorage.setItem(CACHE_KEY, JSON.stringify(data)); } catch (_) {}
             } catch (err) {
                 setError(err.message || 'Failed to fetch product details');
                 toast.error(err.message || 'Failed to fetch product details');
             } finally {
-                setLoading(false);
+                if (showLoader) setLoading(false);
             }
         };
 
-        fetchProductDetails();
+        // Always fetch fresh; show loader only if no cache
+        fetchProductDetails({ showLoader: !hadCache });
     }, [productId]);
 
     useEffect(() => {
@@ -516,6 +532,7 @@ const SingleProductPage = () => {
                                 src={productData.image} 
                                 alt={productData.name}
                                 $isOut={productData.availability === 'Out of Stock'}
+                                loading="lazy"
                             />
                             {productData.availability === 'Out of Stock' && (
                                 <OutOfStockOverlay>Out of Stock</OutOfStockOverlay>
@@ -639,7 +656,7 @@ const SingleProductPage = () => {
                                         }}>
                                             <div style={{ display: 'flex', alignItems: 'center', marginBottom: 8 }}>
                                                 {displayImage ? (
-                                                    <img src={displayImage} alt={displayName || 'Reviewer'} style={{ width: 36, height: 36, borderRadius: '50%', objectFit: 'cover', marginRight: 12, background: ' #eeeeee' }} onError={e => { e.target.onerror = null; e.target.src = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(displayName || 'U'); }} />
+                                                    <img src={displayImage} alt={displayName || 'Reviewer'} style={{ width: 36, height: 36, borderRadius: '50%', objectFit: 'cover', marginRight: 12, background: ' #eeeeee' }} loading="lazy" onError={e => { e.target.onerror = null; e.target.src = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(displayName || 'U'); }} />
                                                 ) : (
                                                 <div style={{
                                                     width: 36,

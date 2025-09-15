@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import useDebouncedRefresh from '../hooks/useDebouncedRefresh';
 import { useNavigate } from 'react-router-dom';
 import { cart, order } from '../api';
+import { SkeletonRow } from '../components/Skeletons';
 import styled, { keyframes } from 'styled-components';
 import {
     Container,
@@ -407,15 +409,40 @@ const CartPage = () => {
     const [showCheckoutForm, setShowCheckoutForm] = useState(false);
     const [orderId, setOrderId] = useState(null);
     const [cartCount, setCartCount] = useState(0);
+    const CART_CACHE_KEY = 'bufood:cart';
+    const [isRefreshing, setIsRefreshing] = useState(false);
 
     useEffect(() => {
-        fetchCart();
+        // Cache-first render
+        let hadCache = false;
+        try {
+            const cached = JSON.parse(localStorage.getItem(CART_CACHE_KEY) || 'null');
+            if (cached && typeof cached === 'object') {
+                hadCache = true;
+                setCartData(cached);
+                const count = Array.isArray(cached?.items)
+                    ? cached.items.reduce((sum, item) => sum + (item.quantity || 0), 0)
+                    : 0;
+                setCartCount(count);
+                const initialSelected = {};
+                if (cached?.items) {
+                    cached.items.forEach(item => {
+                        if (item?.product?._id) initialSelected[item.product._id] = false;
+                    });
+                }
+                setSelectedItems(initialSelected);
+                setLoading(false);
+            }
+        } catch (_) {}
+
+        fetchCart({ showLoader: !hadCache });
     }, []);
 
-    const fetchCart = async () => {
+    const fetchCart = async ({ showLoader = true } = {}) => {
         try {
             setError(null);
             setSuccess(null);
+            if (showLoader) setLoading(true);
             const response = await cart.viewCart();
             console.log('Cart response:', response); // Debug log
             setCartData(response);
@@ -430,13 +457,24 @@ const CartPage = () => {
                 });
             }
             setSelectedItems(initialSelected);
+            try { localStorage.setItem(CART_CACHE_KEY, JSON.stringify(response)); } catch (_) {}
         } catch (err) {
             console.error('Cart fetch error:', err);
             setError(err.message || 'Failed to fetch cart');
         } finally {
-            setLoading(false);
+            if (showLoader) setLoading(false);
         }
     };
+
+    // Debounced background refresh on focus/visibility/interval
+    const { doRefresh } = useDebouncedRefresh(async () => {
+        setIsRefreshing(true);
+        try {
+            await fetchCart({ showLoader: false });
+        } finally {
+            setIsRefreshing(false);
+        }
+    }, { delayMs: 600, intervalMs: 30000 });
 
     const handleQuantityChange = async (productId, newQuantity) => {
         try {
@@ -609,50 +647,58 @@ const CartPage = () => {
                         )}
 
                         <ProductList>
-                            {cartData?.items?.map((item) => (
-                                <ProductCard key={item.product._id}>
-                                    <ProductCardContent>
-                                        <Checkbox 
-                                            checked={selectedItems[item.product._id]}
-                                            onChange={() => handleSelectItem(item.product._id)}
-                                            style={{ marginRight: 1 }}
-                                        />
-                                        <ImageContainer>
-                                            <ProductImage 
-                                                src={item.product.image} 
-                                                alt={item.product.name}
-                                                onClick={() => navigateToProduct(item.product._id)}
+                            {isRefreshing && cartData?.items && cartData.items.length > 0 && (
+                                Array.from({ length: Math.min(3, cartData.items.length) }).map((_, i) => (
+                                    <SkeletonRow key={`cart-skeleton-${i}`} height={96} />
+                                ))
+                            )}
+                            {cartData?.items && cartData.items.length > 0 ? (
+                                cartData.items.map((item) => (
+                                    <ProductCard key={item.product._id}>
+                                        <ProductCardContent>
+                                            <Checkbox 
+                                                checked={selectedItems[item.product._id]}
+                                                onChange={() => handleSelectItem(item.product._id)}
+                                                style={{ marginRight: 1 }}
                                             />
-                                        </ImageContainer>
-                                        <ProductInfo>
-                                            <ProductName>{item.product.name}</ProductName>
-                                        </ProductInfo>
-                                        <ProductRight>
-                                            <ProductPrice>₱{(item.product.price * item.quantity).toFixed(0)}</ProductPrice>
-                                            <QuantityControl>
-                                                <QuantityButton 
-                                                    size={window.innerWidth < 600 ? "small" : "medium"}
-                                                    onClick={() => handleQuantityChange(item.product._id, item.quantity - 1)}
+                                            <ImageContainer>
+                                                <ProductImage 
+                                                    src={item.product.image} 
+                                                    alt={item.product.name}
+                                                    onClick={() => navigateToProduct(item.product._id)}
+                                                    loading="lazy"
+                                                />
+                                            </ImageContainer>
+                                            <ProductInfo>
+                                                <ProductName>{item.product.name}</ProductName>
+                                            </ProductInfo>
+                                            <ProductRight>
+                                                <ProductPrice>₱{(item.product.price * item.quantity).toFixed(0)}</ProductPrice>
+                                                <QuantityControl>
+                                                    <QuantityButton 
+                                                        size={window.innerWidth < 600 ? "small" : "medium"}
+                                                        onClick={() => handleQuantityChange(item.product._id, item.quantity - 1)}
+                                                    >
+                                                        <Remove />
+                                                    </QuantityButton>
+                                                    <QuantityValue>{item.quantity}</QuantityValue>
+                                                    <QuantityButton 
+                                                        size={window.innerWidth < 600 ? "small" : "medium"}
+                                                        onClick={() => handleQuantityChange(item.product._id, item.quantity + 1)}
+                                                    >
+                                                        <Add />
+                                                    </QuantityButton>
+                                                </QuantityControl>
+                                                <RemoveItemButton
+                                                    onClick={() => handleRemoveItem(item.product._id)}
                                                 >
-                                                    <Remove />
-                                                </QuantityButton>
-                                                <QuantityValue>{item.quantity}</QuantityValue>
-                                                <QuantityButton 
-                                                    size={window.innerWidth < 600 ? "small" : "medium"}
-                                                    onClick={() => handleQuantityChange(item.product._id, item.quantity + 1)}
-                                                >
-                                                    <Add />
-                                                </QuantityButton>
-                                            </QuantityControl>
-                                            <RemoveItemButton
-                                                onClick={() => handleRemoveItem(item.product._id)}
-                                            >
-                                                <CloseIcon />
-                                            </RemoveItemButton>
-                                        </ProductRight>
-                                    </ProductCardContent>
-                                </ProductCard>
-                            ))}
+                                                    <CloseIcon />
+                                                </RemoveItemButton>
+                                            </ProductRight>
+                                        </ProductCardContent>
+                                    </ProductCard>
+                                ))
+                            ) : null}
                         </ProductList>
                     </FormContainer>
                 </ContentWrapper>

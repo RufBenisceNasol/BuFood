@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { product as productApi, cart, store as storeApi } from '../api';
 import styled, { keyframes } from 'styled-components';
@@ -104,6 +104,13 @@ const FavoritesPage = () => {
   const [cartCount, setCartCount] = useState(0);
   const [successModal, setSuccessModal] = useState({ open: false, message: '' });
   const navigate = useNavigate();
+  const FAVORITES_CACHE_KEY = 'bufood:favorites';
+  const FAVORITE_STORES_CACHE_KEY = 'bufood:favorite_stores';
+  const PRODUCTS_CACHE_KEY = 'bufood:products';
+  const STORES_CACHE_KEY = 'bufood:stores';
+  const refreshTimerRef = useRef(null);
+  const refreshingRef = useRef(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const handleRefresh = () => {
     setLoading(true);
@@ -113,32 +120,66 @@ const FavoritesPage = () => {
   };
 
   useEffect(() => {
-    loadFavorites();
-    loadFavoriteStores();
+    // Cache-first render
+    let hadCache = false;
+    try {
+      const cachedFavorites = JSON.parse(localStorage.getItem(FAVORITES_CACHE_KEY) || 'null');
+      const cachedStores = JSON.parse(localStorage.getItem(FAVORITE_STORES_CACHE_KEY) || 'null');
+      if (Array.isArray(cachedFavorites) || Array.isArray(cachedStores)) {
+        hadCache = true;
+        if (Array.isArray(cachedFavorites)) setFavorites(cachedFavorites);
+        if (Array.isArray(cachedStores)) setFavoriteStores(cachedStores);
+        setLoading(false);
+      }
+    } catch (_) {}
+
+    // Always fetch fresh data; show loader only if no cache
+    if (!hadCache) setLoading(true);
+    loadFavorites({ showLoader: !hadCache });
+    loadFavoriteStores({ showLoader: !hadCache });
     fetchCartCount();
   }, []);
 
-  // Auto-refresh cart count: interval + when tab gains focus/visibility
+  // Debounced background refresh on interval/focus/visibility
   useEffect(() => {
-    const refreshCartSilently = () => {
-      fetchCartCount();
-    };
-
-    const intervalId = setInterval(refreshCartSilently, 30000);
-    const handleVisibilityChange = () => {
-      if (!document.hidden) {
-        refreshCartSilently();
+    const doRefresh = async () => {
+      if (refreshingRef.current) return;
+      refreshingRef.current = true;
+      setIsRefreshing(true);
+      try {
+        // background refresh without loader
+        await Promise.all([
+          (async () => loadFavorites({ showLoader: false }))(),
+          (async () => loadFavoriteStores({ showLoader: false }))(),
+          (async () => fetchCartCount())(),
+        ]);
+      } finally {
+        setIsRefreshing(false);
+        refreshingRef.current = false;
       }
     };
-    const handleFocus = () => {
-      refreshCartSilently();
+
+    const scheduleRefresh = () => {
+      if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current);
+      refreshTimerRef.current = setTimeout(() => {
+        doRefresh();
+      }, 600);
     };
 
+    const handleVisibilityChange = () => {
+      if (!document.hidden) scheduleRefresh();
+    };
+    const handleFocus = () => {
+      scheduleRefresh();
+    };
+
+    const intervalId = setInterval(scheduleRefresh, 30000);
     document.addEventListener('visibilitychange', handleVisibilityChange);
     window.addEventListener('focus', handleFocus);
 
     return () => {
       clearInterval(intervalId);
+      if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('focus', handleFocus);
     };
@@ -169,31 +210,40 @@ const FavoritesPage = () => {
     );
   }, [searchQuery, favorites, favoriteStores]);
 
-  const loadFavorites = () => {
+  const loadFavorites = ({ showLoader = true } = {}) => {
     try {
-      setLoading(true);
+      if (showLoader) setLoading(true);
       const favoriteIds = getAllFavorites();
       if (favoriteIds.length > 0) {
-        fetchFavoriteProducts(favoriteIds);
+        fetchFavoriteProducts(favoriteIds, { showLoader });
       } else {
         setFavorites([]);
-        setLoading(false);
+        if (showLoader) setLoading(false);
       }
     } catch (err) {
       console.error('Error loading favorites:', err);
       setError('Failed to load favorites');
-      setLoading(false);
+      if (showLoader) setLoading(false);
     }
   };
 
-  const fetchFavoriteProducts = async (favoriteIds) => {
+  const fetchFavoriteProducts = async (favoriteIds, { showLoader = true } = {}) => {
     try {
-      const allProducts = await productApi.getAllProducts();
+      // Prefer cached products from Home if available to avoid extra API calls
+      let allProducts = null;
+      try {
+        const cached = JSON.parse(localStorage.getItem(PRODUCTS_CACHE_KEY) || 'null');
+        if (Array.isArray(cached)) allProducts = cached;
+      } catch (_) {}
+      if (!Array.isArray(allProducts)) {
+        allProducts = await productApi.getAllProducts();
+      }
       if (allProducts && allProducts.length > 0) {
         const favoriteProducts = allProducts.filter(product => 
           favoriteIds.includes(product._id)
         );
         setFavorites(favoriteProducts);
+        try { localStorage.setItem(FAVORITES_CACHE_KEY, JSON.stringify(favoriteProducts)); } catch (_) {}
       } else {
         setFavorites([]);
       }
@@ -201,35 +251,74 @@ const FavoritesPage = () => {
       console.error('Error fetching favorite products:', err);
       setError('Failed to load favorite products');
     } finally {
-      setLoading(false);
+      if (showLoader) setLoading(false);
     }
   };
 
-  const loadFavoriteStores = async () => {
+  const loadFavoriteStores = async ({ showLoader = true } = {}) => {
     try {
       const storeIds = getAllStoreFavorites();
       if (!storeIds || storeIds.length === 0) {
         setFavoriteStores([]);
         return;
       }
-      // Fetch details for each store ID
-      const results = await Promise.all(
-        storeIds.map(async (sid) => {
-          try {
-            const data = await storeApi.getStoreById(sid);
-            return {
-              id: data._id || sid,
-              name: data.storeName || data.name || 'Store',
-              image: data.image || data.logo || 'https://via.placeholder.com/300x200/f0f0f0/cccccc?text=Store',
-              description: data.description || ''
-            };
-          } catch (e) {
-            // If a store fetch fails, still return an entry so UI remains consistent
-            return { id: sid, name: 'Store', image: 'https://via.placeholder.com/300x200/f0f0f0/cccccc?text=Store', description: '' };
-          }
-        })
-      );
+      // Try to reuse cached stores from Home to avoid per-ID calls
+      let cachedStores = null;
+      try {
+        const raw = JSON.parse(localStorage.getItem(STORES_CACHE_KEY) || 'null');
+        if (Array.isArray(raw)) cachedStores = raw;
+      } catch (_) {}
+
+      let results = [];
+      if (Array.isArray(cachedStores) && cachedStores.length > 0) {
+        const setIds = new Set(storeIds);
+        results = cachedStores
+          .filter(s => setIds.has(s._id))
+          .map(s => ({
+            id: s._id,
+            name: s.storeName || s.name || 'Store',
+            image: s.image || s.logo || s.bannerImage || 'https://via.placeholder.com/300x200/f0f0f0/cccccc?text=Store',
+            description: s.description || ''
+          }));
+        // For any remaining IDs not in cache, fetch individually
+        const missing = storeIds.filter(id => !results.find(r => r.id === id));
+        if (missing.length > 0) {
+          const fetched = await Promise.all(missing.map(async (sid) => {
+            try {
+              const data = await storeApi.getStoreById(sid);
+              return {
+                id: data._id || sid,
+                name: data.storeName || data.name || 'Store',
+                image: data.image || data.logo || 'https://via.placeholder.com/300x200/f0f0f0/cccccc?text=Store',
+                description: data.description || ''
+              };
+            } catch (e) {
+              return { id: sid, name: 'Store', image: 'https://via.placeholder.com/300x200/f0f0f0/cccccc?text=Store', description: '' };
+            }
+          }));
+          results = [...results, ...fetched];
+        }
+      } else {
+        // Fallback: Fetch details for each store ID
+        results = await Promise.all(
+          storeIds.map(async (sid) => {
+            try {
+              const data = await storeApi.getStoreById(sid);
+              return {
+                id: data._id || sid,
+                name: data.storeName || data.name || 'Store',
+                image: data.image || data.logo || 'https://via.placeholder.com/300x200/f0f0f0/cccccc?text=Store',
+                description: data.description || ''
+              };
+            } catch (e) {
+              // If a store fetch fails, still return an entry so UI remains consistent
+              return { id: sid, name: 'Store', image: 'https://via.placeholder.com/300x200/f0f0f0/cccccc?text=Store', description: '' };
+            }
+          })
+        );
+      }
       setFavoriteStores(results);
+      try { localStorage.setItem(FAVORITE_STORES_CACHE_KEY, JSON.stringify(results)); } catch (_) {}
     } catch (err) {
       console.error('Error loading favorite stores:', err);
       setFavoriteStores([]);
@@ -392,6 +481,11 @@ const FavoritesPage = () => {
 
           {activeTab === 'products' && (
             <GridContainer>
+              {isRefreshing && filteredProducts.length > 0 && (
+                Array.from({ length: Math.min(4, filteredProducts.length) }).map((_, i) => (
+                  <div key={`skeleton-prod-${i}`} style={{ background: '#f6f6f6', borderRadius: 12, height: 260, boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }} />
+                ))
+              )}
               {filteredProducts.length === 0 ? (
                 <EmptyState>
                   <InfoIcon />
@@ -409,6 +503,7 @@ const FavoritesPage = () => {
                       src={product.image || 'https://placehold.co/600x400/orange/white?text=Product'}
                       alt={product.name}
                       onClick={() => handleViewProduct(product._id)}
+                      loading="lazy"
                     />
                     <ProductContent>
                       <ProductTitle onClick={() => handleViewProduct(product._id)}>
@@ -439,6 +534,11 @@ const FavoritesPage = () => {
 
           {activeTab === 'stores' && (
             <StoreList>
+              {isRefreshing && filteredStores.length > 0 && (
+                Array.from({ length: Math.min(3, filteredStores.length) }).map((_, i) => (
+                  <div key={`skeleton-store-${i}`} style={{ background: '#f6f6f6', borderRadius: 12, height: 88, marginBottom: 16, boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }} />
+                ))
+              )}
               {filteredStores.length === 0 ? (
                 <EmptyState>
                   <InfoIcon />
@@ -452,6 +552,7 @@ const FavoritesPage = () => {
                     <StoreImage 
                       src={store.image}
                       alt={store.name}
+                      loading="lazy"
                       onError={(e) => {
                         e.target.src = 'https://via.placeholder.com/300x200/f0f0f0/cccccc?text=Store';
                       }}

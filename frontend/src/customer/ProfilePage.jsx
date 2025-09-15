@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import useDebouncedRefresh from '../hooks/useDebouncedRefresh';
+import { SkeletonCircle, SkeletonLine } from '../components/Skeletons';
 import { useNavigate } from 'react-router-dom';
 import { auth, customer, cart } from '../api';
 import styled, { createGlobalStyle } from 'styled-components';
@@ -269,38 +271,36 @@ const ProfilePage = () => {
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState('');
   const [cartCount, setCartCount] = useState(0);
+  const USER_CACHE_KEY = 'bufood:user';
   const navigate = useNavigate();
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   useEffect(() => {
-    fetchUserProfile();
+    // Cache-first render
+    let hadCache = false;
+    try {
+      const cached = JSON.parse(localStorage.getItem(USER_CACHE_KEY) || 'null');
+      if (cached && typeof cached === 'object') {
+        hadCache = true;
+        setUserData(cached);
+        setLoading(false);
+      }
+    } catch (_) {}
+
+    fetchUserProfile({ showLoader: !hadCache });
     fetchCartCount();
   }, []);
 
-  // Auto-refresh cart count: interval + when tab gains focus/visibility
-  useEffect(() => {
-    const refreshCartSilently = () => {
-      fetchCartCount();
-    };
-
-    const intervalId = setInterval(refreshCartSilently, 30000);
-    const handleVisibilityChange = () => {
-      if (!document.hidden) {
-        refreshCartSilently();
-      }
-    };
-    const handleFocus = () => {
-      refreshCartSilently();
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    window.addEventListener('focus', handleFocus);
-
-    return () => {
-      clearInterval(intervalId);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-      window.removeEventListener('focus', handleFocus);
-    };
-  }, []);
+  // Debounced background refresh (focus/visibility/interval)
+  useDebouncedRefresh(async () => {
+    setIsRefreshing(true);
+    try {
+      await fetchUserProfile({ showLoader: false });
+      await fetchCartCount();
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, { delayMs: 600, intervalMs: 30000 });
 
   const fetchCartCount = async () => {
     try {
@@ -314,8 +314,8 @@ const ProfilePage = () => {
     }
   };
 
-  const fetchUserProfile = async () => {
-    setLoading(true);
+  const fetchUserProfile = async ({ showLoader = true } = {}) => {
+    if (showLoader) setLoading(true);
     setError('');
     try {
       const rawResponse = await auth.getMe();
@@ -345,11 +345,12 @@ const ProfilePage = () => {
       };
       
       setUserData(processedData);
+      try { localStorage.setItem(USER_CACHE_KEY, JSON.stringify(processedData)); } catch (_) {}
     } catch (err) {
       setError(err.message || 'Failed to fetch user profile');
       console.error('Error fetching user data:', err);
     } finally {
-      setLoading(false);
+      if (showLoader) setLoading(false);
     }
   };
 
@@ -386,6 +387,7 @@ const ProfilePage = () => {
     try {
       const updated = await customer.updateProfile(editData);
       setUserData(prev => ({ ...prev, ...updated.user }));
+      try { localStorage.setItem(USER_CACHE_KEY, JSON.stringify({ ...userData, ...updated.user })); } catch (_) {}
       setEditing(false);
     } catch (err) {
       setEditError(err.message || 'Failed to update profile');
@@ -410,6 +412,7 @@ const ProfilePage = () => {
       setEditLoading(true);
       const updated = await customer.updateProfile(autoSaveData);
       setUserData(prev => ({ ...prev, ...updated.user }));
+      try { localStorage.setItem(USER_CACHE_KEY, JSON.stringify({ ...userData, ...updated.user })); } catch (_) {}
       setEditData(prev => ({ ...prev, profileImage: result.imageUrl }));
       setEditLoading(false);
     } catch (err) {
@@ -461,6 +464,12 @@ const ProfilePage = () => {
       <ScrollableContent>
         <ContentContainer>
           <AvatarSection>
+            {isRefreshing && (
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%', marginBottom: 8 }}>
+                <SkeletonCircle size={80} style={{ marginBottom: 8 }} />
+                <SkeletonLine width="40%" height={14} />
+              </div>
+            )}
             <ProfileAvatarWrapper>
               <ProfileAvatar>
                 {editing ? (
@@ -477,7 +486,7 @@ const ProfilePage = () => {
                       Change
                     </ChangeButton>
                     {editData.profileImage ? (
-                      <img src={editData.profileImage} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
+                      <img src={editData.profileImage} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} loading="lazy" />
                     ) : userData.name ? (
                       <div style={{
                         width: '100%',
@@ -498,7 +507,7 @@ const ProfilePage = () => {
                     {uploadError && <div style={{ color: 'red', fontSize: 13, marginTop: 6 }}>{uploadError}</div>}
                   </>
                 ) : userData.profileImage ? (
-                  <img src={userData.profileImage} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  <img src={userData.profileImage} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} loading="lazy" />
                 ) : userData.name ? (
                   <div style={{
                     width: '100%',
@@ -525,6 +534,12 @@ const ProfilePage = () => {
           <FormContainer>
           
             <ProfileDetails>
+              {isRefreshing && (
+                <div style={{ marginBottom: 12 }}>
+                  <SkeletonLine width="60%" height={14} />
+                  <SkeletonLine width="50%" height={14} />
+                </div>
+              )}
               {editing ? (
                 <form onSubmit={submitEdit}>
                   <DetailItem>

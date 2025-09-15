@@ -27,8 +27,11 @@ try {
   })
 } catch (_) { /* ignore */ }
 
-createRoot(document.getElementById('root')).render(
-  <StrictMode>
-    <App />
-  </StrictMode>,
+const root = document.getElementById('root')
+const app = (
+  import.meta.env.DEV
+    ? <StrictMode><App /></StrictMode>
+    : <App />
 )
+
+createRoot(root).render(app)

@@ -13,6 +13,7 @@ import {
 } from "react-icons/md";
 import { FiRefreshCw } from 'react-icons/fi';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
+import { SkeletonCard } from '../components/Skeletons';
 
 const DashboardCard = ({ title, value, icon: Icon, to, onClick }) => (
   <Link to={to} className="grid-item" onClick={onClick}>
@@ -48,8 +49,22 @@ const DashboardPage = () => {
   };
 
   useEffect(() => {
-    // Fetch store data immediately for fast first paint
-    fetchStoreData();
+    // Cache-first: hydrate from cache to avoid blank UI after idle
+    let hadCache = false;
+    try {
+      const raw = localStorage.getItem('bufood:seller:store');
+      if (raw) {
+        const cached = JSON.parse(raw);
+        if (cached && typeof cached === 'object') {
+          setStoreData(cached);
+          setLoading(false);
+          hadCache = true;
+        }
+      }
+    } catch (_) {}
+
+    // Fetch store data; show loader only if no cache
+    fetchStoreData({ showLoader: !hadCache });
 
     // Defer orders fetching until after first paint/idle
     const defer = (fn) => {
@@ -156,16 +171,28 @@ const DashboardPage = () => {
     } catch (_) {}
   }, []);
 
-  const fetchStoreData = async () => {
+  const fetchStoreData = async ({ showLoader = true } = {}) => {
     try {
-      setLoading(true);
+      if (showLoader) setLoading(true);
       const data = await store.getMyStore();
       setStoreData(data);
+      // persist cache
+      try { localStorage.setItem('bufood:seller:store', JSON.stringify(data)); } catch (_) {}
       setError(null);
     } catch (err) {
-      setError(err.message || 'Failed to fetch store data');
+      const status = err?.response?.status || err?.status;
+      if (status === 401) {
+        // Session expired; redirect to login
+        try { await auth.logout(); } catch (_) {}
+        navigate('/login', { replace: true, state: { message: 'Your session expired. Please sign in again.' } });
+        return;
+      }
+      // Only show fatal error if we did not have cached data to display
+      if (!storeData) {
+        setError(err?.message || 'Failed to fetch store data');
+      }
     } finally {
-      setLoading(false);
+      if (showLoader) setLoading(false);
     }
   };
 
@@ -206,8 +233,14 @@ const DashboardPage = () => {
   };
 
   const handleLogout = async () => {
-    await auth.logout();
-    navigate('/login');
+    // Close menu immediately for responsive UX
+    setIsMenuOpen(false);
+    try {
+      await auth.logout();
+    } finally {
+      // Always navigate to login even if logout API fails or times out
+      navigate('/login', { replace: true, state: { message: 'You have been signed out.' } });
+    }
   };
 
   const handleBack = () => {
@@ -292,9 +325,26 @@ const DashboardPage = () => {
   if (loading) {
     return (
       <div className="main-container">
-        <div className="loading-container">
-          <div className="spinner"></div>
-          <p>Loading store information...</p>
+        <div className="content-container">
+          <div className="banner-wrapper" style={{ position: 'relative' }}>
+            <SkeletonCard height={300} />
+          </div>
+          <h2 className="dashboard-title">DASHBOARD</h2>
+          <div className="form-container">
+            <div className="dashboard-content">
+              <section className="summary-cards" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 16 }}>
+                <SkeletonCard height={120} />
+                <SkeletonCard height={120} />
+              </section>
+              <section>
+                <div className="dashboard-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 16, marginTop: 16 }}>
+                  {Array.from({ length: 4 }).map((_, i) => (
+                    <SkeletonCard key={`dash-skel-${i}`} height={140} />
+                  ))}
+                </div>
+              </section>
+            </div>
+          </div>
         </div>
       </div>
     );

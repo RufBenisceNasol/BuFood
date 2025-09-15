@@ -1,5 +1,8 @@
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://capstonedelibup.onrender.com/api";
 import { getToken } from '../utils/tokenUtils';
+// Use relative base in dev to leverage Vite proxy and avoid CORS
+const API_BASE_URL = import.meta.env.DEV
+  ? '/api'
+  : (import.meta.env.VITE_API_BASE_URL || 'https://capstonedelibup.onrender.com/api');
 
 export const store = {
   // ... existing methods ...

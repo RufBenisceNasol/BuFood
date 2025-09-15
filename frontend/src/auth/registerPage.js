@@ -103,7 +103,7 @@ const RegisterPage = () => {
                     {error && <div style={styles.error}>{error}</div>}
                     {success && <div style={styles.success}>{success}</div>}
                 </div>
-                <div style={{ flex: 1, overflowY: 'auto', padding: '0 0.1rem' }}>
+                <div style={{ flex: 1, overflowY: 'auto', padding: 0 }}>
                     <form onSubmit={handleSubmit} style={styles.form}>
                         <div style={styles.inputGroup}>
                             <span style={styles.inputIcon}><FiUser /></span>
@@ -147,7 +147,7 @@ const RegisterPage = () => {
                                         name="password"
                                         value={formData.password}
                                         onChange={(e) => {
-                                            const value = e.target.value.slice(0, 8); // Limit to 8 characters
+                                            const value = e.target.value.slice(0, 8); // limit to 8 characters
                                             handleChange({ target: { name: 'password', value } });
                                             
                                             // Show error if less than 8 characters
@@ -187,7 +187,7 @@ const RegisterPage = () => {
                                         name="confirmPassword"
                                         value={formData.confirmPassword}
                                         onChange={(e) => {
-                                            const value = e.target.value.slice(0, 8); // Limit to 8 characters
+                                            const value = e.target.value.slice(0, 8); // limit to 8 characters
                                             handleChange({ target: { name: 'confirmPassword', value } });
                                             
                                             // Clear error when typing
@@ -294,7 +294,8 @@ const styles = {
         maxWidth: '400px',
         width: '100%',
         margin: '0 auto',
-        padding: '2rem',
+        padding: 'clamp(16px, 4vw, 24px)',
+        boxSizing: 'border-box',
         overflowY: 'auto',
         flex: 1,
         display: 'flex',
@@ -328,6 +329,8 @@ const styles = {
         display: 'flex',
         alignItems: 'center',
         width: '100%',
+        maxWidth: '100%',
+        overflow: 'hidden',
     },
     inputIcon: {
         position: 'absolute',
@@ -341,11 +344,11 @@ const styles = {
     },
     input: {
         width: '100%',
+        boxSizing: 'border-box',
         border: '1px solid rgba(0, 0, 0, 0.1)',
         borderRadius: '50px',
         backgroundColor: '#ffffff',
         outline: 'none',
-        boxSizing: 'border-box',
         padding: 'clamp(12px, 3vw, 15px) 45px',
         fontSize: 'clamp(14px, 3.5vw, 16px)',
         boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',

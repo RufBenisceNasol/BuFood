@@ -1,13 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { auth, store as storeApi } from '../api';
 import { MdArrowBack, MdEdit, MdPerson, MdEmail, MdPhone, MdBusiness, MdDateRange } from 'react-icons/md';
 import { getToken } from '../utils/tokenUtils';
+import useCachedFetch from '../hooks/useCachedFetch';
+import useDebouncedRefresh from '../hooks/useDebouncedRefresh';
+import { SkeletonCircle, SkeletonLine } from '../components/Skeletons';
 
 const ProfilePage = () => {
   const [userData, setUserData] = useState(null);
   const [storeData, setStoreData] = useState(null);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [editMode, setEditMode] = useState(false);
   const [formData, setFormData] = useState({
@@ -18,65 +20,68 @@ const ProfilePage = () => {
   const [success, setSuccess] = useState('');
   const [saving, setSaving] = useState(false);
   const navigate = useNavigate();
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
-  useEffect(() => {
-    fetchUserProfile();
+  // Cache-first user profile
+  const userFetchFn = useCallback(async () => {
+    const rawResponse = await auth.getMe();
+    const data = rawResponse && typeof rawResponse === 'object' ? rawResponse.user || rawResponse.data?.user || rawResponse.data || rawResponse : rawResponse;
+    return {
+      ...data,
+      name: data?.name || data?.fullName || data?.username || 'User',
+      email: data?.email || '',
+      contactNumber: data?.contactNumber || data?.phone || data?.phoneNumber || '',
+      role: data?.role || data?.userRole || 'User',
+    };
   }, []);
 
-  useEffect(() => {
-    if (userData && userData.role === 'Seller') {
-      fetchStoreData();
-    }
-  }, [userData]);
+  const { data: cachedUser, setData: setCachedUser, loading: userLoading, error: userError, refresh: refreshUser } = useCachedFetch(
+    'bufood:user',
+    userFetchFn,
+    { initialData: null, showLoaderIfNoCache: true }
+  );
 
-  useEffect(() => {
-    if (userData) {
+  // Cache-first store data, only when seller
+  const storeFetchFn = useCallback(async () => {
+    const response = await storeApi.getMyStore();
+    return response || null;
+  }, []);
+
+  const isSeller = (cachedUser?.role || '').toLowerCase() === 'seller';
+  const { data: cachedStore, setData: setCachedStore, loading: storeLoading, error: storeError, refresh: refreshStore } = useCachedFetch(
+    'bufood:my_store',
+    storeFetchFn,
+    { initialData: null, enabled: isSeller, showLoaderIfNoCache: false }
+  );
+
+  // Wire state from hooks
+  useMemo(() => {
+    if (cachedUser) {
+      setUserData(cachedUser);
       setFormData({
-        name: userData.name || '',
-        email: userData.email || '',
-        contactNumber: userData.contactNumber || userData.phone || ''
+        name: cachedUser.name || '',
+        email: cachedUser.email || '',
+        contactNumber: cachedUser.contactNumber || cachedUser.phone || ''
       });
     }
-  }, [userData]);
+  }, [cachedUser]);
 
-  const fetchStoreData = async () => {
-    try {
-      const response = await storeApi.getMyStore();
-      console.log('Store data retrieved:', response);
-      setStoreData(response);
-    } catch (err) {
-      console.error('Error fetching store data:', err);
-    }
-  };
+  useMemo(() => {
+    if (cachedStore) setStoreData(cachedStore);
+  }, [cachedStore]);
 
-  const fetchUserProfile = async () => {
-    setLoading(true);
-    setError('');
+  // Debounced background refresh
+  useDebouncedRefresh(async () => {
+    setIsRefreshing(true);
     try {
-      const rawResponse = await auth.getMe();
-      console.log('Raw API response:', rawResponse);
-      
-      // Extract the user data from the response
-      let data = rawResponse;
-      
-      // Ensure required fields have values
-      const processedData = {
-        ...data,
-        name: data.name || data.fullName || data.username || 'User',
-        email: data.email || '',
-        contactNumber: data.contactNumber || data.phone || data.phoneNumber || '',
-        role: data.role || data.userRole || 'User'
-      };
-      
-      setUserData(processedData);
-      console.log('Final processed user data:', processedData);
-    } catch (err) {
-      setError(err.message || 'Failed to fetch user profile');
-      console.error('Error fetching user data:', err);
+      await Promise.all([
+        refreshUser(),
+        isSeller ? refreshStore() : Promise.resolve(),
+      ]);
     } finally {
-      setLoading(false);
+      setIsRefreshing(false);
     }
-  };
+  }, { delayMs: 600, intervalMs: 30000 });
 
   const handleGoBack = () => {
     if (userData?.role === 'Seller') {
@@ -163,12 +168,14 @@ const ProfilePage = () => {
     }
   };
 
-  if (loading) {
+  const loading = userLoading || (isSeller && storeLoading);
+  if (loading && !userData) {
     return <div style={styles.loadingContainer}>Loading...</div>;
   }
 
-  if (error && !userData) {
-    return <div style={styles.error}>{error}</div>;
+  const mergedError = error || userError || storeError;
+  if (mergedError && !userData) {
+    return <div style={styles.error}>{mergedError}</div>;
   }
 
   if (!userData) {
@@ -198,12 +205,19 @@ const ProfilePage = () => {
 
       <div style={styles.contentContainer}>
         <div style={styles.avatarSection}>
+          {isRefreshing && (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%', marginBottom: 8 }}>
+              <SkeletonCircle size={80} style={{ marginBottom: 8 }} />
+              <SkeletonLine width="40%" height={14} />
+            </div>
+          )}
           <div style={styles.profileAvatarWrapper}>
             {profileImage ? (
               <img
                 src={profileImage}
                 alt="Profile"
                 style={styles.profileAvatar}
+                loading="lazy"
               />
             ) : (
               <div style={{
@@ -228,6 +242,12 @@ const ProfilePage = () => {
         <div style={styles.formContainer}>
           {!editMode ? (
             <div style={styles.profileDetails}>
+              {isRefreshing && (
+                <div style={{ marginBottom: 12 }}>
+                  <SkeletonLine width="60%" height={14} />
+                  <SkeletonLine width="50%" height={14} />
+                </div>
+              )}
               <div style={styles.detailItem}>
                 <div style={styles.detailLabel}>
                   <MdPerson style={styles.detailIcon} />

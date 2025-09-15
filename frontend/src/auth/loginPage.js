@@ -152,32 +152,29 @@ const LoginPage = () => {
                     <div style={styles.inputGroup}>
                         <div style={styles.inputWrapper}>
                         <span style={styles.inputIcon}><MdLockOpen /></span>
-                            <div style={{ width: '100%' }}>
+                            <div style={{ width: '100%', position: 'relative' }}>
                                 <input
                                     type={showPassword ? "text" : "password"}
                                     value={password}
                                     onChange={(e) => {
-                                        const value = e.target.value.slice(0, 8); // Limit to 8 characters
+                                        const value = e.target.value.slice(0, 8); // limit to 8 characters
                                         setPassword(value);
-                                        
-                                        // Show error if less than 8 characters
-                                        if (value.length > 0) {
-                                            if (value.length < 8) {
-                                                setPasswordError(`Password must be 8 characters (${value.length}/8)`);
-                                            } else {
-                                                setPasswordError('');
-                                            }
-                                            setError(''); // Clear any previous error when typing
+
+                                        // Live hint if less than 8 characters
+                                        if (value.length > 0 && value.length < 8) {
+                                            setPasswordError(`Password must be 8 characters (${value.length}/8)`);
                                         } else {
                                             setPasswordError('');
                                         }
+                                        setError(''); // Clear any previous error when typing
                                     }}
                                     required
+                                    minLength={8}
+                                    maxLength={8}
                                     style={styles.input}
                                     disabled={loading}
                                     placeholder="Password"
                                     autoComplete="current-password"
-                                    maxLength={8}
                                 />
                                 <button 
                                     type="button"
@@ -278,6 +275,8 @@ const styles = {
         display: 'flex',
         alignItems: 'center',
         width: '100%',
+        maxWidth: '100%',
+        overflow: 'hidden',
     },
     inputIcon: {
         position: 'absolute',
@@ -288,9 +287,12 @@ const styles = {
         fontSize: 'clamp(16px, 4vw, 20px)',
         display: 'flex',
         alignItems: 'center',
+        zIndex: 3,
+        pointerEvents: 'none',
     },
     input: {
         width: '100%',
+        boxSizing: 'border-box',
         padding: 'clamp(12px, 3vw, 15px) 45px',
         fontSize: 'clamp(14px, 3.5vw, 16px)',
         border: '1px solid #ddd',
@@ -299,6 +301,8 @@ const styles = {
         boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
         outline: 'none',
         transition: 'all 0.2s ease',
+        position: 'relative',
+        zIndex: 1,
         '&:focus': {
             borderColor: '#rgba(103, 70, 30, 0.7)'
         },
@@ -314,6 +318,7 @@ const styles = {
         padding: '0',
         fontSize: 'clamp(16px, 4vw, 20px)',
         color: '#666',
+        zIndex: 4,
     },
     errorMessage: {
         color: '#dc3545',

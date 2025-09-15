@@ -7,11 +7,14 @@ import { order, auth } from '../api';
 import './OrdersPage.css';
 import defPic from '../assets/delibup.png';
 import { FiRefreshCw } from 'react-icons/fi';
+import { SkeletonRow, SkeletonCard } from '../components/Skeletons';
+import useDebouncedRefresh from '../hooks/useDebouncedRefresh';
 
 const OrdersPage = () => {
   const navigate = useNavigate();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState(null);
   const [statusFilter, setStatusFilter] = useState('all');
   const [userRole, setUserRole] = useState(null);
@@ -20,6 +23,7 @@ const OrdersPage = () => {
   const [detailsLoading, setDetailsLoading] = useState(false);
   const [detailsError, setDetailsError] = useState(null);
   const [gcashActionLoading, setGcashActionLoading] = useState(false);
+  const [updatingById, setUpdatingById] = useState({});
 
   useEffect(() => {
     fetchOrders();
@@ -34,6 +38,16 @@ const OrdersPage = () => {
     };
     fetchUserRole();
   }, []);
+
+  // Debounced background refresh: focus/visibility/interval
+  useDebouncedRefresh(async () => {
+    setIsRefreshing(true);
+    try {
+      await fetchOrders();
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, { delayMs: 600, intervalMs: 30000 });
 
   const fetchOrders = async () => {
     try {
@@ -57,15 +71,47 @@ const OrdersPage = () => {
   };
 
   const handleStatusUpdate = async (orderId, newStatus) => {
+    // Find current order state
+    const current = orders.find(o => o._id === orderId);
+    if (!current) {
+      await fetchOrders();
+      return;
+    }
+
+    // No-op guard
+    if (current.status === newStatus) {
+      toast.info(`Order is already ${newStatus}`);
+      return;
+    }
+
+    // Allowed transitions guard (client-side)
+    const allowed = {
+      Pending: ['Accepted', 'Rejected'],
+      Accepted: ['Preparing', 'Rejected'],
+      Preparing: ['Out for Delivery', 'Ready'],
+      Ready: ['Ready for Pickup'],
+      'Ready for Pickup': ['Delivered'],
+      'Out for Delivery': ['Delivered']
+    };
+    const nexts = allowed[current.status] || [];
+    if (!nexts.includes(newStatus)) {
+      toast.error(`Invalid status transition: ${current.status} → ${newStatus}`);
+      return;
+    }
+
+    // Disable actions for this order while updating
+    setUpdatingById(prev => ({ ...prev, [orderId]: true }));
     try {
       await order.updateOrderStatus(orderId, { status: newStatus });
-      fetchOrders(); // Refresh orders after update
+      await fetchOrders(); // Refresh orders after update
       toast.success(`Order marked as ${newStatus}`);
       setError(null);
     } catch (err) {
       setError('Failed to update order status. Please try again.');
       toast.error('Failed to update order status. Please try again.');
       console.error('Error updating order status:', err);
+    } finally {
+      setUpdatingById(prev => ({ ...prev, [orderId]: false }));
     }
   };
 
@@ -200,9 +246,33 @@ const OrdersPage = () => {
         </div>
 
         {loading ? (
-          <div className="orders-loading-container">
-            <div className="orders-loading-spinner"></div>
-            <p className="orders-loading-text">Loading orders...</p>
+          <div className="orders-responsive-wrapper" style={{ padding: 12 }}>
+            {/* Desktop skeleton table */}
+            <table className="orders-table desktop-only">
+              <thead>
+                <tr>
+                  <th>Order ID</th>
+                  <th>Customer</th>
+                  <th>Amount</th>
+                  <th>Status</th>
+                  <th>Payment</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <tr key={`srow-${i}`}>
+                    <td colSpan={6}><SkeletonRow height={48} /></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {/* Mobile skeleton cards */}
+            <div className="mobile-only" style={{ display: 'grid', gap: 12 }}>
+              {Array.from({ length: 5 }).map((_, i) => (
+                <SkeletonCard key={`scard-${i}`} height={120} />
+              ))}
+            </div>
           </div>
         ) : error ? (
           <div className="orders-error">{error}</div>
@@ -212,6 +282,12 @@ const OrdersPage = () => {
           </div>
         ) : (
           <div className="orders-responsive-wrapper">
+            {isRefreshing && (
+              <div style={{ marginBottom: 12 }}>
+                <SkeletonRow height={36} />
+                <SkeletonRow height={36} />
+              </div>
+            )}
             {/* Desktop Table */}
             <table className="orders-table desktop-only">
               <thead>
@@ -240,6 +316,7 @@ const OrdersPage = () => {
                             {ord.status === 'Pending' && (
                               <button
                                 onClick={() => handleStatusUpdate(ord._id, 'Accepted')}
+                                disabled={!!updatingById[ord._id]}
                                 className="accept-button"
                               >
                                 Accept
@@ -248,6 +325,7 @@ const OrdersPage = () => {
                             {ord.status === 'Accepted' && (
                               <button
                                 onClick={() => handleStatusUpdate(ord._id, 'Preparing')}
+                                disabled={!!updatingById[ord._id]}
                                 className="prepare-button"
                               >
                                 Start Preparing
@@ -256,6 +334,7 @@ const OrdersPage = () => {
                             {ord.status === 'Preparing' && ord.orderType === 'Delivery' && (
                               <button
                                 onClick={() => handleStatusUpdate(ord._id, 'Out for Delivery')}
+                                disabled={!!updatingById[ord._id]}
                                 className="outfordelivery-button"
                               >
                                 Out for Delivery
@@ -264,6 +343,7 @@ const OrdersPage = () => {
                             {ord.status === 'Preparing' && ord.orderType === 'Pickup' && (
                               <button
                                 onClick={() => handleStatusUpdate(ord._id, 'Ready')}
+                                disabled={!!updatingById[ord._id]}
                                 className="ready-button"
                               >
                                 Mark Ready
@@ -272,6 +352,7 @@ const OrdersPage = () => {
                             {ord.status === 'Ready' && ord.orderType === 'Pickup' && (
                               <button
                                 onClick={() => handleStatusUpdate(ord._id, 'Ready for Pickup')}
+                                disabled={!!updatingById[ord._id]}
                                 className="readyforpickup-button"
                               >
                                 Ready for Pickup
@@ -280,6 +361,7 @@ const OrdersPage = () => {
                             {ord.status === 'Out for Delivery' && (
                               <button
                                 onClick={() => handleStatusUpdate(ord._id, 'Delivered')}
+                                disabled={!!updatingById[ord._id]}
                                 className="deliver-button"
                               >
                                 Mark Delivered
@@ -288,6 +370,7 @@ const OrdersPage = () => {
                             {ord.status === 'Ready for Pickup' && (
                               <button
                                 onClick={() => handleStatusUpdate(ord._id, 'Delivered')}
+                                disabled={!!updatingById[ord._id]}
                                 className="deliver-button"
                               >
                                 Mark Picked Up
@@ -302,6 +385,7 @@ const OrdersPage = () => {
                                     handleCancelOrder(ord._id);
                                   }
                                 }}
+                                disabled={!!updatingById[ord._id]}
                                 className="cancel-button"
                               >
                                 Cancel
@@ -312,6 +396,7 @@ const OrdersPage = () => {
                         {ord.status === 'Delivered' && ord.paymentStatus !== 'Paid' && (
                           <button
                             onClick={() => handleMarkPaid(ord._id)}
+                            disabled={!!updatingById[ord._id]}
                             className="action-button"
                           >
                             Mark Paid
