@@ -363,11 +363,9 @@ const OrderSummaryPage = () => {
     };
 
     const handleSubmit = async () => {
-        toast.info('Place Order button clicked');
         console.log('Place Order button clicked', formData);
         try {
             setLoading(true);
-            toast.info('Submitting order...');
             if (formData.paymentMethod === 'GCash') {
                 // GCash payment flow
                 // 1. Create a pending order for this store (reuse your order creation logic, but set paymentStatus to 'Pending')
@@ -462,10 +460,8 @@ const OrderSummaryPage = () => {
                 };
             }
             console.log('Submitting order data:', orderData);
-            toast.info('Sending order to backend...');
             const response = await order.createOrderFromCart(orderData);
             console.log('Order response:', response);
-            toast.success('Order placed successfully!');
             navigate('/customer/success-order');
         } catch (err) {
             // Enhanced error logging

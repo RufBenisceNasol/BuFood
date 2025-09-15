@@ -19,11 +19,20 @@ const AnalyticsPage = () => {
           order.getSellerOrders({ page: 1, limit: 100, sortBy: 'createdAt', sortOrder: 'desc' }),
           store.getMyStore()
         ]);
-        setOrders(ordersRes.data?.orders || ordersRes.orders || []);
-        setStoreData(storeRes);
+        // Handle different possible response shapes
+        const ordersData =
+          (ordersRes && ordersRes.data && ordersRes.data.orders)
+          || (ordersRes && ordersRes.data && ordersRes.data.data && ordersRes.data.data.orders)
+          || ordersRes?.orders
+          || [];
+        setOrders(Array.isArray(ordersData) ? ordersData : []);
+        // store.getMyStore returns the store object directly in our API
+        setStoreData(storeRes?.data || storeRes || null);
         setError(null);
       } catch (err) {
-        setError(err.message || 'Failed to fetch analytics data');
+        // Prefer backend-provided message when available
+        const friendlyMsg = err?.response?.data?.message || err?.message || 'Failed to fetch analytics data';
+        setError(friendlyMsg);
       } finally {
         setLoading(false);
       }

@@ -14,6 +14,7 @@ import {
 import api from '../api'; // Assumes you have an api instance for requests
 import { customer, review, order as orderApi, cart } from '../api';
 import { MdCheckCircle } from 'react-icons/md';
+import { PrimaryButton, SecondaryButton, DestructiveButton, ButtonRow } from '../components/Buttons';
 
 import defPic from '../assets/delibup.png';
 import { getUser } from '../utils/tokenUtils';
@@ -79,18 +80,20 @@ const Content = styled.main`
 `;
 
 const OrderCard = styled.div`
-  background: white;
-  border-radius: 12px;
+  background: #fff;
+  border-radius: 14px;
   margin-bottom: 16px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
   overflow: hidden;
-  border-left: 4px solid ${props => 
-    props.status === 'completed' ? '#4CAF50' : '#FFA000'};
 `;
 
 const OrderHeader = styled.div`
   padding: 16px;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid #f4f4f4;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
 `;
 
 const OrderBody = styled.div`
@@ -109,51 +112,16 @@ const OrderFooter = styled.div`
 const StatusBadge = styled.span`
   display: inline-flex;
   align-items: center;
-  padding: 4px 8px;
-  border-radius: 12px;
+  padding: 4px 10px;
+  border-radius: 999px;
   font-size: 12px;
-  font-weight: 500;
-  background: ${props => 
-    props.status === 'delivered' ? '#E8F5E9' : 
-    props.status === 'shipped' ? '#E3F2FD' :
-    props.status === 'placed' ? '#FFF8E1' :
-    props.status === 'canceled' ? '#FFEBEE' : '#FFF3E0'};
-  color: ${props => 
-    props.status === 'delivered' ? '#2E7D32' :
-    props.status === 'shipped' ? '#1565C0' :
-    props.status === 'placed' ? '#F57F17' :
-    props.status === 'canceled' ? '#C62828' : '#E65100'};
+  font-weight: 700;
+  background: ${props => props.$bg || '#FFF3E0'};
+  color: ${props => props.$fg || '#E65100'};
+  text-transform: capitalize;
 `;
 
-const Button = styled.button`
-  padding: 8px 16px;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  transition: all 0.2s;
-  
-  &.primary {
-    background: #ff8c00;
-    color: white;
-    border: none;
-    &:active {
-      background: #e67e00;
-    }
-  }
-  
-  &.outline {
-    background: white;
-    border: 1px solid #e0e0e0;
-    color: #333;
-    &:active {
-      background: #f5f5f5;
-    }
-  }
-`;
+// Using shared Buttons components
 
 const EmptyState = styled.div`
   display: flex;
@@ -176,8 +144,9 @@ const LoadingState = styled.div`
 const TimelineContainer = styled.div`
   margin-top: 16px;
   padding: 12px;
-  background: #f5f5f5;
-  border-radius: 8px;
+  background: #fafafa;
+  border-radius: 10px;
+  border: 1px dashed #eee;
 `;
 const TimelineTitle = styled.p`
   font-size: 14px;
@@ -251,8 +220,8 @@ const ModalActions = styled.div`
 `;
 
 const ProductImage = styled.img`
-  width: 48px;
-  height: 48px;
+  width: 66px;
+  height: 66px;
   object-fit: cover;
   border-radius: 8px;
   margin-right: 12px;
@@ -302,6 +271,36 @@ const ViewMyOrder = () => {
   const [proofRef, setProofRef] = useState('');
   const [uploadingProof, setUploadingProof] = useState(false);
   const navigate = useNavigate();
+
+  const statusStyles = (status) => {
+    const s = (status || '').toString().toLowerCase();
+    switch (s) {
+      case 'pending':
+        return { bg: '#FFF3E0', fg: '#E65100' }; // Orange
+      case 'preparing':
+        return { bg: '#FFFDE7', fg: '#F9A825' }; // Yellow
+      case 'ready':
+        return { bg: '#E3F2FD', fg: '#1565C0' }; // Blue
+      case 'delivered':
+        return { bg: '#E8F5E9', fg: '#2E7D32' }; // Green
+      case 'accepted':
+        return { bg: '#E0F2F1', fg: '#00796B' }; // Teal
+      case 'rejected':
+        return { bg: '#FFEBEE', fg: '#C62828' }; // Red
+      case 'canceled':
+      case 'cancelled':
+        return { bg: '#EEEEEE', fg: '#616161' }; // Gray
+      default:
+        return { bg: '#FFF3E0', fg: '#E65100' };
+    }
+  };
+
+  const shortId = (id) => {
+    if (!id) return '';
+    const s = String(id);
+    if (s.length <= 10) return `#${s}`;
+    return `#${s.slice(0, 5)}…${s.slice(-5)}`;
+  };
 
   useEffect(() => {
     setLoading(true);
@@ -421,38 +420,31 @@ const ViewMyOrder = () => {
         ) : error ? (
           <EmptyState>
             <p style={{ color: '#d32f2f', marginBottom: '16px' }}>{error}</p>
-            <Button 
-              className="primary"
-              onClick={() => window.location.reload()}
-            >
+            <PrimaryButton onClick={() => window.location.reload()}>
               Try Again
-            </Button>
+            </PrimaryButton>
           </EmptyState>
         ) : orders.length === 0 ? (
           <EmptyState>
             <p style={{ color: '#666', marginBottom: '24px' }}>You haven't placed any orders yet</p>
-            <Button 
-              className="primary"
-              onClick={() => navigate('/customer/home')}
-            >
+            <PrimaryButton onClick={() => navigate('/customer/home')}>
               Start Ordering
-            </Button>
+            </PrimaryButton>
           </EmptyState>
         ) : (
           <div>
             {orders.map((order) => (
-              <OrderCard key={order._id || order.id} status={order.status}>
+              <OrderCard key={order._id || order.id}>
                 <OrderHeader>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                    <span style={{ fontSize: '14px', color: '#666' }}>{new Date(order.createdAt).toLocaleString()}</span>
-                    <StatusBadge status={order.status}>
-                      {getStatusIcon(order.status)}
+                  <div>
+                    <div style={{ fontSize: 15, fontWeight: 700 }}> {shortId(order.orderNumber || order._id || order.id)} </div>
+                    <div style={{ fontSize: 12, color: '#888', marginTop: 2 }}>{new Date(order.createdAt).toLocaleString()}</div>
+                  </div>
+                  {(() => { const { bg, fg } = statusStyles(order.status); return (
+                    <StatusBadge $bg={bg} $fg={fg}>
                       {order.status}
                     </StatusBadge>
-                  </div>
-                  <h3 style={{ margin: '8px 0', fontSize: '16px', fontWeight: 600 }}>
-                    Order #{order.orderNumber || order._id || order.id}
-                  </h3>
+                  ); })()}
                 </OrderHeader>
                 <OrderBody>
                   {order.items && order.items.slice(0, expandedOrder === (order._id || order.id) ? order.items.length : 2).map((item, index) => {
@@ -461,14 +453,17 @@ const ViewMyOrder = () => {
                     const imageUrl = product.image || defPic;
                     const productName = product.name || item.name || 'Product';
                     return (
-                      <div key={index} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                      <div key={index} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
                         <div style={{ display: 'flex', alignItems: 'center', minWidth: 0, flex: 1 }}>
                           <ProductImage src={imageUrl} alt={productName} onError={e => { e.target.onerror = null; e.target.src = defPic; }} />
-                          <span style={{ fontSize: '14px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.quantity}x {productName}</span>
+                          <div style={{ minWidth: 0 }}>
+                            <div style={{ fontSize: 14, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{productName}</div>
+                            <div style={{ fontSize: 12, color: '#777' }}>{formatCurrency(item.price || product.price || 0)} × {item.quantity}</div>
+                          </div>
                         </div>
-                      <span style={{ fontSize: '14px', fontWeight: 500 }}>
+                        <span style={{ fontSize: 14, fontWeight: 700 }}>
                           {formatCurrency((item.price || product.price || 0) * item.quantity)}
-                      </span>
+                        </span>
                     </div>
                     );
                   })}
@@ -477,32 +472,32 @@ const ViewMyOrder = () => {
                       +{order.items.length - 2} more items
                     </p>
                   )}
-                  <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px dashed #e0e0e0' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-                      <span style={{ fontSize: '14px' }}>Subtotal</span>
-                      <span style={{ fontSize: '14px' }}>{formatCurrency((order.totalAmount || order.total || 0) - (order.shippingFee || order.deliveryFee || 0))}</span>
+                  <div style={{ marginTop: 16, paddingTop: 12, borderTop: '1px dashed #eaeaea' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4, color: '#777' }}>
+                      <span style={{ fontSize: 14 }}>Subtotal</span>
+                      <span style={{ fontSize: 14 }}>{formatCurrency((order.totalAmount || order.total || 0) - (order.shippingFee || order.deliveryFee || 0))}</span>
                     </div>
                     {(order.shippingFee || order.deliveryFee) > 0 && (
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-                        <span style={{ fontSize: '14px' }}>Delivery Fee</span>
-                        <span style={{ fontSize: '14px' }}>{formatCurrency(order.shippingFee || order.deliveryFee)}</span>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4, color: '#777' }}>
+                        <span style={{ fontSize: 14 }}>Delivery Fee</span>
+                        <span style={{ fontSize: 14 }}>{formatCurrency(order.shippingFee || order.deliveryFee)}</span>
                       </div>
                     )}
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '8px', paddingTop: '8px', borderTop: '1px solid #f0f0f0' }}>
-                      <span style={{ fontWeight: 600 }}>Total</span>
-                      <span style={{ fontWeight: 600, color: '#ff8c00' }}>{formatCurrency(order.totalAmount || order.total || 0)}</span>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8, padding: '10px 12px', background: '#fff7ec', borderRadius: 8 }}>
+                      <span style={{ fontWeight: 800 }}>Total</span>
+                      <span style={{ fontWeight: 800, color: '#ff8c00' }}>{formatCurrency(order.totalAmount || order.total || 0)}</span>
                     </div>
                   </div>
                   {expandedOrder === (order._id || order.id) && (
                     <>
-                    <div style={{ marginTop: '16px', padding: '12px', backgroundColor: '#f9f9f9', borderRadius: '8px' }}>
+                    <div style={{ marginTop: 16, padding: 12, backgroundColor: '#fafafa', borderRadius: 10, border: '1px solid #f0f0f0' }}>
                       <p style={{ fontSize: '14px', fontWeight: 600, margin: '0 0 12px 0' }}>Order Details</p>
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                         <div>
                           <p style={{ fontSize: '12px', color: '#666', margin: '0 0 4px 0' }}>Payment Method</p>
                           <p style={{ fontSize: '14px', margin: 0 }}>{order.paymentMethod}</p>
                         </div>
-                        <div>
+                        <div style={{ borderLeft: '1px solid #f0f0f0', paddingLeft: 12 }}>
                           <p style={{ fontSize: '12px', color: '#666', margin: '0 0 4px 0' }}>Payment Status</p>
                           <p style={{ fontSize: '14px', margin: 0 }}>
                             {order.paymentStatus || 'Pending'}
@@ -513,10 +508,7 @@ const ViewMyOrder = () => {
                           <p style={{ 
                             fontSize: '14px', 
                             margin: 0,
-                            color: order.status === 'delivered' ? '#2E7D32' :
-                                  order.status === 'shipped' ? '#1565C0' :
-                                  order.status === 'placed' ? '#F57F17' :
-                                  order.status === 'canceled' ? '#C62828' : '#E65100',
+                            color: statusStyles(order.status).fg,
                             fontWeight: 500
                           }}>
                               {order.status}
@@ -527,7 +519,7 @@ const ViewMyOrder = () => {
                             )}
                           </p>
                         </div>
-                        <div>
+                        <div style={{ borderLeft: '1px solid #f0f0f0', paddingLeft: 12 }}>
                           <p style={{ fontSize: '12px', color: '#666', margin: '0 0 4px 0' }}>Estimated Delivery</p>
                           <p style={{ fontSize: '14px', margin: 0 }}>
                               {order.estimatedDelivery ? new Date(order.estimatedDelivery).toLocaleString() : 'N/A'}
@@ -537,37 +529,43 @@ const ViewMyOrder = () => {
                       </div>
                       <TimelineContainer>
                         <TimelineTitle><TimelineIcon style={{ fontSize: 18, color: '#ff8c00' }} /> Order Status History</TimelineTitle>
-                        {order.statusHistory && order.statusHistory.length > 0 ? (
-                          <TimelineList>
-                            {order.statusHistory.map((h, idx) => (
-                              <TimelineItem key={idx}>
-                                <TimelineDot><FiberManualRecord fontSize="small" /></TimelineDot>
-                                <TimelineContent>
-                                  <TimelineStatus>{getStatusIcon(h.status)} {h.status}</TimelineStatus>
-                                  <TimelineTime>{h.timestamp ? new Date(h.timestamp).toLocaleString() : ''}</TimelineTime>
-                                  {h.note && <TimelineNote>{h.note}</TimelineNote>}
-                                </TimelineContent>
-                              </TimelineItem>
-                            ))}
-                          </TimelineList>
-                        ) : (
-                          <span style={{ color: '#888', fontSize: 13 }}>No status history available.</span>
-                        )}
+                        {(() => {
+                          const steps = ['Pending','Preparing','Ready','Delivered'];
+                          const current = (order.status || '').toString().toLowerCase();
+                          const { fg } = statusStyles(order.status);
+                          return (
+                            <TimelineList>
+                              {steps.map((s, idx) => {
+                                const done = steps.findIndex(x => x.toLowerCase() === current) >= idx;
+                                const isCurrent = s.toLowerCase() === current;
+                                return (
+                                  <TimelineItem key={s}>
+                                    <TimelineDot>
+                                      <FiberManualRecord fontSize="small" style={{ color: isCurrent ? fg : '#bdbdbd' }} />
+                                    </TimelineDot>
+                                    <TimelineContent>
+                                      <TimelineStatus style={{ color: isCurrent ? fg : '#757575', fontWeight: isCurrent ? 700 : 500 }}>{s}</TimelineStatus>
+                                      {isCurrent && <TimelineTime>Current</TimelineTime>}
+                                    </TimelineContent>
+                                  </TimelineItem>
+                                );
+                              })}
+                            </TimelineList>
+                          );
+                        })()}
                       </TimelineContainer>
                     </>
                   )}
                 </OrderBody>
                 <OrderFooter>
-                  <Button 
-                    className="outline"
+                  <SecondaryButton
                     onClick={() => toggleOrderDetails(order._id || order.id)}
-                    style={{ fontSize: '9px' }}
+                    style={{ fontSize: 12 }}
                   >
                     {expandedOrder === (order._id || order.id) ? 'Hide Details' : 'View Details'}
-                  </Button>
-                  <div style={{ display: 'flex', gap: '8px' }}>
-                    <Button 
-                      className="outline"
+                  </SecondaryButton>
+                  <ButtonRow style={{ justifyContent: 'flex-end' }}>
+                    <PrimaryButton
                       onClick={async () => {
                         try {
                           const items = Array.isArray(order.items) ? order.items : [];
@@ -588,49 +586,47 @@ const ViewMyOrder = () => {
                           setTimeout(() => setNotificationMessage(''), 3000);
                         }
                       }}
-                      style={{ fontSize: '9px' }}
+                      style={{ fontSize: 12 }}
                     >
                       Reorder
-                    </Button>
-                    <Button 
-                      className="primary"
+                    </PrimaryButton>
+                    <SecondaryButton 
                       onClick={async () => {
                         setReviewingOrder(order._id || order.id);
                         setReviewComment('');
                         const firstProductId = order.items && order.items[0] && (order.items[0].product?._id || order.items[0].product || order.items[0]._id);
                         setSelectedProductId(firstProductId || '');
                       }}
-                      style={{ fontSize: '9px' }}
+                      style={{ fontSize: 12 }}
                     >
                       Add Review
-                    </Button>
+                    </SecondaryButton>
                     {order.paymentMethod === 'GCash_Manual' && (
-                      <Button
-                        className="outline"
+                      <SecondaryButton
+                        $accent
                         onClick={() => {
                           setProofOrderId(order._id || order.id);
                           setProofFile(null);
                           setProofRef('');
                         }}
-                        style={{ fontSize: '9px' }}
+                        style={{ fontSize: 12 }}
                       >
-                        Upload GCash Proof
-                      </Button>
+                        Upload Proof
+                      </SecondaryButton>
                     )}
-                    {order.status === 'Pending' && (
-                      <Button
-                        className="cancel"
+                    {String(order.status).toLowerCase() === 'pending' && (
+                      <DestructiveButton
                         onClick={() => {
                           setOrderToCancel(order._id || order.id);
                           setShowCancelModal(true);
                         }}
-                          style={{ fontSize: '9px', background: '#e74c3c', color: 'white', border: 'none' }}
+                          style={{ fontSize: 12 }}
                         disabled={cancelingOrderId === (order._id || order.id)}
                       >
-                        {cancelingOrderId === (order._id || order.id) ? 'Canceling...' : 'Cancel Order'}
-                      </Button>
+                        {cancelingOrderId === (order._id || order.id) ? 'Canceling...' : 'Cancel'}
+                      </DestructiveButton>
                     )}
-                  </div>
+                  </ButtonRow>
                 </OrderFooter>
               </OrderCard>
             ))}
@@ -671,9 +667,8 @@ const ViewMyOrder = () => {
               />
             </div>
             <ModalActions>
-              <button
-                className="primary"
-                style={{ padding: '10px 16px', borderRadius: 8, border: 'none', background: '#ff8c00', color: '#fff', fontWeight: 600, fontSize: 13, minWidth: 110, opacity: uploadingProof ? 0.7 : 1 }}
+              <PrimaryButton
+                style={{ padding: '10px 16px', borderRadius: 8, fontWeight: 600, fontSize: 13, minWidth: 110, opacity: uploadingProof ? 0.7 : 1 }}
                 disabled={uploadingProof || !proofFile}
                 onClick={async () => {
                   if (!proofFile) return;
@@ -698,15 +693,14 @@ const ViewMyOrder = () => {
                 }}
               >
                 {uploadingProof ? 'Uploading...' : 'Submit Proof'}
-              </button>
-              <button
-                className="outline"
-                style={{ padding: '10px 16px', borderRadius: 8, border: '1px solid #ddd', background: '#fff', fontWeight: 600, fontSize: 13, minWidth: 110 }}
+              </PrimaryButton>
+              <SecondaryButton
+                style={{ padding: '10px 16px', borderRadius: 8, fontWeight: 600, fontSize: 13, minWidth: 110 }}
                 onClick={() => { setProofOrderId(null); setProofFile(null); setProofRef(''); }}
                 disabled={uploadingProof}
               >
                 Cancel
-              </button>
+              </SecondaryButton>
             </ModalActions>
           </ModalBox>
         </ModalOverlay>
@@ -718,22 +712,20 @@ const ViewMyOrder = () => {
             <ModalTitle>Cancel Order?</ModalTitle>
             <p style={{ color: '#444', marginBottom: 0 }}>Are you sure you want to cancel this order?</p>
             <ModalActions>
-              <Button
-                className="cancel"
-                style={{ background: '#e74c3c', color: 'white', border: 'none', minWidth: 90, fontSize: '9px' }}
+              <DestructiveButton
+                style={{ minWidth: 90, fontSize: 12 }}
                 onClick={() => handleCancelOrder(orderToCancel)}
                 disabled={cancelingOrderId === orderToCancel}
               >
                 {cancelingOrderId === orderToCancel ? 'Canceling...' : 'Yes, Cancel'}
-              </Button>
-              <Button
-                className="outline"
-                style={{ minWidth: 90, fontSize: '9px' }}
+              </DestructiveButton>
+              <SecondaryButton
+                style={{ minWidth: 90, fontSize: 12 }}
                 onClick={() => { setShowCancelModal(false); setOrderToCancel(null); }}
                 disabled={cancelingOrderId === orderToCancel}
               >
                 No, Go Back
-              </Button>
+              </SecondaryButton>
             </ModalActions>
           </ModalBox>
         </ModalOverlay>
@@ -775,8 +767,7 @@ const ViewMyOrder = () => {
               placeholder="Write your review here..."
             />
             <ModalActions>
-              <Button
-                className="primary"
+              <PrimaryButton
                 onClick={async () => {
                   if (reviewComment.trim() && selectedProductId) {
                     const order = orders.find(o => (o._id || o.id) === reviewingOrder);
@@ -799,21 +790,20 @@ const ViewMyOrder = () => {
                     }
                   }
                 }}
-                style={{ fontSize: '9px' }}
+                style={{ fontSize: 12 }}
               >
                 Submit
-              </Button>
-              <Button
-                className="outline"
+              </PrimaryButton>
+              <SecondaryButton
                 onClick={() => {
                   setReviewingOrder(null);
                   setReviewComment('');
                   setSelectedProductId('');
                 }}
-                  style={{ fontSize: '9px' }}
+                  style={{ fontSize: 12 }}
               >
                 Cancel
-              </Button>
+              </SecondaryButton>
             </ModalActions>
           </ModalBox>
         </ModalOverlay>

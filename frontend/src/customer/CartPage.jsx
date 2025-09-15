@@ -7,13 +7,11 @@ import styled, { keyframes } from 'styled-components';
 import {
     Container,
     Typography,
-    Box,
     Card,
     CardContent,
     IconButton,
     Divider,
     Alert,
-    CircularProgress,
     Checkbox,
     Dialog,
     DialogTitle,
@@ -21,6 +19,7 @@ import {
     DialogActions,
     Button,
 } from '@mui/material';
+import { PrimaryButton } from '../components/Buttons';
 import {
     Add,
     Remove,
@@ -43,6 +42,11 @@ const styles = {
 const spin = keyframes`
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
+`;
+
+const SubtotalText = styled.span`
+  font-size: 0.875rem;
+  color: #666;
 `;
 
 const RefreshButton = styled.button`
@@ -128,7 +132,7 @@ const ContentWrapper = styled.div`
   width: 100%;
   max-width: 900px;
   margin: 0 auto;
-  padding: 20px 15px;
+  padding: 8px 15px; /* Reduced top padding to bring first card closer to header */
   background: #ffffff;
   position: relative;
   min-height: 100%;
@@ -136,7 +140,7 @@ const ContentWrapper = styled.div`
 
 const FormContainer = styled.div`
   width: 100%;
-  padding: 15px 0;
+  padding: 8px 0; /* tighter vertical rhythm */
 `;
 
 const CartHeader = styled.div`
@@ -178,8 +182,8 @@ const ToolbarSpacer = styled.div`
 const ProductList = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  margin-top: 16px;
+  gap: 12px; /* consistent 12–16px spacing between cards */
+  margin-top: 8px;
 `;
 
 const ProductCard = styled(Card)`
@@ -196,11 +200,11 @@ const ProductCard = styled(Card)`
 
 const ProductCardContent = styled(CardContent)`
   display: flex;
-  padding: 12px 16px !important;
+  padding: 10px 12px !important; /* tighter padding */
   align-items: flex-start;
   background:rgba(37, 20, 20, 0.08);
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 8px;
   
   @media (max-width: 480px) {
     padding: 10px 12px !important;
@@ -209,19 +213,19 @@ const ProductCardContent = styled(CardContent)`
 `;
 
 const ImageContainer = styled.div`
-  width: 80px;
-  height: 80px;
-  min-width: 80px;
+  width: 72px;
+  height: 72px;
+  min-width: 72px;
   border-radius: 8px;
   overflow: hidden;
   margin-right: 12px;
   flex-shrink: 0;
   
   @media (max-width: 480px) {
-    width: 70px;
-    height: 70px;
-    min-width: 70px;
-    margin-right: 1px;
+    width: 64px;
+    height: 64px;
+    min-width: 64px;
+    margin-right: 10px;
   }
 `;
 
@@ -250,7 +254,7 @@ const ProductName = styled.span`
   font-size: 1rem;
   font-weight: 500;
   color: #333;
-  margin-bottom: 4px;
+  margin-bottom: 2px; /* tighter gap above subtotal */
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
@@ -268,7 +272,7 @@ const ProductRight = styled.div`
   flex-direction: column;
   align-items: flex-end;
   margin-left: auto;
-  gap: 8px;
+  gap: 6px;
   min-width: 100px;
   
   @media (max-width: 480px) {
@@ -299,22 +303,26 @@ const QuantityControl = styled.div`
   gap: 6px;
   background: #f5f5f5;
   border-radius: 20px;
-  padding: 4px 10px;
+  padding: 2px 6px;
   min-width: 100px;
   justify-content: space-between;
+  min-height: 44px; /* ensure tap target */
   
   @media (max-width: 480px) {
-    padding: 3px 8px;
-    min-width: 90px;
+    padding: 2px 6px;
+    min-width: 96px;
   }
 `;
 
 const QuantityButton = styled(IconButton)`
-  padding: 6px !important;
+  padding: 0 !important;
   color: #ff8c00e0 !important;
+  width: 40px !important;  /* 44px tap area including parent padding */
+  height: 40px !important;
   
   @media (max-width: 480px) {
-    padding: 4px !important;
+    width: 36px !important;
+    height: 36px !important;
   }
   
   .MuiSvgIcon-root {
@@ -348,28 +356,17 @@ const Footer = styled.footer`
   bottom: 62px;
   left: 0;
   right: 0;
-background-color: #ffffff;
-  padding: 13px;
+  background-color: #ffffff;
+  padding: 12px 16px;
   display: flex;
   justify-content: space-between;
   align-items: center;
   box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
   z-index: 1000;
-  height: 80px; /* Fixed height for the footer */
+  min-height: 76px; /* sticky bar height */
 `;
 
-const CheckoutButton = styled(Button)`
-  background: linear-gradient(135deg, #fbaa39, #fc753b) !important;
-  color: white !important;
-  padding: 8px 24px !important;
-  border-radius: 8px !important;
-  text-transform: none !important;
-  font-weight: 600 !important;
-  
-  &:disabled {
-    background-color: #cccccc !important;
-  }
-`;
+// Using shared PrimaryButton for consistent styling across app
 
 const EmptyCartBox = styled.div`
   display: flex;
@@ -583,13 +580,6 @@ const CartPage = () => {
         }
     };
 
-    if (loading) {
-        return (
-            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-                <CircularProgress sx={{ color: '#FF385C' }} />
-            </Box>
-        );
-    }
 
     return (
         <CartContainer>
@@ -632,21 +622,23 @@ const CartPage = () => {
                             </AlertMessage>
                         )}
 
-                        {(!cartData?.items || cartData.items.length === 0) && (
+                        {!loading && (!cartData?.items || cartData.items.length === 0) && (
                             <EmptyCartBox>
                                 <EmptyCartText variant="h6">
                                     Your cart is empty
                                 </EmptyCartText>
-                                <CheckoutButton
-                                    variant="contained"
-                                    onClick={() => navigate('/customer/home')}
-                                >
+                                <PrimaryButton onClick={() => navigate('/customer/home')}>
                                     Continue Shopping
-                                </CheckoutButton>
+                                </PrimaryButton>
                             </EmptyCartBox>
                         )}
 
                         <ProductList>
+                            {loading && (
+                                Array.from({ length: 5 }).map((_, i) => (
+                                    <SkeletonRow key={`cart-skeleton-initial-${i}`} height={96} />
+                                ))
+                            )}
                             {isRefreshing && cartData?.items && cartData.items.length > 0 && (
                                 Array.from({ length: Math.min(3, cartData.items.length) }).map((_, i) => (
                                     <SkeletonRow key={`cart-skeleton-${i}`} height={96} />
@@ -671,6 +663,9 @@ const CartPage = () => {
                                             </ImageContainer>
                                             <ProductInfo>
                                                 <ProductName>{item.product.name}</ProductName>
+                                                <SubtotalText>
+                                                    ₱{Number(item.product.price).toFixed(0)} × {item.quantity} = ₱{(item.product.price * item.quantity).toFixed(0)}
+                                                </SubtotalText>
                                             </ProductInfo>
                                             <ProductRight>
                                                 <ProductPrice>₱{(item.product.price * item.quantity).toFixed(0)}</ProductPrice>
@@ -709,16 +704,13 @@ const CartPage = () => {
                     <Typography variant="body2" color="text.secondary">
                         Selected Items: {getSelectedCount()}
                     </Typography>
-                    <Typography variant="h6" style={{ fontWeight: 'bold', color: ' #FF385C' }}>
+                    <Typography variant="h5" style={{ fontWeight: 800, color: '#ff8c00' }}>
                         Total: ₱{getSelectedTotal().toFixed(2)}
                     </Typography>
                 </div>
-                <CheckoutButton
-                    onClick={handleCheckout}
-                    disabled={getSelectedCount() === 0}
-                >
+                <PrimaryButton onClick={handleCheckout} disabled={getSelectedCount() === 0}>
                     Checkout
-                </CheckoutButton>
+                </PrimaryButton>
             </Footer>
 
             {/* Dialogs */}

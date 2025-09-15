@@ -2,8 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MdSearch, MdHome, MdFavoriteBorder, MdShoppingCart, MdReceipt, MdPerson, MdFilterList, MdClose, MdMenuOpen, MdSettings, MdLogout, MdStore, MdAddShoppingCart, MdCheckCircle } from 'react-icons/md';
 import Slider from 'react-slick';
-import { toast, ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+// Removed react-toastify to avoid popups on the homepage
 import 'slick-carousel/slick/slick.css';
 import 'slick-carousel/slick/slick-theme.css';
 import { store as storeApi, product as productApi, auth, cart } from '../api';
@@ -296,9 +295,8 @@ const HomePage = () => {
       // Update cart badge count
       setCartCount((prev) => (Number.isFinite(prev) ? prev + 1 : 1));
      } catch (err) {
-                const errorMessage = err.message || err.error || 'Failed to add product to cart';
-                toast.error(errorMessage);
-                console.error('Add to cart error:', err);
+               const errorMessage = err.message || err.error || 'Failed to add product to cart';
+               console.error('Add to cart error:', errorMessage, err);
     }
   };
 
@@ -422,7 +420,6 @@ const HomePage = () => {
 
   return (
     <div className="pageContainer">
-      <ToastContainer position="top-center" autoClose={3000} />
       {/* Success Modal */}
       {successModal.open && (
         <div
