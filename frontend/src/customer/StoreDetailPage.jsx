@@ -260,20 +260,20 @@ const StoreDescription = styled.p`
 
 const FavoriteButton = styled.button`
   position: absolute;
-  right: 0;
+  right: 20px;
   top: 50%;
   transform: translateY(-50%);
   background: none;
   border: none;
   color: ${props => props.$isFavorite ? ' #ff4444' : ' white'};
-  font-size: 24px;
+  font-size: 25px;
   cursor: pointer;
-  padding: 10px;
+  padding: 1px 10px 4px 10px;
   border-radius: 50%;
   transition: all 0.3s ease;
   
   &:hover {
-    background: rgba(255, 255, 255, 0.08);
+    background: none;
   }
 `;
 
@@ -563,6 +563,7 @@ const StoreDetailPage = () => {
   const [isFavorite, setIsFavorite] = useState(false);
   const [successModal, setSuccessModal] = useState({ open: false, message: '' });
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState(null);
 
   const API_BASE_URL = import.meta.env.DEV
     ? '/api'
@@ -647,6 +648,9 @@ const StoreDetailPage = () => {
   };
 
   const categories = Array.from(new Set((products || []).map(p => p.category).filter(Boolean)));
+  const filteredProducts = selectedCategory
+    ? (products || []).filter(p => (p.category || '').toLowerCase() === String(selectedCategory).toLowerCase())
+    : (products || []);
 
   if (loading) {
     return (
@@ -768,14 +772,26 @@ const StoreDetailPage = () => {
 
           {activeTab === 'Products' ? (
             <ProductsSection>
+              {selectedCategory && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ fontSize: 14, color: '#666' }}>Showing category:</span>
+                  <span style={{ fontSize: 14, fontWeight: 700, color: '#e65100', background: '#fff7f0', border: '1px solid #ffe0c2', borderRadius: 12, padding: '2px 8px' }}>{selectedCategory}</span>
+                  <button
+                    onClick={() => setSelectedCategory(null)}
+                    style={{ marginLeft: 'auto', background: 'transparent', border: '1px solid #ddd', borderRadius: 8, padding: '6px 10px', fontSize: 12, cursor: 'pointer' }}
+                  >
+                    Clear filter
+                  </button>
+                </div>
+              )}
               <ProductsGrid role="list" aria-label="Products">
-                {isRefreshing && products.length > 0 && (
-                  Array.from({ length: Math.min(6, products.length) }).map((_, i) => (
+                {isRefreshing && filteredProducts.length > 0 && (
+                  Array.from({ length: Math.min(6, filteredProducts.length) }).map((_, i) => (
                     <SkeletonCard key={`skeleton-prod-${i}`} height={220} />
                   ))
                 )}
-                {products.length > 0 ? (
-                  products.map((product) => (
+                {filteredProducts.length > 0 ? (
+                  filteredProducts.map((product) => (
                     <ProductCard
                       key={product._id}
                       onClick={() => handleBuy(product)}
@@ -796,6 +812,9 @@ const StoreDetailPage = () => {
                       )}
                       <ProductInfo>
                         <ProductName>{product.name}</ProductName>
+                        {Number.isFinite(product.soldCount) && (
+                          <div style={{ fontSize: '12px', color: '#777', marginTop: 2 }}>Sold: {product.soldCount}</div>
+                        )}
                         {product.description && (
                           <ProductDescription>{product.description}</ProductDescription>
                         )}
@@ -838,7 +857,15 @@ const StoreDetailPage = () => {
               <CategoriesGrid role="list" aria-label="Categories">
                 {categories.length > 0 ? (
                   categories.map((cat) => (
-                    <CategoryCard key={cat} role="listitem" aria-label={cat}>
+                    <CategoryCard
+                      key={cat}
+                      role="button"
+                      tabIndex={0}
+                      aria-label={`Category ${cat}`}
+                      onClick={() => { setSelectedCategory(cat); setActiveTab('Products'); }}
+                      onKeyDown={(e) => { if (e.key === 'Enter') { setSelectedCategory(cat); setActiveTab('Products'); } }}
+                      style={{ cursor: 'pointer' }}
+                    >
                       {cat}
                     </CategoryCard>
                   ))

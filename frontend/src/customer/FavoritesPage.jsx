@@ -449,7 +449,7 @@ const FavoritesPage = () => {
 
           <SearchBar>
             <SearchIcon>
-              <svg width="20" height="20" fill="none" viewBox="0 0 24 24">
+              <svg width="35" height="20" fill="none" viewBox="0 0 24 24">
                 <path d="M15.5 15.5L19 19" stroke="#BDBDBD" strokeWidth="2" strokeLinecap="round"/>
                 <circle cx="11" cy="11" r="7" stroke="#BDBDBD" strokeWidth="2"/>
               </svg>
@@ -672,7 +672,7 @@ const Title = styled.span`
 
 const SearchBar = styled.div`
   position: relative;
-  margin: 16px 24px;
+  margin: 10px 2px;
   background: #f5f5f5;
   border-radius: 8px;
   display: flex;
@@ -703,7 +703,7 @@ const Tabs = styled.div`
   display: flex;
   justify-content: flex-start;
   gap: 12px;
-  margin: 0 24px 18px;
+  margin: 0 2px 10px;
   border-bottom: 1px solid #f0f0f0;
   padding-bottom: 8px;
 `;
