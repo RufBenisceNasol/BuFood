@@ -19,43 +19,6 @@ const ForgotPasswordPage = () => {
   const [resendIntervalId, setResendIntervalId] = useState(null);
   const navigate = useNavigate();
 
-  // Extract a helpful error message from various error shapes
-  const extractErrorMessage = (err) => {
-    if (!err) return 'Something went wrong. Please try again.';
-    if (typeof err === 'string') return err;
-    // If our api layer threw response.data directly
-    if (typeof err.message === 'string' && err.message.trim()) {
-      return prettify(err.message);
-    }
-    if (typeof err.error === 'string' && err.error.trim()) {
-      return prettify(err.error);
-    }
-    if (typeof err.details === 'string' && err.details.trim()) {
-      return prettify(err.details);
-    }
-    if (err.data) {
-      if (typeof err.data.message === 'string') return prettify(err.data.message);
-      if (typeof err.data.error === 'string') return prettify(err.data.error);
-    }
-    return 'Request failed. Please try again.';
-  };
-
-  // Normalize a few common backend/network messages into friendlier text
-  const prettify = (msg) => {
-    if (!msg) return 'Request failed. Please try again.';
-    const lower = msg.toLowerCase();
-    if (lower.includes('timeout')) {
-      return 'Request timed out. The server may be waking up. Please try again in a moment.';
-    }
-    if (lower.includes('too many requests') || lower.includes('rate limit')) {
-      return 'Too many requests. Please wait a few seconds and try again.';
-    }
-    if (lower.includes('network error')) {
-      return 'Network error. Please check your connection and try again.';
-    }
-    return msg;
-  };
-
   const startCooldown = (seconds = 60) => {
     setResendCooldown(seconds);
     if (resendIntervalId) {
@@ -84,7 +47,7 @@ const ForgotPasswordPage = () => {
       setStep('otp');
       startCooldown(60);
     } catch (err) {
-      setError(extractErrorMessage(err) || 'Failed to send OTP.');
+      setError(err?.message || 'Failed to send OTP.');
     } finally {
       setLoading(false);
     }
@@ -122,7 +85,7 @@ const ForgotPasswordPage = () => {
       setSuccess('Password reset successful. Redirecting to login...');
       setTimeout(() => navigate('/login'), 2000);
     } catch (err) {
-      setError(extractErrorMessage(err) || 'Failed to reset password with OTP.');
+      setError(err?.message || 'Failed to reset password with OTP.');
     } finally {
       setLoading(false);
     }
@@ -137,7 +100,7 @@ const ForgotPasswordPage = () => {
       setSuccess('A new OTP has been sent to your email.');
       startCooldown(60);
     } catch (err) {
-      setError(extractErrorMessage(err) || 'Failed to resend OTP.');
+      setError(err?.message || 'Failed to resend OTP.');
     }
   };
 

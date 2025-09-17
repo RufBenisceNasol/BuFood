@@ -1,3 +1,25 @@
+// Simple retry helper with exponential backoff for transient network errors
+const requestWithRetry = async (fn, { retries = 2, baseDelayMs = 600 } = {}) => {
+    let lastErr;
+    for (let attempt = 0; attempt <= retries; attempt++) {
+        try {
+            return await fn();
+        } catch (error) {
+            lastErr = error;
+            const code = error.code || error?.response?.status;
+            const isTimeout = code === 'ECONNABORTED';
+            const isNetwork = !error.response; // no response => network/DNS/etc.
+            // Only retry for transient cases
+            if (!(isTimeout || isNetwork)) break;
+            if (attempt < retries) {
+                const delay = baseDelayMs * Math.pow(2, attempt);
+                await new Promise(res => setTimeout(res, delay));
+                continue;
+            }
+        }
+    }
+    throw lastErr;
+};
 import axios from 'axios';
 import { getToken, getRefreshToken, removeToken, removeRefreshToken, removeUser, setToken } from './utils/tokenUtils';
 
@@ -13,8 +35,8 @@ const api = axios.create({
     headers: {
         'Content-Type': 'application/json',
     },
-    // Prevent requests from hanging indefinitely (helps surface errors faster)
-    timeout: 12000,
+    // Allow more time for cold starts on hosting providers (Render/others)
+    timeout: 25000,
 });
 
 // Add auth token to requests if available
@@ -147,7 +169,9 @@ export const auth = {
     // OTP-based password reset
     sendPasswordResetOtp: async (email) => {
         try {
-            const response = await api.post('/auth/forgot-password-otp', { email });
+            const response = await requestWithRetry(() => 
+                api.post('/auth/forgot-password-otp', { email }, { timeout: 30000 })
+            );
             return response.data;
         } catch (error) {
             throw error.response?.data || error.message;
@@ -156,7 +180,9 @@ export const auth = {
 
     resetPasswordWithOtp: async ({ email, otp, newPassword }) => {
         try {
-            const response = await api.post('/auth/reset-password-otp', { email, otp, newPassword });
+            const response = await requestWithRetry(() => 
+                api.post('/auth/reset-password-otp', { email, otp, newPassword }, { timeout: 30000 })
+            );
             return response.data;
         } catch (error) {
             throw error.response?.data || error.message;
@@ -165,7 +191,9 @@ export const auth = {
 
     resendPasswordResetOtp: async (email) => {
         try {
-            const response = await api.post('/auth/resend-password-otp', { email });
+            const response = await requestWithRetry(() => 
+                api.post('/auth/resend-password-otp', { email }, { timeout: 30000 })
+            );
             return response.data;
         } catch (error) {
             throw error.response?.data || error.message;
