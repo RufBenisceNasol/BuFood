@@ -232,10 +232,20 @@ const register = async (req, res) => {
 
     const baseUrl = process.env.BASE_URL || 'http://localhost:8000';
     const verificationLink = `${baseUrl}/api/auth/verify/${verificationToken}`;
-    await sendVerificationEmail(email, verificationLink);
+    let emailFailed = false;
+    try {
+      await sendVerificationEmail(email, verificationLink);
+    } catch (e) {
+      // Do not fail registration if email fails to send (e.g., missing EMAIL_USER/PASS in dev)
+      console.error('sendVerificationEmail failed during registration:', e.message);
+      emailFailed = true;
+    }
 
     res.status(201).json({
-      message: 'User registered successfully. Please check your email to verify your account.',
+      message: emailFailed
+        ? 'User registered. Verification email could not be sent. Please contact support or try resending from the login page.'
+        : 'User registered successfully. Please check your email to verify your account.',
+      emailFailed,
     });
   } catch (error) {
     console.error('Error during registration:', error.message);
