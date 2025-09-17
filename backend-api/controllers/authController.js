@@ -7,13 +7,20 @@ const { createStoreForSeller } = require('./storeController');
 
 require('dotenv').config();
 
-// Nodemailer setup
+// Nodemailer setup (pooled with sane timeouts)
 const transporter = nodemailer.createTransport({
   service: 'gmail',
+  pool: true,
+  maxConnections: 3,
+  maxMessages: 50,
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS,
   },
+  // Timeouts (ms)
+  connectionTimeout: 15000,
+  greetingTimeout: 10000,
+  socketTimeout: 20000,
 });
 
 // Verify SMTP credentials on startup (non-fatal)
@@ -27,10 +34,32 @@ setImmediate(() => {
   });
 });
 
+// Helper: send mail with retry/backoff for transient errors
+async function sendMailWithRetry(options, retries = 2, baseDelayMs = 1500) {
+  let attempt = 0;
+  for (;;) {
+    try {
+      return await transporter.sendMail(options);
+    } catch (err) {
+      const code = err?.code;
+      const resp = err?.responseCode;
+      const transient = code === 'ETIMEDOUT' || code === 'ESOCKET' || code === 'ECONNECTION' || code === 'EAI_AGAIN' || [421, 451, 452].includes(resp);
+      if (attempt < retries && transient) {
+        const delay = baseDelayMs * Math.pow(2, attempt);
+        console.warn(`sendMail transient error (${code || resp}); retrying in ${delay}ms...`);
+        await new Promise(r => setTimeout(r, delay));
+        attempt += 1;
+        continue;
+      }
+      throw err;
+    }
+  }
+}
+
 // Verification email sender
 const sendVerificationEmail = async (email, verificationLink) => {
   try {
-    await transporter.sendMail({
+    await sendMailWithRetry({
       from: process.env.EMAIL_FROM || 'BuFood <no-reply@yourdomain.com>',
       to: email,
       subject: 'Verify Your Email - Bufood 🍽️',
@@ -68,7 +97,7 @@ const sendVerificationEmail = async (email, verificationLink) => {
 // Helper to send OTP email
 const sendPasswordResetOTPEmail = async (email, otp) => {
   try {
-    await transporter.sendMail({
+    await sendMailWithRetry({
       from: process.env.EMAIL_FROM || 'BuFood <no-reply@yourdomain.com>',
       to: email,
       subject: `Your BuFood password reset code: ${otp}`,
@@ -178,7 +207,7 @@ const resendPasswordOtp = async (req, res) => {
 // Password changed confirmation email
 const sendPasswordChangedEmail = async (email) => {
   try {
-    await transporter.sendMail({
+    await sendMailWithRetry({
       to: email,
       subject: 'Your BuFood password was changed',
       html: `

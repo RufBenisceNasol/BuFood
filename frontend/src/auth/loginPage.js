@@ -12,11 +12,14 @@ const LoginPage = () => {
     const [password, setPassword] = useState('');
     const [passwordError, setPasswordError] = useState('');
     const [error, setError] = useState('');
+    const [success, setSuccess] = useState('');
     const [loading, setLoading] = useState(false);
     const [loadingMessage, setLoadingMessage] = useState('Signing in...');
     const wakeTimerRef = React.useRef(null);
     const [showPassword, setShowPassword] = useState(false);
     const [rememberMe, setRememberMe] = useState(false);
+    const [canResendVerification, setCanResendVerification] = useState(false);
+    const [resendLoading, setResendLoading] = useState(false);
     const navigate = useNavigate();
 
     // Redirect if already logged in
@@ -41,6 +44,8 @@ const LoginPage = () => {
         e.preventDefault();
         setError('');
         setLoading(true);
+        setSuccess('');
+        setCanResendVerification(false);
         setLoadingMessage('Signing in...');
 
         // If the request takes too long, inform the user the server may be waking up
@@ -78,7 +83,12 @@ const LoginPage = () => {
             }
         } catch (err) {
             // Robust error handling for various backend error shapes
-            if (err.response?.data) {
+            const backendMsg = err.response?.data?.message || err.message || '';
+            if (err.response?.status === 403 || /verify your email/i.test(backendMsg)) {
+                // Unverified email path
+                setError(backendMsg || 'Please verify your email before logging in.');
+                setCanResendVerification(true);
+            } else if (err.response?.data) {
                 if (typeof err.response.data === 'string') {
                     setError(err.response.data);
                 } else if (err.response.data.message) {
@@ -107,6 +117,25 @@ const LoginPage = () => {
         }
     };
 
+    const handleResendVerification = async () => {
+        if (!email) {
+            setError('Please enter your email above, then click Resend.');
+            return;
+        }
+        setResendLoading(true);
+        setError('');
+        setSuccess('');
+        try {
+            await auth.resendVerification(email);
+            setSuccess('Verification email resent. Please check your inbox (or Spam).');
+            setCanResendVerification(false);
+        } catch (e) {
+            setError(typeof e === 'string' ? e : (e?.message || 'Failed to resend verification'));
+        } finally {
+            setResendLoading(false);
+        }
+    };
+
     return (
         <div style={styles.pageContainer}>
             {/* Loading overlay and keyframes definition */}
@@ -131,6 +160,21 @@ const LoginPage = () => {
                 <h1 style={styles.title}>SIGN IN</h1>
                 
                 {error && <div style={styles.error}>{error}</div>}
+                {canResendVerification && (
+                    <div style={{ marginTop: 6, marginBottom: 10, textAlign: 'center' }}>
+                        <button type="button" onClick={handleResendVerification} disabled={resendLoading} style={styles.linkButton}>
+                            {resendLoading ? 'Resending...' : 'Resend verification email'}
+                        </button>
+                    </div>
+                )}
+                {!canResendVerification && email && (
+                    <div style={{ marginTop: 4, marginBottom: 8, textAlign: 'center' }}>
+                        <button type="button" onClick={handleResendVerification} disabled={resendLoading} style={styles.linkButton}>
+                            {resendLoading ? 'Resending...' : "Didn't get the email? Resend verification"}
+                        </button>
+                    </div>
+                )}
+                {success && <div style={styles.success}>{success}</div>}
                 
                 <form onSubmit={handleSubmit} style={styles.form}>
                     <div style={styles.inputGroup}>
@@ -237,6 +281,24 @@ const styles = {
         backgroundColor: '#f5f5f5',
         padding: '15px',
         boxSizing: 'border-box',
+    },
+    success: {
+        color: '#28a745',
+        backgroundColor: '#e6ffe6',
+        padding: 'clamp(10px, 2.5vw, 12px)',
+        borderRadius: '8px',
+        fontSize: 'clamp(12px, 3vw, 14px)',
+        marginBottom: 'clamp(15px, 4vw, 20px)',
+        textAlign: 'center',
+        width: '100%',
+    },
+    linkButton: {
+        background: 'none',
+        border: 'none',
+        color: '#ff8c00',
+        fontWeight: 600,
+        cursor: 'pointer',
+        textDecoration: 'underline',
     },
     container: {
         width: '100%',
