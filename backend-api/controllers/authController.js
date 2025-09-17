@@ -16,6 +16,18 @@ const transporter = nodemailer.createTransport({
   },
 });
 
+// Verify SMTP transport on startup (logs only; does not crash app)
+// Helps diagnose "Failed to send OTP" due to invalid Gmail/App Password config
+(async () => {
+  try {
+    await transporter.verify();
+    console.log('SMTP transporter verified: ready to send emails');
+  } catch (e) {
+    console.error('SMTP verify failed:', e.message);
+    console.error('Hint: Ensure EMAIL_USER is your Gmail and EMAIL_PASS is a Gmail App Password (with 2FA enabled).');
+  }
+})();
+
 // Verification email sender
 const sendVerificationEmail = async (email, verificationLink) => {
   try {

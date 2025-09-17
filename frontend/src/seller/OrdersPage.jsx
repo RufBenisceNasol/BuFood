@@ -36,6 +36,32 @@ const OrdersPage = () => {
         setUserRole(null);
       }
     };
+
+  const handleAcceptOrder = async (orderId) => {
+    // Prompt for required estimated preparation time in minutes
+    const input = window.prompt('Estimated preparation time (minutes)?', '30');
+    if (input === null) return; // user cancelled
+    const estimatedPreparationTime = parseInt(input, 10);
+    if (Number.isNaN(estimatedPreparationTime) || estimatedPreparationTime <= 0) {
+      toast.error('Please enter a valid number of minutes');
+      return;
+    }
+    const note = window.prompt('Optional note to customer (or leave blank):', '') || undefined;
+
+    setUpdatingById(prev => ({ ...prev, [orderId]: true }));
+    try {
+      await order.acceptOrder(orderId, { estimatedPreparationTime, note });
+      await fetchOrders();
+      toast.success('Order accepted');
+      setError(null);
+    } catch (err) {
+      setError('Failed to accept order. Please try again.');
+      toast.error(err?.message || 'Failed to accept order. Please try again.');
+      console.error('Error accepting order:', err);
+    } finally {
+      setUpdatingById(prev => ({ ...prev, [orderId]: false }));
+    }
+  };
     fetchUserRole();
   }, []);
 
@@ -315,7 +341,7 @@ const OrdersPage = () => {
                           <div>
                             {ord.status === 'Pending' && (
                               <button
-                                onClick={() => handleStatusUpdate(ord._id, 'Accepted')}
+                                onClick={() => handleAcceptOrder(ord._id)}
                                 disabled={!!updatingById[ord._id]}
                                 className="accept-button"
                               >
@@ -376,7 +402,7 @@ const OrdersPage = () => {
                                 Mark Picked Up
                               </button>
                             )}
-                            {['Pending', 'Accepted'].includes(ord.status) && (
+                            {ord.status === 'Pending' && (
                               <button
                                 onClick={() => {
                                   if (userRole === 'Seller') {
@@ -556,7 +582,7 @@ const OrdersPage = () => {
                         <>
                           {ord.status === 'Pending' && (
                             <button
-                              onClick={() => handleStatusUpdate(ord._id, 'Accepted')}
+                              onClick={() => handleAcceptOrder(ord._id)}
                               className="accept-button"
                             >
                               Accept
@@ -610,7 +636,7 @@ const OrdersPage = () => {
                               Mark Picked Up
                             </button>
                           )}
-                          {['Pending', 'Accepted'].includes(ord.status) && (
+                          {ord.status === 'Pending' && (
                             <button
                               onClick={() => {
                                 if (userRole === 'Seller') {
