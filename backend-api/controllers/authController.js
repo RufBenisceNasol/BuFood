@@ -7,32 +7,14 @@ const { createStoreForSeller } = require('./storeController');
 
 require('dotenv').config();
 
-// Nodemailer setup (explicit Gmail SMTP)
+// Nodemailer setup
 const transporter = nodemailer.createTransport({
-  host: 'smtp.gmail.com',
-  port: 465,
-  secure: true,
-  pool: true,
+  service: 'gmail',
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS,
   },
 });
-
-// Verify SMTP transport on startup (logs only; does not crash app)
-// Helps diagnose "Failed to send OTP" due to invalid Gmail/App Password config
-let EMAIL_TRANSPORT_READY = false;
-(async () => {
-  try {
-    await transporter.verify();
-    console.log('SMTP transporter verified: ready to send emails');
-    EMAIL_TRANSPORT_READY = true;
-  } catch (e) {
-    console.error('SMTP verify failed:', e.message);
-    console.error('Hint: Ensure EMAIL_USER is your Gmail and EMAIL_PASS is a Gmail App Password (with 2FA enabled).');
-    EMAIL_TRANSPORT_READY = false;
-  }
-})();
 
 // Verification email sender
 const sendVerificationEmail = async (email, verificationLink) => {
@@ -71,11 +53,10 @@ const sendVerificationEmail = async (email, verificationLink) => {
 };
 
 // ======= OTP Password Reset Flow =======
-// Helper to send OTP email (no fake mode; must deliver or throw)
+// Helper to send OTP email
 const sendPasswordResetOTPEmail = async (email, otp) => {
   try {
-    const info = await transporter.sendMail({
-      from: `BuFood <${process.env.EMAIL_USER}>`,
+    await transporter.sendMail({
       to: email,
       subject: `Your BuFood password reset code: ${otp}`,
       text: `Your password reset code is ${otp}. It expires in 10 minutes. If you didn't request this, ignore this email.`,
@@ -90,7 +71,6 @@ const sendPasswordResetOTPEmail = async (email, otp) => {
         </div>
       `,
     });
-    console.log('OTP email sent:', { messageId: info.messageId, response: info.response });
   } catch (err) {
     console.error('Error sending OTP email:', err.message);
     throw new Error('Failed to send OTP email');
@@ -110,7 +90,7 @@ const forgotPasswordOtp = async (req, res) => {
     const otp = user.createPasswordResetOTP();
     await user.save();
     await sendPasswordResetOTPEmail(user.email, otp);
-    return res.status(200).json({ message: 'If the email exists, an OTP has been sent' });
+    return res.status(200).json({ message: 'OTP sent to email' });
   } catch (error) {
     console.error('Forgot password OTP error:', error);
     return res.status(500).json({ message: 'Error sending OTP' });
@@ -164,7 +144,8 @@ const resendPasswordOtp = async (req, res) => {
     const otp = user.createPasswordResetOTP();
     await user.save();
     await sendPasswordResetOTPEmail(user.email, otp);
-    return res.status(200).json({ message: 'If the email exists, a new OTP has been sent' });
+
+    return res.status(200).json({ message: 'OTP resent' });
   } catch (error) {
     console.error('Resend OTP error:', error);
     return res.status(500).json({ message: 'Error resending OTP' });

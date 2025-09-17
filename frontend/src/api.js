@@ -13,8 +13,8 @@ const api = axios.create({
     headers: {
         'Content-Type': 'application/json',
     },
-    // Prevent requests from hanging indefinitely; allow more time for server cold-starts
-    timeout: 25000,
+    // Prevent requests from hanging indefinitely (helps surface errors faster)
+    timeout: 12000,
 });
 
 // Add auth token to requests if available

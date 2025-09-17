@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { auth } from '../api';
 import logod from '../assets/logod.png';
@@ -19,14 +19,42 @@ const ForgotPasswordPage = () => {
   const [resendIntervalId, setResendIntervalId] = useState(null);
   const navigate = useNavigate();
 
-  // Clean up resend interval on unmount
-  useEffect(() => {
-    return () => {
-      if (resendIntervalId) {
-        clearInterval(resendIntervalId);
-      }
-    };
-  }, [resendIntervalId]);
+  // Extract a helpful error message from various error shapes
+  const extractErrorMessage = (err) => {
+    if (!err) return 'Something went wrong. Please try again.';
+    if (typeof err === 'string') return err;
+    // If our api layer threw response.data directly
+    if (typeof err.message === 'string' && err.message.trim()) {
+      return prettify(err.message);
+    }
+    if (typeof err.error === 'string' && err.error.trim()) {
+      return prettify(err.error);
+    }
+    if (typeof err.details === 'string' && err.details.trim()) {
+      return prettify(err.details);
+    }
+    if (err.data) {
+      if (typeof err.data.message === 'string') return prettify(err.data.message);
+      if (typeof err.data.error === 'string') return prettify(err.data.error);
+    }
+    return 'Request failed. Please try again.';
+  };
+
+  // Normalize a few common backend/network messages into friendlier text
+  const prettify = (msg) => {
+    if (!msg) return 'Request failed. Please try again.';
+    const lower = msg.toLowerCase();
+    if (lower.includes('timeout')) {
+      return 'Request timed out. The server may be waking up. Please try again in a moment.';
+    }
+    if (lower.includes('too many requests') || lower.includes('rate limit')) {
+      return 'Too many requests. Please wait a few seconds and try again.';
+    }
+    if (lower.includes('network error')) {
+      return 'Network error. Please check your connection and try again.';
+    }
+    return msg;
+  };
 
   const startCooldown = (seconds = 60) => {
     setResendCooldown(seconds);
@@ -56,7 +84,7 @@ const ForgotPasswordPage = () => {
       setStep('otp');
       startCooldown(60);
     } catch (err) {
-      setError(err?.message || 'Failed to send OTP.');
+      setError(extractErrorMessage(err) || 'Failed to send OTP.');
     } finally {
       setLoading(false);
     }
@@ -94,7 +122,7 @@ const ForgotPasswordPage = () => {
       setSuccess('Password reset successful. Redirecting to login...');
       setTimeout(() => navigate('/login'), 2000);
     } catch (err) {
-      setError(err?.message || 'Failed to reset password with OTP.');
+      setError(extractErrorMessage(err) || 'Failed to reset password with OTP.');
     } finally {
       setLoading(false);
     }
@@ -109,26 +137,12 @@ const ForgotPasswordPage = () => {
       setSuccess('A new OTP has been sent to your email.');
       startCooldown(60);
     } catch (err) {
-      setError(err?.message || 'Failed to resend OTP.');
+      setError(extractErrorMessage(err) || 'Failed to resend OTP.');
     }
   };
 
   return (
     <div style={styles.pageContainer}>
-      {loading && (
-        <div style={styles.loadingOverlay} role="alert" aria-live="assertive" aria-busy="true">
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
-            {/* Accessible inline SVG spinner */}
-            <svg width="42" height="42" viewBox="0 0 50 50" aria-hidden="true">
-              <circle cx="25" cy="25" r="20" stroke="#ffe0b2" strokeWidth="6" fill="none" />
-              <path d="M25 5 a20 20 0 0 1 0 40" stroke="#ff8c00" strokeWidth="6" fill="none">
-                <animateTransform attributeName="transform" type="rotate" from="0 25 25" to="360 25 25" dur="0.9s" repeatCount="indefinite" />
-              </path>
-            </svg>
-            <div style={styles.loadingText}>{step === 'email' ? 'Sending OTP…' : 'Processing…'}</div>
-          </div>
-        </div>
-      )}
       <div style={styles.container}>
         <img src={logod} alt="Logo" style={styles.logo} />
         <h1 style={styles.title}>Forgot Password</h1>
@@ -270,20 +284,6 @@ const styles = {
     backgroundColor: '#f5f5f5',
     padding: '15px',
     boxSizing: 'border-box',
-  },
-  loadingOverlay: {
-    position: 'fixed',
-    inset: 0,
-    background: 'rgba(0,0,0,0.35)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 9999
-  },
-  loadingText: {
-    color: '#fff',
-    fontWeight: 600,
-    fontSize: 14
   },
   container: {
     width: '100%',

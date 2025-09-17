@@ -1,9 +1,8 @@
-import React, { Suspense, lazy, useEffect } from 'react'
+import React, { Suspense, lazy } from 'react'
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import SplashScreen from './components/SplashScreen'
 import { Box } from '@mui/material'
 import './App.css'
-import { warmup } from './api'
 
 // Lazy-loaded routes (code splitting)
 const LoginPage = lazy(() => import('./auth/loginPage'))
@@ -45,10 +44,6 @@ const CustomerLayout = ({ children }) => (
 );
 
 function App() {
-  useEffect(() => {
-    // Fire-and-forget warmup to reduce perceived backend cold-start delays
-    warmup();
-  }, []);
   return (
     <div className="app-container">
       <Router>
