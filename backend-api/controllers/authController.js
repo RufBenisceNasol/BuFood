@@ -71,14 +71,8 @@ const sendVerificationEmail = async (email, verificationLink) => {
 };
 
 // ======= OTP Password Reset Flow =======
-// Helper to send OTP email
+// Helper to send OTP email (no fake mode; must deliver or throw)
 const sendPasswordResetOTPEmail = async (email, otp) => {
-  const FAKE_MODE = String(process.env.EMAIL_FAKE_MODE || '').toLowerCase() === 'true';
-  if (!EMAIL_TRANSPORT_READY || FAKE_MODE) {
-    console.warn('[EMAIL_FAKE_MODE or transport not ready] OTP for', email, '=>', otp);
-    // Do not throw; allow flow to proceed (useful in development or when SMTP not configured)
-    return;
-  }
   try {
     const info = await transporter.sendMail({
       from: `BuFood <${process.env.EMAIL_USER}>`,
@@ -99,7 +93,7 @@ const sendPasswordResetOTPEmail = async (email, otp) => {
     console.log('OTP email sent:', { messageId: info.messageId, response: info.response });
   } catch (err) {
     console.error('Error sending OTP email:', err.message);
-    // Do not throw to avoid failing the request – we still proceed for UX
+    throw new Error('Failed to send OTP email');
   }
 };
 
@@ -119,8 +113,7 @@ const forgotPasswordOtp = async (req, res) => {
     return res.status(200).json({ message: 'If the email exists, an OTP has been sent' });
   } catch (error) {
     console.error('Forgot password OTP error:', error);
-    // Avoid surfacing transport failures to client; keep response generic and 200 to prevent frontend hard failure
-    return res.status(200).json({ message: 'If the email exists, an OTP has been sent' });
+    return res.status(500).json({ message: 'Error sending OTP' });
   }
 };
 
@@ -174,8 +167,7 @@ const resendPasswordOtp = async (req, res) => {
     return res.status(200).json({ message: 'If the email exists, a new OTP has been sent' });
   } catch (error) {
     console.error('Resend OTP error:', error);
-    // Keep generic success to avoid blocking UX
-    return res.status(200).json({ message: 'If the email exists, a new OTP has been sent' });
+    return res.status(500).json({ message: 'Error resending OTP' });
   }
 };
 
