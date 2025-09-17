@@ -20,6 +20,7 @@ const transporter = nodemailer.createTransport({
 const sendVerificationEmail = async (email, verificationLink) => {
   try {
     await transporter.sendMail({
+      from: process.env.EMAIL_FROM || 'BuFood <no-reply@yourdomain.com>',
       to: email,
       subject: 'Verify Your Email - Bufood 🍽️',
       html: `
