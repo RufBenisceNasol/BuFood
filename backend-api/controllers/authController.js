@@ -7,9 +7,12 @@ const { createStoreForSeller } = require('./storeController');
 
 require('dotenv').config();
 
-// Nodemailer setup
+// Nodemailer setup (explicit Gmail SMTP)
 const transporter = nodemailer.createTransport({
-  service: 'gmail',
+  host: 'smtp.gmail.com',
+  port: 465,
+  secure: true,
+  pool: true,
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS,
@@ -77,7 +80,8 @@ const sendPasswordResetOTPEmail = async (email, otp) => {
     return;
   }
   try {
-    await transporter.sendMail({
+    const info = await transporter.sendMail({
+      from: `BuFood <${process.env.EMAIL_USER}>`,
       to: email,
       subject: `Your BuFood password reset code: ${otp}`,
       text: `Your password reset code is ${otp}. It expires in 10 minutes. If you didn't request this, ignore this email.`,
@@ -92,6 +96,7 @@ const sendPasswordResetOTPEmail = async (email, otp) => {
         </div>
       `,
     });
+    console.log('OTP email sent:', { messageId: info.messageId, response: info.response });
   } catch (err) {
     console.error('Error sending OTP email:', err.message);
     // Do not throw to avoid failing the request – we still proceed for UX
