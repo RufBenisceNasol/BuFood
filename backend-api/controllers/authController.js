@@ -16,6 +16,17 @@ const transporter = nodemailer.createTransport({
   },
 });
 
+// Verify SMTP credentials on startup (non-fatal)
+setImmediate(() => {
+  transporter.verify((err, success) => {
+    if (err) {
+      console.error('SMTP verification failed:', err.message);
+    } else {
+      console.log('SMTP server is ready to take our messages');
+    }
+  });
+});
+
 // Verification email sender
 const sendVerificationEmail = async (email, verificationLink) => {
   try {
@@ -58,6 +69,7 @@ const sendVerificationEmail = async (email, verificationLink) => {
 const sendPasswordResetOTPEmail = async (email, otp) => {
   try {
     await transporter.sendMail({
+      from: process.env.EMAIL_FROM || 'BuFood <no-reply@yourdomain.com>',
       to: email,
       subject: `Your BuFood password reset code: ${otp}`,
       text: `Your password reset code is ${otp}. It expires in 10 minutes. If you didn't request this, ignore this email.`,
@@ -72,6 +84,7 @@ const sendPasswordResetOTPEmail = async (email, otp) => {
         </div>
       `,
     });
+    console.log(`Password reset OTP email sent to ${email}`);
   } catch (err) {
     console.error('Error sending OTP email:', err.message);
     throw new Error('Failed to send OTP email');
@@ -92,7 +105,11 @@ const forgotPasswordOtp = async (req, res) => {
     const otp = user.createPasswordResetOTP();
     await user.save();
     await sendPasswordResetOTPEmail(user.email, otp);
-    return res.status(200).json({ message: 'OTP sent to email' });
+    const payload = { message: 'OTP sent to email' };
+    if (process.env.EXPOSE_OTP_FOR_TESTING === 'true') {
+      payload.otp = otp;
+    }
+    return res.status(200).json(payload);
   } catch (error) {
     console.error('Forgot password OTP error:', error);
     return res.status(500).json({ message: 'Error sending OTP' });
@@ -137,7 +154,8 @@ const resetPasswordOtp = async (req, res) => {
 const resendPasswordOtp = async (req, res) => {
   try {
     const { email } = req.body;
-    const user = await User.findOne({ email });
+    const normalizedEmail = (email || '').trim().toLowerCase();
+    const user = await User.findOne({ email: normalizedEmail });
     // Always 200 to prevent enumeration
     if (!user) {
       return res.status(200).json({ message: 'If the email exists, a new OTP has been sent' });
@@ -146,8 +164,11 @@ const resendPasswordOtp = async (req, res) => {
     const otp = user.createPasswordResetOTP();
     await user.save();
     await sendPasswordResetOTPEmail(user.email, otp);
-
-    return res.status(200).json({ message: 'OTP resent' });
+    const payload = { message: 'OTP resent' };
+    if (process.env.EXPOSE_OTP_FOR_TESTING === 'true') {
+      payload.otp = otp;
+    }
+    return res.status(200).json(payload);
   } catch (error) {
     console.error('Resend OTP error:', error);
     return res.status(500).json({ message: 'Error resending OTP' });
