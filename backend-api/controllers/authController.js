@@ -210,12 +210,13 @@ const register = async (req, res) => {
 
     await user.save();
 
-    // 🔥 Create store if role is Seller
+    // 🔥 Create store if role is Seller (non-fatal on failure)
+    let storeCreationFailed = false;
     if (role === 'Seller') {
       try {
         const store = await createStoreForSeller(user);
 
-        // ✅ Optionally attach store info to user
+        // ✅ Attach store info to user
         user.store = {
           storeName: store.storeName,
           storeId: store._id,
@@ -224,9 +225,8 @@ const register = async (req, res) => {
         await user.save();
       } catch (err) {
         console.error('Error creating store:', err.message);
-        // ❌ Delete the user if store creation fails
-        await User.findByIdAndDelete(user._id);
-        return res.status(500).json({ message: 'Failed to create store for seller' });
+        // Do NOT delete user or fail registration; mark flag so client can inform user/admin
+        storeCreationFailed = true;
       }
     }
 
@@ -246,6 +246,7 @@ const register = async (req, res) => {
         ? 'User registered. Verification email could not be sent. Please contact support or try resending from the login page.'
         : 'User registered successfully. Please check your email to verify your account.',
       emailFailed,
+      storeCreationFailed,
     });
   } catch (error) {
     console.error('Error during registration:', error.message);

@@ -69,7 +69,9 @@ export const auth = {
             const response = await api.post('/auth/register', userData);
             return response.data;
         } catch (error) {
-            throw error.response?.data || error.message;
+            const backend = error.response?.data;
+            const message = (backend && (backend.message || backend.error || (typeof backend === 'string' ? backend : null))) || error.message || 'Registration failed';
+            throw new Error(message);
         }
     },
 

@@ -10,10 +10,14 @@ const registerValidation = [
 
     body('contactNumber')
         .notEmpty().withMessage('Contact number is required')
-        .isMobilePhone().withMessage('Invalid contact number'),
+        // Accept common international or local numeric formats (7-15 digits, optional leading + or leading 0)
+        .matches(/^(\+?\d{7,15}|0\d{9,12})$/)
+        .withMessage('Invalid contact number. Use digits only, optionally starting with + or 0.'),
 
     body('password')
-        .isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
+        .isLength({ min: 8, max: 8 }).withMessage('Password must be exactly 8 characters long')
+        .matches(/\d/).withMessage('Password must contain a number')
+        .matches(/[A-Z]/).withMessage('Password must contain an uppercase letter'),
 
     body('role')
         .optional()
