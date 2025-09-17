@@ -425,6 +425,7 @@ const forgotPassword = async (req, res) => {
     const resetUrl = `${frontendBase}/reset-password/${resetToken}`;
     
     await transporter.sendMail({
+      from: `BuFood <${process.env.EMAIL_USER}>`,
       to: user.email,
       subject: 'Password Reset Request - BuFood',
       html: `
