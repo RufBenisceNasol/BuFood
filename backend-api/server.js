@@ -35,6 +35,9 @@ const storeMemberRoutes = require('./routes/storeMemberRoutes');
 const reviewRoutes = require('./routes/reviewRoutes');
 
 const app = express();
+// Trust the reverse proxy (e.g., Render, Nginx) so req.ip reflects the real client IP
+// and express-rate-limit can safely use X-Forwarded-For
+app.set('trust proxy', 1);
 const port = process.env.PORT || 8000;
 
 // Security middleware
@@ -56,7 +59,10 @@ app.use(helmet({
 const limiter = rateLimit({
     windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000,
     max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 100,
-    message: { error: 'Too many requests, please try again later.' }
+    standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+    legacyHeaders: false,  // Disable the `X-RateLimit-*` headers
+    message: { error: 'Too many requests, please try again later.' },
+    keyGenerator: (req, _res) => req.ip, // Will respect trust proxy
 });
 
 const speedLimiter = slowDown({
