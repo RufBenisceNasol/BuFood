@@ -85,18 +85,23 @@ const sendPasswordResetOTPEmail = async (email, otp) => {
 const forgotPasswordOtp = async (req, res) => {
   try {
     const { email } = req.body;
+    console.log('[OTP] Forgot request for:', email);
     const user = await User.findOne({ email });
     // Always respond 200 to avoid account enumeration
     if (!user) {
+      console.log('[OTP] No user found for email; responding 200 to avoid enumeration');
       return res.status(200).json({ message: 'If the email exists, an OTP has been sent' });
     }
 
     const otp = user.createPasswordResetOTP();
+    console.log('[OTP] Generated OTP and hashed in DB; expires at:', new Date(user.passwordResetOTPExpires).toISOString());
     await user.save();
+    console.log('[OTP] User saved with OTP expiry; sending email...');
     await sendPasswordResetOTPEmail(user.email, otp);
+    console.log('[OTP] Email send requested via transporter');
     return res.status(200).json({ message: 'OTP sent to email' });
   } catch (error) {
-    console.error('Forgot password OTP error:', error);
+    console.error('[OTP] Forgot password OTP error:', error);
     return res.status(500).json({ message: 'Error sending OTP' });
   }
 };
@@ -105,11 +110,13 @@ const forgotPasswordOtp = async (req, res) => {
 const resetPasswordOtp = async (req, res) => {
   try {
     const { email, otp, newPassword } = req.body;
+    console.log('[OTP] Reset request for:', email);
     const user = await User.findOne({ email });
     if (!user) {
       return res.status(400).json({ message: 'Invalid email or OTP' });
     }
     const hashedOtp = crypto.createHash('sha256').update(otp).digest('hex');
+    console.log('[OTP] Comparing hashed OTP');
     const isValid =
       user.passwordResetOTP &&
       user.passwordResetOTP === hashedOtp &&
@@ -117,20 +124,23 @@ const resetPasswordOtp = async (req, res) => {
       user.passwordResetOTPExpires > Date.now();
 
     if (!isValid) {
+      console.log('[OTP] Invalid or expired OTP');
       return res.status(400).json({ message: 'Invalid or expired OTP' });
     }
 
+    console.log('[OTP] OTP valid; hashing new password');
     user.password = await bcrypt.hash(newPassword, 10);
     user.passwordResetOTP = undefined;
     user.passwordResetOTPExpires = undefined;
     user.passwordResetToken = undefined;
     user.passwordResetExpires = undefined;
     await user.save();
+    console.log('[OTP] Password updated; sending confirmation email');
     await sendPasswordChangedEmail(user.email);
 
     return res.status(200).json({ message: 'Password reset successful' });
   } catch (error) {
-    console.error('Reset password via OTP error:', error);
+    console.error('[OTP] Reset password via OTP error:', error);
     return res.status(500).json({ message: 'Error resetting password' });
   }
 };
@@ -139,19 +149,23 @@ const resetPasswordOtp = async (req, res) => {
 const resendPasswordOtp = async (req, res) => {
   try {
     const { email } = req.body;
+    console.log('[OTP] Resend request for:', email);
     const user = await User.findOne({ email });
     // Always 200 to prevent enumeration
     if (!user) {
+      console.log('[OTP] No user for resend; responding 200');
       return res.status(200).json({ message: 'If the email exists, a new OTP has been sent' });
     }
 
     const otp = user.createPasswordResetOTP();
+    console.log('[OTP] Regenerated OTP; expires at:', new Date(user.passwordResetOTPExpires).toISOString());
     await user.save();
+    console.log('[OTP] User saved; resending OTP email');
     await sendPasswordResetOTPEmail(user.email, otp);
 
     return res.status(200).json({ message: 'OTP resent' });
   } catch (error) {
-    console.error('Resend OTP error:', error);
+    console.error('[OTP] Resend OTP error:', error);
     return res.status(500).json({ message: 'Error resending OTP' });
   }
 };
