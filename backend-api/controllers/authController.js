@@ -7,11 +7,9 @@ const { createStoreForSeller } = require('./storeController');
 
 require('dotenv').config();
 
-// Nodemailer setup - use explicit Gmail SMTP (more reliable on some hosts)
+// Nodemailer setup
 const transporter = nodemailer.createTransport({
-  host: 'smtp.gmail.com',
-  port: 465,
-  secure: true, // true for 465, false for 587
+  service: 'gmail',
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS,
@@ -22,7 +20,6 @@ const transporter = nodemailer.createTransport({
 const sendVerificationEmail = async (email, verificationLink) => {
   try {
     await transporter.sendMail({
-      from: `BuFood <${process.env.EMAIL_USER}>`,
       to: email,
       subject: 'Verify Your Email - Bufood 🍽️',
       html: `
@@ -60,7 +57,6 @@ const sendVerificationEmail = async (email, verificationLink) => {
 const sendPasswordResetOTPEmail = async (email, otp) => {
   try {
     await transporter.sendMail({
-      from: `BuFood <${process.env.EMAIL_USER}>`,
       to: email,
       subject: `Your BuFood password reset code: ${otp}`,
       text: `Your password reset code is ${otp}. It expires in 10 minutes. If you didn't request this, ignore this email.`,
@@ -85,23 +81,18 @@ const sendPasswordResetOTPEmail = async (email, otp) => {
 const forgotPasswordOtp = async (req, res) => {
   try {
     const { email } = req.body;
-    console.log('[OTP] Forgot request for:', email);
     const user = await User.findOne({ email });
     // Always respond 200 to avoid account enumeration
     if (!user) {
-      console.log('[OTP] No user found for email; responding 200 to avoid enumeration');
       return res.status(200).json({ message: 'If the email exists, an OTP has been sent' });
     }
 
     const otp = user.createPasswordResetOTP();
-    console.log('[OTP] Generated OTP and hashed in DB; expires at:', new Date(user.passwordResetOTPExpires).toISOString());
     await user.save();
-    console.log('[OTP] User saved with OTP expiry; sending email...');
     await sendPasswordResetOTPEmail(user.email, otp);
-    console.log('[OTP] Email send requested via transporter');
     return res.status(200).json({ message: 'OTP sent to email' });
   } catch (error) {
-    console.error('[OTP] Forgot password OTP error:', error);
+    console.error('Forgot password OTP error:', error);
     return res.status(500).json({ message: 'Error sending OTP' });
   }
 };
@@ -110,13 +101,11 @@ const forgotPasswordOtp = async (req, res) => {
 const resetPasswordOtp = async (req, res) => {
   try {
     const { email, otp, newPassword } = req.body;
-    console.log('[OTP] Reset request for:', email);
     const user = await User.findOne({ email });
     if (!user) {
       return res.status(400).json({ message: 'Invalid email or OTP' });
     }
     const hashedOtp = crypto.createHash('sha256').update(otp).digest('hex');
-    console.log('[OTP] Comparing hashed OTP');
     const isValid =
       user.passwordResetOTP &&
       user.passwordResetOTP === hashedOtp &&
@@ -124,23 +113,20 @@ const resetPasswordOtp = async (req, res) => {
       user.passwordResetOTPExpires > Date.now();
 
     if (!isValid) {
-      console.log('[OTP] Invalid or expired OTP');
       return res.status(400).json({ message: 'Invalid or expired OTP' });
     }
 
-    console.log('[OTP] OTP valid; hashing new password');
     user.password = await bcrypt.hash(newPassword, 10);
     user.passwordResetOTP = undefined;
     user.passwordResetOTPExpires = undefined;
     user.passwordResetToken = undefined;
     user.passwordResetExpires = undefined;
     await user.save();
-    console.log('[OTP] Password updated; sending confirmation email');
     await sendPasswordChangedEmail(user.email);
 
     return res.status(200).json({ message: 'Password reset successful' });
   } catch (error) {
-    console.error('[OTP] Reset password via OTP error:', error);
+    console.error('Reset password via OTP error:', error);
     return res.status(500).json({ message: 'Error resetting password' });
   }
 };
@@ -149,23 +135,19 @@ const resetPasswordOtp = async (req, res) => {
 const resendPasswordOtp = async (req, res) => {
   try {
     const { email } = req.body;
-    console.log('[OTP] Resend request for:', email);
     const user = await User.findOne({ email });
     // Always 200 to prevent enumeration
     if (!user) {
-      console.log('[OTP] No user for resend; responding 200');
       return res.status(200).json({ message: 'If the email exists, a new OTP has been sent' });
     }
 
     const otp = user.createPasswordResetOTP();
-    console.log('[OTP] Regenerated OTP; expires at:', new Date(user.passwordResetOTPExpires).toISOString());
     await user.save();
-    console.log('[OTP] User saved; resending OTP email');
     await sendPasswordResetOTPEmail(user.email, otp);
 
     return res.status(200).json({ message: 'OTP resent' });
   } catch (error) {
-    console.error('[OTP] Resend OTP error:', error);
+    console.error('Resend OTP error:', error);
     return res.status(500).json({ message: 'Error resending OTP' });
   }
 };
@@ -228,8 +210,7 @@ const register = async (req, res) => {
 
     await user.save();
 
-    // 🔥 Create store if role is Seller (non-blocking)
-    let storeCreationWarning = false;
+    // 🔥 Create store if role is Seller
     if (role === 'Seller') {
       try {
         const store = await createStoreForSeller(user);
@@ -242,23 +223,19 @@ const register = async (req, res) => {
         };
         await user.save();
       } catch (err) {
-        console.error('Non-fatal: Error creating store for seller:', err.message);
-        // Do NOT delete the user; allow registration to succeed and let seller create store later
-        storeCreationWarning = true;
+        console.error('Error creating store:', err.message);
+        // ❌ Delete the user if store creation fails
+        await User.findByIdAndDelete(user._id);
+        return res.status(500).json({ message: 'Failed to create store for seller' });
       }
     }
 
     const baseUrl = process.env.BASE_URL || 'http://localhost:8000';
     const verificationLink = `${baseUrl}/api/auth/verify/${verificationToken}`;
-    // Try to send verification email, but do NOT fail registration if it errors
-    try {
-      await sendVerificationEmail(email, verificationLink);
-    } catch (e) {
-      console.error('Non-fatal: failed to send verification email:', e?.message || e);
-    }
+    await sendVerificationEmail(email, verificationLink);
 
     res.status(201).json({
-      message: 'User registered successfully. If you did not receive a verification email, please use Resend Verification on the login page.' + (storeCreationWarning ? ' Store setup could not be completed now; please create your store from the seller dashboard.' : ''),
+      message: 'User registered successfully. Please check your email to verify your account.',
     });
   } catch (error) {
     console.error('Error during registration:', error.message);
@@ -429,32 +406,25 @@ const forgotPassword = async (req, res) => {
     const frontendBase = process.env.FRONTEND_URL || 'http://localhost:5173';
     const resetUrl = `${frontendBase}/reset-password/${resetToken}`;
     
-    // Try to send the email, but respond generically to avoid leaking info and to be resilient
-    try {
-      await transporter.sendMail({
-        from: `BuFood <${process.env.EMAIL_USER}>`,
-        to: user.email,
-        subject: 'Password Reset Request - BuFood',
-        html: `
-          <div style="font-family: Arial, sans-serif; background-color: #f9f9f9; padding: 20px;">
-            <h2>Reset Your Password</h2>
-            <p>Click the button below to reset your password. This link is valid for 10 minutes.</p>
-            <a href="${resetUrl}" style="background-color: #28a745; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">
-              Reset Password
-            </a>
-            <p>If you didn't request this, please ignore this email.</p>
-          </div>
-        `
-      });
-    } catch (mailErr) {
-      console.error('Non-fatal: failed to send password reset email:', mailErr?.message || mailErr);
-    }
+    await transporter.sendMail({
+      to: user.email,
+      subject: 'Password Reset Request - BuFood',
+      html: `
+        <div style="font-family: Arial, sans-serif; background-color: #f9f9f9; padding: 20px;">
+          <h2>Reset Your Password</h2>
+          <p>Click the button below to reset your password. This link is valid for 10 minutes.</p>
+          <a href="${resetUrl}" style="background-color: #28a745; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">
+            Reset Password
+          </a>
+          <p>If you didn't request this, please ignore this email.</p>
+        </div>
+      `
+    });
 
-    res.status(200).json({ message: 'If the email exists, a password reset link has been sent.' });
+    res.status(200).json({ message: 'Password reset email sent' });
   } catch (error) {
     console.error('Password reset error:', error);
-    // Generic 200 to avoid enumeration and keep UX smooth
-    res.status(200).json({ message: 'If the email exists, a password reset link has been sent.' });
+    res.status(500).json({ message: 'Error sending password reset email' });
   }
 };
 
