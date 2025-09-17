@@ -106,6 +106,12 @@ const RegisterPage = () => {
                 }, 5000);
             } else if (data?.message) {
                 setSuccess(data.message);
+                // If email was queued for sending, allow the user to resend right away
+                if (data.emailQueued) {
+                    setCanResendVerification(true);
+                }
+                // Give a bit more time before redirecting so user can click resend if needed
+                setTimeout(() => navigate('/login'), 8000);
             }
         } catch (err) {
             // New error format from auth.register: { message, status, isVerified }

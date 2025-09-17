@@ -232,8 +232,8 @@ const register = async (req, res) => {
       }
     }
 
-    const baseUrl = process.env.BASE_URL || 'http://localhost:8000';
-    const verificationLink = `${baseUrl}/api/auth/verify/${verificationToken}`;
+    const frontendBase = process.env.FRONTEND_URL || 'http://localhost:5173';
+    const verificationLink = `${frontendBase}/verify/${verificationToken}`;
     // Send verification email in background; do not block the response
     setImmediate(async () => {
       try {
@@ -353,9 +353,9 @@ const resendVerificationEmail = async (req, res) => {
     user.verificationToken = verificationToken;
     await user.save();
 
-    // Send new verification email
-    const baseUrl = process.env.BASE_URL || 'http://localhost:8000';
-    const verificationLink = `${baseUrl}/api/auth/verify/${verificationToken}`;
+    // Send new verification email (link points to frontend verify route)
+    const frontendBase = process.env.FRONTEND_URL || 'http://localhost:5173';
+    const verificationLink = `${frontendBase}/verify/${verificationToken}`;
     await sendVerificationEmail(user.email, verificationLink);
 
     res.status(200).json({ message: 'Verification email resent successfully' });

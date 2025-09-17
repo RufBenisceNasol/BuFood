@@ -9,6 +9,7 @@ const LoginPage = lazy(() => import('./auth/loginPage'))
 const RegisterPage = lazy(() => import('./auth/registerPage'))
 const ForgotPasswordPage = lazy(() => import('./auth/ForgotPasswordPage'))
 const ResetPasswordConfirmationPage = lazy(() => import('./auth/ResetPasswordConfirmationPage'))
+const VerifyEmailPage = lazy(() => import('./auth/VerifyEmailPage'))
 
 // Seller
 const DashboardPage = lazy(() => import('./seller/DashboardPage'))
@@ -55,6 +56,7 @@ function App() {
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
             <Route path="/reset-password/:token" element={<ResetPasswordConfirmationPage />} />
+            <Route path="/verify/:token" element={<VerifyEmailPage />} />
 
             {/* Seller Routes */}
             <Route path="/seller/dashboard" element={<DashboardPage />} />
