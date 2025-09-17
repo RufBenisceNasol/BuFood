@@ -228,7 +228,8 @@ const register = async (req, res) => {
 
     await user.save();
 
-    // 🔥 Create store if role is Seller
+    // 🔥 Create store if role is Seller (non-blocking)
+    let storeCreationWarning = false;
     if (role === 'Seller') {
       try {
         const store = await createStoreForSeller(user);
@@ -241,19 +242,23 @@ const register = async (req, res) => {
         };
         await user.save();
       } catch (err) {
-        console.error('Error creating store:', err.message);
-        // ❌ Delete the user if store creation fails
-        await User.findByIdAndDelete(user._id);
-        return res.status(500).json({ message: 'Failed to create store for seller' });
+        console.error('Non-fatal: Error creating store for seller:', err.message);
+        // Do NOT delete the user; allow registration to succeed and let seller create store later
+        storeCreationWarning = true;
       }
     }
 
     const baseUrl = process.env.BASE_URL || 'http://localhost:8000';
     const verificationLink = `${baseUrl}/api/auth/verify/${verificationToken}`;
-    await sendVerificationEmail(email, verificationLink);
+    // Try to send verification email, but do NOT fail registration if it errors
+    try {
+      await sendVerificationEmail(email, verificationLink);
+    } catch (e) {
+      console.error('Non-fatal: failed to send verification email:', e?.message || e);
+    }
 
     res.status(201).json({
-      message: 'User registered successfully. Please check your email to verify your account.',
+      message: 'User registered successfully. If you did not receive a verification email, please use Resend Verification on the login page.' + (storeCreationWarning ? ' Store setup could not be completed now; please create your store from the seller dashboard.' : ''),
     });
   } catch (error) {
     console.error('Error during registration:', error.message);
@@ -424,26 +429,32 @@ const forgotPassword = async (req, res) => {
     const frontendBase = process.env.FRONTEND_URL || 'http://localhost:5173';
     const resetUrl = `${frontendBase}/reset-password/${resetToken}`;
     
-    await transporter.sendMail({
-      from: `BuFood <${process.env.EMAIL_USER}>`,
-      to: user.email,
-      subject: 'Password Reset Request - BuFood',
-      html: `
-        <div style="font-family: Arial, sans-serif; background-color: #f9f9f9; padding: 20px;">
-          <h2>Reset Your Password</h2>
-          <p>Click the button below to reset your password. This link is valid for 10 minutes.</p>
-          <a href="${resetUrl}" style="background-color: #28a745; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">
-            Reset Password
-          </a>
-          <p>If you didn't request this, please ignore this email.</p>
-        </div>
-      `
-    });
+    // Try to send the email, but respond generically to avoid leaking info and to be resilient
+    try {
+      await transporter.sendMail({
+        from: `BuFood <${process.env.EMAIL_USER}>`,
+        to: user.email,
+        subject: 'Password Reset Request - BuFood',
+        html: `
+          <div style="font-family: Arial, sans-serif; background-color: #f9f9f9; padding: 20px;">
+            <h2>Reset Your Password</h2>
+            <p>Click the button below to reset your password. This link is valid for 10 minutes.</p>
+            <a href="${resetUrl}" style="background-color: #28a745; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">
+              Reset Password
+            </a>
+            <p>If you didn't request this, please ignore this email.</p>
+          </div>
+        `
+      });
+    } catch (mailErr) {
+      console.error('Non-fatal: failed to send password reset email:', mailErr?.message || mailErr);
+    }
 
-    res.status(200).json({ message: 'Password reset email sent' });
+    res.status(200).json({ message: 'If the email exists, a password reset link has been sent.' });
   } catch (error) {
     console.error('Password reset error:', error);
-    res.status(500).json({ message: 'Error sending password reset email' });
+    // Generic 200 to avoid enumeration and keep UX smooth
+    res.status(200).json({ message: 'If the email exists, a password reset link has been sent.' });
   }
 };
 
