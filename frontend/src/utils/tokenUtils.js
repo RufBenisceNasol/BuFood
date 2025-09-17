@@ -1,3 +1,13 @@
+/*
+ * tokenUtils
+ * -------------------------------------------------------------
+ * App flow role:
+ *  - Centralized helpers to store/retrieve/remove auth tokens and user info
+ *    from localStorage/sessionStorage, depending on "remember me".
+ *  - Pages/components call the getters (e.g., `getUser()`) to personalize UI.
+ *  - API calls (see `src/api/index.js`) read `getToken()` to attach auth headers.
+ *  - `setToken`/`setUser` pick storage based on rememberMe to persist sessions.
+ */
 // Utility for managing tokens and user info in localStorage/sessionStorage for 'remember me' functionality
 
 // Storage keys

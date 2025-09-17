@@ -1,3 +1,24 @@
+/*
+  * ViewMyOrder
+  * -------------------------------------------------------------
+  * Customer orders history and tracking page. It supports:
+  *  - Fetching the authenticated user's orders and auto-refreshing them
+  *  - Expandable order cards to view items and cost breakdown
+  *  - Status timeline with visual indicators per order state
+  *  - Reorder button to quickly add items back to cart
+  *  - Add review flow targeting any item in the order
+  *  - Manual GCash proof upload for orders using GCash_Manual
+  *  - Success notifications via lightweight modal and inline toasts
+  *
+  * Data flow:
+  *  - Initial load from /orders/my-orders
+  *  - Periodic refresh every 15s to keep statuses up to date
+  *  - Mutations (cancel, reorder, upload proof, review) call API
+  *
+  * Navigation:
+  *  - Back button returns to the home page
+  */
+
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';

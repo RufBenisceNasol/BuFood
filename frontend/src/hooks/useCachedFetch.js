@@ -1,3 +1,12 @@
+/*
+ * useCachedFetch
+ * -------------------------------------------------------------
+ * App flow role:
+ *  - Provides a cache-first loading pattern with background refresh.
+ *  - Reads/writes data to localStorage (via cacheKey) to render instantly
+ *    on revisit, then refreshes from the provided fetchFn.
+ *  - Returns loading/error/hadCache flags to help pages tune UX.
+ */
 import { useEffect, useState, useCallback } from 'react';
 
 // useCachedFetch

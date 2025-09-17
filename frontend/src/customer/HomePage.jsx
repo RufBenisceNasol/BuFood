@@ -1,3 +1,23 @@
+/*
+  * HomePage
+  * -------------------------------------------------------------
+  * Main customer landing page. It shows:
+  *  - A banner slider of stores (from API, de-duplicated)
+  *  - Popular products and the full product grid with filters
+  *  - Sticky search bar and filter controls
+  *  - Add-to-cart interactions with success feedback modal
+  *  - Bottom navigation and a small popup menu (profile, orders, settings, logout)
+  *
+  * Data flow & caching:
+  *  - Cache-first render from localStorage for stores/products
+  *  - Fetch fresh data on mount and via debounced background refresh
+  *  - Cart count fetched and updated optimistically on add-to-cart
+  *
+  * Responsiveness:
+  *  - Product grid columns auto-adjust with viewport width
+  *  - Styled primarily via external CSS + inline styles
+  */
+
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MdSearch, MdHome, MdFavoriteBorder, MdShoppingCart, MdReceipt, MdPerson, MdFilterList, MdClose, MdMenuOpen, MdSettings, MdLogout, MdStore, MdAddShoppingCart, MdCheckCircle } from 'react-icons/md';
@@ -111,7 +131,7 @@ const HomePage = () => {
   }, []);
 
   useEffect(() => {
-    // Get user data from local storage
+    // Get user data from localStorage for greeting
     const userData = getUser();
     if (userData && userData.name) {
       setUserName(userData.name);
@@ -136,7 +156,7 @@ const HomePage = () => {
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   useEffect(() => {
-    // Cache-first render
+    // Cache-first render from localStorage, then refresh from API
     let hadCache = false;
     try {
       const cachedStores = JSON.parse(localStorage.getItem(STORES_CACHE_KEY) || 'null');
@@ -181,7 +201,7 @@ const HomePage = () => {
     }
   };
 
-  // Apply filters and search
+  // Apply filters and search to allProducts
   useEffect(() => {
     let result = [...allProducts];
     
@@ -229,6 +249,7 @@ const HomePage = () => {
   }, [searchQuery, filters, allProducts]);
 
   const fetchData = async ({ showLoader = true } = {}) => {
+    // Fetch stores and products concurrently; update caches on success
     if (showLoader) {
       setLoading(true);
     }
@@ -308,6 +329,7 @@ const HomePage = () => {
   }, { delayMs: 600, intervalMs: 30000 });
 
   const handleAddToCart = async (product) => {
+    // Add single unit to cart; show short success modal and bump badge
     try {
       await cart.addToCart(product._id, 1);
       // Show success modal message
@@ -370,10 +392,12 @@ const HomePage = () => {
   };
 
   const handleProductClick = (productId) => {
+    // Navigate to product details
     navigate(`/customer/product/${productId}`);
   };
 
   const handleStoreClick = (storeId) => {
+    // Navigate to store details
     navigate(`/customer/store/${storeId}`);
   };
 

@@ -1,3 +1,22 @@
+/*
+  * SingleProductPage
+  * -------------------------------------------------------------
+  * Displays a single product’s details for customers. It supports:
+  *  - Cache-first product loading with background fetch update
+  *  - Add-to-cart with quantity controls and success feedback
+  *  - Favorite toggle persisted in localStorage
+  *  - Basic reviews list fetched from backend
+  *  - Responsive layout using styled-components
+  *
+  * Data flow:
+  *  - On mount, read cached product (localStorage) when available
+  *  - Fetch latest details from the API and refresh the cache
+  *  - Separately fetch product reviews
+  *
+  * Navigation:
+  *  - Back button returns to the customer home page
+  */
+
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { product, cart, review } from '../api';
@@ -391,7 +410,7 @@ const SingleProductPage = () => {
     const [successModal, setSuccessModal] = useState({ open: false, message: '' });
 
     useEffect(() => {
-        // Load current user from localStorage
+        // Load current user from localStorage (for review name/image resolution)
         try {
             const user = getUser() || {};
             setCurrentUser(user && user.name ? user : null);
@@ -405,6 +424,7 @@ const SingleProductPage = () => {
     };
 
     useEffect(() => {
+        // Cache-first render for product, then fetch latest to refresh cache
         const CACHE_KEY = `bufood:product:${productId}`;
         let hadCache = false;
 
@@ -419,6 +439,7 @@ const SingleProductPage = () => {
         } catch (_) {}
 
         const fetchProductDetails = async ({ showLoader = true } = {}) => {
+            // Fetch product details from API and update local cache
             try {
                 if (showLoader) setLoading(true);
                 const data = await product.getProductById(productId);
@@ -437,7 +458,7 @@ const SingleProductPage = () => {
     }, [productId]);
 
     useEffect(() => {
-        // Load reviews for this product from backend
+        // Load reviews for this product from backend (best-effort)
         let isMounted = true;
         (async () => {
             try {
@@ -453,6 +474,7 @@ const SingleProductPage = () => {
     }, [productId]);
 
     const handleAddToCart = async () => {
+        // Add current product to cart with selected quantity
         try {
             await cart.addToCart(productId, quantity);
             setSuccessModal({ open: true, message: 'Product added to cart successfully' });

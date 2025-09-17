@@ -1,3 +1,11 @@
+/*
+ * useDebouncedRefresh
+ * -------------------------------------------------------------
+ * App flow role:
+ *  - Central hook to schedule debounced background refresh work.
+ *  - Triggers refresh on interval and when the app regains focus/visibility.
+ *  - Pages call this to keep cached UI data fresh without flashing loaders.
+ */
 import { useEffect, useRef, useCallback, useState } from 'react';
 
 // useDebouncedRefresh

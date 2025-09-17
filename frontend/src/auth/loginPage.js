@@ -48,7 +48,7 @@ const LoginPage = () => {
             clearTimeout(wakeTimerRef.current);
         }
         wakeTimerRef.current = setTimeout(() => {
-            setLoadingMessage('Waking server... This first login can take up to a minute.');
+            setLoadingMessage('logging in...');
         }, 4000);
 
         // Validate password length

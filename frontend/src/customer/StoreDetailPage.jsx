@@ -1,3 +1,26 @@
+/*
+  * StoreDetailPage
+  * -------------------------------------------------------------
+  * Customer-facing page that displays a single store’s details
+  * and its products. It supports:
+  *  - Cache-first rendering of store data with background refresh
+  *  - Toggling a store as favorite (persisted in localStorage)
+  *  - Simple tab navigation (e.g., Products, Categories)
+  *  - Responsive, scrollable layout with styled-components
+  *  - Subtle success feedback modal on actions
+  *
+  * Data flow:
+  *  - On mount, try reading cached store data (localStorage)
+  *  - Fetch fresh data from API and update cache
+  *  - Periodically refresh using a debounced interval hook
+  *
+  * Navigation:
+  *  - Back button returns to the stores listing
+  *
+  * Styling:
+  *  - Uses styled-components for modular, responsive UI
+  */
+
 import React, { useState, useEffect } from 'react';
 import useDebouncedRefresh from '../hooks/useDebouncedRefresh';
 import { SkeletonCard } from '../components/Skeletons';
@@ -565,17 +588,19 @@ const StoreDetailPage = () => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState(null);
 
+  // Base API and cache key per store instance
   const API_BASE_URL = import.meta.env.DEV
     ? '/api'
     : (import.meta.env.VITE_API_BASE_URL || 'https://capstonedelibup.onrender.com/api');
   const STORE_CACHE_KEY = `bufood:store:${storeId}`;
 
   useEffect(() => {
-    // Check favorite state
+    // Initialize favorite state from localStorage via utility
     setIsFavorite(isStoreInFavorites(storeId));
   }, [storeId]);
 
   useEffect(() => {
+    // Cache-first render followed by a network fetch to refresh data
     let hadCache = false;
     // Cache-first render
     try {
@@ -589,6 +614,7 @@ const StoreDetailPage = () => {
     } catch (_) {}
 
     const fetchStore = async ({ showLoader = true } = {}) => {
+      // Fetch store details and products from API; optionally show loader
       try {
         if (showLoader) setLoading(true);
         setError('');
@@ -609,7 +635,7 @@ const StoreDetailPage = () => {
     fetchStore({ showLoader: !hadCache });
   }, [API_BASE_URL, storeId]);
 
-  // Debounced background refresh
+  // Debounced background refresh (silent UI updates)
   useDebouncedRefresh(async () => {
     setIsRefreshing(true);
     try {
@@ -630,6 +656,7 @@ const StoreDetailPage = () => {
 
   const handleGoBack = () => navigate('/customer/stores');
   const handleToggleFavorite = () => {
+    // Toggle store favorite state and show quick success feedback
     const next = toggleStoreFavorite(storeId);
     setIsFavorite(next);
     const msg = next ? 'Added to favorites' : 'Removed from favorites';
@@ -647,6 +674,7 @@ const StoreDetailPage = () => {
     navigate(`/customer/product/${product._id}`);
   };
 
+  // Build unique categories and filter products by the selected category
   const categories = Array.from(new Set((products || []).map(p => p.category).filter(Boolean)));
   const filteredProducts = selectedCategory
     ? (products || []).filter(p => (p.category || '').toLowerCase() === String(selectedCategory).toLowerCase())

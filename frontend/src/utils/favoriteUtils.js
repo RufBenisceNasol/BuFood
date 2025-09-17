@@ -1,3 +1,14 @@
+/*
+ * favoriteUtils
+ * -------------------------------------------------------------
+ * App flow role:
+ *  - Pages call these helpers to read/write favorite IDs in localStorage
+ *    for both products and stores.
+ *  - UI pages (e.g., Home, Favorites, Store/Product pages) then resolve
+ *    the stored IDs against cached/all data from the API to render cards.
+ *  - This keeps favorites fast (localStorage) while actual product/store
+ *    data is fetched or reused from cache separately.
+ */
 /**
  * Utility functions for managing product favorites in localStorage
  */
