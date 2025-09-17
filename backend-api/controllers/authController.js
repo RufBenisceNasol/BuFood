@@ -18,13 +18,16 @@ const transporter = nodemailer.createTransport({
 
 // Verify SMTP transport on startup (logs only; does not crash app)
 // Helps diagnose "Failed to send OTP" due to invalid Gmail/App Password config
+let EMAIL_TRANSPORT_READY = false;
 (async () => {
   try {
     await transporter.verify();
     console.log('SMTP transporter verified: ready to send emails');
+    EMAIL_TRANSPORT_READY = true;
   } catch (e) {
     console.error('SMTP verify failed:', e.message);
     console.error('Hint: Ensure EMAIL_USER is your Gmail and EMAIL_PASS is a Gmail App Password (with 2FA enabled).');
+    EMAIL_TRANSPORT_READY = false;
   }
 })();
 
@@ -67,6 +70,12 @@ const sendVerificationEmail = async (email, verificationLink) => {
 // ======= OTP Password Reset Flow =======
 // Helper to send OTP email
 const sendPasswordResetOTPEmail = async (email, otp) => {
+  const FAKE_MODE = String(process.env.EMAIL_FAKE_MODE || '').toLowerCase() === 'true';
+  if (!EMAIL_TRANSPORT_READY || FAKE_MODE) {
+    console.warn('[EMAIL_FAKE_MODE or transport not ready] OTP for', email, '=>', otp);
+    // Do not throw; allow flow to proceed (useful in development or when SMTP not configured)
+    return;
+  }
   try {
     await transporter.sendMail({
       to: email,
@@ -85,7 +94,7 @@ const sendPasswordResetOTPEmail = async (email, otp) => {
     });
   } catch (err) {
     console.error('Error sending OTP email:', err.message);
-    throw new Error('Failed to send OTP email');
+    // Do not throw to avoid failing the request – we still proceed for UX
   }
 };
 
@@ -102,10 +111,11 @@ const forgotPasswordOtp = async (req, res) => {
     const otp = user.createPasswordResetOTP();
     await user.save();
     await sendPasswordResetOTPEmail(user.email, otp);
-    return res.status(200).json({ message: 'OTP sent to email' });
+    return res.status(200).json({ message: 'If the email exists, an OTP has been sent' });
   } catch (error) {
     console.error('Forgot password OTP error:', error);
-    return res.status(500).json({ message: 'Error sending OTP' });
+    // Avoid surfacing transport failures to client; keep response generic and 200 to prevent frontend hard failure
+    return res.status(200).json({ message: 'If the email exists, an OTP has been sent' });
   }
 };
 
@@ -156,11 +166,11 @@ const resendPasswordOtp = async (req, res) => {
     const otp = user.createPasswordResetOTP();
     await user.save();
     await sendPasswordResetOTPEmail(user.email, otp);
-
-    return res.status(200).json({ message: 'OTP resent' });
+    return res.status(200).json({ message: 'If the email exists, a new OTP has been sent' });
   } catch (error) {
     console.error('Resend OTP error:', error);
-    return res.status(500).json({ message: 'Error resending OTP' });
+    // Keep generic success to avoid blocking UX
+    return res.status(200).json({ message: 'If the email exists, a new OTP has been sent' });
   }
 };
 

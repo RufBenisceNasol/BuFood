@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { auth } from '../api';
 import logod from '../assets/logod.png';
@@ -18,6 +18,15 @@ const ForgotPasswordPage = () => {
   const [resendCooldown, setResendCooldown] = useState(0);
   const [resendIntervalId, setResendIntervalId] = useState(null);
   const navigate = useNavigate();
+
+  // Clean up resend interval on unmount
+  useEffect(() => {
+    return () => {
+      if (resendIntervalId) {
+        clearInterval(resendIntervalId);
+      }
+    };
+  }, [resendIntervalId]);
 
   const startCooldown = (seconds = 60) => {
     setResendCooldown(seconds);
@@ -106,6 +115,20 @@ const ForgotPasswordPage = () => {
 
   return (
     <div style={styles.pageContainer}>
+      {loading && (
+        <div style={styles.loadingOverlay} role="alert" aria-live="assertive" aria-busy="true">
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+            {/* Accessible inline SVG spinner */}
+            <svg width="42" height="42" viewBox="0 0 50 50" aria-hidden="true">
+              <circle cx="25" cy="25" r="20" stroke="#ffe0b2" strokeWidth="6" fill="none" />
+              <path d="M25 5 a20 20 0 0 1 0 40" stroke="#ff8c00" strokeWidth="6" fill="none">
+                <animateTransform attributeName="transform" type="rotate" from="0 25 25" to="360 25 25" dur="0.9s" repeatCount="indefinite" />
+              </path>
+            </svg>
+            <div style={styles.loadingText}>{step === 'email' ? 'Sending OTP…' : 'Processing…'}</div>
+          </div>
+        </div>
+      )}
       <div style={styles.container}>
         <img src={logod} alt="Logo" style={styles.logo} />
         <h1 style={styles.title}>Forgot Password</h1>
@@ -247,6 +270,20 @@ const styles = {
     backgroundColor: '#f5f5f5',
     padding: '15px',
     boxSizing: 'border-box',
+  },
+  loadingOverlay: {
+    position: 'fixed',
+    inset: 0,
+    background: 'rgba(0,0,0,0.35)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 9999
+  },
+  loadingText: {
+    color: '#fff',
+    fontWeight: 600,
+    fontSize: 14
   },
   container: {
     width: '100%',
