@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { auth } from '../api';
+import { auth, warmup } from '../api';
 import { useNavigate } from 'react-router-dom';
 import { FiUser, FiMail, FiPhone, FiLock, FiBriefcase, FiEye, FiEyeOff } from 'react-icons/fi';
 import logod from '../assets/logod.png';
@@ -20,12 +20,20 @@ const RegisterPage = () => {
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [passwordError, setPasswordError] = useState('');
     const [confirmPasswordError, setConfirmPasswordError] = useState('');
+    const [canResendVerification, setCanResendVerification] = useState(false);
+    const [resendLoading, setResendLoading] = useState(false);
     const navigate = useNavigate();
 
     const handleChange = (e) => {
+        const { name, value } = e.target;
+        // Normalize contact number: strip spaces/dashes/parentheses
+        let newValue = value;
+        if (name === 'contactNumber') {
+            newValue = value.replace(/[^\d+]/g, '');
+        }
         setFormData({
             ...formData,
-            [e.target.name]: e.target.value
+            [name]: newValue
         });
     };
 
@@ -36,10 +44,26 @@ const RegisterPage = () => {
         setPasswordError('');
         setConfirmPasswordError('');
 
-        // Validate password length
-        if (formData.password.length < 8) {
-            setError('Password must be at least 8 characters long');
+        // Validate name
+        if (!formData.name || formData.name.trim().length < 2) {
+            setError('Name must be at least 2 characters long');
+            return;
+        }
+
+        // Validate password (exactly 8 chars, must include uppercase and number)
+        if (formData.password.length !== 8) {
+            setError('Password must be exactly 8 characters');
             setPasswordError(`Password must be 8 characters (${formData.password.length}/8)`);
+            return;
+        }
+        if (!/[A-Z]/.test(formData.password)) {
+            setError('Password must contain an uppercase letter');
+            setPasswordError('Password must contain an uppercase letter');
+            return;
+        }
+        if (!/\d/.test(formData.password)) {
+            setError('Password must contain a number');
+            setPasswordError('Password must contain a number');
             return;
         }
 
@@ -50,9 +74,24 @@ const RegisterPage = () => {
             return;
         }
 
+        // Validate contact number format (digits only, optionally starting with + or 0)
+        const contactOk = /^(\+?\d{7,15}|0\d{9,12})$/.test(formData.contactNumber);
+        if (!contactOk) {
+            setError('Invalid contact number. Use digits only, optionally starting with + or 0.');
+            return;
+        }
+
+        // Ensure role is valid
+        if (!['Customer', 'Seller'].includes(formData.role)) {
+            setError('Please select a valid role');
+            return;
+        }
+
         setLoading(true);
 
         try {
+            // Warm up backend to avoid cold start timeouts
+            try { await warmup(); } catch (_) {}
             // Remove confirmPassword and create dataToSend in one step
             const { confirmPassword: _, ...dataToSend } = formData;
             const data = await auth.register(dataToSend);
@@ -69,28 +108,42 @@ const RegisterPage = () => {
                 setSuccess(data.message);
             }
         } catch (err) {
-            // Robust error handling for various backend error shapes
-            if (err.response?.data) {
-                if (typeof err.response.data === 'string') {
-                    setError(err.response.data);
-                } else if (err.response.data.message) {
-                    setError(err.response.data.message);
-                } else if (err.response.data.error) {
-                    let msg = err.response.data.error;
-                    if (err.response.data.details) {
-                        msg += ': ' + err.response.data.details;
-                    }
-                    setError(msg);
-                } else if (err.response.data.details) {
-                    setError(err.response.data.details);
-                } else {
-                    setError(JSON.stringify(err.response.data));
-                }
+            // New error format from auth.register: { message, status, isVerified }
+            if (err?.status === 409) {
+                setError(err.message || 'User already exists');
+                // Offer resend if not verified
+                setCanResendVerification(!err.isVerified);
+            } else if (typeof err?.message === 'string') {
+                setError(err.message);
             } else {
-                setError(err.message || 'Registration failed');
+                // Fallback legacy handling
+                if (err?.response?.data) {
+                    const data = err.response.data;
+                    if (typeof data === 'string') setError(data);
+                    else if (data.message) setError(data.message);
+                    else setError(JSON.stringify(data));
+                } else {
+                    setError('Registration failed');
+                }
             }
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleResendVerification = async () => {
+        if (!formData.email) return;
+        setResendLoading(true);
+        setError('');
+        setSuccess('');
+        try {
+            await auth.resendVerification(formData.email);
+            setSuccess('Verification email has been resent. Please check your inbox.');
+            setCanResendVerification(false);
+        } catch (e) {
+            setError(typeof e === 'string' ? e : (e?.message || 'Failed to resend verification'));
+        } finally {
+            setResendLoading(false);
         }
     };
 
@@ -101,6 +154,13 @@ const RegisterPage = () => {
                     <img src={logod} alt="BuFood Logo" style={styles.logo} />
                     <h2 style={styles.title}>SIGN UP</h2>
                     {error && <div style={styles.error}>{error}</div>}
+                    {canResendVerification && (
+                        <div style={{ marginBottom: '10px', textAlign: 'center' }}>
+                            <button type="button" onClick={handleResendVerification} disabled={resendLoading} style={styles.linkButton}>
+                                {resendLoading ? 'Resending...' : 'Resend verification email'}
+                            </button>
+                        </div>
+                    )}
                     {success && <div style={styles.success}>{success}</div>}
                 </div>
                 <div style={{ flex: 1, overflowY: 'auto', padding: 0 }}>

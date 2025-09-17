@@ -81,7 +81,8 @@ const sendPasswordResetOTPEmail = async (email, otp) => {
 const forgotPasswordOtp = async (req, res) => {
   try {
     const { email } = req.body;
-    const user = await User.findOne({ email });
+    const normalizedEmail = (email || '').trim().toLowerCase();
+    const user = await User.findOne({ email: normalizedEmail });
     // Always respond 200 to avoid account enumeration
     if (!user) {
       return res.status(200).json({ message: 'If the email exists, an OTP has been sent' });
@@ -189,11 +190,12 @@ const generateTokens = (userId) => {
 // Register
 const register = async (req, res) => {
   const { name, email, contactNumber, password, role } = req.body;
+  const normalizedEmail = (email || '').trim().toLowerCase();
 
   try {
-    const existingUser = await User.findOne({ email });
+    const existingUser = await User.findOne({ email: normalizedEmail });
     if (existingUser) {
-      return res.status(400).json({ message: 'User already exists' });
+      return res.status(409).json({ message: 'User already exists', isVerified: !!existingUser.isVerified });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -201,7 +203,7 @@ const register = async (req, res) => {
 
     const user = new User({
       name,
-      email,
+      email: normalizedEmail,
       contactNumber,
       password: hashedPassword,
       verificationToken,
@@ -232,20 +234,18 @@ const register = async (req, res) => {
 
     const baseUrl = process.env.BASE_URL || 'http://localhost:8000';
     const verificationLink = `${baseUrl}/api/auth/verify/${verificationToken}`;
-    let emailFailed = false;
-    try {
-      await sendVerificationEmail(email, verificationLink);
-    } catch (e) {
-      // Do not fail registration if email fails to send (e.g., missing EMAIL_USER/PASS in dev)
-      console.error('sendVerificationEmail failed during registration:', e.message);
-      emailFailed = true;
-    }
+    // Send verification email in background; do not block the response
+    setImmediate(async () => {
+      try {
+        await sendVerificationEmail(normalizedEmail, verificationLink);
+      } catch (e) {
+        console.error('sendVerificationEmail failed during registration (background):', e.message);
+      }
+    });
 
     res.status(201).json({
-      message: emailFailed
-        ? 'User registered. Verification email could not be sent. Please contact support or try resending from the login page.'
-        : 'User registered successfully. Please check your email to verify your account.',
-      emailFailed,
+      message: 'User registered successfully. Please check your email to verify your account.',
+      emailQueued: true,
       storeCreationFailed,
     });
   } catch (error) {
@@ -257,9 +257,10 @@ const register = async (req, res) => {
 // Login
 const login = async (req, res) => {
   const { email, password } = req.body;
+  const normalizedEmail = (email || '').trim().toLowerCase();
 
   try {
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email: normalizedEmail });
 
     if (!user) return res.status(400).json({ message: 'Invalid credentials' });
 
