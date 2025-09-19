@@ -591,7 +591,7 @@ const StoreDetailPage = () => {
   // Base API and cache key per store instance
   const API_BASE_URL = import.meta.env.DEV
     ? '/api'
-    : (import.meta.env.VITE_API_BASE_URL || 'https://capstonedelibup.onrender.com/api');
+    : (import.meta.env.VITE_API_BASE_URL || 'https://capstonedelibup-o7sl.onrender.com/api');
   const STORE_CACHE_KEY = `bufood:store:${storeId}`;
 
   useEffect(() => {

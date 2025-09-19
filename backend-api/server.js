@@ -78,7 +78,7 @@ app.use(compression()); // Compress responses
 const allowedOrigins = [
     'http://localhost:3000', // React dev server (if used)
     'http://localhost:5173', // Vite dev server (added for local frontend)
-    'https://capstonedelibup.onrender.com', // Production backend (if needed)
+    'https://capstonedelibup-o7sl.onrender.com', // Production backend (if needed)
     'capacitor://localhost', // Capacitor Android/iOS
     'http://localhost', // Android emulator
     'https://localhost', // Android WebView (for CORS)

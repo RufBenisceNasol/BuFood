@@ -294,11 +294,15 @@ const register = async (req, res) => {
       }
     });
 
-    res.status(201).json({
+    const registerPayload = {
       message: 'User registered successfully. Please check your email to verify your account.',
       emailQueued: true,
       storeCreationFailed,
-    });
+    };
+    if (process.env.EXPOSE_VERIFY_LINK_FOR_TESTING === 'true') {
+      registerPayload.verifyLink = verificationLink;
+    }
+    res.status(201).json(registerPayload);
   } catch (error) {
     console.error('Error during registration:', error.message);
     res.status(500).json({ message: 'Server error' });
@@ -409,7 +413,11 @@ const resendVerificationEmail = async (req, res) => {
     const verificationLink = `${baseUrl}/api/auth/verify/${verificationToken}`;
     await sendVerificationEmail(user.email, verificationLink);
 
-    res.status(200).json({ message: 'Verification email resent successfully' });
+    const resendPayload = { message: 'Verification email resent successfully' };
+    if (process.env.EXPOSE_VERIFY_LINK_FOR_TESTING === 'true') {
+      resendPayload.verifyLink = verificationLink;
+    }
+    res.status(200).json(resendPayload);
   } catch (error) {
     console.error('Error resending verification email:', error.message);
     res.status(500).json({ message: 'Failed to resend verification email' });

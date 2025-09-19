@@ -5,7 +5,7 @@ import { getToken, getRefreshToken, removeToken, removeRefreshToken, removeUser,
 // In production, fall back to the provided environment variable or the Render URL
 const API_BASE_URL = import.meta.env.DEV
     ? '/api'
-    : (import.meta.env.VITE_API_BASE_URL || "https://capstonedelibup.onrender.com/api");
+    : (import.meta.env.VITE_API_BASE_URL || "https://capstonedelibup-o7sl.onrender.com/api");
 
 // Simple retry helper for POST with exponential backoff
 async function postWithRetry(url, data, config = {}, retries = 2, baseDelayMs = 1500) {
