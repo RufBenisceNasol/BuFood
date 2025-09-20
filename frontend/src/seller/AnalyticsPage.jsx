@@ -164,7 +164,7 @@ const AnalyticsPage = () => {
             <section className="analytics-section">
               <h2>Analytics</h2>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 32, justifyContent: 'center', alignItems: 'center', marginBottom: 24 }}>
-                <div style={{ width: 320, height: 220, background: 'white', borderRadius: 16, padding: '1px 1px' }}>
+                <div style={{ width: 320, height: 220, background: 'white', border: '1px solid #ccc', borderRadius: 16, padding: '1px 1px' }}>
                   <h3 style={{ textAlign: 'center', fontSize: 14, margin: 0, color: ' #ff9800' }}>Sales (Last 7 Days)</h3>
                   <ResponsiveContainer width="100%" height={160}>
                     <BarChart data={salesLast7Days}>
@@ -175,7 +175,7 @@ const AnalyticsPage = () => {
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
-                <div style={{ width: 320, height: 260, background: 'white', borderRadius: 16, padding: 16, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                <div style={{ width: 320, height: 260, background: 'white', border: '1px solid #ccc', borderRadius: 16, padding: 16, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
                   <h3 style={{ textAlign: 'center', fontSize: 14, margin: 0, color: ' #ff9800', marginBottom: 8 }}>Order Status</h3>
                   <ResponsiveContainer width="100%" height={180}>
                     <PieChart>
