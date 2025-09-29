@@ -62,10 +62,11 @@ async function sendMailWithRetry(options, retries = 2, baseDelayMs = 1500) {
 // Verification email sender
 const sendVerificationEmail = async (email, verificationLink) => {
   try {
+    console.log(`Attempting to send verification email to: ${email}`);
     await sendMailWithRetry({
       from: process.env.EMAIL_FROM || 'BuFood <no-reply@yourdomain.com>',
       to: email,
-      subject: 'Verify Your Email - Bufood 🍽️',
+      subject: 'Verify Your Email - BuFood 🍽️',
       html: `
         <div style="font-family: Arial, sans-serif; background-color: #f9f9f9; padding: 20px;">
           <div style="max-width: 600px; margin: auto; background-color: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);">
@@ -89,9 +90,10 @@ const sendVerificationEmail = async (email, verificationLink) => {
         </div>
       `,
     });
-    console.log('Verification email sent successfully');
+    console.log(`Verification email sent successfully to: ${email}`);
   } catch (error) {
-    console.error('Error sending verification email:', error.message);
+    console.error('Error sending verification email to', email, ':', error.message);
+    console.error('Email error details:', error);
     throw new Error('Could not send verification email');
   }
 };
@@ -247,6 +249,23 @@ const register = async (req, res) => {
   const normalizedEmail = (email || '').trim().toLowerCase();
 
   try {
+    // Additional validation to prevent common issues
+    if (!name || name.trim().length < 2) {
+      return res.status(400).json({ message: 'Name must be at least 2 characters long' });
+    }
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
+      return res.status(400).json({ message: 'Please enter a valid email address' });
+    }
+    if (!contactNumber || !/^(\+?\d{7,15}|0\d{9,12})$/.test(contactNumber)) {
+      return res.status(400).json({ message: 'Invalid contact number. Use digits only, optionally starting with + or 0.' });
+    }
+    if (!password || password.length !== 8 || !/[A-Z]/.test(password) || !/\d/.test(password)) {
+      return res.status(400).json({ message: 'Password must be exactly 8 characters with at least one uppercase letter and one number' });
+    }
+    if (role && !['Customer', 'Seller'].includes(role)) {
+      return res.status(400).json({ message: 'Role must be either Customer or Seller' });
+    }
+
     const existingUser = await User.findOne({ email: normalizedEmail });
     if (existingUser) {
       return res.status(409).json({ message: 'User already exists', isVerified: !!existingUser.isVerified });
@@ -256,9 +275,9 @@ const register = async (req, res) => {
     const verificationToken = crypto.randomBytes(32).toString('hex');
 
     const user = new User({
-      name,
+      name: name.trim(),
       email: normalizedEmail,
-      contactNumber,
+      contactNumber: contactNumber.trim(),
       password: hashedPassword,
       verificationToken,
       role: role || 'Customer',
@@ -308,7 +327,18 @@ const register = async (req, res) => {
     res.status(201).json(registerPayload);
   } catch (error) {
     console.error('Error during registration:', error.message);
-    res.status(500).json({ message: 'Server error' });
+    console.error('Registration error stack:', error.stack);
+    
+    // Handle specific MongoDB errors
+    if (error.code === 11000) {
+      return res.status(409).json({ message: 'User already exists' });
+    }
+    if (error.name === 'ValidationError') {
+      const messages = Object.values(error.errors).map(err => err.message);
+      return res.status(400).json({ message: messages.join(', ') });
+    }
+    
+    res.status(500).json({ message: 'Server error during registration' });
   }
 };
 

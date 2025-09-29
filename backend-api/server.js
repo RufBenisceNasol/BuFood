@@ -58,11 +58,15 @@ app.use(helmet({
 // Rate limiting configuration
 const limiter = rateLimit({
     windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000,
-    max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 100,
+    max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 200, // Increased for registration
     standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
     legacyHeaders: false,  // Disable the `X-RateLimit-*` headers
     message: { error: 'Too many requests, please try again later.' },
     keyGenerator: (req, _res) => req.ip, // Will respect trust proxy
+    skip: (req) => {
+        // Skip rate limiting for health checks
+        return req.path === '/health';
+    }
 });
 
 const speedLimiter = slowDown({
@@ -154,13 +158,8 @@ mongoose.connection.once('open', async () => {
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpecs));
 
 // Health check endpoint
-app.get('/health', (req, res) => {
-    res.status(200).json({
-        status: 'healthy',
-        timestamp: new Date().toISOString(),
-        uptime: process.uptime()
-    });
-});
+const { healthCheck } = require('./utils/healthCheck');
+app.get('/health', healthCheck);
 
 // Root route handler
 app.get('/', (req, res) => {

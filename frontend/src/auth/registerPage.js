@@ -114,6 +114,7 @@ const RegisterPage = () => {
                 setTimeout(() => navigate('/login'), 8000);
             }
         } catch (err) {
+            console.error('Registration error:', err);
             // New error format from auth.register: { message, status, isVerified }
             if (err?.status === 409) {
                 setError(err.message || 'User already exists');
@@ -121,16 +122,24 @@ const RegisterPage = () => {
                 setCanResendVerification(!err.isVerified);
             } else if (typeof err?.message === 'string') {
                 setError(err.message);
-            } else {
-                // Fallback legacy handling
-                if (err?.response?.data) {
-                    const data = err.response.data;
-                    if (typeof data === 'string') setError(data);
-                    else if (data.message) setError(data.message);
-                    else setError(JSON.stringify(data));
+            } else if (err?.response?.data) {
+                // Handle backend validation errors
+                const data = err.response.data;
+                if (typeof data === 'string') {
+                    setError(data);
+                } else if (data.message) {
+                    setError(data.message);
+                } else if (data.error) {
+                    setError(data.error);
+                } else if (data.errors && Array.isArray(data.errors)) {
+                    // Handle express-validator errors
+                    const errorMessages = data.errors.map(e => e.msg || e.message).join(', ');
+                    setError(errorMessages);
                 } else {
-                    setError('Registration failed');
+                    setError('Registration failed. Please check your input.');
                 }
+            } else {
+                setError('Registration failed. Please try again.');
             }
         } finally {
             setLoading(false);
