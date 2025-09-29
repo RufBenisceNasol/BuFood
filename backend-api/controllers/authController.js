@@ -4,6 +4,7 @@ const jwt = require('jsonwebtoken');
 const nodemailer = require('nodemailer');
 const crypto = require('crypto');
 const { createStoreForSeller } = require('./storeController');
+const axios = require('axios');
 
 require('dotenv').config();
 
@@ -59,68 +60,107 @@ async function sendMailWithRetry(options, retries = 2, baseDelayMs = 1500) {
   }
 }
 
-// Verification email sender
-const sendVerificationEmail = async (email, verificationLink) => {
+// Resend API email sender (primary)
+const sendEmailViaResend = async (to, subject, html) => {
+  const response = await axios.post('https://api.resend.com/emails', {
+    from: process.env.EMAIL_FROM || 'BuFood <onboarding@resend.dev>',
+    to: [to],
+    subject,
+    html
+  }, {
+    headers: {
+      'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
+      'Content-Type': 'application/json'
+    },
+    timeout: 10000
+  });
+  return response.data;
+};
+
+// Universal email sender with provider fallback
+const sendEmail = async (to, subject, html) => {
+  console.log(`Attempting to send email to: ${to}`);
+  
+  // Try Resend first if API key is available
+  if (process.env.RESEND_API_KEY) {
+    try {
+      console.log('Using Resend API for email delivery');
+      const result = await sendEmailViaResend(to, subject, html);
+      console.log(`Email sent successfully via Resend to: ${to}`, result.id);
+      return result;
+    } catch (error) {
+      console.error('Resend API failed:', error.response?.data || error.message);
+      console.log('Falling back to Gmail SMTP...');
+    }
+  }
+  
+  // Fallback to Gmail SMTP
   try {
-    console.log(`Attempting to send verification email to: ${email}`);
-    await sendMailWithRetry({
+    console.log('Using Gmail SMTP for email delivery');
+    const result = await sendMailWithRetry({
       from: process.env.EMAIL_FROM || 'BuFood <no-reply@yourdomain.com>',
-      to: email,
-      subject: 'Verify Your Email - BuFood 🍽️',
-      html: `
-        <div style="font-family: Arial, sans-serif; background-color: #f9f9f9; padding: 20px;">
-          <div style="max-width: 600px; margin: auto; background-color: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);">
-            <h2 style="color: #333;">Welcome to <span style="color: #28a745;">Bufood</span>! 👋</h2>
-            <p style="font-size: 16px; color: #555;">
-              Thanks for signing up! Please verify your email address by clicking the button below:
-            </p>
-            <a href="${verificationLink}"
-               style="display: inline-block; padding: 12px 24px; margin: 20px 0;
-                      background-color: #28a745; color: #fff; text-decoration: none;
-                      border-radius: 6px; font-weight: bold; font-size: 16px;">
-              Verify Email
-            </a>
-            <p style="font-size: 14px; color: #777;">
-              If you did not create this account, you can safely ignore this email.
-            </p>
-            <p style="font-size: 14px; color: #aaa; margin-top: 30px;">
-              &mdash; The Bufood Team
-            </p>
-          </div>
-        </div>
-      `,
+      to,
+      subject,
+      html
     });
-    console.log(`Verification email sent successfully to: ${email}`);
+    console.log(`Email sent successfully via Gmail SMTP to: ${to}`);
+    return result;
   } catch (error) {
-    console.error('Error sending verification email to', email, ':', error.message);
-    console.error('Email error details:', error);
-    throw new Error('Could not send verification email');
+    console.error('Gmail SMTP also failed:', error.message);
+    throw new Error(`Email delivery failed via both Resend and Gmail: ${error.message}`);
   }
 };
 
-// ======= OTP Password Reset Flow =======
+// Verification email sender
+const sendVerificationEmail = async (email, verificationLink) => {
+  const subject = 'Verify Your Email - BuFood 🍽️';
+  const html = `
+    <div style="font-family: Arial, sans-serif; background-color: #f9f9f9; padding: 20px;">
+      <div style="max-width: 600px; margin: auto; background-color: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);">
+        <h2 style="color: #333;">Welcome to <span style="color: #28a745;">BuFood</span>! 👋</h2>
+        <p style="font-size: 16px; color: #555;">
+          Thanks for signing up! Please verify your email address by clicking the button below:
+        </p>
+        <a href="${verificationLink}"
+           style="display: inline-block; padding: 12px 24px; margin: 20px 0;
+                  background-color: #28a745; color: #fff; text-decoration: none;
+                  border-radius: 5px; font-weight: bold;">Verify Email</a>
+        <p style="font-size: 14px; color: #777;">
+          If you did not create this account, you can safely ignore this email.
+        </p>
+        <p style="font-size: 14px; color: #aaa; margin-top: 30px;">
+          &mdash; The BuFood Team
+        </p>
+      </div>
+    </div>
+  `;
+  
+  try {
+    await sendEmail(email, subject, html);
+  } catch (error) {
+    console.error('Error sending verification email to', email, ':', error.message);
+    throw new Error('Could not send verification email');
+  }
+};
 // Helper to send OTP email
 const sendPasswordResetOTPEmail = async (email, otp) => {
+  const subject = `Your BuFood password reset code: ${otp}`;
+  const html = `
+    <div style="font-family: Arial, sans-serif; background:#f9f9f9; padding:20px;">
+      <div style="max-width:600px; margin:auto; background:#fff; padding:24px; border-radius:8px;">
+        <h2 style="margin:0 0 12px; color:#333;">Password reset code</h2>
+        <p style="color:#555; margin:0 0 16px;">Use the following code to reset your BuFood password. This code expires in 10 minutes.</p>
+        <div style="font-size:28px; font-weight:700; letter-spacing:6px; text-align:center; color:#111;">${otp}</div>
+        <p style="color:#777; margin-top:16px; font-size:14px;">If you didn't request this, you can safely ignore this email.</p>
+      </div>
+    </div>
+  `;
+  
   try {
-    await sendMailWithRetry({
-      from: process.env.EMAIL_FROM || 'BuFood <no-reply@yourdomain.com>',
-      to: email,
-      subject: `Your BuFood password reset code: ${otp}`,
-      text: `Your password reset code is ${otp}. It expires in 10 minutes. If you didn't request this, ignore this email.`,
-      html: `
-        <div style="font-family: Arial, sans-serif; background:#f9f9f9; padding:20px;">
-          <div style="max-width:600px; margin:auto; background:#fff; padding:24px; border-radius:8px;">
-            <h2 style="margin:0 0 12px; color:#333;">Password reset code</h2>
-            <p style="color:#555; margin:0 0 16px;">Use the following code to reset your BuFood password. This code expires in 10 minutes.</p>
-            <div style="font-size:28px; font-weight:700; letter-spacing:6px; text-align:center; color:#111;">${otp}</div>
-            <p style="color:#777; margin-top:16px; font-size:14px;">If you didn't request this, you can safely ignore this email.</p>
-          </div>
-        </div>
-      `,
-    });
+    await sendEmail(email, subject, html);
     console.log(`Password reset OTP email sent to ${email}`);
-  } catch (err) {
-    console.error('Error sending OTP email:', err.message);
+  } catch (error) {
+    console.error('Error sending OTP email:', error.message);
     throw new Error('Failed to send OTP email');
   }
 };
@@ -211,25 +251,24 @@ const resendPasswordOtp = async (req, res) => {
 
 // Password changed confirmation email
 const sendPasswordChangedEmail = async (email) => {
+  const subject = 'Your BuFood password was changed';
+  const html = `
+    <div style="font-family: Arial, sans-serif; background-color: #f9f9f9; padding: 20px;">
+      <div style="max-width: 600px; margin: auto; background-color: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);">
+        <h2 style="color: #333;">Password changed successfully ✅</h2>
+        <p style="font-size: 16px; color: #555;">
+          This is a confirmation that your BuFood account password was just changed. If this was you, no further action is needed.
+        </p>
+        <p style="font-size: 14px; color: #777;">
+          If you did not perform this action, please reset your password immediately using the "Forgot Password" link on the login page.
+        </p>
+        <p style="font-size: 14px; color: #aaa; margin-top: 30px;">— The BuFood Team</p>
+      </div>
+    </div>
+  `;
+  
   try {
-    await sendMailWithRetry({
-      to: email,
-      subject: 'Your BuFood password was changed',
-      html: `
-        <div style="font-family: Arial, sans-serif; background-color: #f9f9f9; padding: 20px;">
-          <div style="max-width: 600px; margin: auto; background-color: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);">
-            <h2 style="color: #333;">Password changed successfully ✅</h2>
-            <p style="font-size: 16px; color: #555;">
-              This is a confirmation that your BuFood account password was just changed. If this was you, no further action is needed.
-            </p>
-            <p style="font-size: 14px; color: #777;">
-              If you did not perform this action, please reset your password immediately using the "Forgot Password" link on the login page.
-            </p>
-            <p style="font-size: 14px; color: #aaa; margin-top: 30px;">— The BuFood Team</p>
-          </div>
-        </div>
-      `,
-    });
+    await sendEmail(email, subject, html);
     console.log('Password change confirmation email sent');
   } catch (error) {
     // Do not block the flow if email fails
