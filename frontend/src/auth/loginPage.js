@@ -20,6 +20,9 @@ const LoginPage = () => {
     const [rememberMe, setRememberMe] = useState(false);
     const [canResendVerification, setCanResendVerification] = useState(false);
     const [resendLoading, setResendLoading] = useState(false);
+    // Delay showing the generic resend option for 60 seconds
+    const [resendDelayElapsed, setResendDelayElapsed] = useState(false);
+    const resendTimerRef = React.useRef(null);
     const navigate = useNavigate();
 
     // Redirect if already logged in
@@ -46,6 +49,12 @@ const LoginPage = () => {
         setLoading(true);
         setSuccess('');
         setCanResendVerification(false);
+        // reset generic resend delay on submit
+        if (resendTimerRef.current) {
+            clearTimeout(resendTimerRef.current);
+            resendTimerRef.current = null;
+        }
+        setResendDelayElapsed(false);
         setLoadingMessage('Signing in...');
 
         // If the request takes too long, inform the user the server may be waking up
@@ -129,12 +138,41 @@ const LoginPage = () => {
             await auth.resendVerification(email);
             setSuccess('Verification email resent. Please check your inbox (or Spam).');
             setCanResendVerification(false);
+            // After a resend, require waiting again before showing the generic option
+            if (resendTimerRef.current) {
+                clearTimeout(resendTimerRef.current);
+                resendTimerRef.current = null;
+            }
+            setResendDelayElapsed(false);
         } catch (e) {
             setError(typeof e === 'string' ? e : (e?.message || 'Failed to resend verification'));
         } finally {
             setResendLoading(false);
         }
     };
+
+    // Manage the 60s delay to show the generic resend prompt
+    React.useEffect(() => {
+        // Clear any existing timer
+        if (resendTimerRef.current) {
+            clearTimeout(resendTimerRef.current);
+            resendTimerRef.current = null;
+        }
+        setResendDelayElapsed(false);
+        // Start a new timer when there's an email and the explicit resend CTA is not active
+        if (email && !canResendVerification) {
+            resendTimerRef.current = setTimeout(() => {
+                setResendDelayElapsed(true);
+            }, 60000); // 60 seconds
+        }
+        // Cleanup on unmount
+        return () => {
+            if (resendTimerRef.current) {
+                clearTimeout(resendTimerRef.current);
+                resendTimerRef.current = null;
+            }
+        };
+    }, [email, canResendVerification]);
 
     return (
         <div style={styles.pageContainer}>
@@ -167,7 +205,7 @@ const LoginPage = () => {
                         </button>
                     </div>
                 )}
-                {!canResendVerification && email && (
+                {!canResendVerification && email && resendDelayElapsed && (
                     <div style={{ marginTop: 4, marginBottom: 8, textAlign: 'center' }}>
                         <button type="button" onClick={handleResendVerification} disabled={resendLoading} style={styles.linkButton}>
                             {resendLoading ? 'Resending...' : "Didn't get the email? Resend verification"}

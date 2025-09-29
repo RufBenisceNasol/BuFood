@@ -408,6 +408,7 @@ const CartPage = () => {
     const [cartCount, setCartCount] = useState(0);
     const CART_CACHE_KEY = 'bufood:cart';
     const [isRefreshing, setIsRefreshing] = useState(false);
+    const [updating, setUpdating] = useState({}); // productId -> boolean for in-flight quantity updates
 
     useEffect(() => {
         // Cache-first render
@@ -474,13 +475,32 @@ const CartPage = () => {
     }, { delayMs: 600, intervalMs: 30000 });
 
     const handleQuantityChange = async (productId, newQuantity) => {
+        if (newQuantity < 1) return;
+        // Optimistic update: update UI immediately to remove perceived delay
         try {
-            if (newQuantity < 1) return;
+            if (cartData && Array.isArray(cartData.items)) {
+                const newItems = cartData.items.map(it =>
+                    it?.product?._id === productId ? { ...it, quantity: newQuantity } : it
+                );
+                const newCart = { ...cartData, items: newItems };
+                setCartData(newCart);
+                // Recompute and update cart count
+                const count = newItems.reduce((sum, it) => sum + (it.quantity || 0), 0);
+                setCartCount(count);
+                try { localStorage.setItem(CART_CACHE_KEY, JSON.stringify(newCart)); } catch (_) {}
+            }
+            setUpdating(prev => ({ ...prev, [productId]: true }));
+            // Sync with server in background
             await cart.updateCartItem(productId, newQuantity);
-            fetchCart();
+            // Silent refresh without loader to reconcile any server-side changes like pricing, promos, etc.
+            await fetchCart({ showLoader: false });
             setSuccess('Quantity updated successfully');
         } catch (err) {
-            setError(err.message || 'Failed to update quantity');
+            // Re-sync cart to correct any optimistic mismatch
+            await fetchCart({ showLoader: false });
+            setError(err?.message || 'Failed to update quantity');
+        } finally {
+            setUpdating(prev => ({ ...prev, [productId]: false }));
         }
     };
 
@@ -572,7 +592,7 @@ const CartPage = () => {
         try {
             setError(null);
             await cart.removeFromCart(productId);
-            await fetchCart(); // Refresh cart after removal
+            await fetchCart({ showLoader: false }); // background refresh to avoid flicker
             setSuccess('Item removed from cart');
         } catch (err) {
             console.error('Remove item error:', err);
@@ -669,10 +689,11 @@ const CartPage = () => {
                                             </ProductInfo>
                                             <ProductRight>
                                                 <ProductPrice>₱{(item.product.price * item.quantity).toFixed(0)}</ProductPrice>
-                                                <QuantityControl>
+                                                <QuantityControl aria-busy={!!updating[item.product._id]}>
                                                     <QuantityButton 
                                                         size={window.innerWidth < 600 ? "small" : "medium"}
                                                         onClick={() => handleQuantityChange(item.product._id, item.quantity - 1)}
+                                                        disabled={!!updating[item.product._id]}
                                                     >
                                                         <Remove />
                                                     </QuantityButton>
@@ -680,6 +701,7 @@ const CartPage = () => {
                                                     <QuantityButton 
                                                         size={window.innerWidth < 600 ? "small" : "medium"}
                                                         onClick={() => handleQuantityChange(item.product._id, item.quantity + 1)}
+                                                        disabled={!!updating[item.product._id]}
                                                     >
                                                         <Add />
                                                     </QuantityButton>

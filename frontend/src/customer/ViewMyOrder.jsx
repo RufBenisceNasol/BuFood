@@ -316,6 +316,19 @@ const ViewMyOrder = () => {
     }
   };
 
+  // Helpers for action visibility
+  const normalizeStatus = (s = '') => String(s || '').toLowerCase();
+  const isDelivered = (order) => normalizeStatus(order.status) === 'delivered';
+  const isPendingOrProcessing = (order) => {
+    const s = normalizeStatus(order.status);
+    return s === 'pending' || s === 'preparing' || s === 'processing' || s === 'accepted';
+  };
+  const isManualPayment = (order) => {
+    const m = String(order.paymentMethod || '').toLowerCase();
+    // Covers values like 'gcash_manual', 'gcash/manual', 'manual gcash', etc.
+    return m.includes('gcash') && (m.includes('manual') || m.includes('_manual') || m.includes('/manual'));
+  };
+
   const shortId = (id) => {
     if (!id) return '';
     const s = String(id);
@@ -575,78 +588,232 @@ const ViewMyOrder = () => {
                           );
                         })()}
                       </TimelineContainer>
+
+                      {/* Secondary actions under dropdown to keep layout tidy */}
+                      {(() => {
+                        // Build eligible actions, then we'll subtract primaries in the footer
+                        const actions = [];
+                        const id = order._id || order.id;
+                        // Eligible rules
+                        const manual = isManualPayment(order);
+                        const pendingProc = isPendingOrProcessing(order);
+                        const delivered = isDelivered(order);
+
+                        // Reorder is generally available
+                        actions.push({ key: 'reorder', type: 'primary' });
+                        if (delivered) actions.push({ key: 'review', type: 'secondary' });
+                        if (manual && pendingProc) actions.push({ key: 'upload', type: 'accent' });
+                        if (normalizeStatus(order.status) === 'pending') actions.push({ key: 'cancel', type: 'danger' });
+
+                        // Determine primaries based on spec
+                        let primaries = [];
+                        if (pendingProc) {
+                          primaries = [
+                            { key: 'cancel', type: 'danger' },
+                            ...(manual ? [{ key: 'upload', type: 'accent' }] : [])
+                          ].slice(0, 2);
+                        } else if (delivered) {
+                          primaries = [
+                            { key: 'reorder', type: 'primary' },
+                            { key: 'review', type: 'secondary' }
+                          ];
+                        }
+                        const primaryKeys = new Set(primaries.map(a => a.key));
+                        const secondary = actions.filter(a => !primaryKeys.has(a.key));
+
+                        if (secondary.length === 0) return null;
+                        return (
+                          <div style={{ marginTop: 12 }}>
+                            <p style={{ fontSize: 13, color: '#666', margin: '0 0 8px 0' }}>More actions</p>
+                            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                              {secondary.map(a => {
+                                if (a.key === 'reorder') {
+                                  return (
+                                    <SecondaryButton
+                                      key={a.key}
+                                      onClick={async () => {
+                                        try {
+                                          const items = Array.isArray(order.items) ? order.items : [];
+                                          if (items.length === 0) return;
+                                          await Promise.all(
+                                            items.map(async (it) => {
+                                              const pid = it.product?._id || it.product || it._id;
+                                              const qty = it.quantity || 1;
+                                              if (pid) {
+                                                try { await cart.addToCart(pid, qty); } catch {}
+                                              }
+                                            })
+                                          );
+                                          setSuccessModal({ open: true, message: 'Items added to cart' });
+                                          setTimeout(() => setSuccessModal({ open: false, message: '' }), 1200);
+                                        } catch {
+                                          setNotificationMessage('Failed to reorder');
+                                          setTimeout(() => setNotificationMessage(''), 3000);
+                                        }
+                                      }}
+                                      style={{ fontSize: 12 }}
+                                    >
+                                      Reorder
+                                    </SecondaryButton>
+                                  );
+                                }
+                                if (a.key === 'review') {
+                                  return (
+                                    <SecondaryButton
+                                      key={a.key}
+                                      onClick={() => {
+                                        setReviewingOrder(order._id || order.id);
+                                        setReviewComment('');
+                                        const firstProductId = order.items && order.items[0] && (order.items[0].product?._id || order.items[0].product || order.items[0]._id);
+                                        setSelectedProductId(firstProductId || '');
+                                      }}
+                                      style={{ fontSize: 12 }}
+                                    >
+                                      Add Review
+                                    </SecondaryButton>
+                                  );
+                                }
+                                if (a.key === 'upload') {
+                                  return (
+                                    <SecondaryButton
+                                      key={a.key}
+                                      $accent
+                                      onClick={() => {
+                                        setProofOrderId(order._id || order.id);
+                                        setProofFile(null);
+                                        setProofRef('');
+                                      }}
+                                      style={{ fontSize: 12 }}
+                                    >
+                                      Upload Proof
+                                    </SecondaryButton>
+                                  );
+                                }
+                                if (a.key === 'cancel') {
+                                  return (
+                                    <SecondaryButton
+                                      key={a.key}
+                                      onClick={() => {
+                                        setOrderToCancel(order._id || order.id);
+                                        setShowCancelModal(true);
+                                      }}
+                                      style={{ fontSize: 12 }}
+                                    >
+                                      Cancel
+                                    </SecondaryButton>
+                                  );
+                                }
+                                return null;
+                              })}
+                            </div>
+                          </div>
+                        );
+                      })()}
                     </>
                   )}
                 </OrderBody>
                 <OrderFooter>
                   <SecondaryButton
                     onClick={() => toggleOrderDetails(order._id || order.id)}
-                    style={{ fontSize: 12 }}
+                    style={{ fontSize: 12, display: 'flex', alignItems: 'center', gap: 6 }}
                   >
-                    {expandedOrder === (order._id || order.id) ? 'Hide Details' : 'View Details'}
+                    {expandedOrder === (order._id || order.id) ? 'Hide Details' : 'Click to View'}
+                    <span style={{ display: 'inline-block', transition: 'transform 0.2s', transform: expandedOrder === (order._id || order.id) ? 'rotate(180deg)' : 'rotate(0deg)' }}>▾</span>
                   </SecondaryButton>
-                  <ButtonRow style={{ justifyContent: 'flex-end' }}>
-                    <PrimaryButton
-                      onClick={async () => {
-                        try {
-                          const items = Array.isArray(order.items) ? order.items : [];
-                          if (items.length === 0) return;
-                          await Promise.all(
-                            items.map(async (it) => {
-                              const pid = it.product?._id || it.product || it._id;
-                              const qty = it.quantity || 1;
-                              if (pid) {
-                                try { await cart.addToCart(pid, qty); } catch {}
-                              }
-                            })
+                  <ButtonRow style={{ justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+                    {(() => {
+                      // Build primary actions based on status rules, max 2 buttons
+                      const primary = [];
+                      const manual = isManualPayment(order);
+                      if (isPendingOrProcessing(order)) {
+                        // Pending/Processing: Cancel (red) + Upload Proof (orange if manual)
+                        primary.push({ key: 'cancel' });
+                        if (manual) primary.push({ key: 'upload' });
+                      } else if (isDelivered(order)) {
+                        // Delivered: Reorder (orange) + Add Review (gray)
+                        primary.push({ key: 'reorder' }, { key: 'review' });
+                      }
+                      const limited = primary.slice(0, 2);
+                      return limited.map(({ key }) => {
+                        if (key === 'reorder') {
+                          return (
+                            <PrimaryButton
+                              key={key}
+                              onClick={async () => {
+                                try {
+                                  const items = Array.isArray(order.items) ? order.items : [];
+                                  if (items.length === 0) return;
+                                  await Promise.all(
+                                    items.map(async (it) => {
+                                      const pid = it.product?._id || it.product || it._id;
+                                      const qty = it.quantity || 1;
+                                      if (pid) {
+                                        try { await cart.addToCart(pid, qty); } catch {}
+                                      }
+                                    })
+                                  );
+                                  setSuccessModal({ open: true, message: 'Items added to cart' });
+                                  setTimeout(() => setSuccessModal({ open: false, message: '' }), 1200);
+                                } catch {
+                                  setNotificationMessage('Failed to reorder');
+                                  setTimeout(() => setNotificationMessage(''), 3000);
+                                }
+                              }}
+                              style={{ fontSize: 12 }}
+                            >
+                              Reorder
+                            </PrimaryButton>
                           );
-                          setSuccessModal({ open: true, message: 'Items added to cart' });
-                          setTimeout(() => setSuccessModal({ open: false, message: '' }), 1200);
-                        } catch (e) {
-                          setNotificationMessage('Failed to reorder');
-                          setTimeout(() => setNotificationMessage(''), 3000);
                         }
-                      }}
-                      style={{ fontSize: 12 }}
-                    >
-                      Reorder
-                    </PrimaryButton>
-                    <SecondaryButton 
-                      onClick={async () => {
-                        setReviewingOrder(order._id || order.id);
-                        setReviewComment('');
-                        const firstProductId = order.items && order.items[0] && (order.items[0].product?._id || order.items[0].product || order.items[0]._id);
-                        setSelectedProductId(firstProductId || '');
-                      }}
-                      style={{ fontSize: 12 }}
-                    >
-                      Add Review
-                    </SecondaryButton>
-                    {order.paymentMethod === 'GCash_Manual' && (
-                      <SecondaryButton
-                        $accent
-                        onClick={() => {
-                          setProofOrderId(order._id || order.id);
-                          setProofFile(null);
-                          setProofRef('');
-                        }}
-                        style={{ fontSize: 12 }}
-                      >
-                        Upload Proof
-                      </SecondaryButton>
-                    )}
-                    {String(order.status).toLowerCase() === 'pending' && (
-                      <DestructiveButton
-                        onClick={() => {
-                          setOrderToCancel(order._id || order.id);
-                          setShowCancelModal(true);
-                        }}
-                          style={{ fontSize: 12 }}
-                        disabled={cancelingOrderId === (order._id || order.id)}
-                      >
-                        {cancelingOrderId === (order._id || order.id) ? 'Canceling...' : 'Cancel'}
-                      </DestructiveButton>
-                    )}
+                        if (key === 'review') {
+                          return (
+                            <SecondaryButton
+                              key={key}
+                              onClick={() => {
+                                setReviewingOrder(order._id || order.id);
+                                setReviewComment('');
+                                const firstProductId = order.items && order.items[0] && (order.items[0].product?._id || order.items[0].product || order.items[0]._id);
+                                setSelectedProductId(firstProductId || '');
+                              }}
+                              style={{ fontSize: 12 }}
+                            >
+                              Add Review
+                            </SecondaryButton>
+                          );
+                        }
+                        if (key === 'upload') {
+                          return (
+                            <PrimaryButton
+                              key={key}
+                              onClick={() => {
+                                setProofOrderId(order._id || order.id);
+                                setProofFile(null);
+                                setProofRef('');
+                              }}
+                              style={{ fontSize: 12 }}
+                            >
+                              Upload Proof
+                            </PrimaryButton>
+                          );
+                        }
+                        if (key === 'cancel') {
+                          return (
+                            <DestructiveButton
+                              key={key}
+                              onClick={() => {
+                                setOrderToCancel(order._id || order.id);
+                                setShowCancelModal(true);
+                              }}
+                              style={{ fontSize: 12 }}
+                              disabled={cancelingOrderId === (order._id || order.id)}
+                            >
+                              {cancelingOrderId === (order._id || order.id) ? 'Canceling...' : 'Cancel'}
+                            </DestructiveButton>
+                          );
+                        }
+                        return null;
+                      });
+                    })()}
                   </ButtonRow>
                 </OrderFooter>
               </OrderCard>
