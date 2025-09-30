@@ -1,6 +1,56 @@
+// POST /api/auth/verify-email-otp
+const verifyEmailOtp = async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+    if (!email || !otp) return res.status(400).json({ message: 'Email and OTP are required' });
+    const normalizedEmail = (email || '').trim().toLowerCase();
+    const user = await User.findOne({ email: normalizedEmail });
+    if (!user) return res.status(400).json({ message: 'Invalid email or OTP' });
+
+    const hashed = crypto.createHash('sha256').update(otp).digest('hex');
+    const valid = user.emailVerificationOTP && user.emailVerificationOTP === hashed && user.emailVerificationOTPExpires && user.emailVerificationOTPExpires > Date.now();
+    if (!valid) return res.status(400).json({ message: 'Invalid or expired OTP' });
+
+    user.isVerified = true;
+    user.emailVerificationOTP = undefined;
+    user.emailVerificationOTPExpires = undefined;
+    user.verificationToken = undefined; // clear any link token if present
+    await user.save();
+
+    return res.status(200).json({ message: 'Email verified' });
+  } catch (error) {
+    console.error('verifyEmailOtp error:', error);
+    return res.status(500).json({ message: 'Error verifying email' });
+  }
+};
+
+// POST /api/auth/resend-email-otp
+const resendEmailOtp = async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ message: 'Email is required' });
+    const normalizedEmail = (email || '').trim().toLowerCase();
+    const user = await User.findOne({ email: normalizedEmail });
+    // return 200 regardless to avoid enumeration
+    if (!user) return res.status(200).json({ message: 'If the email exists, a new code has been sent' });
+    if (user.isVerified) return res.status(200).json({ message: 'Email already verified' });
+
+    const otp = user.createEmailVerificationOTP();
+    await user.save();
+    await sendVerificationOTPEmail(user.email, otp);
+    const payload = { message: 'Verification code resent' };
+    if (process.env.EXPOSE_OTP_FOR_TESTING === 'true') payload.otp = otp;
+    return res.status(200).json(payload);
+  } catch (error) {
+    console.error('resendEmailOtp error:', error);
+    return res.status(500).json({ message: 'Error resending verification code' });
+  }
+};
+
 const User = require('../models/userModel');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const axios = require('axios');
 const nodemailer = require('nodemailer');
 const crypto = require('crypto');
 const { createStoreForSeller } = require('./storeController');
@@ -59,6 +109,87 @@ async function sendMailWithRetry(options, retries = 2, baseDelayMs = 1500) {
   }
 }
 
+// ===== EmailJS (optional fallback) =====
+function hasEmailJsConfig() {
+  return (
+    !!process.env.EMAILJS_SERVICE_ID &&
+    !!process.env.EMAILJS_PUBLIC_KEY &&
+    !!process.env.EMAILJS_TEMPLATE_ID_VERIFY
+  );
+}
+
+async function sendViaEmailJS({ templateId, toEmail, subject, templateParams }) {
+  const serviceId = process.env.EMAILJS_SERVICE_ID;
+  const publicKey = process.env.EMAILJS_PUBLIC_KEY; // user_id
+  const privateKey = process.env.EMAILJS_PRIVATE_KEY; // optional
+  const fromName = process.env.EMAIL_FROM_NAME || 'BuFood';
+
+  const payload = {
+    service_id: serviceId,
+    template_id: templateId,
+    user_id: publicKey,
+    template_params: {
+      to_email: toEmail,
+      subject: subject,
+      from_name: fromName,
+      ...(templateParams || {}),
+    },
+  };
+
+// ======= Email Verification via OTP =======
+const sendVerificationOTPEmail = async (email, otp) => {
+  try {
+    await sendMailWithRetry({
+      from: process.env.EMAIL_FROM || 'BuFood <no-reply@yourdomain.com>',
+      to: email,
+      subject: `Your BuFood verification code: ${otp}`,
+      text: `Your BuFood email verification code is ${otp}. It expires in 10 minutes. If you didn't request this, ignore this email.`,
+      html: `
+        <div style="font-family: Arial, sans-serif; background:#f9f9f9; padding:20px;">
+          <div style="max-width:600px; margin:auto; background:#fff; padding:24px; border-radius:8px;">
+            <h2 style="margin:0 0 12px; color:#333;">Email verification code</h2>
+            <p style="color:#555; margin:0 0 16px;">Use the following code to verify your BuFood account. This code expires in 10 minutes.</p>
+            <div style="font-size:28px; font-weight:700; letter-spacing:6px; text-align:center; color:#111;">${otp}</div>
+            <p style="color:#777; margin-top:16px; font-size:14px;">If you didn't request this, you can safely ignore this email.</p>
+          </div>
+        </div>
+      `,
+    });
+    console.log(`Verification OTP email sent to ${email}`);
+  } catch (err) {
+    console.error('Error sending verification OTP email:', err.message);
+    // EmailJS fallback (prefer dedicated VERIFY_OTP template, otherwise reuse OTP)
+    const tpl = process.env.EMAILJS_TEMPLATE_ID_VERIFY_OTP || process.env.EMAILJS_TEMPLATE_ID_OTP;
+    if (tpl && !!process.env.EMAILJS_SERVICE_ID && !!process.env.EMAILJS_PUBLIC_KEY) {
+      try {
+        await sendViaEmailJS({
+          templateId: tpl,
+          toEmail: email,
+          subject: `Your BuFood verification code: ${otp}`,
+          templateParams: { otp },
+        });
+        console.log('Verification OTP email sent via EmailJS');
+        return;
+      } catch (e) {
+        console.error('EmailJS verification OTP send failed:', e?.message || e);
+      }
+    }
+    throw new Error('Failed to send verification OTP');
+  }
+};
+
+  // Prefer authorized endpoint if private key provided
+  const url = 'https://api.emailjs.com/api/v1.0/email/send';
+  const headers = {
+    'Content-Type': 'application/json',
+  };
+  if (privateKey) {
+    headers['Authorization'] = `Bearer ${privateKey}`;
+  }
+
+  await axios.post(url, payload, { headers, timeout: 15000 });
+}
+
 // Verification email sender
 const sendVerificationEmail = async (email, verificationLink) => {
   try {
@@ -92,6 +223,23 @@ const sendVerificationEmail = async (email, verificationLink) => {
     console.log('Verification email sent successfully');
   } catch (error) {
     console.error('Error sending verification email:', error.message);
+    // Fallback to EmailJS if configured
+    if (hasEmailJsConfig()) {
+      try {
+        await sendViaEmailJS({
+          templateId: process.env.EMAILJS_TEMPLATE_ID_VERIFY,
+          toEmail: email,
+          subject: 'Verify Your Email - BuFood',
+          templateParams: {
+            verification_link: verificationLink,
+          },
+        });
+        console.log('Verification email sent via EmailJS');
+        return;
+      } catch (e) {
+        console.error('EmailJS verification send failed:', e?.message || e);
+      }
+    }
     throw new Error('Could not send verification email');
   }
 };
@@ -119,6 +267,25 @@ const sendPasswordResetOTPEmail = async (email, otp) => {
     console.log(`Password reset OTP email sent to ${email}`);
   } catch (err) {
     console.error('Error sending OTP email:', err.message);
+    // Fallback to EmailJS if configured and OTP template provided
+    if (
+      process.env.EMAILJS_TEMPLATE_ID_OTP &&
+      !!process.env.EMAILJS_SERVICE_ID &&
+      !!process.env.EMAILJS_PUBLIC_KEY
+    ) {
+      try {
+        await sendViaEmailJS({
+          templateId: process.env.EMAILJS_TEMPLATE_ID_OTP,
+          toEmail: email,
+          subject: `Your BuFood password reset code: ${otp}`,
+          templateParams: { otp },
+        });
+        console.log('OTP email sent via EmailJS');
+        return;
+      } catch (e) {
+        console.error('EmailJS OTP send failed:', e?.message || e);
+      }
+    }
     throw new Error('Failed to send OTP email');
   }
 };
@@ -286,14 +453,22 @@ const register = async (req, res) => {
       }
     }
 
-    const baseUrl = process.env.BASE_URL || 'http://localhost:8000';
-    const verificationLink = `${baseUrl}/api/auth/verify/${verificationToken}`;
-    // Send verification email in background; do not block the response
+    // Generate and send email verification OTP as primary flow
+    const emailOtp = user.createEmailVerificationOTP();
+    await user.save();
     setImmediate(async () => {
       try {
-        await sendVerificationEmail(normalizedEmail, verificationLink);
+        await sendVerificationOTPEmail(normalizedEmail, emailOtp);
       } catch (e) {
-        console.error('sendVerificationEmail failed during registration (background):', e.message);
+        console.error('sendVerificationOTPEmail failed during registration (background):', e.message);
+        // As a fallback, also try sending link-based verification (non-fatal)
+        try {
+          const baseUrl = process.env.BASE_URL || 'http://localhost:8000';
+          const verificationLink = `${baseUrl}/api/auth/verify/${verificationToken}`;
+          await sendVerificationEmail(normalizedEmail, verificationLink);
+        } catch (e2) {
+          console.error('sendVerificationEmail fallback also failed:', e2.message);
+        }
       }
     });
 
@@ -303,7 +478,8 @@ const register = async (req, res) => {
       storeCreationFailed,
     };
     if (process.env.EXPOSE_VERIFY_LINK_FOR_TESTING === 'true') {
-      registerPayload.verifyLink = verificationLink;
+      // Expose OTP as well for testing, alongside link fallback
+      registerPayload.verifyOTP = emailOtp;
     }
     res.status(201).json(registerPayload);
   } catch (error) {
@@ -604,10 +780,12 @@ module.exports = {
   login,
   logout,
   verifyEmail,
+  verifyEmailOtp,
   sendVerificationEmail,
   sendPasswordChangedEmail,
   getMe,
   resendVerificationEmail,
+  resendEmailOtp,
   checkEmailVerificationStatus,
   forgotPassword,
   resetPassword,

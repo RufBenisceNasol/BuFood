@@ -52,6 +52,13 @@ const userSchema = new mongoose.Schema({
     passwordResetOTPExpires: {
         type: Date,
     },
+    // OTP-based email verification fields
+    emailVerificationOTP: {
+        type: String, // hashed
+    },
+    emailVerificationOTPExpires: {
+        type: Date,
+    },
     favorites: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Product'
@@ -84,6 +91,17 @@ userSchema.methods.createPasswordResetOTP = function() {
         .update(otp)
         .digest('hex');
     this.passwordResetOTPExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
+    return otp;
+};
+
+// Add method to generate an OTP for email verification
+userSchema.methods.createEmailVerificationOTP = function() {
+    const otp = (Math.floor(100000 + Math.random() * 900000)).toString();
+    this.emailVerificationOTP = crypto
+        .createHash('sha256')
+        .update(otp)
+        .digest('hex');
+    this.emailVerificationOTPExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
     return otp;
 };
 
