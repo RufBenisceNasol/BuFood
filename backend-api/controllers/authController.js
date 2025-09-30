@@ -1,52 +1,3 @@
-// POST /api/auth/verify-email-otp
-const verifyEmailOtp = async (req, res) => {
-  try {
-    const { email, otp } = req.body;
-    if (!email || !otp) return res.status(400).json({ message: 'Email and OTP are required' });
-    const normalizedEmail = (email || '').trim().toLowerCase();
-    const user = await User.findOne({ email: normalizedEmail });
-    if (!user) return res.status(400).json({ message: 'Invalid email or OTP' });
-
-    const hashed = crypto.createHash('sha256').update(otp).digest('hex');
-    const valid = user.emailVerificationOTP && user.emailVerificationOTP === hashed && user.emailVerificationOTPExpires && user.emailVerificationOTPExpires > Date.now();
-    if (!valid) return res.status(400).json({ message: 'Invalid or expired OTP' });
-
-    user.isVerified = true;
-    user.emailVerificationOTP = undefined;
-    user.emailVerificationOTPExpires = undefined;
-    user.verificationToken = undefined; // clear any link token if present
-    await user.save();
-
-    return res.status(200).json({ message: 'Email verified' });
-  } catch (error) {
-    console.error('verifyEmailOtp error:', error);
-    return res.status(500).json({ message: 'Error verifying email' });
-  }
-};
-
-// POST /api/auth/resend-email-otp
-const resendEmailOtp = async (req, res) => {
-  try {
-    const { email } = req.body;
-    if (!email) return res.status(400).json({ message: 'Email is required' });
-    const normalizedEmail = (email || '').trim().toLowerCase();
-    const user = await User.findOne({ email: normalizedEmail });
-    // return 200 regardless to avoid enumeration
-    if (!user) return res.status(200).json({ message: 'If the email exists, a new code has been sent' });
-    if (user.isVerified) return res.status(200).json({ message: 'Email already verified' });
-
-    const otp = user.createEmailVerificationOTP();
-    await user.save();
-    await sendVerificationOTPEmail(user.email, otp);
-    const payload = { message: 'Verification code resent' };
-    if (process.env.EXPOSE_OTP_FOR_TESTING === 'true') payload.otp = otp;
-    return res.status(200).json(payload);
-  } catch (error) {
-    console.error('resendEmailOtp error:', error);
-    return res.status(500).json({ message: 'Error resending verification code' });
-  }
-};
-
 const User = require('../models/userModel');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
@@ -136,6 +87,18 @@ async function sendViaEmailJS({ templateId, toEmail, subject, templateParams }) 
     },
   };
 
+  // Prefer authorized endpoint if private key provided
+  const url = 'https://api.emailjs.com/api/v1.0/email/send';
+  const headers = {
+    'Content-Type': 'application/json',
+  };
+  if (privateKey) {
+    headers['Authorization'] = `Bearer ${privateKey}`;
+  }
+
+  await axios.post(url, payload, { headers, timeout: 15000 });
+}
+
 // ======= Email Verification via OTP =======
 const sendVerificationOTPEmail = async (email, otp) => {
   try {
@@ -177,18 +140,6 @@ const sendVerificationOTPEmail = async (email, otp) => {
     throw new Error('Failed to send verification OTP');
   }
 };
-
-  // Prefer authorized endpoint if private key provided
-  const url = 'https://api.emailjs.com/api/v1.0/email/send';
-  const headers = {
-    'Content-Type': 'application/json',
-  };
-  if (privateKey) {
-    headers['Authorization'] = `Bearer ${privateKey}`;
-  }
-
-  await axios.post(url, payload, { headers, timeout: 15000 });
-}
 
 // Verification email sender
 const sendVerificationEmail = async (email, verificationLink) => {
@@ -600,6 +551,55 @@ const resendVerificationEmail = async (req, res) => {
   } catch (error) {
     console.error('Error resending verification email:', error.message);
     res.status(500).json({ message: 'Failed to resend verification email' });
+  }
+};
+
+// POST /api/auth/verify-email-otp
+const verifyEmailOtp = async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+    if (!email || !otp) return res.status(400).json({ message: 'Email and OTP are required' });
+    const normalizedEmail = (email || '').trim().toLowerCase();
+    const user = await User.findOne({ email: normalizedEmail });
+    if (!user) return res.status(400).json({ message: 'Invalid email or OTP' });
+
+    const hashed = crypto.createHash('sha256').update(otp).digest('hex');
+    const valid = user.emailVerificationOTP && user.emailVerificationOTP === hashed && user.emailVerificationOTPExpires && user.emailVerificationOTPExpires > Date.now();
+    if (!valid) return res.status(400).json({ message: 'Invalid or expired OTP' });
+
+    user.isVerified = true;
+    user.emailVerificationOTP = undefined;
+    user.emailVerificationOTPExpires = undefined;
+    user.verificationToken = undefined; // clear any link token if present
+    await user.save();
+
+    return res.status(200).json({ message: 'Email verified' });
+  } catch (error) {
+    console.error('verifyEmailOtp error:', error);
+    return res.status(500).json({ message: 'Error verifying email' });
+  }
+};
+
+// POST /api/auth/resend-email-otp
+const resendEmailOtp = async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ message: 'Email is required' });
+    const normalizedEmail = (email || '').trim().toLowerCase();
+    const user = await User.findOne({ email: normalizedEmail });
+    // return 200 regardless to avoid enumeration
+    if (!user) return res.status(200).json({ message: 'If the email exists, a new code has been sent' });
+    if (user.isVerified) return res.status(200).json({ message: 'Email already verified' });
+
+    const otp = user.createEmailVerificationOTP();
+    await user.save();
+    await sendVerificationOTPEmail(user.email, otp);
+    const payload = { message: 'Verification code resent' };
+    if (process.env.EXPOSE_OTP_FOR_TESTING === 'true') payload.otp = otp;
+    return res.status(200).json(payload);
+  } catch (error) {
+    console.error('resendEmailOtp error:', error);
+    return res.status(500).json({ message: 'Error resending verification code' });
   }
 };
 
