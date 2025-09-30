@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { auth, warmup } from '../api';
 import { useNavigate } from 'react-router-dom';
 import { FiUser, FiMail, FiPhone, FiLock, FiBriefcase, FiEye, FiEyeOff } from 'react-icons/fi';
@@ -22,6 +22,11 @@ const RegisterPage = () => {
     const [confirmPasswordError, setConfirmPasswordError] = useState('');
     const [canResendVerification, setCanResendVerification] = useState(false);
     const [resendLoading, setResendLoading] = useState(false);
+    const [showOtpModal, setShowOtpModal] = useState(false);
+    const [otp, setOtp] = useState(['', '', '', '', '', '']);
+    const [otpError, setOtpError] = useState('');
+    const [otpSuccess, setOtpSuccess] = useState('');
+    const [resendCooldown, setResendCooldown] = useState(0);
     const navigate = useNavigate();
 
     const handleChange = (e) => {
@@ -106,12 +111,10 @@ const RegisterPage = () => {
                 }, 5000);
             } else if (data?.message) {
                 setSuccess(data.message);
-                // If email was queued for sending, allow the user to resend right away
-                if (data.emailQueued) {
-                    setCanResendVerification(true);
-                }
-                // Give a bit more time before redirecting so user can click resend if needed
-                setTimeout(() => navigate('/login'), 8000);
+                // Open OTP modal for email verification (primary flow now)
+                setShowOtpModal(true);
+                // Allow resend link inside modal
+                setCanResendVerification(true);
             }
         } catch (err) {
             // New error format from auth.register: { message, status, isVerified }
@@ -139,17 +142,60 @@ const RegisterPage = () => {
 
     const handleResendVerification = async () => {
         if (!formData.email) return;
+        if (resendCooldown > 0) return;
         setResendLoading(true);
         setError('');
         setSuccess('');
         try {
-            await auth.resendVerification(formData.email);
-            setSuccess('Verification email has been resent. Please check your inbox.');
-            setCanResendVerification(false);
+            // Send verification OTP instead of link
+            await auth.resendEmailOtp(formData.email);
+            setOtpSuccess('A new verification code was sent to your email.');
+            setOtpError('');
+            setResendCooldown(30);
         } catch (e) {
-            setError(typeof e === 'string' ? e : (e?.message || 'Failed to resend verification'));
+            setOtpError(typeof e === 'string' ? e : (e?.message || 'Failed to resend code'));
         } finally {
             setResendLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        if (resendCooldown <= 0) return;
+        const t = setInterval(() => setResendCooldown((s) => (s > 0 ? s - 1 : 0)), 1000);
+        return () => clearInterval(t);
+    }, [resendCooldown]);
+
+    const handleOtpChange = (index, value) => {
+        if (!/^\d?$/.test(value)) return; // only digits
+        const next = [...otp];
+        next[index] = value;
+        setOtp(next);
+        setOtpError('');
+        // auto focus next input
+        const nextIndex = value && index < 5 ? index + 1 : null;
+        if (nextIndex !== null) {
+            const el = document.getElementById(`otp-${nextIndex}`);
+            el && el.focus();
+        }
+    };
+
+    const handleVerifyOtp = async () => {
+        const code = otp.join('');
+        if (code.length !== 6) {
+            setOtpError('Enter the 6-digit code');
+            return;
+        }
+        try {
+            setOtpError('');
+            setOtpSuccess('');
+            await auth.verifyEmailOtp(formData.email, code);
+            setOtpSuccess('Email verified! Redirecting to Sign In...');
+            setTimeout(() => {
+                setShowOtpModal(false);
+                navigate('/login');
+            }, 1500);
+        } catch (e) {
+            setOtpError(typeof e === 'string' ? e : (e?.message || 'Invalid or expired code'));
         }
     };
 
@@ -339,6 +385,35 @@ const RegisterPage = () => {
                     </p>
                 </div>
             </div>
+            {showOtpModal && (
+                <div style={styles.modalOverlay}>
+                    <div style={styles.modalContent}>
+                        <h3 style={{ marginTop: 0, marginBottom: 8 }}>Verify your email</h3>
+                        <p style={{ marginTop: 0, color: '#555' }}>Enter the 6-digit code sent to {formData.email}</p>
+                        {otpError && <div style={styles.error}>{otpError}</div>}
+                        {otpSuccess && <div style={styles.success}>{otpSuccess}</div>}
+                        <div style={{ display: 'flex', gap: 8, justifyContent: 'center', margin: '12px 0' }}>
+                            {otp.map((d, i) => (
+                                <input
+                                    key={i}
+                                    id={`otp-${i}`}
+                                    value={d}
+                                    onChange={(e) => handleOtpChange(i, e.target.value)}
+                                    inputMode="numeric"
+                                    maxLength={1}
+                                    style={styles.otpInput}
+                                />
+                            ))}
+                        </div>
+                        <button type="button" onClick={handleVerifyOtp} style={styles.button}>Verify</button>
+                        <div style={{ textAlign: 'center', marginTop: 10 }}>
+                            <button type="button" onClick={handleResendVerification} disabled={resendLoading || resendCooldown>0} style={styles.linkButton}>
+                                {resendLoading ? 'Sending...' : (resendCooldown>0 ? `Resend code in ${resendCooldown}s` : 'Resend code')}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
@@ -512,5 +587,32 @@ const styles = {
         paddingLeft: '15px',
     }
 }
+
+// Modal styles
+styles.modalOverlay = {
+    position: 'fixed',
+    inset: 0,
+    background: 'rgba(0,0,0,0.35)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 16
+};
+styles.modalContent = {
+    width: '100%',
+    maxWidth: 420,
+    background: '#fff',
+    borderRadius: 12,
+    padding: 16,
+    boxShadow: '0 10px 30px rgba(0,0,0,0.2)'
+};
+styles.otpInput = {
+    width: 42,
+    height: 48,
+    borderRadius: 8,
+    border: '1px solid rgba(0,0,0,0.15)',
+    textAlign: 'center',
+    fontSize: 20
+};
 
 export default RegisterPage;

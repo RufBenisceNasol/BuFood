@@ -148,6 +148,25 @@ export const auth = {
         }
     },
 
+    // Email verification via OTP
+    verifyEmailOtp: async (email, otp) => {
+        try {
+            const response = await api.post('/auth/verify-email-otp', { email, otp });
+            return response.data;
+        } catch (error) {
+            throw error.response?.data || error.message;
+        }
+    },
+
+    resendEmailOtp: async (email) => {
+        try {
+            const response = await api.post('/auth/resend-email-otp', { email });
+            return response.data;
+        } catch (error) {
+            throw error.response?.data || error.message;
+        }
+    },
+
     checkEmailVerification: async (email) => {
         try {
             const response = await api.post('/auth/check-verification', { email });

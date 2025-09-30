@@ -6,6 +6,8 @@ const {
     verifyEmail, 
     getMe, 
     resendVerificationEmail, 
+    verifyEmailOtp,
+    resendEmailOtp,
     checkEmailVerificationStatus,
     forgotPassword,
     resetPassword,
@@ -233,6 +235,56 @@ router.get('/me', authenticate, getMe);
  *         description: Invalid email or user already verified
  */
 router.post('/resend-verification', resendVerificationValidation, handleValidation, resendVerificationEmail);
+
+/**
+ * @swagger
+ * /api/auth/verify-email-otp:
+ *   post:
+ *     tags: [Authentication]
+ *     summary: Verify email using 6-digit OTP
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [email, otp]
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *               otp:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Email verified
+ *       400:
+ *         description: Invalid or expired OTP
+ */
+router.post('/verify-email-otp', verifyEmailOtp);
+
+/**
+ * @swagger
+ * /api/auth/resend-email-otp:
+ *   post:
+ *     tags: [Authentication]
+ *     summary: Resend email verification OTP
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [email]
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *     responses:
+ *       200:
+ *         description: Verification code resent if eligible
+ */
+router.post('/resend-email-otp', resendEmailOtp);
 
 /**
  * @swagger
