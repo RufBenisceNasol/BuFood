@@ -75,10 +75,11 @@ async function sendViaEmailJS({ templateId, toEmail, subject, templateParams }) 
   const privateKey = process.env.EMAILJS_PRIVATE_KEY; // optional
   const fromName = process.env.EMAIL_FROM_NAME || 'BuFood';
 
+  // Build payload; when using privateKey (server-to-server), omit user_id
   const payload = {
     service_id: serviceId,
     template_id: templateId,
-    user_id: publicKey,
+    ...(privateKey ? {} : { user_id: publicKey }),
     template_params: {
       to_email: toEmail,
       subject: subject,
