@@ -523,6 +523,14 @@ const forgotPassword = async (req, res) => {
     const frontendBase = process.env.FRONTEND_URL || 'http://localhost:5173';
     const resetUrl = `${frontendBase}/reset-password/${resetToken}`;
     
+    // If Supabase handles emails, do not send via Nodemailer.
+    if (process.env.USE_SUPABASE_EMAIL_VERIFICATION === 'true') {
+      return res.status(200).json({
+        message: 'Supabase-managed reset: use supabase.auth.resetPasswordForEmail on the client',
+        hint: 'Client should call supabase.auth.resetPasswordForEmail(email, { redirectTo: <your-app>/supabase-reset })'
+      });
+    }
+    
     await transporter.sendMail({
       from: process.env.EMAIL_FROM || 'BuFood <no-reply@yourdomain.com>',
       to: user.email,
