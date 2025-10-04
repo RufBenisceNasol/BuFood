@@ -1984,3 +1984,34 @@
 {"level":"info","message":"Running with in-memory cache (Redis disabled)","timestamp":"2025-10-04T13:34:14.842Z"}
 {"level":"info","message":"🚀 Server started on port 8000","timestamp":"2025-10-04T13:34:14.866Z"}
 {"level":"info","message":"📚 API Documentation available at http://[YOUR_IP]:8000/api-docs","timestamp":"2025-10-04T13:34:14.867Z"}
+{"level":"info","message":"Running with in-memory cache (Redis disabled)","timestamp":"2025-10-04T14:16:54.002Z"}
+{"level":"info","message":"🚀 Server started on port 8000","timestamp":"2025-10-04T14:16:54.024Z"}
+{"level":"info","message":"📚 API Documentation available at http://[YOUR_IP]:8000/api-docs","timestamp":"2025-10-04T14:16:54.024Z"}
+{"level":"info","message":"MongoDB connection established successfully","timestamp":"2025-10-04T14:16:55.432Z"}
+{"level":"info","message":"✅ Successfully connected to MongoDB","timestamp":"2025-10-04T14:16:55.440Z"}
+{"level":"info","message":"Successfully dropped all indexes from cart collection","timestamp":"2025-10-04T14:16:55.504Z"}
+{"level":"info","message":{"duration":"13ms","method":"GET","requestId":"59a1b9be-c013-40de-9edd-d8ab22dba1ff","status":401,"url":"/my-store?_t=1759587508927"},"timestamp":"2025-10-04T14:18:28.972Z"}
+{"level":"info","message":{"duration":"5ms","method":"GET","requestId":"adaca12d-2f5a-4746-80aa-5e8552498fce","status":401,"url":"/seller?page=1&limit=100&sortBy=createdAt&sortOrder=desc"},"timestamp":"2025-10-04T14:18:28.980Z"}
+{"level":"info","message":{"duration":"2ms","method":"GET","requestId":"b88c5963-e937-4a69-8d52-74563e1a3049","status":401,"url":"/my-store?_t=1759587509058"},"timestamp":"2025-10-04T14:18:29.238Z"}
+{"level":"info","message":{"duration":"3ms","method":"GET","requestId":"aefe7aa9-0190-4eb4-b46e-7c98969aa0c0","status":401,"url":"/seller?page=1&limit=100&sortBy=createdAt&sortOrder=desc"},"timestamp":"2025-10-04T14:18:29.242Z"}
+{"level":"info","message":{"duration":"42ms","method":"POST","requestId":"def43d16-e9bc-42ab-a286-1607458801c1","status":401,"url":"/refresh-token"},"timestamp":"2025-10-04T14:18:29.296Z"}
+{"level":"info","message":{"duration":"67ms","method":"POST","requestId":"ed7e626c-fa36-4d1e-8da1-996bcebc9384","status":401,"url":"/refresh-token"},"timestamp":"2025-10-04T14:18:29.300Z"}
+{"level":"info","message":{"duration":"81ms","method":"POST","requestId":"4990d21d-aa02-4c4b-ac8e-a64a9d05296a","status":401,"url":"/refresh-token"},"timestamp":"2025-10-04T14:18:29.304Z"}
+{"level":"info","message":{"duration":"62ms","method":"POST","requestId":"c5444ab3-799a-4af3-81a3-4811b46b88cb","status":401,"url":"/refresh-token"},"timestamp":"2025-10-04T14:18:29.310Z"}
+{"level":"info","message":{"duration":"3ms","method":"GET","requestId":"f312e07a-560d-4477-814b-e992701829cc","status":200,"url":"/health?_t=1759587509800"},"timestamp":"2025-10-04T14:18:29.826Z"}
+{"level":"info","message":{"duration":"1ms","method":"GET","requestId":"358040b0-340e-464d-b824-023c2fd7420f","status":200,"url":"/health?_t=1759587510075"},"timestamp":"2025-10-04T14:18:30.086Z"}
+{"level":"info","message":{"duration":"0ms","method":"GET","requestId":"7bfb2bbe-94ae-46a0-8b58-fcf18f9a7e0d","status":200,"url":"/health?_t=1759587510078"},"timestamp":"2025-10-04T14:18:30.092Z"}
+{"level":"info","message":{"duration":"2ms","method":"GET","requestId":"78525a72-fcda-440e-b8ff-17a15bd0f2fe","status":200,"url":"/health?_t=1759587514722"},"timestamp":"2025-10-04T14:18:34.744Z"}
+{"level":"info","message":{"duration":"1ms","method":"GET","requestId":"c06736fd-db95-4e82-99b6-da69fa12bfd7","status":200,"url":"/health?_t=1759587515022"},"timestamp":"2025-10-04T14:18:35.035Z"}
+{"level":"info","message":{"duration":"1ms","method":"GET","requestId":"2ca0152a-1e43-44e6-b00c-a6718e7c1bc4","status":200,"url":"/health?_t=1759587515026"},"timestamp":"2025-10-04T14:18:35.039Z"}
+{"level":"info","message":{"duration":"256ms","method":"POST","requestId":"68d3228b-cb4e-41d8-ad8f-2759c3dd5744","status":200,"url":"/login"},"timestamp":"2025-10-04T14:18:55.948Z"}
+{"level":"info","message":{"duration":"259ms","method":"GET","requestId":"29f329ce-5262-42e3-80dd-eb9f3d66a8df","status":200,"url":"/my-store?_t=1759587536048"},"timestamp":"2025-10-04T14:18:56.316Z"}
+{"level":"info","message":{"duration":"301ms","method":"GET","requestId":"af81ec04-fee7-469f-8f98-7ec65c67743b","status":200,"url":"/seller?page=1&limit=20&sortBy=createdAt&sortOrder=desc"},"timestamp":"2025-10-04T14:18:56.385Z"}
+{"level":"info","message":{"duration":"633ms","method":"GET","requestId":"2e77508d-f228-47fc-8f30-db6e4c7e55d2","status":304,"url":"/seller?page=1&limit=20&sortBy=createdAt&sortOrder=desc"},"timestamp":"2025-10-04T14:18:57.023Z"}
+{"level":"info","message":{"duration":"966ms","method":"GET","requestId":"1ecdc82f-22d2-4f55-975c-161b386f46ed","status":200,"url":"/my-store?_t=1759587536050"},"timestamp":"2025-10-04T14:18:57.029Z"}
+{"level":"info","message":{"duration":"436ms","method":"GET","requestId":"aff56023-3d37-4363-857d-2403e43cb001","status":200,"url":"/seller?page=1&limit=100&sortBy=createdAt&sortOrder=desc"},"timestamp":"2025-10-04T14:18:57.152Z"}
+{"level":"info","message":{"duration":"600ms","method":"GET","requestId":"c2730efa-f2c9-4f9b-bda5-e2ed5e4d751f","status":304,"url":"/seller?page=1&limit=100&sortBy=createdAt&sortOrder=desc"},"timestamp":"2025-10-04T14:18:57.959Z"}
+{"level":"info","message":{"duration":"521ms","method":"POST","requestId":"01e42b3a-a2d7-4834-923b-88468798f5f9","status":200,"url":"/logout"},"timestamp":"2025-10-04T14:19:00.894Z"}
+{"level":"info","message":{"duration":"2ms","method":"GET","requestId":"6b2a972f-d547-4bbd-822b-8c6fe5048e9a","status":200,"url":"/health?_t=1759587540921"},"timestamp":"2025-10-04T14:19:00.935Z"}
+{"level":"info","message":{"duration":"2ms","method":"GET","requestId":"0894acc0-21c1-47df-9647-24c922a9066e","status":200,"url":"/health?_t=1759587540923"},"timestamp":"2025-10-04T14:19:00.941Z"}
+{"level":"info","message":"Received shutdown signal, starting graceful shutdown...","timestamp":"2025-10-04T14:19:10.216Z"}
