@@ -13,17 +13,21 @@ const transporter = nodemailer.createTransport({
   port: parseInt(process.env.SMTP_PORT || (process.env.SMTP_SECURE === 'true' ? '465' : '587'), 10),
   secure: process.env.SMTP_SECURE === 'true', // true=SSL(465), false=STARTTLS(587)
   requireTLS: process.env.SMTP_SECURE !== 'true',
-  pool: true,
-  maxConnections: 3,
-  maxMessages: 50,
+  // Render/serverless: keep simple connections; pools can be dropped while idle
+  pool: false,
+  maxConnections: 1,
+  maxMessages: 20,
+  family: 4, // prefer IPv4 to avoid IPv6 stalls
+  logger: process.env.MAIL_DEBUG === 'true',
+  debug: process.env.MAIL_DEBUG === 'true',
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS,
   },
   // Timeouts (ms)
-  connectionTimeout: 15000,
-  greetingTimeout: 10000,
-  socketTimeout: 20000,
+  connectionTimeout: 30000,
+  greetingTimeout: 20000,
+  socketTimeout: 60000,
 });
 
 // Verify SMTP credentials on startup (non-fatal)
@@ -38,7 +42,7 @@ setImmediate(() => {
 });
 
 // Helper: send mail with retry/backoff for transient errors
-async function sendMailWithRetry(options, retries = 2, baseDelayMs = 1500) {
+async function sendMailWithRetry(options, retries = 4, baseDelayMs = 1500) {
   let attempt = 0;
   for (;;) {
     try {
