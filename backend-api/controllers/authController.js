@@ -9,10 +9,10 @@ require('dotenv').config();
 
 // Nodemailer setup (explicit Gmail SMTP with STARTTLS, pooled, with timeouts)
 const transporter = nodemailer.createTransport({
-  host: 'smtp.gmail.com',
-  port: 587,
-  secure: false,        // use STARTTLS
-  requireTLS: true,
+  host: process.env.SMTP_HOST || 'smtp.gmail.com',
+  port: parseInt(process.env.SMTP_PORT || (process.env.SMTP_SECURE === 'true' ? '465' : '587'), 10),
+  secure: process.env.SMTP_SECURE === 'true', // true=SSL(465), false=STARTTLS(587)
+  requireTLS: process.env.SMTP_SECURE !== 'true',
   pool: true,
   maxConnections: 3,
   maxMessages: 50,
@@ -211,6 +211,7 @@ const resendPasswordOtp = async (req, res) => {
 const sendPasswordChangedEmail = async (email) => {
   try {
     await sendMailWithRetry({
+      from: process.env.EMAIL_FROM || 'BuFood <no-reply@yourdomain.com>',
       to: email,
       subject: 'Your BuFood password was changed',
       html: `
@@ -481,6 +482,7 @@ const forgotPassword = async (req, res) => {
     const resetUrl = `${frontendBase}/reset-password/${resetToken}`;
     
     await transporter.sendMail({
+      from: process.env.EMAIL_FROM || 'BuFood <no-reply@yourdomain.com>',
       to: user.email,
       subject: 'Password Reset Request - BuFood',
       html: `
