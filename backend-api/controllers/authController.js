@@ -24,10 +24,14 @@ const transporter = nodemailer.createTransport({
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS,
   },
+  tls: {
+    minVersion: 'TLSv1.2',
+    servername: process.env.SMTP_HOST || 'smtp.gmail.com',
+  },
   // Timeouts (ms)
-  connectionTimeout: 30000,
-  greetingTimeout: 20000,
-  socketTimeout: 60000,
+  connectionTimeout: 45000,
+  greetingTimeout: 30000,
+  socketTimeout: 90000,
 });
 
 // Verify SMTP credentials on startup (non-fatal)
@@ -42,7 +46,7 @@ setImmediate(() => {
 });
 
 // Helper: send mail with retry/backoff for transient errors
-async function sendMailWithRetry(options, retries = 4, baseDelayMs = 1500) {
+async function sendMailWithRetry(options, retries = 5, baseDelayMs = 2000) {
   let attempt = 0;
   for (;;) {
     try {
