@@ -15,7 +15,9 @@ const {
   uploadProfileImage
 } = require('../controllers/supabaseAuthController');
 const { authenticateWithSupabase } = require('../middlewares/supabaseAuthMiddleware');
-const { uploadProfileImageMiddleware } = require('../middlewares/uploadProfileImage');
+// Import multer instance and create a single-file middleware for field name 'image'
+const profileImageUpload = require('../middlewares/uploadProfileImage');
+const profileImageUploadMiddleware = profileImageUpload.single('image');
 
 /**
  * @swagger
@@ -306,6 +308,6 @@ router.put('/profile', authenticateWithSupabase, updateProfile);
  *       200:
  *         description: Profile image uploaded
  */
-router.post('/profile/image', authenticateWithSupabase, uploadProfileImageMiddleware, uploadProfileImage);
+router.post('/profile/image', authenticateWithSupabase, profileImageUploadMiddleware, uploadProfileImage);
 
 module.exports = router;
