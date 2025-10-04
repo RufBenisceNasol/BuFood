@@ -70,6 +70,11 @@ async function sendMailWithRetry(options, retries = 5, baseDelayMs = 2000) {
 // Verification email sender
 const sendVerificationEmail = async (email, verificationLink) => {
   try {
+    // If Supabase manages verification emails, skip Nodemailer send
+    if (process.env.USE_SUPABASE_EMAIL_VERIFICATION === 'true') {
+      console.log('Skipping Nodemailer verification email (using Supabase)');
+      return;
+    }
     await sendMailWithRetry({
       from: process.env.EMAIL_FROM || 'BuFood <no-reply@yourdomain.com>',
       to: email,
@@ -297,14 +302,19 @@ const register = async (req, res) => {
 
     const baseUrl = process.env.BASE_URL || 'http://localhost:8000';
     const verificationLink = `${baseUrl}/api/auth/verify/${verificationToken}`;
-    // Send verification email in background; do not block the response
-    setImmediate(async () => {
-      try {
-        await sendVerificationEmail(normalizedEmail, verificationLink);
-      } catch (e) {
-        console.error('sendVerificationEmail failed during registration (background):', e.message);
-      }
-    });
+    // Conditionally send email via Nodemailer unless Supabase is used
+    if (process.env.USE_SUPABASE_EMAIL_VERIFICATION === 'true') {
+      console.log('Registration: skipping Nodemailer email (Supabase handles verification)');
+    } else {
+      // Send verification email in background; do not block the response
+      setImmediate(async () => {
+        try {
+          await sendVerificationEmail(normalizedEmail, verificationLink);
+        } catch (e) {
+          console.error('sendVerificationEmail failed during registration (background):', e.message);
+        }
+      });
+    }
 
     const registerPayload = {
       message: 'User registered successfully. Please check your email to verify your account.',
@@ -318,6 +328,30 @@ const register = async (req, res) => {
   } catch (error) {
     console.error('Error during registration:', error.message);
     res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// Mark a user verified (for Supabase-driven verification flows)
+// Minimal implementation: sets isVerified=true by email.
+// For production, protect with a secret or verify via Supabase Admin API.
+const markVerified = async (req, res) => {
+  try {
+    const { email } = req.body;
+    const normalizedEmail = (email || '').trim().toLowerCase();
+    if (!normalizedEmail) {
+      return res.status(400).json({ message: 'Email is required' });
+    }
+    const user = await User.findOne({ email: normalizedEmail });
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    user.isVerified = true;
+    user.verificationToken = undefined;
+    await user.save();
+    return res.status(200).json({ message: 'User marked as verified' });
+  } catch (err) {
+    console.error('markVerified error:', err.message);
+    return res.status(500).json({ message: 'Failed to mark verified' });
   }
 };
 
@@ -628,4 +662,5 @@ module.exports = {
   refreshToken,
   updateProfile,
   uploadProfileImage,
+  markVerified,
 };

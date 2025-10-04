@@ -4,9 +4,18 @@ import react from '@vitejs/plugin-react'
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
-  // Allow overriding dev proxy target: e.g., https://capstonedelibup-o7sl.onrender.com or http://localhost:8000
-  const devTarget = env.VITE_DEV_API_TARGET || 'http://localhost:8000'
+  // Resolve dev proxy target robustly:
+  // 1) VITE_DEV_API_TARGET if provided (no trailing /api)
+  // 2) Else derive from VITE_API_BASE_URL by stripping trailing /api
+  // 3) Else default to deployed backend to avoid localhost dependency
+  const derivedFromApiBase = env.VITE_API_BASE_URL
+    ? env.VITE_API_BASE_URL.replace(/\/?api\/?$/, '')
+    : ''
+  const devTarget = (env.VITE_DEV_API_TARGET || derivedFromApiBase || 'https://capstonedelibup-o7sl.onrender.com')
   const isHttps = devTarget.startsWith('https://')
+  // Helpful log to confirm target during dev
+  // eslint-disable-next-line no-console
+  console.log(`[vite] Proxy target => ${devTarget}`)
 
   return {
     plugins: [react()],
@@ -30,12 +39,14 @@ export default defineConfig(({ mode }) => {
         '/api': {
           target: devTarget,
           changeOrigin: true,
-          secure: isHttps,
+          // Disable TLS verification to avoid local dev cert issues when targeting https
+          secure: false,
         },
         '/health': {
           target: devTarget,
           changeOrigin: true,
-          secure: isHttps,
+          // Disable TLS verification to avoid local dev cert issues when targeting https
+          secure: false,
         },
       },
     },

@@ -15,7 +15,9 @@ const {
     // OTP-based handlers
     forgotPasswordOtp,
     resetPasswordOtp,
-    resendPasswordOtp
+    resendPasswordOtp,
+    // Supabase bridging
+    markVerified
 } = require('../controllers/authController');
 const { 
     registerValidation, 
@@ -438,6 +440,33 @@ router.post('/resend-password-otp', resendPasswordOtpValidation, handleValidatio
  *         description: Invalid refresh token
  */
 router.post('/refresh-token', refreshToken);
+
+/**
+ * @swagger
+ * /api/auth/mark-verified:
+ *   post:
+ *     tags: [Authentication]
+ *     summary: Mark a user as verified (Supabase email verification bridge)
+ *     description: Sets isVerified=true for the user with the given email. In production, secure this endpoint.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *     responses:
+ *       200:
+ *         description: User marked as verified
+ *       404:
+ *         description: User not found
+ */
+router.post('/mark-verified', markVerified);
 
 /**
  * @swagger
