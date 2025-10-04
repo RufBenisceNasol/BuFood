@@ -2,6 +2,13 @@ const mongoose = require('mongoose');
 const crypto = require('crypto');
 
 const userSchema = new mongoose.Schema({
+    // Supabase Authentication ID (primary auth identifier)
+    supabaseId: {
+        type: String,
+        unique: true,
+        sparse: true, // Allow null for backward compatibility
+        index: true
+    },
     name: {
         type: String,
         required: true,
@@ -17,7 +24,7 @@ const userSchema = new mongoose.Schema({
     },
     password: {
         type: String,
-        required: true,
+        required: false, // Not required when using Supabase auth
     },
     verificationToken: {
         type: String,
@@ -59,6 +66,12 @@ const userSchema = new mongoose.Schema({
     profileImage: {
         type: String,
         default: ''
+    },
+    // Authentication method tracking
+    authMethod: {
+        type: String,
+        enum: ['supabase', 'legacy'],
+        default: 'supabase'
     }
 }, { timestamps: true });
 

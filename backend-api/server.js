@@ -25,6 +25,7 @@ const { authenticate } = require('./middlewares/authMiddleware');
 
 // Import routes
 const authRoutes = require('./routes/authRoutes');
+const supabaseAuthRoutes = require('./routes/supabaseAuthRoutes');
 const storeRoutes = require('./routes/storeRoutes');
 const productRoutes = require('./routes/productRoutes');
 const customerRoutes = require('./routes/customerRoutes');
@@ -171,7 +172,8 @@ app.get('/', (req, res) => {
 });
 
 // Routes with caching where appropriate
-app.use('/api/auth', authRoutes);
+app.use('/api/auth', authRoutes); // Legacy JWT authentication
+app.use('/api/auth/supabase', supabaseAuthRoutes); // New Supabase authentication
 app.use('/api/products', cache('10 minutes'), productRoutes);
 // Do NOT apply cache middleware globally to /api/store to avoid interfering with multipart/form-data on PUT/POST
 app.use('/api/store', storeRoutes);

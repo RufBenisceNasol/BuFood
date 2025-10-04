@@ -7,11 +7,15 @@
   "scripts": {
     "start": "node scripts/init.js && node server.js",
     "dev": "node scripts/init.js && nodemon server.js",
-    "test": "jest"
+    "test": "jest",
+    "setup:supabase": "node scripts/setupSupabase.js",
+    "migrate:supabase": "node scripts/migrateUsersToSupabase.js",
+    "migrate:supabase:dry": "DRY_RUN=true node scripts/migrateUsersToSupabase.js"
   },
   "license": "ISC",
   "keywords": [],
   "dependencies": {
+    "@supabase/supabase-js": "^2.58.0",
     "apicache": "^1.6.3",
     "axios": "^1.10.0",
     "bcryptjs": "^3.0.2",
