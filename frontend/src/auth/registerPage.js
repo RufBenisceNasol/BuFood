@@ -148,18 +148,34 @@ const RegisterPage = () => {
         try {
             const normalizedEmail = (formData.email || '').trim().toLowerCase();
             const sanitizedOtp = (otp || '').replace(/\D/g, '');
+            
+            // Debug log for Android troubleshooting
+            console.log('OTP Verify Debug:', {
+                originalEmail: formData.email,
+                normalizedEmail,
+                originalOtp: otp,
+                sanitizedOtp,
+                otpLength: sanitizedOtp.length
+            });
+            
             // Verify the OTP for email
-            const { error: vErr } = await supabase.auth.verifyOtp({
+            const { error: vErr, data } = await supabase.auth.verifyOtp({
                 email: normalizedEmail,
                 token: sanitizedOtp,
                 type: 'email',
             });
-            if (vErr) throw vErr;
+            
+            if (vErr) {
+                console.error('Supabase OTP Error:', vErr);
+                throw vErr;
+            }
+            
+            console.log('OTP Verified Successfully:', data);
 
             // Create the user in our backend after successful OTP verification
             const { confirmPassword: _omit, ...dataToSend } = formData;
             dataToSend.email = normalizedEmail;
-            const data = await auth.register(dataToSend);
+            const backendResponse = await auth.register(dataToSend);
 
             // Mark verified in backend to sync flags
             try {
@@ -172,10 +188,15 @@ const RegisterPage = () => {
                 await res.catch?.(() => {});
             } catch (_) {}
 
-            setSuccess(data?.message || 'Your email has been verified. Redirecting to login...');
+            setSuccess(backendResponse?.message || 'Your email has been verified. Redirecting to login...');
             setTimeout(() => navigate('/login'), 2500);
         } catch (err) {
-            setError(err?.message || 'Invalid or expired code. Please try again.');
+            console.error('OTP Verification Failed:', err);
+            // Show detailed error for debugging
+            const errorMsg = err?.message || err?.error_description || 'Invalid or expired code';
+            const errorCode = err?.error_code || err?.code || '';
+            const debugInfo = errorCode ? ` (${errorCode})` : '';
+            setError(`${errorMsg}${debugInfo}. Please try again.`);
         } finally {
             setLoading(false);
         }
