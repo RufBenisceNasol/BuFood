@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { auth, warmup } from '../api';
 import { supabase } from '../lib/supabaseClient';
 import { useNavigate } from 'react-router-dom';
-import { FiUser, FiMail, FiPhone, FiLock, FiBriefcase, FiEye, FiEyeOff } from 'react-icons/fi';
+import { FiUser, FiMail, FiPhone, FiLock, FiBriefcase, FiEye, FiEyeOff, FiKey } from 'react-icons/fi';
 import logod from '../assets/logod.png';
 
 const RegisterPage = () => {
@@ -457,6 +457,7 @@ const RegisterPage = () => {
                     {step === 'otp' && (
                       <form onSubmit={handleVerifyOtp} style={styles.form}>
                         <div style={styles.inputGroup}>
+                          <span style={styles.inputIcon}><FiKey /></span>
                           <input
                             type="text"
                             value={otp}
