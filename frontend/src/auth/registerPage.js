@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { auth, warmup } from '../api';
+import { supabase } from '../lib/supabaseClient';
 import { useNavigate } from 'react-router-dom';
 import { FiUser, FiMail, FiPhone, FiLock, FiBriefcase, FiEye, FiEyeOff } from 'react-icons/fi';
 import logod from '../assets/logod.png';
@@ -22,6 +23,7 @@ const RegisterPage = () => {
     const [confirmPasswordError, setConfirmPasswordError] = useState('');
     const [canResendVerification, setCanResendVerification] = useState(false);
     const [resendLoading, setResendLoading] = useState(false);
+    const [verifySyncLoading, setVerifySyncLoading] = useState(false);
     const navigate = useNavigate();
 
     const handleChange = (e) => {
@@ -92,6 +94,25 @@ const RegisterPage = () => {
         try {
             // Warm up backend to avoid cold start timeouts
             try { await warmup(); } catch (_) {}
+
+            // Choose redirect base: prefer configured site URL in env for production/mobile
+            const siteUrl = (import.meta.env && import.meta.env.VITE_SITE_URL) ? import.meta.env.VITE_SITE_URL : window.location.origin;
+
+            // 1) Register with Supabase to trigger Supabase-managed email verification
+            const { data: supaData, error: supaError } = await supabase.auth.signUp({
+                email: formData.email,
+                password: formData.password,
+                options: {
+                    // After user confirms email on any device, land on our friendly verification page
+                    emailRedirectTo: `${siteUrl}/verified`,
+                },
+            });
+            if (supaError) {
+                setError(supaError.message || 'Failed to register with Supabase');
+                return;
+            }
+
+            // 2) Register in our backend (Mongo) to create the application user/store
             // Remove confirmPassword and create dataToSend in one step
             const { confirmPassword: _, ...dataToSend } = formData;
             const data = await auth.register(dataToSend);
@@ -100,12 +121,12 @@ const RegisterPage = () => {
                 localStorage.setItem('token', data.accessToken);
                 localStorage.setItem('refreshToken', data.refreshToken);
                 localStorage.setItem('user', JSON.stringify(data.user));
-                setSuccess(data.message);
+                setSuccess(data.message || 'Account created. Please verify the email sent by Supabase.');
                 setTimeout(() => {
                     navigate('/login');
                 }, 5000);
             } else if (data?.message) {
-                setSuccess(data.message);
+                setSuccess(data.message + ' If you used Supabase for signup, please verify your email.');
                 // If email was queued for sending, allow the user to resend right away
                 if (data.emailQueued) {
                     setCanResendVerification(true);
@@ -153,8 +174,48 @@ const RegisterPage = () => {
         }
     };
 
+    // Supabase flow: manually sync verification to backend
+    const handleIHaveVerified = async () => {
+        if (!formData.email) return;
+        setVerifySyncLoading(true);
+        setError('');
+        setSuccess('');
+        try {
+            const res = await fetch('/api/auth/mark-verified', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: formData.email }),
+            });
+            const body = await res.json();
+            if (!res.ok) throw new Error(body?.message || 'Failed to mark verified');
+            setSuccess('Your account has been marked verified. You can now log in.');
+            setTimeout(() => navigate('/login'), 3000);
+        } catch (e) {
+            setError(e?.message || 'Failed to update verification status');
+        } finally {
+            setVerifySyncLoading(false);
+        }
+    };
+
     return (
         <div style={styles.container}>
+            {/* Loading overlay and keyframes definition (match login style) */}
+            <style>
+                {`
+                @keyframes spin {
+                    0% { transform: rotate(0deg); }
+                    100% { transform: rotate(360deg); }
+                }
+                `}
+            </style>
+            {loading && (
+                <div style={styles.loadingOverlay} aria-live="polite" aria-busy="true" role="alert" aria-label="Creating your account">
+                    <div style={styles.loadingBox}>
+                        <div style={styles.spinner} />
+                        <div style={styles.loadingText}>Creating account...</div>
+                    </div>
+                </div>
+            )}
             <div style={styles.formContainer}>
                 <div style={{ marginBottom: '1rem' }}>
                     <img src={logod} alt="BuFood Logo" style={styles.logo} />
@@ -164,6 +225,14 @@ const RegisterPage = () => {
                         <div style={{ marginBottom: '10px', textAlign: 'center' }}>
                             <button type="button" onClick={handleResendVerification} disabled={resendLoading} style={styles.linkButton}>
                                 {resendLoading ? 'Resending...' : 'Resend verification email'}
+                            </button>
+                        </div>
+                    )}
+                    {/* Supabase flow helper */}
+                    {formData.email && (
+                        <div style={{ marginBottom: '10px', textAlign: 'center' }}>
+                            <button type="button" onClick={handleIHaveVerified} disabled={verifySyncLoading} style={styles.linkButton}>
+                                {verifySyncLoading ? 'Syncing...' : "I've verified my email"}
                             </button>
                         </div>
                     )}
@@ -492,6 +561,40 @@ const styles = {
         color: '#ff8c00',
         textDecoration: 'none',
         fontWeight: '600',
+    },
+    loadingOverlay: {
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0,0,0,0.35)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 9999,
+        backdropFilter: 'blur(1px)'
+    },
+    loadingBox: {
+        backgroundColor: '#fff',
+        borderRadius: '12px',
+        padding: '20px 24px',
+        boxShadow: '0 10px 30px rgba(0,0,0,0.2)',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '12px'
+    },
+    spinner: {
+        width: '28px',
+        height: '28px',
+        border: '3px solid #f3f3f3',
+        borderTop: '3px solid #ff8c00',
+        borderRadius: '50%',
+        animation: 'spin 1s linear infinite'
+    },
+    loadingText: {
+        color: '#333',
+        fontWeight: 600
     },
     showPasswordButton: {
         position: 'absolute',

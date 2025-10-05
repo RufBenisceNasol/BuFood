@@ -10,6 +10,8 @@ const RegisterPage = lazy(() => import('./auth/registerPage'))
 const ForgotPasswordPage = lazy(() => import('./auth/ForgotPasswordPage'))
 const ResetPasswordConfirmationPage = lazy(() => import('./auth/ResetPasswordConfirmationPage'))
 const VerifyEmailPage = lazy(() => import('./auth/VerifyEmailPage'))
+const SupabaseResetPasswordPage = lazy(() => import('./auth/SupabaseResetPasswordPage'))
+const SupabaseVerifyPage = lazy(() => import('./auth/SupabaseVerifyPage'))
 
 // Seller
 const DashboardPage = lazy(() => import('./seller/DashboardPage'))
@@ -84,6 +86,8 @@ function App() {
             <Route path="/customer/view-my-order" element={<CustomerLayout><ViewMyOrder /></CustomerLayout>} />
             <Route path="/customer/favorites" element={<CustomerLayout><FavoritesPage /></CustomerLayout>} />
             <Route path="/gcash-callback" element={<GCashCallback />} />
+            <Route path="/supabase-reset" element={<SupabaseResetPasswordPage />} />
+            <Route path="/verified" element={<SupabaseVerifyPage />} />
 
             {/* Redirects for root-level customer routes to /customer/* */}
             <Route path="/home" element={<CustomerLayout><HomePage /></CustomerLayout>} />

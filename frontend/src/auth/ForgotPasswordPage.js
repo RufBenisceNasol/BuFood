@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { auth } from '../api';
+import { supabase } from '../lib/supabaseClient';
 import logod from '../assets/logod.png';
 import { FiEye, FiEyeOff } from 'react-icons/fi';
 
@@ -53,6 +54,27 @@ const ForgotPasswordPage = () => {
     }
   };
 
+  // Supabase-managed reset: sends a magic link to the user's email. No backend SMTP needed.
+  const handleSendSupabaseReset = async () => {
+    if (!email) {
+      setError('Please enter your email');
+      return;
+    }
+    setError('');
+    setSuccess('');
+    setLoading(true);
+    try {
+      const redirectTo = `${window.location.origin}/supabase-reset`;
+      const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
+      if (error) throw error;
+      setSuccess('If this email is registered, a Supabase reset link has been sent. Check your inbox.');
+    } catch (err) {
+      setError(err?.message || 'Failed to send reset link.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const validatePassword = (pwd) => {
     if (!pwd || pwd.length !== 8) return 'Password must be exactly 8 characters';
     if (!/[A-Z]/.test(pwd)) return 'Password must contain an uppercase letter';
@@ -64,20 +86,10 @@ const ForgotPasswordPage = () => {
     e.preventDefault();
     setError('');
     setSuccess('');
-    // Frontend validation
     const pwdErr = validatePassword(newPassword);
-    if (pwdErr) {
-      setError(pwdErr);
-      return;
-    }
-    if (newPassword !== confirmPassword) {
-      setError('Passwords do not match');
-      return;
-    }
-    if (!otp || otp.length !== 6) {
-      setError('Please enter the 6-digit OTP');
-      return;
-    }
+    if (pwdErr) { setError(pwdErr); return; }
+    if (newPassword !== confirmPassword) { setError('Passwords do not match'); return; }
+    if (!otp || otp.length !== 6) { setError('Please enter the 6-digit OTP'); return; }
 
     setLoading(true);
     try {
@@ -135,6 +147,14 @@ const ForgotPasswordPage = () => {
               disabled={loading}
             >
               {loading ? 'Sending...' : 'Send OTP'}
+            </button>
+            <button
+              type="button"
+              onClick={handleSendSupabaseReset}
+              style={{ ...styles.linkButton, marginTop: 10 }}
+              disabled={loading}
+            >
+              Or send Supabase reset link
             </button>
           </form>
         )}
