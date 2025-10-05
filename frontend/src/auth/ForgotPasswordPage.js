@@ -43,8 +43,13 @@ const ForgotPasswordPage = () => {
     setSuccess('');
     setLoading(true);
     try {
-      await auth.sendPasswordResetOtp(email);
-      setSuccess('If this email is registered, an OTP has been sent. Please check your inbox.');
+      // Send a Supabase OTP for account recovery
+      const { error } = await supabase.auth.signInWithOtp({
+        email,
+        options: { shouldCreateUser: false },
+      });
+      if (error) throw error;
+      setSuccess('If this email is registered, a 6-digit code has been sent. Please check your inbox.');
       setStep('otp');
       startCooldown(60);
     } catch (err) {
@@ -54,27 +59,7 @@ const ForgotPasswordPage = () => {
     }
   };
 
-  // Supabase-managed reset: sends a magic link to the user's email. No backend SMTP needed.
-  const handleSendSupabaseReset = async () => {
-    if (!email) {
-      setError('Please enter your email');
-      return;
-    }
-    setError('');
-    setSuccess('');
-    setLoading(true);
-    try {
-      const siteUrl = (import.meta.env && import.meta.env.VITE_SITE_URL) ? import.meta.env.VITE_SITE_URL : window.location.origin;
-      const redirectTo = `${siteUrl}/supabase-reset`;
-      const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
-      if (error) throw error;
-      setSuccess('If this email is registered, a Supabase reset link has been sent. Check your inbox.');
-    } catch (err) {
-      setError(err?.message || 'Failed to send reset link.');
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Removed Supabase magic-link flow to keep the UX strictly OTP-based
 
   const validatePassword = (pwd) => {
     if (!pwd || pwd.length !== 8) return 'Password must be exactly 8 characters';
@@ -94,7 +79,32 @@ const ForgotPasswordPage = () => {
 
     setLoading(true);
     try {
-      await auth.resetPasswordWithOtp({ email, otp, newPassword });
+      // Verify Supabase OTP (email code)
+      const { error: verifyErr } = await supabase.auth.verifyOtp({
+        email,
+        token: otp,
+        type: 'email',
+      });
+      if (verifyErr) throw verifyErr;
+
+      // Get Supabase access token from session to authorize backend request
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData?.session?.access_token;
+      if (!accessToken) throw new Error('Session missing after OTP verification');
+
+      // Call backend to update password using Supabase-authenticated identity
+      const apiBase = (import.meta.env && import.meta.env.VITE_API_BASE_URL) ? import.meta.env.VITE_API_BASE_URL : '/api';
+      const res = await fetch(`${apiBase.replace(/\/$/, '')}/auth/supabase/reset-password`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({ newPassword }),
+      });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(body?.message || 'Failed to update password');
+
       setSuccess('Password reset successful. Redirecting to login...');
       setTimeout(() => navigate('/login'), 2000);
     } catch (err) {
@@ -109,8 +119,12 @@ const ForgotPasswordPage = () => {
     setError('');
     setSuccess('');
     try {
-      await auth.resendPasswordResetOtp(email);
-      setSuccess('A new OTP has been sent to your email.');
+      const { error } = await supabase.auth.signInWithOtp({
+        email,
+        options: { shouldCreateUser: false },
+      });
+      if (error) throw error;
+      setSuccess('A new 6-digit code has been sent to your email.');
       startCooldown(60);
     } catch (err) {
       setError(err?.message || 'Failed to resend OTP.');
@@ -149,14 +163,7 @@ const ForgotPasswordPage = () => {
             >
               {loading ? 'Sending...' : 'Send OTP'}
             </button>
-            <button
-              type="button"
-              onClick={handleSendSupabaseReset}
-              style={{ ...styles.linkButton, marginTop: 10 }}
-              disabled={loading}
-            >
-              Or send Supabase reset link
-            </button>
+            {/* Magic link reset removed; using OTP-only flow */}
           </form>
         )}
 

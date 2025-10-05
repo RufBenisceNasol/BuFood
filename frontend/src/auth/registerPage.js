@@ -17,6 +17,9 @@ const RegisterPage = () => {
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
     const [loading, setLoading] = useState(false);
+    const [step, setStep] = useState('form'); // 'form' | 'otp'
+    const [otp, setOtp] = useState('');
+    const [otpError, setOtpError] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [passwordError, setPasswordError] = useState('');
@@ -95,45 +98,18 @@ const RegisterPage = () => {
             // Warm up backend to avoid cold start timeouts
             try { await warmup(); } catch (_) {}
 
-            // Choose redirect base: prefer configured site URL in env for production/mobile
-            const siteUrl = (import.meta.env && import.meta.env.VITE_SITE_URL) ? import.meta.env.VITE_SITE_URL : window.location.origin;
-
-            // 1) Register with Supabase to trigger Supabase-managed email verification
-            const { data: supaData, error: supaError } = await supabase.auth.signUp({
+            // Send a 6-digit OTP to the user's email (create user if not exists)
+            const { error: otpErr } = await supabase.auth.signInWithOtp({
                 email: formData.email,
-                password: formData.password,
-                options: {
-                    // After user confirms email on any device, land on our friendly verification page
-                    emailRedirectTo: `${siteUrl}/verified`,
-                },
+                options: { shouldCreateUser: true }
             });
-            if (supaError) {
-                setError(supaError.message || 'Failed to register with Supabase');
+            if (otpErr) {
+                setError(otpErr.message || 'Failed to send verification code');
                 return;
             }
 
-            // 2) Register in our backend (Mongo) to create the application user/store
-            // Remove confirmPassword and create dataToSend in one step
-            const { confirmPassword: _, ...dataToSend } = formData;
-            const data = await auth.register(dataToSend);
-            // Safely check for accessToken and refreshToken before using any data properties
-            if (data?.accessToken && data?.refreshToken) {
-                localStorage.setItem('token', data.accessToken);
-                localStorage.setItem('refreshToken', data.refreshToken);
-                localStorage.setItem('user', JSON.stringify(data.user));
-                setSuccess(data.message || 'Account created. Please verify the email sent by Supabase.');
-                setTimeout(() => {
-                    navigate('/login');
-                }, 5000);
-            } else if (data?.message) {
-                setSuccess(data.message + ' If you used Supabase for signup, please verify your email.');
-                // If email was queued for sending, allow the user to resend right away
-                if (data.emailQueued) {
-                    setCanResendVerification(true);
-                }
-                // Give a bit more time before redirecting so user can click resend if needed
-                setTimeout(() => navigate('/login'), 8000);
-            }
+            setSuccess('We sent a 6-digit verification code to your email. Enter it below to verify.');
+            setStep('otp');
         } catch (err) {
             // New error format from auth.register: { message, status, isVerified }
             if (err?.status === 409) {
@@ -153,6 +129,49 @@ const RegisterPage = () => {
                     setError('Registration failed');
                 }
             }
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleVerifyOtp = async (e) => {
+        e.preventDefault();
+        setError('');
+        setSuccess('');
+        setOtpError('');
+        if (!otp || otp.length !== 6) {
+            setOtpError('Please enter the 6-digit code');
+            return;
+        }
+        setLoading(true);
+        try {
+            // Verify the OTP for email
+            const { error: vErr } = await supabase.auth.verifyOtp({
+                email: formData.email,
+                token: otp,
+                type: 'email',
+            });
+            if (vErr) throw vErr;
+
+            // Create the user in our backend after successful OTP verification
+            const { confirmPassword: _omit, ...dataToSend } = formData;
+            const data = await auth.register(dataToSend);
+
+            // Mark verified in backend to sync flags
+            try {
+                const res = await fetch('/api/auth/mark-verified', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: formData.email }),
+                });
+                // ignore non-2xx here; UI success proceeds regardless
+                await res.catch?.(() => {});
+            } catch (_) {}
+
+            setSuccess(data?.message || 'Your email has been verified. Redirecting to login...');
+            setTimeout(() => navigate('/login'), 2500);
+        } catch (err) {
+            setError(err?.message || 'Invalid or expired code. Please try again.');
         } finally {
             setLoading(false);
         }
@@ -221,15 +240,15 @@ const RegisterPage = () => {
                     <img src={logod} alt="BuFood Logo" style={styles.logo} />
                     <h2 style={styles.title}>SIGN UP</h2>
                     {error && <div style={styles.error}>{error}</div>}
-                    {canResendVerification && (
+                    {canResendVerification && step === 'form' && (
                         <div style={{ marginBottom: '10px', textAlign: 'center' }}>
                             <button type="button" onClick={handleResendVerification} disabled={resendLoading} style={styles.linkButton}>
                                 {resendLoading ? 'Resending...' : 'Resend verification email'}
                             </button>
                         </div>
                     )}
-                    {/* Supabase flow helper */}
-                    {formData.email && (
+                    {/* Supabase flow helper - not needed in OTP mode, keep hidden during OTP */}
+                    {formData.email && step === 'form' && (
                         <div style={{ marginBottom: '10px', textAlign: 'center' }}>
                             <button type="button" onClick={handleIHaveVerified} disabled={verifySyncLoading} style={styles.linkButton}>
                                 {verifySyncLoading ? 'Syncing...' : "I've verified my email"}
@@ -239,6 +258,7 @@ const RegisterPage = () => {
                     {success && <div style={styles.success}>{success}</div>}
                 </div>
                 <div style={{ flex: 1, overflowY: 'auto', padding: 0 }}>
+                    {step === 'form' && (
                     <form onSubmit={handleSubmit} style={styles.form}>
                         <div style={styles.inputGroup}>
                             <span style={styles.inputIcon}><FiUser /></span>
@@ -401,6 +421,35 @@ const RegisterPage = () => {
                             {loading ? 'Creating Account...' : 'CREATE ACCOUNT'}
                         </button>
                     </form>
+                    )}
+                    {step === 'otp' && (
+                      <form onSubmit={handleVerifyOtp} style={styles.form}>
+                        <div style={styles.inputGroup}>
+                          <input
+                            type="text"
+                            value={otp}
+                            onChange={(e) => setOtp(e.target.value.replace(/[^0-9]/g, '').slice(0, 6))}
+                            required
+                            style={styles.input}
+                            placeholder="Enter 6-digit code"
+                            disabled={loading}
+                            inputMode="numeric"
+                          />
+                        </div>
+                        {otpError && <div style={styles.errorMessage}>{otpError}</div>}
+                        <div style={{ display: 'flex', gap: 12 }}>
+                          <button type="submit" style={styles.button} disabled={loading}>
+                            {loading ? 'Verifying...' : 'Verify & Continue'}
+                          </button>
+                          <button type="button" onClick={handleResendVerification} disabled={resendLoading || loading} style={styles.button}>
+                            {resendLoading ? 'Resending...' : 'Resend Code'}
+                          </button>
+                        </div>
+                        <div style={{ textAlign: 'center' }}>
+                          <button type="button" onClick={() => setStep('form')} style={styles.linkButton}>Back</button>
+                        </div>
+                      </form>
+                    )}
                 </div>
                 <div style={styles.links}>
                     <p style={styles.loginText}>
