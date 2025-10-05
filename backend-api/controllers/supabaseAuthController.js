@@ -325,6 +325,19 @@ const resetPassword = async (req, res) => {
     // Update password in Supabase
     await updateUserPassword(req.supabaseUser.id, newPassword);
 
+    // CRITICAL: Also update password hash in MongoDB
+    // Login checks MongoDB password, so we must update both
+    const user = await User.findOne({ supabaseId: req.supabaseUser.id });
+    if (user) {
+      const bcrypt = require('bcryptjs');
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+      user.password = hashedPassword;
+      await user.save();
+      console.log('Password updated in both Supabase and MongoDB for user:', user.email);
+    } else {
+      console.warn('User not found in MongoDB for supabaseId:', req.supabaseUser.id);
+    }
+
     res.status(200).json({ message: 'Password reset successful' });
   } catch (error) {
     console.error('Reset password error:', error);
