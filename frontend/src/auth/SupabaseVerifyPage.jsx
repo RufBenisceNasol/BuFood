@@ -48,7 +48,8 @@ export default function SupabaseVerifyPage() {
         if (!email) throw new Error('Auth session missing!');
 
         // Bridge to backend to mark user verified in our DB
-        const res = await fetch('/api/auth/mark-verified', {
+        const apiBase = (import.meta.env && import.meta.env.VITE_API_BASE_URL) ? import.meta.env.VITE_API_BASE_URL : '';
+        const res = await fetch(`${apiBase ? apiBase : '/api'}/auth/mark-verified`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email }),

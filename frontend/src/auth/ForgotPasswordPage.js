@@ -64,7 +64,8 @@ const ForgotPasswordPage = () => {
     setSuccess('');
     setLoading(true);
     try {
-      const redirectTo = `${window.location.origin}/supabase-reset`;
+      const siteUrl = (import.meta.env && import.meta.env.VITE_SITE_URL) ? import.meta.env.VITE_SITE_URL : window.location.origin;
+      const redirectTo = `${siteUrl}/supabase-reset`;
       const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
       if (error) throw error;
       setSuccess('If this email is registered, a Supabase reset link has been sent. Check your inbox.');
