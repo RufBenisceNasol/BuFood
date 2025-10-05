@@ -44,8 +44,9 @@ const ForgotPasswordPage = () => {
     setLoading(true);
     try {
       // Send a Supabase OTP for account recovery
+      const normalizedEmail = (email || '').trim().toLowerCase();
       const { error } = await supabase.auth.signInWithOtp({
-        email,
+        email: normalizedEmail,
         options: { shouldCreateUser: false },
       });
       if (error) throw error;
@@ -79,10 +80,12 @@ const ForgotPasswordPage = () => {
 
     setLoading(true);
     try {
+      const normalizedEmail = (email || '').trim().toLowerCase();
+      const sanitizedOtp = (otp || '').replace(/\D/g, '');
       // Verify Supabase OTP (email code)
       const { error: verifyErr } = await supabase.auth.verifyOtp({
-        email,
-        token: otp,
+        email: normalizedEmail,
+        token: sanitizedOtp,
         type: 'email',
       });
       if (verifyErr) throw verifyErr;
@@ -119,8 +122,9 @@ const ForgotPasswordPage = () => {
     setError('');
     setSuccess('');
     try {
+      const normalizedEmail = (email || '').trim().toLowerCase();
       const { error } = await supabase.auth.signInWithOtp({
-        email,
+        email: normalizedEmail,
         options: { shouldCreateUser: false },
       });
       if (error) throw error;

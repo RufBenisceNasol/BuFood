@@ -1,6 +1,7 @@
 const express = require('express');
 const { 
     register, 
+    registerWithSupabase,
     login, 
     logout,
     verifyEmail, 
@@ -117,6 +118,50 @@ const router = express.Router();
  *         description: Email already exists
  */
 router.post('/register', registerValidation, handleValidation, register);
+
+/**
+ * @swagger
+ * /api/auth/register-with-supabase:
+ *   post:
+ *     tags: [Authentication]
+ *     summary: Register user with verified Supabase OTP
+ *     description: Create MongoDB user after Supabase OTP verification
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - name
+ *               - email
+ *               - password
+ *               - contactNumber
+ *               - supabaseId
+ *             properties:
+ *               name:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *                 format: email
+ *               password:
+ *                 type: string
+ *               contactNumber:
+ *                 type: string
+ *               role:
+ *                 type: string
+ *                 enum: [Customer, Seller]
+ *               supabaseId:
+ *                 type: string
+ *               isVerified:
+ *                 type: boolean
+ *     responses:
+ *       201:
+ *         description: User registered successfully
+ *       409:
+ *         description: Email already exists
+ */
+router.post('/register-with-supabase', registerWithSupabase);
 
 /**
  * @swagger

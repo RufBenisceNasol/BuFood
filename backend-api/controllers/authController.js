@@ -331,6 +331,72 @@ const register = async (req, res) => {
   }
 };
 
+// Register user with existing Supabase account (for OTP-based registration)
+// User already verified OTP in Supabase, we just create MongoDB record
+const registerWithSupabase = async (req, res) => {
+  const { name, email, contactNumber, password, role, supabaseId, isVerified } = req.body;
+  const normalizedEmail = (email || '').trim().toLowerCase();
+
+  try {
+    // Check if user already exists in MongoDB
+    const existingUser = await User.findOne({ email: normalizedEmail });
+    if (existingUser) {
+      return res.status(409).json({ 
+        message: 'User already exists', 
+        isVerified: !!existingUser.isVerified 
+      });
+    }
+
+    if (!supabaseId) {
+      return res.status(400).json({ message: 'Supabase ID is required' });
+    }
+
+    // Hash password for MongoDB (even though Supabase manages auth)
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Create user in MongoDB with Supabase ID
+    const user = new User({
+      supabaseId,
+      name,
+      email: normalizedEmail,
+      contactNumber,
+      password: hashedPassword,
+      role: role || 'Customer',
+      isVerified: isVerified === true, // Already verified via OTP
+      authMethod: 'supabase'
+    });
+
+    await user.save();
+
+    // Create store if role is Seller (non-fatal on failure)
+    let storeCreationFailed = false;
+    if (role === 'Seller') {
+      try {
+        const store = await createStoreForSeller(user);
+        user.store = {
+          storeName: store.storeName,
+          storeId: store._id,
+          owner: user._id,
+        };
+        await user.save();
+      } catch (err) {
+        console.error('Error creating store:', err.message);
+        storeCreationFailed = true;
+      }
+    }
+
+    res.status(201).json({
+      message: 'User registered successfully with Supabase.',
+      userId: user._id,
+      supabaseId: user.supabaseId,
+      storeCreationFailed,
+    });
+  } catch (error) {
+    console.error('Error during Supabase registration:', error.message);
+    res.status(500).json({ message: 'Registration failed', error: error.message });
+  }
+};
+
 // Mark a user verified (for Supabase-driven verification flows)
 // Minimal implementation: sets isVerified=true by email.
 // For production, protect with a secret or verify via Supabase Admin API.
@@ -653,6 +719,7 @@ const uploadProfileImage = async (req, res) => {
 
 module.exports = {
   register,
+  registerWithSupabase,
   login,
   logout,
   verifyEmail,

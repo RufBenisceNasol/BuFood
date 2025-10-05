@@ -172,21 +172,28 @@ const RegisterPage = () => {
             
             console.log('OTP Verified Successfully:', data);
 
-            // Create the user in our backend after successful OTP verification
+            // Get Supabase user ID from the session
+            const supabaseUserId = data?.user?.id;
+            if (!supabaseUserId) {
+                throw new Error('Failed to get Supabase user ID after verification');
+            }
+
+            // Create the user in our backend with Supabase ID
             const { confirmPassword: _omit, ...dataToSend } = formData;
             dataToSend.email = normalizedEmail;
-            const backendResponse = await auth.register(dataToSend);
-
-            // Mark verified in backend to sync flags
-            try {
-                const res = await fetch('/api/auth/mark-verified', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email: normalizedEmail }),
-                });
-                // ignore non-2xx here; UI success proceeds regardless
-                await res.catch?.(() => {});
-            } catch (_) {}
+            dataToSend.supabaseId = supabaseUserId;
+            dataToSend.isVerified = true; // Already verified via OTP
+            
+            const apiBase = (import.meta.env && import.meta.env.VITE_API_BASE_URL) ? import.meta.env.VITE_API_BASE_URL : '/api';
+            const res = await fetch(`${apiBase.replace(/\/$/, '')}/auth/register-with-supabase`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(dataToSend),
+            });
+            const backendResponse = await res.json();
+            if (!res.ok) {
+                throw new Error(backendResponse?.message || 'Failed to create user in database');
+            }
 
             setSuccess(backendResponse?.message || 'Your email has been verified. Redirecting to login...');
             setTimeout(() => navigate('/login'), 2500);
