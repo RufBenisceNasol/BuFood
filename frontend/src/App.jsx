@@ -58,7 +58,9 @@ function App() {
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
             <Route path="/reset-password/:token" element={<ResetPasswordConfirmationPage />} />
-            <Route path="/verify/:token" element={<VerifyEmailPage />} />
+            {/* Route all verify links to SupabaseVerifyPage (Supabase tokens come via hash/query) */}
+            <Route path="/verify" element={<SupabaseVerifyPage />} />
+            <Route path="/verify/:token" element={<SupabaseVerifyPage />} />
 
             {/* Seller Routes */}
             <Route path="/seller/dashboard" element={<DashboardPage />} />
