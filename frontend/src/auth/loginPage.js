@@ -198,21 +198,6 @@ const LoginPage = () => {
                 <h1 style={styles.title}>SIGN IN</h1>
                 
                 {error && <div style={styles.error}>{error}</div>}
-                {canResendVerification && (
-                    <div style={{ marginTop: 6, marginBottom: 10, textAlign: 'center' }}>
-                        <button type="button" onClick={handleResendVerification} disabled={resendLoading} style={styles.linkButton}>
-                            {resendLoading ? 'Resending...' : 'Resend verification email'}
-                        </button>
-                    </div>
-                )}
-                {!canResendVerification && email && resendDelayElapsed && (
-                    <div style={{ marginTop: 4, marginBottom: 8, textAlign: 'center' }}>
-                        <button type="button" onClick={handleResendVerification} disabled={resendLoading} style={styles.linkButton}>
-                            {resendLoading ? 'Resending...' : "Didn't get the email? Resend verification"}
-                        </button>
-                    </div>
-                )}
-                {success && <div style={styles.success}>{success}</div>}
                 
                 <form onSubmit={handleSubmit} style={styles.form}>
                     <div style={styles.inputGroup}>
