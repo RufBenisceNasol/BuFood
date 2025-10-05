@@ -99,8 +99,9 @@ const RegisterPage = () => {
             try { await warmup(); } catch (_) {}
 
             // Send a 6-digit OTP to the user's email (create user if not exists)
+            const normalizedEmail = (formData.email || '').trim().toLowerCase();
             const { error: otpErr } = await supabase.auth.signInWithOtp({
-                email: formData.email,
+                email: normalizedEmail,
                 options: { shouldCreateUser: true }
             });
             if (otpErr) {
@@ -145,16 +146,19 @@ const RegisterPage = () => {
         }
         setLoading(true);
         try {
+            const normalizedEmail = (formData.email || '').trim().toLowerCase();
+            const sanitizedOtp = (otp || '').replace(/\D/g, '');
             // Verify the OTP for email
             const { error: vErr } = await supabase.auth.verifyOtp({
-                email: formData.email,
-                token: otp,
+                email: normalizedEmail,
+                token: sanitizedOtp,
                 type: 'email',
             });
             if (vErr) throw vErr;
 
             // Create the user in our backend after successful OTP verification
             const { confirmPassword: _omit, ...dataToSend } = formData;
+            dataToSend.email = normalizedEmail;
             const data = await auth.register(dataToSend);
 
             // Mark verified in backend to sync flags
@@ -162,7 +166,7 @@ const RegisterPage = () => {
                 const res = await fetch('/api/auth/mark-verified', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email: formData.email }),
+                    body: JSON.stringify({ email: normalizedEmail }),
                 });
                 // ignore non-2xx here; UI success proceeds regardless
                 await res.catch?.(() => {});
