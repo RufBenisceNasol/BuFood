@@ -39,6 +39,39 @@ const productSchema = new mongoose.Schema({
     min: 0,
     default: 0,
   },
+  stock: {
+    type: Number,
+    min: 0,
+    default: 0,
+  },
+  discount: {
+    type: Number,
+    min: 0,
+    max: 100,
+    default: 0, // Percentage discount (0-100)
+  },
+  // Optional variants array: each item may contain id/name/price/image
+  variants: [
+    {
+      id: { type: String },
+      name: { type: String },
+      price: { type: Number, min: 0 },
+      image: { type: String },
+    }
+  ],
+  // Optional options map: e.g., { Size: ['S','M','L'], Sugar: ['0%','50%','100%'] }
+  options: {
+    type: Map,
+    of: [String],
+    default: undefined,
+  },
+  // Optional paid add-ons (extras) with prices
+  addons: [
+    {
+      name: { type: String },
+      price: { type: Number, min: 0 }
+    }
+  ],
   sellerId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
@@ -51,6 +84,14 @@ const productSchema = new mongoose.Schema({
   },
 }, {
   timestamps: true, // Adds createdAt and updatedAt
+});
+
+// Pre-save middleware to auto-update availability based on stock
+productSchema.pre('save', function(next) {
+  if (this.isModified('stock')) {
+    this.availability = this.stock > 0 ? 'Available' : 'Out of Stock';
+  }
+  next();
 });
 
 const Product = mongoose.model('Product', productSchema);

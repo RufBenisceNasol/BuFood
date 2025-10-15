@@ -6,6 +6,14 @@ const orderItemSchema = new mongoose.Schema({
         ref: 'Product',
         required: true
     },
+    selectedVariantId: {
+        type: String
+    },
+    selectedOptions: {
+        type: Map,
+        of: String,
+        default: undefined
+    },
     quantity: {
         type: Number,
         required: true,

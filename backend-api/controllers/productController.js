@@ -16,7 +16,7 @@ const deleteFile = async (filePath) => {
 // Create a product
 const createProduct = async (req, res) => {
   try {
-    const { name, description, price, category, availability, estimatedTime, shippingFee } = req.body;
+    const { name, description, price, category, availability, estimatedTime, shippingFee, stock, discount } = req.body;
     const sellerId = req.user._id;
 
     // Find the store associated with the seller
@@ -37,7 +37,17 @@ const createProduct = async (req, res) => {
       imageUrl = Product.schema.path('image').defaultValue;
     }
 
-    // Create the product with shipping and time info
+    // Parse optional variants/options (may come as JSON strings in multipart/form-data)
+    let variants;
+    let options;
+    if (req.body.variants) {
+      try { variants = typeof req.body.variants === 'string' ? JSON.parse(req.body.variants) : req.body.variants; } catch (_) { variants = undefined; }
+    }
+    if (req.body.options) {
+      try { options = typeof req.body.options === 'string' ? JSON.parse(req.body.options) : req.body.options; } catch (_) { options = undefined; }
+    }
+
+    // Create the product with shipping/time and optional options
     const newProduct = new Product({
       name,
       description,
@@ -48,7 +58,11 @@ const createProduct = async (req, res) => {
       storeId: store._id,  // Ensure the storeId is correctly referenced
       image: imageUrl, // Set the image URL (either uploaded or default)
       estimatedTime: estimatedTime || 30, // Default 30 minutes if not provided
-      shippingFee: shippingFee || 0 // Default 0 if not provided
+      shippingFee: shippingFee || 0, // Default 0 if not provided
+      stock: stock || 0,
+      discount: discount || 0,
+      ...(Array.isArray(variants) ? { variants } : {}),
+      ...(options && typeof options === 'object' ? { options } : {}),
     });
 
     // Save the product and update the store with the new product
@@ -185,11 +199,21 @@ const updateProduct = async (req, res) => {
 
     // Only allow updating specific fields
     const updates = {};
-    const allowedUpdates = ['name', 'description', 'price', 'category', 'availability', 'estimatedTime', 'shippingFee'];
+    const allowedUpdates = ['name', 'description', 'price', 'category', 'availability', 'estimatedTime', 'shippingFee', 'stock', 'discount', 'variants', 'options'];
     
     allowedUpdates.forEach(field => {
       if (req.body[field] !== undefined) {
-        updates[field] = req.body[field];
+        // Parse JSON for variants/options if needed
+        if ((field === 'variants' || field === 'options') && typeof req.body[field] === 'string') {
+          try {
+            const parsed = JSON.parse(req.body[field]);
+            updates[field] = parsed;
+          } catch (_) {
+            // ignore malformed, skip update for this field
+          }
+        } else {
+          updates[field] = req.body[field];
+        }
       }
     });
 
@@ -296,6 +320,70 @@ const deleteAllProductsInStore = async (req, res) => {
   }
 };
 
+// Get seller analytics (sales, revenue, top products)
+const getSellerAnalytics = async (req, res) => {
+  try {
+    const sellerId = req.user._id;
+    
+    // Get all seller's products
+    const products = await Product.find({ sellerId });
+    const productIds = products.map(p => p._id);
+    
+    // Get all delivered orders containing seller's products
+    const orders = await Order.find({
+      seller: sellerId,
+      status: 'Delivered'
+    }).populate('items.product');
+    
+    // Calculate total revenue
+    let totalRevenue = 0;
+    let totalOrders = orders.length;
+    const productSales = {};
+    
+    orders.forEach(order => {
+      totalRevenue += order.totalAmount || 0;
+      
+      order.items.forEach(item => {
+        const productId = item.product._id.toString();
+        if (!productSales[productId]) {
+          productSales[productId] = {
+            product: item.product,
+            totalQuantity: 0,
+            totalRevenue: 0
+          };
+        }
+        productSales[productId].totalQuantity += item.quantity;
+        productSales[productId].totalRevenue += item.subtotal;
+      });
+    });
+    
+    // Get top selling products
+    const topProducts = Object.values(productSales)
+      .sort((a, b) => b.totalQuantity - a.totalQuantity)
+      .slice(0, 10)
+      .map(item => ({
+        productId: item.product._id,
+        name: item.product.name,
+        image: item.product.image,
+        quantitySold: item.totalQuantity,
+        revenue: item.totalRevenue
+      }));
+    
+    res.json({
+      success: true,
+      data: {
+        totalRevenue,
+        totalOrders,
+        totalProducts: products.length,
+        topProducts
+      }
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
 module.exports = {
   createProduct,
   getSellerProducts,
@@ -305,5 +393,5 @@ module.exports = {
   deleteProduct,
   deleteAllProductsInStore,
   updateProductImage,
-
+  getSellerAnalytics,
 };

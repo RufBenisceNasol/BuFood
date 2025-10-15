@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { product } from '../api';
-import { MdArrowBack } from 'react-icons/md';
+import { MdArrowBack, MdAdd, MdDelete } from 'react-icons/md';
 
 const AddProductPage = () => {
   const navigate = useNavigate();
@@ -17,9 +17,20 @@ const AddProductPage = () => {
     availability: 'Available', // Default to Available
     estimatedTime: '', // New field for estimated delivery time
     shippingFee: '0', // New field for shipping fee
+    stock: '0', // Stock quantity
+    discount: '0', // Discount percentage (0-100)
   });
   const [selectedImage, setSelectedImage] = useState(null);
   const [previewUrl, setPreviewUrl] = useState('');
+  
+  // Variants state - array of {name, price}
+  const [variants, setVariants] = useState([]);
+  
+  // Options state - array of {groupName, choices: []}
+  const [optionGroups, setOptionGroups] = useState([]);
+
+  // Predefined categories
+  const categories = ['Drinks', 'Meals', 'Snacks', 'Desserts', 'Appetizers', 'Main Course', 'Beverages', 'Breakfast', 'Lunch', 'Dinner', 'Other'];
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -27,6 +38,59 @@ const AddProductPage = () => {
       ...prev,
       [name]: value
     }));
+  };
+
+  // Generate unique ID for variants
+  const generateVariantId = (name) => {
+    return name.toLowerCase().replace(/\s+/g, '-') + '-' + Date.now().toString(36).substr(-4);
+  };
+
+  // Variant handlers
+  const addVariant = () => {
+    setVariants([...variants, { name: '', price: '' }]);
+  };
+
+  const removeVariant = (index) => {
+    setVariants(variants.filter((_, i) => i !== index));
+  };
+
+  const updateVariant = (index, field, value) => {
+    const updated = [...variants];
+    updated[index][field] = value;
+    setVariants(updated);
+  };
+
+  // Option group handlers
+  const addOptionGroup = () => {
+    setOptionGroups([...optionGroups, { groupName: '', choices: [''] }]);
+  };
+
+  const removeOptionGroup = (index) => {
+    setOptionGroups(optionGroups.filter((_, i) => i !== index));
+  };
+
+  const updateOptionGroupName = (index, value) => {
+    const updated = [...optionGroups];
+    updated[index].groupName = value;
+    setOptionGroups(updated);
+  };
+
+  const addChoice = (groupIndex) => {
+    const updated = [...optionGroups];
+    updated[groupIndex].choices.push('');
+    setOptionGroups(updated);
+  };
+
+  const removeChoice = (groupIndex, choiceIndex) => {
+    const updated = [...optionGroups];
+    updated[groupIndex].choices = updated[groupIndex].choices.filter((_, i) => i !== choiceIndex);
+    setOptionGroups(updated);
+  };
+
+  const updateChoice = (groupIndex, choiceIndex, value) => {
+    const updated = [...optionGroups];
+    updated[groupIndex].choices[choiceIndex] = value;
+    setOptionGroups(updated);
   };
 
   const handleImageChange = (e) => {
@@ -48,6 +112,34 @@ const AddProductPage = () => {
       Object.keys(formData).forEach(key => {
         submitData.append(key, formData[key]);
       });
+      
+      // Format variants with auto-generated IDs
+      if (variants.length > 0) {
+        const formattedVariants = variants
+          .filter(v => v.name && v.price)
+          .map(v => ({
+            id: generateVariantId(v.name),
+            name: v.name,
+            price: parseFloat(v.price)
+          }));
+        if (formattedVariants.length > 0) {
+          submitData.append('variants', JSON.stringify(formattedVariants));
+        }
+      }
+      
+      // Format options as object
+      if (optionGroups.length > 0) {
+        const formattedOptions = {};
+        optionGroups.forEach(group => {
+          if (group.groupName && group.choices.filter(c => c.trim()).length > 0) {
+            formattedOptions[group.groupName] = group.choices.filter(c => c.trim());
+          }
+        });
+        if (Object.keys(formattedOptions).length > 0) {
+          submitData.append('options', JSON.stringify(formattedOptions));
+        }
+      }
+      
       if (selectedImage) {
         submitData.append('image', selectedImage);
       }
@@ -64,7 +156,11 @@ const AddProductPage = () => {
         availability: 'Available',
         estimatedTime: '',
         shippingFee: '0',
+        stock: '0',
+        discount: '0',
       });
+      setVariants([]);
+      setOptionGroups([]);
       setSelectedImage(null);
       setPreviewUrl('');
       if (fileInputRef.current) {
@@ -163,17 +259,20 @@ const AddProductPage = () => {
 
             <div style={styles.inputGroup}>
               <label htmlFor="category" style={styles.label}>Category:</label>
-              <input
-                type="text"
+              <select
                 id="category"
                 name="category"
                 value={formData.category}
                 onChange={handleInputChange}
                 required
-                style={styles.input}
-                className="product-input"
-                placeholder="Enter category"
-              />
+                style={styles.select}
+                className="product-select"
+              >
+                <option value="">Select a category</option>
+                {categories.map(cat => (
+                  <option key={cat} value={cat}>{cat}</option>
+                ))}
+              </select>
             </div>
 
             <div style={styles.inputGroup}>
@@ -210,6 +309,39 @@ const AddProductPage = () => {
             </div>
 
             <div style={styles.inputGroup}>
+              <label htmlFor="stock" style={styles.label}>Stock Quantity:</label>
+              <input
+                type="number"
+                id="stock"
+                name="stock"
+                value={formData.stock}
+                onChange={handleInputChange}
+                required
+                min="0"
+                style={styles.input}
+                className="product-input"
+                placeholder="Enter stock quantity"
+              />
+            </div>
+
+            <div style={styles.inputGroup}>
+              <label htmlFor="discount" style={styles.label}>Discount (%):</label>
+              <input
+                type="number"
+                id="discount"
+                name="discount"
+                value={formData.discount}
+                onChange={handleInputChange}
+                min="0"
+                max="100"
+                step="1"
+                style={styles.input}
+                className="product-input"
+                placeholder="Enter discount percentage (0-100)"
+              />
+            </div>
+
+            <div style={styles.inputGroup}>
               <label htmlFor="availability" style={styles.label}>Availability:</label>
               <select
                 id="availability"
@@ -224,6 +356,136 @@ const AddProductPage = () => {
               </select>
             </div>
 
+            {/* Variants Section */}
+            <div style={styles.sectionContainer}>
+              <div style={styles.sectionHeader}>
+                <label style={styles.sectionLabel}>Product Variants (optional)</label>
+                <button
+                  type="button"
+                  onClick={addVariant}
+                  style={styles.addButton}
+                  className="add-button"
+                >
+                  <MdAdd style={{ marginRight: '5px' }} />
+                  Add Variant
+                </button>
+              </div>
+              
+              {variants.map((variant, index) => (
+                <div key={index} style={styles.variantRow}>
+                  <input
+                    type="text"
+                    placeholder="Variant Name (e.g., Small, Large)"
+                    value={variant.name}
+                    onChange={(e) => updateVariant(index, 'name', e.target.value)}
+                    style={{ ...styles.input, flex: 2 }}
+                    className="product-input"
+                  />
+                  <input
+                    type="number"
+                    placeholder="Price"
+                    value={variant.price}
+                    onChange={(e) => updateVariant(index, 'price', e.target.value)}
+                    min="0"
+                    step="0.01"
+                    style={{ ...styles.input, flex: 1 }}
+                    className="product-input"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => removeVariant(index)}
+                    style={styles.deleteButton}
+                    className="delete-button"
+                  >
+                    <MdDelete />
+                  </button>
+                </div>
+              ))}
+              
+              {variants.length === 0 && (
+                <div style={styles.emptyState}>
+                  No variants added. Click "Add Variant" to create size/type options.
+                </div>
+              )}
+            </div>
+
+            {/* Options Section */}
+            <div style={styles.sectionContainer}>
+              <div style={styles.sectionHeader}>
+                <label style={styles.sectionLabel}>Product Options (optional)</label>
+                <button
+                  type="button"
+                  onClick={addOptionGroup}
+                  style={styles.addButton}
+                  className="add-button"
+                >
+                  <MdAdd style={{ marginRight: '5px' }} />
+                  Add Option Group
+                </button>
+              </div>
+              
+              {optionGroups.map((group, groupIndex) => (
+                <div key={groupIndex} style={styles.optionGroupContainer}>
+                  <div style={styles.optionGroupHeader}>
+                    <input
+                      type="text"
+                      placeholder="Option Group Name (e.g., Sugar Level, Ice Level)"
+                      value={group.groupName}
+                      onChange={(e) => updateOptionGroupName(groupIndex, e.target.value)}
+                      style={{ ...styles.input, flex: 1 }}
+                      className="product-input"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removeOptionGroup(groupIndex)}
+                      style={styles.deleteButton}
+                      className="delete-button"
+                    >
+                      <MdDelete />
+                    </button>
+                  </div>
+                  
+                  <div style={styles.choicesContainer}>
+                    {group.choices.map((choice, choiceIndex) => (
+                      <div key={choiceIndex} style={styles.choiceRow}>
+                        <input
+                          type="text"
+                          placeholder="Choice (e.g., 0%, 50%, 100%)"
+                          value={choice}
+                          onChange={(e) => updateChoice(groupIndex, choiceIndex, e.target.value)}
+                          style={{ ...styles.input, flex: 1 }}
+                          className="product-input"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removeChoice(groupIndex, choiceIndex)}
+                          style={styles.deleteButtonSmall}
+                          className="delete-button-small"
+                        >
+                          <MdDelete size={16} />
+                        </button>
+                      </div>
+                    ))}
+                    <button
+                      type="button"
+                      onClick={() => addChoice(groupIndex)}
+                      style={styles.addChoiceButton}
+                      className="add-choice-button"
+                    >
+                      <MdAdd size={16} style={{ marginRight: '3px' }} />
+                      Add Choice
+                    </button>
+                  </div>
+                </div>
+              ))}
+              
+              {optionGroups.length === 0 && (
+                <div style={styles.emptyState}>
+                  No option groups added. Click "Add Option Group" to create customization options.
+                </div>
+              )}
+            </div>
+
             <div style={styles.buttonRow}>
               <button
                 type="submit"
@@ -235,7 +497,14 @@ const AddProductPage = () => {
                 disabled={loading}
                 className="product-button"
               >
-                {loading ? 'Creating...' : 'Create Product'}
+                {loading ? (
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
+                    <div style={styles.spinner}></div>
+                    Creating Product...
+                  </div>
+                ) : (
+                  'Create Product'
+                )}
               </button>
             </div>
           </form>
@@ -294,17 +563,17 @@ const styles = {
   formContainer: {
     backgroundColor: 'white',
     borderRadius: '16px',
-    margin: '20px 15px',
-    boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
+    margin: '15px',
+    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.06)',
     overflow: 'hidden',
     transition: 'transform 0.3s, box-shadow 0.3s',
   },
   form: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '10px',
+    gap: '12px',
     width: '100%',
-    padding: '25px 24px',
+    padding: '20px 16px',
     maxWidth: '600px',
     margin: '0 auto',
   },
@@ -317,81 +586,84 @@ const styles = {
     marginBottom: '10px',
   },
   imagePreview: {
-    width: '100%',
-    maxWidth: '125px',
-    height: '125px',
+    width: '120px',
+    height: '120px',
     objectFit: 'cover',
-    borderRadius: '12px',
-    border: '2px solid #eee',
-    boxShadow: '0 4px 15px rgba(0, 0, 0, 0.2)',
+    borderRadius: '10px',
+    border: '2px solid #e5e7eb',
+    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
   },
   placeholderImage: {
-    width: '100%',
-    maxWidth: '125px',
-    height: '125px',
+    width: '120px',
+    height: '120px',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#f9f9f9',
-    borderRadius: '12px',
-    border: '2px dashed #ddd',
-    color: '#666',
-    fontSize: '16px',
-    boxShadow: '0 4px 8px rgba(0, 0, 0, 0.09)',
+    backgroundColor: '#f9fafb',
+    borderRadius: '10px',
+    border: '2px dashed #d1d5db',
+    color: '#6b7280',
+    fontSize: '14px',
+    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05)',
   },
   fileInput: {
     width: '100%',
-    maxWidth: '250px',
-    boxShadow: '0 4px 8px rgba(0, 0, 0, 0.05)',
+    maxWidth: '100%',
+    fontSize: '14px',
+    padding: '8px',
   },
   inputGroup: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '8px',
+    gap: '6px',
     width: '100%',
-    boxShadow: '0 4px 8px rgba(0, 0, 0, 0.09)',
   },
   label: {
-    color: '#555',
-    fontSize: '15px',
-    fontWeight: '500',
+    color: '#374151',
+    fontSize: '14px',
+    fontWeight: '600',
+    letterSpacing: '0.01em',
   },
   input: {
-    padding: '12px 16px',
-    borderRadius: '10px',
-    border: '1px solid #ddd',
-    fontSize: '16px',
+    padding: '11px 14px',
+    borderRadius: '8px',
+    border: '1px solid #e5e7eb',
+    fontSize: '15px',
     width: '100%',
     boxSizing: 'border-box',
-    backgroundColor: '#f9f9f9',
+    backgroundColor: '#ffffff',
     transition: 'all 0.2s',
+    color: '#1f2937',
   },
   textarea: {
-    padding: '12px 16px',
-    borderRadius: '10px',
-    border: '1px solid #ddd',
-    fontSize: '16px',
-    minHeight: '120px',
+    padding: '11px 14px',
+    borderRadius: '8px',
+    border: '1px solid #e5e7eb',
+    fontSize: '15px',
+    minHeight: '100px',
     width: '100%',
     boxSizing: 'border-box',
     resize: 'vertical',
-    backgroundColor: '#f9f9f9',
+    backgroundColor: '#ffffff',
     transition: 'all 0.2s',
+    color: '#1f2937',
+    lineHeight: '1.5',
   },
   select: {
-    padding: '12px 16px',
-    borderRadius: '10px',
-    border: '1px solid #ddd',
-    fontSize: '16px',
+    padding: '11px 14px',
+    borderRadius: '8px',
+    border: '1px solid #e5e7eb',
+    fontSize: '15px',
     width: '100%',
     boxSizing: 'border-box',
-    backgroundColor: '#f9f9f9',
+    backgroundColor: '#ffffff',
     appearance: 'none',
-    backgroundImage: 'url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23555%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E")',
+    backgroundImage: 'url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23374151%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E")',
     backgroundRepeat: 'no-repeat',
-    backgroundPosition: 'right 15px center',
-    backgroundSize: '12px',
+    backgroundPosition: 'right 12px center',
+    backgroundSize: '10px',
     transition: 'all 0.2s',
+    color: '#1f2937',
   },
   buttonRow: {
     display: 'flex',
@@ -400,18 +672,17 @@ const styles = {
     marginTop: '20px',
   },
   submitButton: {
-    padding: '14px 28px',
+    padding: '13px 24px',
     border: 'none',
-    borderRadius: '10px',
-    fontSize: '16px',
-    fontWeight: '500',
+    borderRadius: '8px',
+    fontSize: '15px',
+    fontWeight: '600',
     cursor: 'pointer',
-    background: 'linear-gradient(135deg, #fbaa39, #fc753b)',
+    background: 'linear-gradient(135deg, #f97316, #ea580c)',
     color: 'white',
     width: '100%',
-    maxWidth: '200px',
     transition: 'all 0.3s ease',
-    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.25)',
+    boxShadow: '0 2px 8px rgba(249, 115, 22, 0.3)',
   },
   error: {
     backgroundColor: '#fde8e8',
@@ -432,6 +703,137 @@ const styles = {
     borderRadius: '10px',
     fontSize: '14px',
     boxShadow: '0 2px 4px rgba(34, 84, 61, 0.1)',
+    animation: 'slideDown 0.3s ease-out',
+  },
+  spinner: {
+    width: '16px',
+    height: '16px',
+    border: '2px solid rgba(255, 255, 255, 0.3)',
+    borderTop: '2px solid white',
+    borderRadius: '50%',
+    animation: 'spin 0.8s linear infinite',
+  },
+  // Variants and Options Sections
+  sectionContainer: {
+    backgroundColor: '#f9fafb',
+    borderRadius: '10px',
+    padding: '16px',
+    marginTop: '12px',
+    border: '1px solid #e5e7eb',
+  },
+  sectionHeader: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: '12px',
+    flexWrap: 'wrap',
+    gap: '8px',
+  },
+  sectionLabel: {
+    fontSize: '15px',
+    fontWeight: '600',
+    color: '#1f2937',
+  },
+  addButton: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: '8px 14px',
+    backgroundColor: '#10b981',
+    color: 'white',
+    border: 'none',
+    borderRadius: '6px',
+    fontSize: '13px',
+    fontWeight: '600',
+    cursor: 'pointer',
+    transition: 'all 0.2s',
+    boxShadow: '0 1px 3px rgba(16, 185, 129, 0.3)',
+    whiteSpace: 'nowrap',
+  },
+  variantRow: {
+    display: 'flex',
+    gap: '8px',
+    marginBottom: '8px',
+    alignItems: 'stretch',
+    flexWrap: 'wrap',
+  },
+  deleteButton: {
+    padding: '10px',
+    backgroundColor: '#ef4444',
+    color: 'white',
+    border: 'none',
+    borderRadius: '6px',
+    cursor: 'pointer',
+    transition: 'all 0.2s',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    minWidth: '42px',
+    flexShrink: 0,
+  },
+  deleteButtonSmall: {
+    padding: '7px',
+    backgroundColor: '#ef4444',
+    color: 'white',
+    border: 'none',
+    borderRadius: '5px',
+    cursor: 'pointer',
+    transition: 'all 0.2s',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    minWidth: '34px',
+    flexShrink: 0,
+  },
+  emptyState: {
+    textAlign: 'center',
+    padding: '24px 16px',
+    color: '#9ca3af',
+    fontSize: '13px',
+    fontStyle: 'italic',
+    backgroundColor: '#ffffff',
+    borderRadius: '6px',
+    border: '2px dashed #e5e7eb',
+    lineHeight: '1.5',
+  },
+  optionGroupContainer: {
+    backgroundColor: '#ffffff',
+    borderRadius: '8px',
+    padding: '12px',
+    marginBottom: '12px',
+    border: '1px solid #e5e7eb',
+  },
+  optionGroupHeader: {
+    display: 'flex',
+    gap: '8px',
+    marginBottom: '10px',
+    alignItems: 'stretch',
+    flexWrap: 'wrap',
+  },
+  choicesContainer: {
+    paddingLeft: '12px',
+    borderLeft: '2px solid #e5e7eb',
+  },
+  choiceRow: {
+    display: 'flex',
+    gap: '6px',
+    marginBottom: '6px',
+    alignItems: 'stretch',
+  },
+  addChoiceButton: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: '6px 10px',
+    backgroundColor: '#3b82f6',
+    color: 'white',
+    border: 'none',
+    borderRadius: '5px',
+    fontSize: '12px',
+    fontWeight: '600',
+    cursor: 'pointer',
+    transition: 'all 0.2s',
+    marginTop: '4px',
   },
 };
 
@@ -453,11 +855,66 @@ const ResponsiveStyle = () => (
       box-shadow: 0 6px 15px rgba(255, 140, 0, 0.35);
     }
     
+    .add-button:hover {
+      background-color: #059669;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(16, 185, 129, 0.3);
+    }
+    
+    .delete-button:hover, .delete-button-small:hover {
+      background-color: #dc2626;
+      transform: scale(1.05);
+    }
+    
+    .add-choice-button:hover {
+      background-color: #2563eb;
+      transform: translateY(-1px);
+    }
+    
     .product-input:focus, .product-textarea:focus, .product-select:focus {
       border-color: #ff8c00e0;
       outline: none;
       box-shadow: 0 0 0 3px rgba(255, 140, 0, 0.15);
       background-color: #fff;
+      transform: translateY(-1px);
+      transition: all 0.2s ease;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    @keyframes slideDown {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-5px); }
+      75% { transform: translateX(5px); }
+    }
+    
+    .product-form {
+      animation: fadeIn 0.4s ease-out;
+    }
+    
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
     }
     
     /* Scrollbar styling */
@@ -479,13 +936,55 @@ const ResponsiveStyle = () => (
       background: rgba(255, 140, 0, 0.5);
     }
     
-    @media (max-width: 768px) {
-      .form {
-        padding: 20px 15px;
+    @media (max-width: 640px) {
+      .variantRow {
+        flex-direction: column;
       }
       
-      .imagePreview, .placeholderImage {
-        height: 200px;
+      .variantRow input {
+        width: 100% !important;
+        flex: 1 1 100% !important;
+      }
+      
+      .variantRow button {
+        width: 100%;
+        max-width: 100%;
+      }
+      
+      .optionGroupHeader {
+        flex-direction: column;
+      }
+      
+      .optionGroupHeader input {
+        width: 100% !important;
+        flex: 1 1 100% !important;
+      }
+      
+      .optionGroupHeader button {
+        width: 100%;
+      }
+      
+      .sectionHeader {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      
+      .add-button {
+        width: 100%;
+      }
+    }
+    
+    @media (min-width: 641px) {
+      .variantRow input:first-child {
+        flex: 2;
+      }
+      
+      .variantRow input:nth-child(2) {
+        flex: 1;
+      }
+      
+      .optionGroupHeader input {
+        flex: 1;
       }
     }
   `}</style>

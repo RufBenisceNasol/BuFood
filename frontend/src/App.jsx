@@ -23,6 +23,7 @@ const ProfilePage = lazy(() => import('./seller/ProfilePage'))
 const SellerProductDetailPage = lazy(() => import('./seller/SellerProductDetailPage'))
 const EditProductPage = lazy(() => import('./seller/EditProductPage'))
 const AnalyticsPage = lazy(() => import('./seller/AnalyticsPage'))
+const SellerSettingsPage = lazy(() => import('./seller/SellerSettingsPage'))
 
 // Customer
 const HomePage = lazy(() => import('./customer/HomePage'))
@@ -69,6 +70,7 @@ function App() {
             <Route path="/seller/store-settings" element={<StoreSettings />} />
             <Route path="/seller/manage-orders" element={<OrdersPage />} />
             <Route path="/seller/profile" element={<ProfilePage />} />
+            <Route path="/seller/settings" element={<SellerSettingsPage />} />
             <Route path="/seller/product/:productId" element={<SellerProductDetailPage />} />
             <Route path="/seller/edit-product/:productId" element={<EditProductPage />} />
             <Route path="/seller/analytics" element={<AnalyticsPage />} />

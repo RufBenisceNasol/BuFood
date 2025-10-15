@@ -39,7 +39,7 @@ const addToCart = async (req, res) => {
     const session = await mongoose.startSession();
     session.startTransaction();
 
-    try {      const { productId, quantity } = req.body;
+    try {      const { productId, quantity, selectedVariantId, selectedOptions } = req.body;
 
       // Input validation
       if (!productId || !quantity || quantity <= 0) {
@@ -66,7 +66,15 @@ const addToCart = async (req, res) => {
           'Insufficient stock',
           { available: product.quantity }
         ));
-      }      const price = product.price;
+      }      // Compute unit price based on selected variant (options groups have no price in Phase 2)
+      let unitPrice = product.price;
+      if (selectedVariantId && Array.isArray(product.variants)) {
+        const v = product.variants.find(v => String(v.id || v._id || v.name) === String(selectedVariantId));
+        if (v && typeof v.price === 'number') {
+          unitPrice = v.price;
+        }
+      }
+      const optionsObj = selectedOptions && typeof selectedOptions === 'object' ? selectedOptions : undefined;
       let cart = await Cart.findOne({ user: req.user._id }).session(session);
 
       if (!cart) {
@@ -75,27 +83,42 @@ const addToCart = async (req, res) => {
 
           items: [{ 
             product: productId, 
+            selectedVariantId: selectedVariantId || undefined,
+            selectedOptions: optionsObj,
             quantity, 
-            subtotal: price * quantity 
+            price: unitPrice,
+            subtotal: unitPrice * quantity 
           }],
-          total: price * quantity
+          total: unitPrice * quantity
         });
       } else {
-        const itemIndex = cart.items.findIndex(item => item.product.toString() === productId);
+        const itemIndex = cart.items.findIndex(item => {
+          const sameProduct = item.product.toString() === productId;
+          const sameVariant = String(item.selectedVariantId || '') === String(selectedVariantId || '');
+          const existingOpts = item.selectedOptions ? Object.fromEntries(item.selectedOptions) : undefined;
+          const sameOptions = JSON.stringify(existingOpts || {}) === JSON.stringify(optionsObj || {});
+          return sameProduct && sameVariant && sameOptions;
+        });
 
         if (itemIndex > -1) {
           cart.items[itemIndex].quantity = cart.items[itemIndex].quantity + quantity;
-          cart.items[itemIndex].subtotal = cart.items[itemIndex].quantity * price;
+          // Keep stored unit price for this line
+          const linePrice = cart.items[itemIndex].price || unitPrice;
+          cart.items[itemIndex].price = linePrice;
+          cart.items[itemIndex].subtotal = cart.items[itemIndex].quantity * linePrice;
         } else {
           cart.items.push({ 
             product: productId, 
+            selectedVariantId: selectedVariantId || undefined,
+            selectedOptions: optionsObj,
             quantity, 
-            subtotal: price * quantity 
+            price: unitPrice,
+            subtotal: unitPrice * quantity 
           });
         }
 
         // Recalculate total
-        cart.total = cart.items.reduce((acc, item) => acc + item.subtotal, 0);
+        cart.total = cart.items.reduce((acc, item) => acc + (item.subtotal || 0), 0);
       }
 
       await cart.save({ session });

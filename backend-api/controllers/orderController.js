@@ -124,11 +124,13 @@ const createOrderFromCart = async (req, res) => {
         ? Math.max(...items.map(item => item.product.estimatedTime || 30)) + 30 // Add 30 minutes for delivery
         : null;
 
-      // Create order items
+      // Create order items (use stored cart item price and selections)
       const orderItems = items.map(item => ({
         product: item.product._id,
+        selectedVariantId: item.selectedVariantId,
+        selectedOptions: item.selectedOptions,
         quantity: item.quantity,
-        price: item.product.price,
+        price: typeof item.price === 'number' ? item.price : item.product.price,
         subtotal: item.subtotal
       }));
 
@@ -855,7 +857,7 @@ const createDirectOrder = async (req, res) => {
 
     const {
       orderType,
-      items, // Array of { productId, quantity }
+      items, // Array of { productId, quantity, selectedVariantId?, selectedOptions? }
       paymentMethod,
       deliveryDetails,
       pickupTime,
@@ -920,11 +922,20 @@ const createDirectOrder = async (req, res) => {
         };
       }
 
+      // Determine unit price: variant overrides base price if provided
+      let unitPrice = product.price;
+      if (orderItem?.selectedVariantId && Array.isArray(product.variants)) {
+        const v = product.variants.find(v => String(v.id || v._id || v.name) === String(orderItem.selectedVariantId));
+        if (v && typeof v.price === 'number') unitPrice = v.price;
+      }
+
       acc[storeId].items.push({
         product: product._id,
+        selectedVariantId: orderItem?.selectedVariantId,
+        selectedOptions: orderItem?.selectedOptions,
         quantity: orderItem.quantity,
-        price: product.price,
-        subtotal: product.price * orderItem.quantity
+        price: unitPrice,
+        subtotal: unitPrice * orderItem.quantity
       });
 
       return acc;

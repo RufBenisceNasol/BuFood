@@ -1,4 +1,9 @@
 const User = require('../models/userModel');
+const Cart = require('../models/cartModel');
+const Order = require('../models/orderModel');
+const Product = require('../models/productModel');
+const Store = require('../models/storeModel');
+const Review = require('../models/reviewModel');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const nodemailer = require('nodemailer');
@@ -106,6 +111,46 @@ const sendVerificationEmail = async (email, verificationLink) => {
   } catch (error) {
     console.error('Error sending verification email:', error.message);
     throw new Error('Could not send verification email');
+  }
+};
+
+// Permanently delete the authenticated user's account and all related data (legacy auth path)
+const deleteAccount = async (req, res) => {
+  try {
+    const user = req.user; // set by authenticate middleware
+    if (!user) return res.status(401).json({ message: 'Unauthorized' });
+
+    const userId = user._id;
+
+    // 1) Customer data
+    await Promise.all([
+      Cart.deleteOne({ user: userId }),
+      Review.deleteMany({ user: userId }),
+    ]);
+
+    // 2) Orders (customer or seller)
+    await Order.deleteMany({ $or: [{ customer: userId }, { seller: userId }] });
+
+    // 3) Seller resources
+    if (user.role === 'Seller') {
+      const products = await Product.find({ sellerId: userId }).select('_id');
+      const productIds = products.map(p => p._id);
+      if (productIds.length > 0) {
+        await Review.deleteMany({ product: { $in: productIds } });
+      }
+      await Promise.all([
+        Product.deleteMany({ sellerId: userId }),
+        Store.deleteOne({ owner: userId })
+      ]);
+    }
+
+    // 4) Delete user
+    await User.deleteOne({ _id: userId });
+
+    return res.status(200).json({ message: 'Account and related data deleted successfully' });
+  } catch (error) {
+    console.error('deleteAccount (legacy) error:', error);
+    return res.status(500).json({ message: 'Failed to delete account' });
   }
 };
 
@@ -738,4 +783,5 @@ module.exports = {
   updateProfile,
   uploadProfileImage,
   markVerified,
+  deleteAccount,
 };

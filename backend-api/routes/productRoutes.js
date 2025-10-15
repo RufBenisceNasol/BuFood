@@ -39,7 +39,7 @@ const {
   deleteAllProductsInStore,
   getSellerProducts,
   updateProductImage,
-  toggleProductAvailability
+  getSellerAnalytics
 } = require('../controllers/productController');
 
 const { authenticate, checkRole } = require('../middlewares/authMiddleware');
@@ -288,6 +288,27 @@ router.delete(
   authenticate,
   checkRole('Seller'),
   deleteAllProductsInStore
+);
+
+/**
+ * @swagger
+ * /api/products/seller/analytics:
+ *   get:
+ *     tags: [Products]
+ *     summary: Get seller analytics (sales, revenue, top products)
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Analytics data retrieved successfully
+ *       401:
+ *         description: Unauthorized
+ */
+router.get(
+  '/seller/analytics',
+  authenticate,
+  checkRole('Seller'),
+  getSellerAnalytics
 );
 
 module.exports = router;

@@ -454,7 +454,7 @@ const DashboardPage = () => {
           
           {isMenuOpen && (
             <div className="popup-menu">
-              <Link to="/seller/store-settings" className="menu-item">
+              <Link to="/seller/settings" className="menu-item">
                 <MdSettings />
                 <span>Settings</span>
               </Link>

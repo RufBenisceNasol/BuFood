@@ -213,6 +213,18 @@ export const auth = {
         } catch (error) {
             throw error.response?.data || error.message;
         }
+    },
+
+    // Permanently delete current authenticated user's account and related data
+    // Attempts Supabase path if requested; otherwise defaults to legacy path
+    deleteAccount: async ({ supabase = false } = {}) => {
+        try {
+            const url = supabase ? '/auth/supabase/account' : '/auth/account';
+            const response = await api.delete(url);
+            return response.data;
+        } catch (error) {
+            throw error.response?.data || error.message;
+        }
     }
 };
 
@@ -372,13 +384,27 @@ export const product = {
         } catch (error) {
             throw error.response?.data || error.message;
         }
+    },
+
+    // Get seller analytics
+    getSellerAnalytics: async () => {
+        try {
+            const response = await api.get('/products/seller/analytics');
+            return response.data;
+        } catch (error) {
+            throw error.response?.data || error.message;
+        }
     }
 };
 
 // Cart API endpoints
-export const cart = {    addToCart: async (productId, quantity) => {
+export const cart = {
+    addToCart: async (productId, quantity, selectedVariantId = null, selectedOptions = null) => {
         try {
-            const response = await api.post('/cart/add', { productId, quantity });
+            const payload = { productId, quantity };
+            if (selectedVariantId) payload.selectedVariantId = selectedVariantId;
+            if (selectedOptions) payload.selectedOptions = selectedOptions;
+            const response = await api.post('/cart/add', payload);
             return response.data.data.cart;
         } catch (error) {
             throw error.response?.data || error.message;

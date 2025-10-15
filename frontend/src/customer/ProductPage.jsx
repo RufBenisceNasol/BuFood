@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+
 import { useParams, useNavigate } from 'react-router-dom';
 import { cart, product, order } from '../api';
 import {
@@ -28,6 +29,7 @@ import {
     AccessTime
 } from '@mui/icons-material';
 import OrderDetailsForm from '../components/OrderDetailsForm';
+import ProductOptionsModal from '../components/ProductOptionsModal';
 
 const ProductPage = () => {
     const { id } = useParams();
@@ -43,6 +45,7 @@ const ProductPage = () => {
         message: '',
         severity: 'success'
     });
+    const [optionsOpen, setOptionsOpen] = useState(false);
 
     const fetchProduct = useCallback(async () => {
         if (!id) return;
@@ -65,20 +68,36 @@ const ProductPage = () => {
         setQuantity(newValue);
     };
 
+    const productHasOptions = !!(selectedProduct?.variants?.length || (selectedProduct?.options && Object.keys(selectedProduct?.options || {}).length));
+
     const handleAddToCart = async () => {
+        // If the product has options/variants, open the options modal first
+        if (productHasOptions) {
+            setOptionsOpen(true);
+            return;
+        }
         try {
             await cart.addToCart(selectedProduct._id, quantity);
-            setSnackbar({
-                open: true,
-                message: 'Added to cart successfully!',
-                severity: 'success'
-            });
+            setSnackbar({ open: true, message: 'Added to cart successfully!', severity: 'success' });
         } catch (err) {
-            setSnackbar({
-                open: true,
-                message: err.message || 'Failed to add to cart',
-                severity: 'error'
-            });
+            setSnackbar({ open: true, message: err.message || 'Failed to add to cart', severity: 'error' });
+        }
+    };
+
+    const handleConfirmOptions = async ({ quantity: chosenQty, selectedVariantId, selectedOptions }) => {
+        // Phase 2: send selected variant/options to backend for proper pricing
+        try {
+            await cart.addToCart(
+                selectedProduct._id, 
+                chosenQty || quantity,
+                selectedVariantId,
+                selectedOptions
+            );
+            setOptionsOpen(false);
+            setSnackbar({ open: true, message: 'Added to cart successfully!', severity: 'success' });
+        } catch (err) {
+            setOptionsOpen(false);
+            setSnackbar({ open: true, message: err.message || 'Failed to add to cart', severity: 'error' });
         }
     };
 
@@ -289,6 +308,15 @@ const ProductPage = () => {
                     </Box>
                 </Grid>
             </Grid>
+
+            {/* Product Options Modal (Phase 1 UI) */}
+            <ProductOptionsModal
+                open={optionsOpen}
+                product={selectedProduct}
+                initialQuantity={quantity}
+                onClose={() => setOptionsOpen(false)}
+                onConfirm={handleConfirmOptions}
+            />
 
             <Snackbar
                 open={snackbar.open}

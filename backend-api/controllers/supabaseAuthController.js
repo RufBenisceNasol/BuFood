@@ -1,4 +1,9 @@
 const User = require('../models/userModel');
+const Cart = require('../models/cartModel');
+const Order = require('../models/orderModel');
+const Product = require('../models/productModel');
+const Store = require('../models/storeModel');
+const Review = require('../models/reviewModel');
 const { 
   createSupabaseUser, 
   signInWithSupabase,
@@ -81,6 +86,70 @@ const register = async (req, res) => {
       supabaseId: supabaseUser.id,
       storeCreationFailed,
     };
+
+/**
+ * Permanently delete the authenticated user's account and all related data.
+ * For role === 'Seller': also delete their store and products.
+ * For role === 'Customer': delete their cart, orders, and reviews.
+ * Finally delete the user in Supabase and MongoDB.
+ */
+const deleteAccount = async (req, res) => {
+  try {
+    const user = req.user; // set by authenticateWithSupabase
+    if (!user) return res.status(401).json({ message: 'Unauthorized' });
+
+    const userId = user._id;
+
+    // 1) Delete customer-facing data
+    await Promise.all([
+      Cart.deleteOne({ user: userId }),
+      Review.deleteMany({ user: userId }),
+    ]);
+
+    // 2) Orders
+    // Remove all orders where the user is customer or seller
+    await Order.deleteMany({ $or: [{ customer: userId }, { seller: userId }] });
+
+    // 3) Seller resources
+    if (user.role === 'Seller') {
+      // Find store and products
+      const store = await Store.findOne({ owner: userId });
+      const products = await Product.find({ sellerId: userId }).select('_id');
+      const productIds = products.map(p => p._id);
+
+      // Delete reviews for these products
+      if (productIds.length > 0) {
+        await Review.deleteMany({ product: { $in: productIds } });
+      }
+
+      // Delete products and store
+      await Promise.all([
+        Product.deleteMany({ sellerId: userId }),
+        Store.deleteOne({ owner: userId })
+      ]);
+    }
+
+    // 4) Delete favorites are embedded in user doc; will be removed with user
+
+    // 5) Delete Supabase user if present
+    try {
+      if (user.supabaseId) {
+        await deleteSupabaseUser(user.supabaseId);
+      }
+    } catch (e) {
+      // log but continue to delete Mongo user to honor request
+      console.warn('Supabase delete failed:', e?.message || e);
+    }
+
+    // 6) Delete MongoDB user
+    await User.deleteOne({ _id: userId });
+
+    return res.status(200).json({ message: 'Account and related data deleted successfully' });
+  } catch (error) {
+    console.error('deleteAccount (supabase) error:', error);
+    return res.status(500).json({ message: 'Failed to delete account' });
+  }
+};
 
     res.status(201).json(registerPayload);
   } catch (error) {
@@ -434,4 +503,5 @@ module.exports = {
   refreshToken,
   updateProfile,
   uploadProfileImage,
+  deleteAccount,
 };

@@ -13,6 +13,7 @@ const {
     refreshToken,
     updateProfile,
     uploadProfileImage: uploadProfileImageController,
+    deleteAccount,
     // OTP-based handlers
     forgotPasswordOtp,
     resetPasswordOtp,
@@ -574,5 +575,10 @@ router.put('/me', authenticate, updateProfile);
  *         description: Unauthorized
  */
 router.post('/profile-image', authenticate, uploadProfileImage.single('image'), uploadProfileImageController);
+
+/**
+ * Permanently delete current user's account and all related data (legacy/JWT path)
+ */
+router.delete('/account', authenticate, deleteAccount);
 
 module.exports = router;
