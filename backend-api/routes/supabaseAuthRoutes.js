@@ -12,8 +12,7 @@ const {
   resetPassword,
   refreshToken,
   updateProfile,
-  uploadProfileImage,
-  deleteAccount
+  uploadProfileImage
 } = require('../controllers/supabaseAuthController');
 const { authenticateWithSupabase } = require('../middlewares/supabaseAuthMiddleware');
 // Import multer instance and create a single-file middleware for field name 'image'
@@ -310,10 +309,5 @@ router.put('/profile', authenticateWithSupabase, updateProfile);
  *         description: Profile image uploaded
  */
 router.post('/profile/image', authenticateWithSupabase, profileImageUploadMiddleware, uploadProfileImage);
-
-/**
- * Permanently delete current user's account and data
- */
-router.delete('/account', authenticateWithSupabase, deleteAccount);
 
 module.exports = router;
