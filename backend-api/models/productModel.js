@@ -50,13 +50,16 @@ const productSchema = new mongoose.Schema({
     max: 100,
     default: 0, // Percentage discount (0-100)
   },
-  // Optional variants array: each item may contain id/name/price/image
+  // Product variants with individual pricing, images, and stock
   variants: [
     {
-      id: { type: String },
-      name: { type: String },
-      price: { type: Number, min: 0 },
-      image: { type: String },
+      id: { type: String, required: true },
+      name: { type: String, required: true },
+      price: { type: Number, min: 0, required: true },
+      image: { type: String, default: '' },
+      stock: { type: Number, min: 0, default: 0 },
+      sku: { type: String, default: '' }, // Stock Keeping Unit
+      isAvailable: { type: Boolean, default: true }
     }
   ],
   // Optional options map: e.g., { Size: ['S','M','L'], Sugar: ['0%','50%','100%'] }

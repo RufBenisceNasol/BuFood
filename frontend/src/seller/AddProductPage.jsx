@@ -429,7 +429,7 @@ const AddProductPage = () => {
                   <div style={styles.optionGroupHeader}>
                     <input
                       type="text"
-                      placeholder="Option Group Name (e.g., Sugar Level, Ice Level)"
+                      placeholder="Group Name(e.g., Sugar Level, Ice Level)"
                       value={group.groupName}
                       onChange={(e) => updateOptionGroupName(groupIndex, e.target.value)}
                       style={{ ...styles.input, flex: 1 }}
@@ -450,7 +450,7 @@ const AddProductPage = () => {
                       <div key={choiceIndex} style={styles.choiceRow}>
                         <input
                           type="text"
-                          placeholder="Choice (e.g., 0%, 50%, 100%)"
+                          placeholder="Choice(e.g., 0%, 50%, 100%)"
                           value={choice}
                           onChange={(e) => updateChoice(groupIndex, choiceIndex, e.target.value)}
                           style={{ ...styles.input, flex: 1 }}
