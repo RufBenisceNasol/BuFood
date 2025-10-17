@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { product } from '../api';
-import { MdArrowBack, MdAdd, MdDelete } from 'react-icons/md';
+import { MdArrowBack, MdAdd, MdDelete, MdImage } from 'react-icons/md';
 
 const AddProductPage = () => {
   const navigate = useNavigate();
@@ -12,22 +12,20 @@ const AddProductPage = () => {
   const [formData, setFormData] = useState({
     name: '',
     description: '',
-    price: '',
+    basePrice: '',
     category: '',
-    availability: 'Available', // Default to Available
-    estimatedTime: '', // New field for estimated delivery time
-    shippingFee: '0', // New field for shipping fee
-    stock: '0', // Stock quantity
-    discount: '0', // Discount percentage (0-100)
+    availability: 'Available',
+    estimatedTime: '',
+    shippingFee: '0',
+    stock: '0',
+    discount: '0',
   });
   const [selectedImage, setSelectedImage] = useState(null);
   const [previewUrl, setPreviewUrl] = useState('');
-  
-  // Variants state - array of {name, price}
+  // Variants state - array of { variantName, options: [{ optionName, price, stock, image }] }
   const [variants, setVariants] = useState([]);
-  
-  // Options state - array of {groupName, choices: []}
-  const [optionGroups, setOptionGroups] = useState([]);
+  // For inline option image upload loading states
+  const [uploadingOption, setUploadingOption] = useState({});
 
   // Predefined categories
   const categories = ['Drinks', 'Meals', 'Snacks', 'Desserts', 'Appetizers', 'Main Course', 'Beverages', 'Breakfast', 'Lunch', 'Dinner', 'Other'];
@@ -40,57 +38,46 @@ const AddProductPage = () => {
     }));
   };
 
-  // Generate unique ID for variants
-  const generateVariantId = (name) => {
-    return name.toLowerCase().replace(/\s+/g, '-') + '-' + Date.now().toString(36).substr(-4);
-  };
-
-  // Variant handlers
+  // Variant category handlers
   const addVariant = () => {
-    setVariants([...variants, { name: '', price: '' }]);
+    setVariants(prev => ([
+      ...prev,
+      { variantName: '', options: [] }
+    ]));
   };
 
   const removeVariant = (index) => {
-    setVariants(variants.filter((_, i) => i !== index));
+    setVariants(prev => prev.filter((_, i) => i !== index));
   };
 
-  const updateVariant = (index, field, value) => {
-    const updated = [...variants];
-    updated[index][field] = value;
-    setVariants(updated);
+  const updateVariantName = (index, value) => {
+    setVariants(prev => prev.map((v, i) => i === index ? { ...v, variantName: value } : v));
   };
 
-  // Option group handlers
-  const addOptionGroup = () => {
-    setOptionGroups([...optionGroups, { groupName: '', choices: [''] }]);
+  // Option handlers inside a variant
+  const addOption = (variantIdx) => {
+    setVariants(prev => prev.map((v, i) => {
+      if (i !== variantIdx) return v;
+      return {
+        ...v,
+        options: [...(v.options || []), { optionName: '', price: '', stock: '', image: '' }]
+      };
+    }));
   };
 
-  const removeOptionGroup = (index) => {
-    setOptionGroups(optionGroups.filter((_, i) => i !== index));
+  const removeOption = (variantIdx, optionIdx) => {
+    setVariants(prev => prev.map((v, i) => {
+      if (i !== variantIdx) return v;
+      return { ...v, options: v.options.filter((_, oi) => oi !== optionIdx) };
+    }));
   };
 
-  const updateOptionGroupName = (index, value) => {
-    const updated = [...optionGroups];
-    updated[index].groupName = value;
-    setOptionGroups(updated);
-  };
-
-  const addChoice = (groupIndex) => {
-    const updated = [...optionGroups];
-    updated[groupIndex].choices.push('');
-    setOptionGroups(updated);
-  };
-
-  const removeChoice = (groupIndex, choiceIndex) => {
-    const updated = [...optionGroups];
-    updated[groupIndex].choices = updated[groupIndex].choices.filter((_, i) => i !== choiceIndex);
-    setOptionGroups(updated);
-  };
-
-  const updateChoice = (groupIndex, choiceIndex, value) => {
-    const updated = [...optionGroups];
-    updated[groupIndex].choices[choiceIndex] = value;
-    setOptionGroups(updated);
+  const updateOptionField = (variantIdx, optionIdx, field, value) => {
+    setVariants(prev => prev.map((v, i) => {
+      if (i !== variantIdx) return v;
+      const newOptions = v.options.map((o, oi) => oi === optionIdx ? { ...o, [field]: value } : o);
+      return { ...v, options: newOptions };
+    }));
   };
 
   const handleImageChange = (e) => {
@@ -98,6 +85,34 @@ const AddProductPage = () => {
     if (file) {
       setSelectedImage(file);
       setPreviewUrl(URL.createObjectURL(file));
+    }
+  };
+
+  // Upload a single option image to backend -> Cloudinary
+  const handleOptionImageUpload = async (variantIdx, optionIdx, file) => {
+    if (!file) return;
+    try {
+      const key = `${variantIdx}-${optionIdx}`;
+      setUploadingOption(prev => ({ ...prev, [key]: true }));
+      const form = new FormData();
+      form.append('image', file);
+      const token = localStorage.getItem('token');
+      const res = await fetch('/api/upload/image', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: form,
+      });
+      const data = await res.json();
+      if (data?.success && data.imageUrl) {
+        updateOptionField(variantIdx, optionIdx, 'image', data.imageUrl);
+      } else {
+        setError(data?.message || 'Failed to upload option image');
+      }
+    } catch (err) {
+      setError('Failed to upload option image');
+    } finally {
+      const key = `${variantIdx}-${optionIdx}`;
+      setUploadingOption(prev => ({ ...prev, [key]: false }));
     }
   };
 
@@ -109,35 +124,40 @@ const AddProductPage = () => {
 
     try {
       const submitData = new FormData();
-      Object.keys(formData).forEach(key => {
-        submitData.append(key, formData[key]);
-      });
+      // Map fields: basePrice -> price (backend expects price)
+      submitData.append('name', formData.name);
+      submitData.append('description', formData.description);
+      submitData.append('price', formData.basePrice);
+      submitData.append('category', formData.category);
+      submitData.append('availability', formData.availability);
+      submitData.append('estimatedTime', formData.estimatedTime);
+      submitData.append('shippingFee', formData.shippingFee);
+      submitData.append('stock', formData.stock);
+      submitData.append('discount', formData.discount);
       
-      // Format variants with auto-generated IDs
-      if (variants.length > 0) {
-        const formattedVariants = variants
-          .filter(v => v.name && v.price)
-          .map(v => ({
-            id: generateVariantId(v.name),
-            name: v.name,
-            price: parseFloat(v.price)
-          }));
-        if (formattedVariants.length > 0) {
-          submitData.append('variants', JSON.stringify(formattedVariants));
-        }
+      // Validate main fields
+      if (!formData.name || !formData.description || !formData.basePrice || !formData.category) {
+        throw new Error('Please complete all required fields.');
       }
-      
-      // Format options as object
-      if (optionGroups.length > 0) {
-        const formattedOptions = {};
-        optionGroups.forEach(group => {
-          if (group.groupName && group.choices.filter(c => c.trim()).length > 0) {
-            formattedOptions[group.groupName] = group.choices.filter(c => c.trim());
-          }
-        });
-        if (Object.keys(formattedOptions).length > 0) {
-          submitData.append('options', JSON.stringify(formattedOptions));
-        }
+
+      // Validate variants/options and format to desired schema
+      const formattedVariants = (variants || [])
+        .filter(v => v.variantName && (v.options || []).length > 0)
+        .map(v => ({
+          variantName: v.variantName,
+          options: (v.options || [])
+            .filter(o => o.optionName && o.price !== '' && o.stock !== '')
+            .map(o => ({
+              optionName: o.optionName,
+              price: Number(o.price),
+              stock: Number(o.stock),
+              image: o.image || ''
+            }))
+        }))
+        .filter(v => v.options.length > 0);
+
+      if (formattedVariants.length > 0) {
+        submitData.append('variants', JSON.stringify(formattedVariants));
       }
       
       if (selectedImage) {
@@ -151,7 +171,7 @@ const AddProductPage = () => {
       setFormData({
         name: '',
         description: '',
-        price: '',
+        basePrice: '',
         category: '',
         availability: 'Available',
         estimatedTime: '',
@@ -160,7 +180,6 @@ const AddProductPage = () => {
         discount: '0',
       });
       setVariants([]);
-      setOptionGroups([]);
       setSelectedImage(null);
       setPreviewUrl('');
       if (fileInputRef.current) {
@@ -241,19 +260,19 @@ const AddProductPage = () => {
             </div>
 
             <div style={styles.inputGroup}>
-              <label htmlFor="price" style={styles.label}>Price:</label>
+              <label htmlFor="basePrice" style={styles.label}>Base Price:</label>
               <input
                 type="number"
-                id="price"
-                name="price"
-                value={formData.price}
+                id="basePrice"
+                name="basePrice"
+                value={formData.basePrice}
                 onChange={handleInputChange}
                 required
                 min="0"
                 step="0.01"
                 style={styles.input}
                 className="product-input"
-                placeholder="Enter price"
+                placeholder="Enter base price"
               />
             </div>
 
@@ -356,10 +375,10 @@ const AddProductPage = () => {
               </select>
             </div>
 
-            {/* Variants Section */}
+            {/* Variants Section (Categories + Options) */}
             <div style={styles.sectionContainer}>
               <div style={styles.sectionHeader}>
-                <label style={styles.sectionLabel}>Product Variants (optional)</label>
+                <label style={styles.sectionLabel}>Product Variants & Options</label>
                 <button
                   type="button"
                   onClick={addVariant}
@@ -367,124 +386,158 @@ const AddProductPage = () => {
                   className="add-button"
                 >
                   <MdAdd style={{ marginRight: '5px' }} />
-                  Add Variant
+                  Add Variant Category
                 </button>
               </div>
-              
-              {variants.map((variant, index) => (
-                <div key={index} style={styles.variantRow}>
-                  <input
-                    type="text"
-                    placeholder="Variant Name (e.g., Small, Large)"
-                    value={variant.name}
-                    onChange={(e) => updateVariant(index, 'name', e.target.value)}
-                    style={{ ...styles.input, flex: 2 }}
-                    className="product-input"
-                  />
-                  <input
-                    type="number"
-                    placeholder="Price"
-                    value={variant.price}
-                    onChange={(e) => updateVariant(index, 'price', e.target.value)}
-                    min="0"
-                    step="0.01"
-                    style={{ ...styles.input, flex: 1 }}
-                    className="product-input"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => removeVariant(index)}
-                    style={styles.deleteButton}
-                    className="delete-button"
-                  >
-                    <MdDelete />
-                  </button>
-                </div>
-              ))}
-              
               {variants.length === 0 && (
-                <div style={styles.emptyState}>
-                  No variants added. Click "Add Variant" to create size/type options.
-                </div>
+                <div style={styles.emptyState}>No variant categories yet. Click "Add Variant Category".</div>
               )}
-            </div>
 
-            {/* Options Section */}
-            <div style={styles.sectionContainer}>
-              <div style={styles.sectionHeader}>
-                <label style={styles.sectionLabel}>Product Options (optional)</label>
-                <button
-                  type="button"
-                  onClick={addOptionGroup}
-                  style={styles.addButton}
-                  className="add-button"
-                >
-                  <MdAdd style={{ marginRight: '5px' }} />
-                  Add Option Group
-                </button>
-              </div>
-              
-              {optionGroups.map((group, groupIndex) => (
-                <div key={groupIndex} style={styles.optionGroupContainer}>
+              {variants.map((variant, vIdx) => (
+                <div key={vIdx} style={{ ...styles.optionGroupContainer, marginTop: 8 }}>
                   <div style={styles.optionGroupHeader}>
                     <input
                       type="text"
-                      placeholder="Group Name(e.g., Sugar Level, Ice Level)"
-                      value={group.groupName}
-                      onChange={(e) => updateOptionGroupName(groupIndex, e.target.value)}
+                      placeholder="Variant Category (e.g., Size, Flavor, Color)"
+                      value={variant.variantName}
+                      onChange={(e) => updateVariantName(vIdx, e.target.value)}
                       style={{ ...styles.input, flex: 1 }}
                       className="product-input"
                     />
                     <button
                       type="button"
-                      onClick={() => removeOptionGroup(groupIndex)}
+                      onClick={() => removeVariant(vIdx)}
                       style={styles.deleteButton}
                       className="delete-button"
                     >
                       <MdDelete />
                     </button>
                   </div>
-                  
+
+                  {/* Options inside this variant */}
                   <div style={styles.choicesContainer}>
-                    {group.choices.map((choice, choiceIndex) => (
-                      <div key={choiceIndex} style={styles.choiceRow}>
-                        <input
-                          type="text"
-                          placeholder="Choice(e.g., 0%, 50%, 100%)"
-                          value={choice}
-                          onChange={(e) => updateChoice(groupIndex, choiceIndex, e.target.value)}
-                          style={{ ...styles.input, flex: 1 }}
-                          className="product-input"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => removeChoice(groupIndex, choiceIndex)}
-                          style={styles.deleteButtonSmall}
-                          className="delete-button-small"
-                        >
-                          <MdDelete size={16} />
-                        </button>
-                      </div>
-                    ))}
+                    {(variant.options || []).map((opt, oIdx) => {
+                      const loadingKey = `${vIdx}-${oIdx}`;
+                      return (
+                        <div key={oIdx} style={styles.choiceRow}>
+                          {/* Option image preview & uploader */}
+                          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
+                            {opt.image ? (
+                              <img src={opt.image} alt={opt.optionName || 'option'} style={{ width: 64, height: 64, objectFit: 'cover', borderRadius: 8, border: '1px solid #e5e7eb' }} />
+                            ) : (
+                              <div style={{ width: 64, height: 64, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f3f4f6', border: '1px dashed #d1d5db', borderRadius: 8, color: '#9ca3af' }}>
+                                <MdImage />
+                              </div>
+                            )}
+                            <label style={{ fontSize: 11, fontWeight: 600, color: '#374151', cursor: 'pointer' }}>
+                              {uploadingOption[loadingKey] ? 'Uploading...' : 'Upload'}
+                              <input
+                                type="file"
+                                accept="image/*"
+                                onChange={(e) => handleOptionImageUpload(vIdx, oIdx, e.target.files?.[0])}
+                                style={{ display: 'none' }}
+                              />
+                            </label>
+                          </div>
+
+                          <input
+                            type="text"
+                            placeholder="Option Name (e.g., Small, Large, Chocolate)"
+                            value={opt.optionName}
+                            onChange={(e) => updateOptionField(vIdx, oIdx, 'optionName', e.target.value)}
+                            style={{ ...styles.input, flex: 2 }}
+                            className="product-input"
+                          />
+                          <input
+                            type="number"
+                            placeholder="Price (override or add-on)"
+                            value={opt.price}
+                            onChange={(e) => updateOptionField(vIdx, oIdx, 'price', e.target.value)}
+                            min="0"
+                            step="0.01"
+                            style={{ ...styles.input, flex: 1 }}
+                            className="product-input"
+                          />
+                          <input
+                            type="number"
+                            placeholder="Stock"
+                            value={opt.stock}
+                            onChange={(e) => updateOptionField(vIdx, oIdx, 'stock', e.target.value)}
+                            min="0"
+                            style={{ ...styles.input, flex: 1 }}
+                            className="product-input"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removeOption(vIdx, oIdx)}
+                            style={styles.deleteButtonSmall}
+                            className="delete-button-small"
+                          >
+                            <MdDelete size={16} />
+                          </button>
+                        </div>
+                      );
+                    })}
+
                     <button
                       type="button"
-                      onClick={() => addChoice(groupIndex)}
+                      onClick={() => addOption(vIdx)}
                       style={styles.addChoiceButton}
                       className="add-choice-button"
                     >
                       <MdAdd size={16} style={{ marginRight: '3px' }} />
-                      Add Choice
+                      Add Option
                     </button>
                   </div>
                 </div>
               ))}
-              
-              {optionGroups.length === 0 && (
-                <div style={styles.emptyState}>
-                  No option groups added. Click "Add Option Group" to create customization options.
-                </div>
-              )}
             </div>
+
+            {/* Real-time Preview */}
+            <div style={{ ...styles.sectionContainer, background: '#fff' }}>
+              <div style={styles.sectionHeader}>
+                <label style={styles.sectionLabel}>Preview</label>
+              </div>
+              <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start', flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+                  {previewUrl ? (
+                    <img src={previewUrl} alt="Preview" style={{ width: 140, height: 140, objectFit: 'cover', borderRadius: 10, border: '2px solid #e5e7eb' }} />
+                  ) : (
+                    <div style={{ width: 140, height: 140, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 10, border: '2px dashed #d1d5db', color: '#9ca3af' }}>No image</div>
+                  )}
+                  <div style={{ fontSize: 14, fontWeight: 600, color: '#374151' }}>{formData.name || 'Product Name'}</div>
+                  <div style={{ fontSize: 13, color: '#6b7280' }}>{formData.category || 'Category'}</div>
+                  <div style={{ fontSize: 16, fontWeight: 700, color: '#f97316' }}>{formData.basePrice ? `₱${Number(formData.basePrice).toFixed(2)}` : '₱0.00'}</div>
+                </div>
+                <div style={{ flex: 1, minWidth: 220 }}>
+                  {(variants || []).map((v, idx) => (
+                    <div key={idx} style={{ marginBottom: 10 }}>
+                      <div style={{ fontSize: 14, fontWeight: 600, color: '#374151', marginBottom: 6 }}>{v.variantName || 'Variant'}</div>
+                      {(v.options || []).length === 0 ? (
+                        <div style={{ fontSize: 13, color: '#9ca3af', fontStyle: 'italic' }}>No options yet</div>
+                      ) : (
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 8 }}>
+                          {v.options.map((o, oi) => (
+                            <div key={oi} style={{ border: '1px solid #e5e7eb', borderRadius: 8, padding: 8, background: '#f9fafb' }}>
+                              {o.image ? (
+                                <img src={o.image} alt={o.optionName || 'opt'} style={{ width: '100%', height: 80, objectFit: 'cover', borderRadius: 6, marginBottom: 6 }} />
+                              ) : (
+                                <div style={{ width: '100%', height: 80, background: '#fff', border: '1px dashed #d1d5db', borderRadius: 6, marginBottom: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9ca3af', fontSize: 12 }}>No image</div>
+                              )}
+                              <div style={{ fontSize: 13, fontWeight: 600, color: '#374151' }}>{o.optionName || 'Option'}</div>
+                              <div style={{ fontSize: 13, fontWeight: 700, color: '#f97316' }}>{o.price ? `₱${Number(o.price).toFixed(2)}` : '₱0.00'}</div>
+                              <div style={{ fontSize: 12, color: '#6b7280' }}>Stock: {o.stock || 0}</div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            
 
             <div style={styles.buttonRow}>
               <button

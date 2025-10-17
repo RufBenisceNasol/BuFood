@@ -38,10 +38,14 @@ const createProduct = async (req, res) => {
     }
 
     // Parse optional variants/options (may come as JSON strings in multipart/form-data)
-    let variants;
+    let variants; // legacy simple variants OR mistakenly nested variants
+    let variantChoices; // new nested variant choices field
     let options;
     if (req.body.variants) {
       try { variants = typeof req.body.variants === 'string' ? JSON.parse(req.body.variants) : req.body.variants; } catch (_) { variants = undefined; }
+    }
+    if (req.body.variantChoices) {
+      try { variantChoices = typeof req.body.variantChoices === 'string' ? JSON.parse(req.body.variantChoices) : req.body.variantChoices; } catch (_) { variantChoices = undefined; }
     }
     if (req.body.options) {
       try { options = typeof req.body.options === 'string' ? JSON.parse(req.body.options) : req.body.options; } catch (_) { options = undefined; }
@@ -61,7 +65,18 @@ const createProduct = async (req, res) => {
       shippingFee: shippingFee || 0, // Default 0 if not provided
       stock: stock || 0,
       discount: discount || 0,
-      ...(Array.isArray(variants) ? { variants } : {}),
+      // If client sent nested variants under 'variants' (variantName/options), map to variantChoices
+      ...(Array.isArray(variantChoices) ? { variantChoices } : {}),
+      ...(
+        Array.isArray(variants)
+          ? (
+              // Detect nested structure vs legacy
+              variants.length > 0 && variants[0] && variants[0].variantName
+                ? { variantChoices: variants }
+                : { variants }
+            )
+          : {}
+      ),
       ...(options && typeof options === 'object' ? { options } : {}),
     });
 

@@ -50,16 +50,32 @@ const productSchema = new mongoose.Schema({
     max: 100,
     default: 0, // Percentage discount (0-100)
   },
-  // Product variants with individual pricing, images, and stock
+  // Legacy simple variants (kept for backward compatibility)
   variants: [
     {
-      id: { type: String, required: true },
-      name: { type: String, required: true },
-      price: { type: Number, min: 0, required: true },
+      id: { type: String },
+      name: { type: String },
+      price: { type: Number, min: 0 },
       image: { type: String, default: '' },
       stock: { type: Number, min: 0, default: 0 },
-      sku: { type: String, default: '' }, // Stock Keeping Unit
+      sku: { type: String, default: '' },
       isAvailable: { type: Boolean, default: true }
+    }
+  ],
+  
+  // New nested variant choices structure
+  // Example: [{ variantName: 'Size', options: [{ optionName:'Large', price:120, stock:10, image:'...' }] }]
+  variantChoices: [
+    {
+      variantName: { type: String, required: true },
+      options: [
+        {
+          optionName: { type: String, required: true },
+          price: { type: Number, min: 0, required: true },
+          stock: { type: Number, min: 0, default: 0 },
+          image: { type: String, default: '' }
+        }
+      ]
     }
   ],
   // Optional options map: e.g., { Size: ['S','M','L'], Sugar: ['0%','50%','100%'] }

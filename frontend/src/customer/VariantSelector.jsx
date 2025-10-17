@@ -130,6 +130,8 @@ const VariantSelector = ({
                 choiceId: choice._id,
                 image: choice.image,
                 price: choice.price,
+                stock: typeof choice.stock === 'number' ? choice.stock : undefined,
+                isAvailable: typeof choice.isAvailable === 'boolean' ? choice.isAvailable : undefined,
               });
               
               // Add to price (for multiple selections, add each)
@@ -148,6 +150,8 @@ const VariantSelector = ({
               choiceId: choice._id,
               image: choice.image,
               price: choice.price,
+              stock: typeof choice.stock === 'number' ? choice.stock : undefined,
+              isAvailable: typeof choice.isAvailable === 'boolean' ? choice.isAvailable : undefined,
             });
             
             // For single selection, use choice price as final price

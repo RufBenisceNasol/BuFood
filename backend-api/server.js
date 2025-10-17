@@ -35,6 +35,7 @@ const orderRoutes = require('./routes/orderRoutes');
 const storeMemberRoutes = require('./routes/storeMemberRoutes');
 const reviewRoutes = require('./routes/reviewRoutes');
 const favoriteRoutes = require('./routes/favoriteRoutes');
+const uploadRoutes = require('./routes/uploadRoutes');
 
 const app = express();
 // Trust the reverse proxy (e.g., Render, Nginx) so req.ip reflects the real client IP
@@ -182,9 +183,12 @@ app.use('/api/store', storeMemberRoutes);
 app.use('/api/customers', customerRoutes);
 app.use('/api/seller', sellerRoutes);
 app.use('/api/cart', cartRoutes);
+// Alias to support plural path from clients
+app.use('/api/carts', cartRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api', reviewRoutes);
 app.use('/api/favorites', favoriteRoutes);
+app.use('/api/upload', uploadRoutes);
 
 // Error handling
 app.use(errorLogger);

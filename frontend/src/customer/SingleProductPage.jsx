@@ -20,6 +20,8 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { product, cart, review } from '../api';
+import VariantSelector from './VariantSelector';
+
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { MdArrowBack, MdShoppingCart, MdAdd, MdRemove, MdCheckCircle } from 'react-icons/md';
@@ -408,6 +410,10 @@ const SingleProductPage = () => {
     const [reviews, setReviews] = useState([]);
     const [currentUser, setCurrentUser] = useState(null);
     const [successModal, setSuccessModal] = useState({ open: false, message: '' });
+    const [variantSelections, setVariantSelections] = useState([]);
+    const [isSelectionsValid, setIsSelectionsValid] = useState(false);
+    const [calculatedPrice, setCalculatedPrice] = useState(0);
+    const [relatedProducts, setRelatedProducts] = useState([]);
 
     useEffect(() => {
         // Load current user from localStorage (for review name/image resolution)
@@ -434,6 +440,8 @@ const SingleProductPage = () => {
             if (cached && typeof cached === 'object') {
                 hadCache = true;
                 setProductData(cached);
+                setCalculatedPrice(cached?.price || 0);
+
                 setLoading(false);
             }
         } catch (_) {}
@@ -444,6 +452,8 @@ const SingleProductPage = () => {
                 if (showLoader) setLoading(true);
                 const data = await product.getProductById(productId);
                 setProductData(data);
+                setCalculatedPrice(data?.price || 0);
+
                 try { localStorage.setItem(CACHE_KEY, JSON.stringify(data)); } catch (_) {}
             } catch (err) {
                 setError(err.message || 'Failed to fetch product details');
@@ -473,14 +483,152 @@ const SingleProductPage = () => {
         return () => { isMounted = false; };
     }, [productId]);
 
-    const handleAddToCart = async () => {
-        // Add current product to cart with selected quantity
+    // Load related products by category (simple in-memory filter)
+    useEffect(() => {
+        let isMounted = true;
+        (async () => {
+            try {
+                const res = await fetch('/api/products');
+                const all = await res.json();
+                if (Array.isArray(all) && productData?.category) {
+                    const rel = all.filter(p => p._id !== productId && p.category === productData.category).slice(0, 6);
+                    if (isMounted) setRelatedProducts(rel);
+                } else if (isMounted) {
+                    setRelatedProducts([]);
+                }
+            } catch (_) {
+                if (isMounted) setRelatedProducts([]);
+            }
+        })();
+        return () => { isMounted = false; };
+    }, [productId, productData?.category]);
+
+    // Compute effective stock from selected choices
+    const getEffectiveStock = () => {
+        const hasVariants = Array.isArray(productData?.variants) && productData.variants.length > 0;
+        if (!hasVariants) {
+            return typeof productData?.stock === 'number' ? productData.stock : Infinity;
+        }
+        if (!variantSelections || variantSelections.length === 0) return 0;
+        const stocks = variantSelections
+            .map(s => (typeof s.stock === 'number' ? s.stock : undefined))
+            .filter(n => typeof n === 'number');
+        if (stocks.length === 0) return 0;
+        return Math.min(...stocks);
+    };
+
+    const selectedVariantImage = (() => {
+        const img = variantSelections?.find(s => s.image)?.image;
+        return img || productData?.image;
+    })();
+
+    const handleAddToFavorites = async () => {
         try {
-            await cart.addToCart(productId, quantity);
+            const hasVariants = Array.isArray(productData?.variants) && productData.variants.length > 0;
+            if (hasVariants && !isSelectionsValid) {
+                toast.error('Please select required options');
+                return;
+            }
+
+            const token = localStorage.getItem('token');
+            const headers = {
+                'Content-Type': 'application/json',
+                ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+            };
+
+            let body;
+            if (Array.isArray(variantSelections) && variantSelections.length === 1) {
+                const sel = variantSelections[0];
+                body = {
+                    productId,
+                    variant: sel.variant,
+                    option: sel.choice,
+                    variantId: sel.choiceId,
+                    price: calculatedPrice || sel.price || productData.price,
+                    image: sel.image || productData.image,
+                };
+            } else {
+                body = {
+                    productId,
+                    variantSelections,
+                    price: calculatedPrice || productData.price,
+                };
+            }
+
+            const res = await fetch('/api/favorites', {
+                method: 'POST',
+                headers,
+                body: JSON.stringify(body),
+            });
+            const data = await res.json();
+            if (!res.ok || data?.error) throw new Error(data?.message || 'Failed to add to favorites');
+            toast.success('Added to favorites');
+        } catch (err) {
+            toast.error(err.message || 'Failed to add to favorites');
+        }
+    };
+
+    const handleAddToCart = async () => {
+        try {
+            // If product has variants in new schema, ensure selections are valid
+            const hasVariants = Array.isArray(productData?.variants) && productData.variants.length > 0;
+            if (hasVariants && !isSelectionsValid) {
+                toast.error('Please select required options');
+                return;
+            }
+            // Stock check
+            const effStock = getEffectiveStock();
+            if (effStock === 0) {
+                toast.error('Selected option is out of stock');
+                return;
+            }
+            if (quantity > effStock) {
+                toast.error(`Only ${effStock} left in stock`);
+                return;
+            }
+
+            // Use direct fetch to support variant selections payload
+            const token = localStorage.getItem('token');
+            const headers = {
+                'Content-Type': 'application/json',
+                ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+            };
+
+            let body;
+            if (Array.isArray(variantSelections) && variantSelections.length === 1) {
+                const sel = variantSelections[0];
+                body = {
+                    productId,
+                    variant: sel.variant,
+                    option: sel.choice,
+                    variantId: sel.choiceId,
+                    price: calculatedPrice || sel.price || productData.price,
+                    quantity,
+                    image: sel.image || productData.image,
+                };
+            } else {
+                body = {
+                    productId,
+                    variantSelections,
+                    price: calculatedPrice || productData.price,
+                    quantity,
+                };
+            }
+
+            const response = await fetch('/api/carts', {
+                method: 'POST',
+                headers,
+                body: JSON.stringify(body),
+            });
+            const data = await response.json();
+            if (!response.ok || !data.success) {
+                const msg = data?.message || 'Failed to add product to cart';
+                throw new Error(msg);
+            }
             setSuccessModal({ open: true, message: 'Product added to cart successfully' });
             setTimeout(() => setSuccessModal({ open: false, message: '' }), 1200);
         } catch (err) {
-            const errorMessage = err.message || err.error || 'Failed to add product to cart';
+            const errorMessage = err.message || 'Failed to add product to cart';
             toast.error(errorMessage);
             console.error('Add to cart error:', err);
         }
@@ -551,7 +699,7 @@ const SingleProductPage = () => {
                     <ProductCard>
                         <ImageContainer>
                             <ProductImage 
-                                src={productData.image} 
+                                src={selectedVariantImage} 
                                 alt={productData.name}
                                 $isOut={productData.availability === 'Out of Stock'}
                                 loading="lazy"
@@ -565,13 +713,9 @@ const SingleProductPage = () => {
                             <ProductHeader>
                                 <ProductName>{productData.name}</ProductName>
                                 <FavoriteButton 
-                                    onClick={(e) => {
+                                    onClick={async (e) => {
                                         e.stopPropagation();
-                                        const newFavoriteStatus = toggleFavorite(productId);
-                                        setIsFavorite(newFavoriteStatus);
-                                        const msg = newFavoriteStatus ? 'Added to favorites' : 'Removed from favorites';
-                                        setSuccessModal({ open: true, message: msg });
-                                        setTimeout(() => setSuccessModal({ open: false, message: '' }), 1200);
+                                        await handleAddToFavorites();
                                     }}
                                     aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
                                 >
@@ -581,7 +725,8 @@ const SingleProductPage = () => {
                                     }
                                 </FavoriteButton>
                             </ProductHeader>
-                            <Price>₱{productData.price.toFixed(2)}</Price>
+                            <Price>₱{Number(calculatedPrice || productData.price || 0).toFixed(2)}</Price>
+
                             {productData.soldCount != null && (
                                 <SoldCount>Sold: {productData.soldCount}</SoldCount>
                             )}
@@ -590,6 +735,37 @@ const SingleProductPage = () => {
                                 <SectionTitle>Description</SectionTitle>
                                 <DescriptionText>{productData.description}</DescriptionText>
                             </Section>
+
+                            {/* Variant Selector (map API schema to selector schema) */}
+                            {Array.isArray(productData.variants) && productData.variants.length > 0 && (
+                                <Section>
+                                    <SectionTitle>Options</SectionTitle>
+                                    <VariantSelector
+                                        product={{
+                                            ...productData,
+                                            basePrice: productData.price,
+                                            variants: (productData.variants || []).map(v => ({
+                                                name: v.variantName || v.name,
+                                                isRequired: true,
+                                                allowMultiple: false,
+                                                choices: (v.options || v.choices || []).map(o => ({
+                                                    _id: o._id,
+                                                    name: o.optionName || o.name,
+                                                    image: o.image || '',
+                                                    price: Number(o.price || 0),
+                                                    stock: Number(o.stock || 0),
+                                                    isAvailable: (o.stock || 0) > 0,
+                                                }))
+                                            }))
+                                        }}
+                                        onSelectionChange={(selections, isValid, price) => {
+                                            setVariantSelections(selections);
+                                            setIsSelectionsValid(isValid);
+                                            setCalculatedPrice(price);
+                                        }}
+                                    />
+                                </Section>
+                            )}
 
                             <Section>
                                 <SectionTitle>Store</SectionTitle>
@@ -639,7 +815,25 @@ const SingleProductPage = () => {
                                         </QuantityButton>
                                     </QuantitySelector>
 
-                                    <AddToCartButton onClick={handleAddToCart}>
+                                    <AddToCartButton 
+                                        onClick={handleAddToCart}
+                                        disabled={(() => {
+                                            const hasVariants = Array.isArray(productData?.variants) && productData.variants.length > 0;
+                                            const eff = getEffectiveStock();
+                                            if (hasVariants && !isSelectionsValid) return true;
+                                            if (eff === 0) return true;
+                                            if (quantity > eff) return true;
+                                            return false;
+                                        })()}
+                                        style={{ opacity: (() => {
+                                            const hasVariants = Array.isArray(productData?.variants) && productData.variants.length > 0;
+                                            const eff = getEffectiveStock();
+                                            if (hasVariants && !isSelectionsValid) return 0.6;
+                                            if (eff === 0) return 0.6;
+                                            if (quantity > eff) return 0.6;
+                                            return 1;
+                                        })() }}
+                                    >
                                         <MdShoppingCart size={20} />
                                         Add to Cart
                                     </AddToCartButton>
@@ -710,6 +904,22 @@ const SingleProductPage = () => {
                             </ul>
                         )}
                     </div>
+                    {/* Related Products */}
+                    {relatedProducts.length > 0 && (
+                        <div style={{ marginTop: 24 }}>
+                            <h3 style={{ color: '#333333', marginBottom: 12 }}>Related Products</h3>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 12 }}>
+                                {relatedProducts.map((p) => (
+                                    <button key={p._id} onClick={() => navigate(`/customer/product/${p._id}`)} style={{ border: '1px solid #eee', borderRadius: 10, padding: 10, textAlign: 'left', background: '#fff', cursor: 'pointer' }}>
+                                        <img src={p.image} alt={p.name} style={{ width: '100%', height: 100, objectFit: 'cover', borderRadius: 8, marginBottom: 8 }} />
+                                        <div style={{ fontSize: 14, fontWeight: 600, color: '#111' }}>{p.name}</div>
+                                        <div style={{ fontSize: 13, fontWeight: 700, color: '#f97316' }}>₱{Number(p.price || 0).toFixed(2)}</div>
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
                 </ContentContainer>
             </ScrollableContent>
         </PageContainer>
