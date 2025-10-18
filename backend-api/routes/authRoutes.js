@@ -21,6 +21,8 @@ const {
     // Supabase bridging
     markVerified
 } = require('../controllers/authController');
+// Import supabaseLogin from Supabase controller to provide a flat route alias
+const { supabaseLogin } = require('../controllers/supabaseAuthController');
 const { 
     registerValidation, 
     loginValidation, 
@@ -119,6 +121,9 @@ const router = express.Router();
  *         description: Email already exists
  */
 router.post('/register', registerValidation, handleValidation, register);
+
+// Exchange Supabase access token for backend JWT (flat path)
+router.post('/supabase-login', supabaseLogin);
 
 /**
  * @swagger

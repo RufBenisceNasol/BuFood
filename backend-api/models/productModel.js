@@ -25,6 +25,10 @@ const productSchema = new mongoose.Schema({
     type: String,
     default: 'https://res.cloudinary.com/dflcnd7z3/image/upload/v1744609432/zqmqydo1eeiup3qvv1vh.jpg',
   },
+  images: {
+    type: [String],
+    default: [],
+  },
   category: {
     type: String,
     required: true,

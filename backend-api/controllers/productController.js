@@ -78,6 +78,15 @@ const toSlug = (str) => (str || '')
 const createProduct = async (req, res) => {
   try {
     const { name, description, price, category, availability, estimatedTime, shippingFee, stock, discount, image: imageFromBody } = req.body;
+    // Parse optional images array (may be JSON string if multipart/form-data)
+    let imagesFromBody = [];
+    if (req.body.images) {
+      try {
+        imagesFromBody = Array.isArray(req.body.images) ? req.body.images : JSON.parse(req.body.images);
+      } catch (_) {
+        imagesFromBody = [];
+      }
+    }
     const sellerId = req.user._id;
 
     // Find the store associated with the seller
@@ -91,9 +100,9 @@ const createProduct = async (req, res) => {
       imageUrl = result.secure_url;
       await deleteFile(req.file.path);
     }
-    if (!imageUrl) {
-      imageUrl = Product.schema.path('image').defaultValue;
-    }
+    // If still no imageUrl, fall back to images[0] if provided, else default
+    if (!imageUrl) imageUrl = imagesFromBody[0];
+    if (!imageUrl) imageUrl = Product.schema.path('image').defaultValue;
 
     // Create the flat product
     const newProduct = new Product({
@@ -106,6 +115,7 @@ const createProduct = async (req, res) => {
       sellerId,
       storeId: store._id,  // Ensure the storeId is correctly referenced
       image: imageUrl, // Set the image URL (either uploaded or default)
+      images: Array.isArray(imagesFromBody) ? imagesFromBody : [],
       estimatedTime: estimatedTime || 30, // Default 30 minutes if not provided
       shippingFee: shippingFee || 0, // Default 0 if not provided
       stock: stock || 0,

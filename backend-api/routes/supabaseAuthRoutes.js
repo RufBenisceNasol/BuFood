@@ -12,7 +12,8 @@ const {
   resetPassword,
   refreshToken,
   updateProfile,
-  uploadProfileImage
+  uploadProfileImage,
+  supabaseLogin
 } = require('../controllers/supabaseAuthController');
 const { authenticateWithSupabase } = require('../middlewares/supabaseAuthMiddleware');
 // Import multer instance and create a single-file middleware for field name 'image'
@@ -55,6 +56,9 @@ const profileImageUploadMiddleware = profileImageUpload.single('image');
  *         description: User already exists
  */
 router.post('/register', register);
+
+// Exchange Supabase access token for backend JWT
+router.post('/supabase-login', supabaseLogin);
 
 /**
  * @swagger

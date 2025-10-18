@@ -1,11 +1,14 @@
 import axios from 'axios';
 import { getToken, getRefreshToken, removeToken, removeRefreshToken, removeUser, setToken } from './utils/tokenUtils';
 
-// Use a relative base during local development to leverage Vite's proxy and avoid CORS
-// In production, fall back to the provided environment variable or the Render URL
-const API_BASE_URL = import.meta.env.DEV
-    ? '/api'
-    : (import.meta.env.VITE_API_BASE_URL || "https://capstonedelibup-o7sl.onrender.com/api");
+// Prefer explicit VITE_API_BASE_URL in all modes. If not set:
+//  - In dev, fall back to '/api' (Vite proxy)
+//  - In prod, fall back to the Render URL
+const API_BASE_URL = (
+    import.meta.env.VITE_API_BASE_URL || (import.meta.env.DEV
+        ? '/api'
+        : 'https://capstonedelibup-o7sl.onrender.com/api')
+);
 
 // Simple retry helper for POST with exponential backoff
 async function postWithRetry(url, data, config = {}, retries = 2, baseDelayMs = 1500) {
@@ -302,7 +305,8 @@ export const product = {
     // Create a new product
     createProduct: async (formData) => {
         try {
-            const response = await api.post('/seller/products', formData, {
+            // Backend route: POST /api/products
+            const response = await api.post('/products', formData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
             return response.data;

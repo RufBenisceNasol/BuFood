@@ -1,7 +1,8 @@
 import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { product } from '../api';
+import { product, API_BASE_URL } from '../api';
 import { MdArrowBack, MdAdd, MdDelete, MdImage } from 'react-icons/md';
+import { getToken } from '../utils/tokenUtils';
 
 const AddProductPage = () => {
   const navigate = useNavigate();
@@ -9,6 +10,8 @@ const AddProductPage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  // Derive origin from axios base; if base is '/api' in dev, origin becomes '' so fetch uses Vite proxy
+  const API_ORIGIN = (API_BASE_URL || '').replace(/\/api$/, '');
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -22,6 +25,9 @@ const AddProductPage = () => {
   });
   const [selectedImage, setSelectedImage] = useState(null);
   const [previewUrl, setPreviewUrl] = useState('');
+  // Multiple images for product
+  const [images, setImages] = useState([]); // array of Cloudinary URLs
+  const [uploadingImages, setUploadingImages] = useState(false);
   // Variants state - array of { variantName, options: [{ optionName, price, stock, image }] }
   const [variants, setVariants] = useState([]);
   // For inline option image upload loading states
@@ -88,20 +94,96 @@ const AddProductPage = () => {
     }
   };
 
-  // Upload a single option image to backend -> Cloudinary
+  // Upload a single file to backend /api/upload/image (JWT protected)
+  const uploadOneImage = async (file) => {
+    const token = getToken(); // prefer centralized util (checks localStorage + sessionStorage)
+    if (!token) throw new Error('Not authenticated');
+    const form = new FormData();
+    form.append('image', file);
+    const res = await fetch(`${API_ORIGIN}/api/upload/image`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+      body: form,
+    });
+    if (res.status === 401 || res.status === 403) {
+      throw new Error('Unauthorized to upload. Please log in as a seller.');
+    }
+    const data = await res.json();
+    if (!data?.success || !data?.imageUrl) {
+      throw new Error(data?.message || 'Upload failed');
+    }
+    return data.imageUrl;
+  };
+
+  // Handle multiple images selection and upload sequentially (or small parallel batches)
+  const handleMultipleImagesSelect = async (e) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+    setError('');
+    setUploadingImages(true);
+    try {
+      const uploaded = [];
+      for (const f of files) {
+        const url = await uploadOneImage(f);
+        uploaded.push(url);
+      }
+      setImages(prev => [...prev, ...uploaded]);
+    } catch (err) {
+      setError(err.message || 'Failed to upload images');
+    } finally {
+      setUploadingImages(false);
+      // Reset input value so same file can be re-selected if desired
+      e.target.value = '';
+    }
+  };
+
+  const removeImageAt = (idx) => {
+    setImages(prev => prev.filter((_, i) => i !== idx));
+  };
+
+  // Upload a single option image: prefer client-side Cloudinary unsigned upload; fallback to server upload
   const handleOptionImageUpload = async (variantIdx, optionIdx, file) => {
     if (!file) return;
+    const key = `${variantIdx}-${optionIdx}`;
     try {
-      const key = `${variantIdx}-${optionIdx}`;
       setUploadingOption(prev => ({ ...prev, [key]: true }));
+
+      const cloudName = import.meta?.env?.VITE_CLOUDINARY_CLOUD_NAME;
+      const uploadPreset = import.meta?.env?.VITE_CLOUDINARY_UPLOAD_PRESET;
+
+      if (cloudName && uploadPreset) {
+        // Client-side unsigned upload to Cloudinary
+        const url = `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`;
+        const fd = new FormData();
+        fd.append('file', file);
+        fd.append('upload_preset', uploadPreset);
+        const up = await fetch(url, { method: 'POST', body: fd });
+        const body = await up.json();
+        if (up.ok && body?.secure_url) {
+          updateOptionField(variantIdx, optionIdx, 'image', body.secure_url);
+          return;
+        }
+        setError(body?.error?.message || 'Failed to upload image to Cloudinary');
+        return;
+      }
+
+      // Fallback to server upload (requires valid auth token)
+      const token = getToken();
+      if (!token) {
+        setError('Please log in to upload images');
+        return;
+      }
       const form = new FormData();
       form.append('image', file);
-      const token = localStorage.getItem('token');
-      const res = await fetch('/api/upload/image', {
+      const res = await fetch(`${API_ORIGIN}/api/upload/image`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
         body: form,
       });
+      if (res.status === 401 || res.status === 403) {
+        setError('Unauthorized to upload images. Please log in as a seller.');
+        return;
+      }
       const data = await res.json();
       if (data?.success && data.imageUrl) {
         updateOptionField(variantIdx, optionIdx, 'image', data.imageUrl);
@@ -111,7 +193,6 @@ const AddProductPage = () => {
     } catch (err) {
       setError('Failed to upload option image');
     } finally {
-      const key = `${variantIdx}-${optionIdx}`;
       setUploadingOption(prev => ({ ...prev, [key]: false }));
     }
   };
@@ -134,6 +215,9 @@ const AddProductPage = () => {
       submitData.append('shippingFee', formData.shippingFee);
       submitData.append('stock', formData.stock);
       submitData.append('discount', formData.discount);
+      if (images.length > 0) {
+        submitData.append('images', JSON.stringify(images));
+      }
       
       // Validate main fields
       if (!formData.name || !formData.description || !formData.basePrice || !formData.category) {
@@ -182,6 +266,7 @@ const AddProductPage = () => {
       setVariants([]);
       setSelectedImage(null);
       setPreviewUrl('');
+      setImages([]);
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
@@ -491,6 +576,29 @@ const AddProductPage = () => {
                   </div>
                 </div>
               ))}
+            </div>
+
+            {/* Product Images (Multiple uploads) */}
+            <div style={{ ...styles.sectionContainer, background: '#fff' }}>
+              <div style={styles.sectionHeader}>
+                <label style={styles.sectionLabel}>Product Images</label>
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                  <input type="file" accept="image/*" multiple onChange={handleMultipleImagesSelect} />
+                  {uploadingImages && <span style={{ fontSize: 12, color: '#6b7280' }}>Uploading...</span>}
+                </div>
+              </div>
+              {images.length === 0 ? (
+                <div style={styles.emptyState}>No images yet. Upload one or more images.</div>
+              ) : (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: 10 }}>
+                  {images.map((url, idx) => (
+                    <div key={idx} style={{ position: 'relative', border: '1px solid #e5e7eb', borderRadius: 8, overflow: 'hidden', background: '#fff' }}>
+                      <img src={url} alt={`product-${idx}`} style={{ width: '100%', height: 120, objectFit: 'cover' }} />
+                      <button type="button" onClick={() => removeImageAt(idx)} style={{ position: 'absolute', top: 6, right: 6, background: '#ef4444', color: '#fff', border: 'none', borderRadius: 4, padding: '4px 6px', cursor: 'pointer', fontSize: 12 }}>Delete</button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Real-time Preview */}

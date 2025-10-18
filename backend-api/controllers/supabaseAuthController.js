@@ -13,6 +13,8 @@ const {
   verifyUserEmail,
   deleteSupabaseUser
 } = require('../config/supabaseConfig');
+const { verifySupabaseToken } = require('../config/supabaseConfig');
+const jwt = require('jsonwebtoken');
 const { createStoreForSeller } = require('./storeController');
 
 require('dotenv').config();
@@ -65,6 +67,61 @@ const register = async (req, res) => {
           storeId: store._id,
           owner: user._id,
         };
+
+/**
+ * Exchange Supabase access token for backend JWT
+ * Body: { access_token }
+ * Flow: Verify Supabase token -> find/create Mongo user -> sign backend JWT
+ */
+const supabaseLogin = async (req, res) => {
+  try {
+    const { access_token: accessToken, role: desiredRole } = req.body || {};
+    if (!accessToken) {
+      return res.status(400).json({ message: 'access_token is required' });
+    }
+
+    // Verify Supabase token and get user profile
+    const supaUser = await verifySupabaseToken(accessToken);
+    if (!supaUser) {
+      return res.status(401).json({ message: 'Invalid Supabase token' });
+    }
+
+    const email = (supaUser.email || '').trim().toLowerCase();
+    if (!email) {
+      return res.status(400).json({ message: 'Supabase user email missing' });
+    }
+
+    // Find or create Mongo user
+    let user = await User.findOne({ email });
+    if (!user) {
+      user = await User.create({
+        supabaseId: supaUser.id,
+        name: supaUser.user_metadata?.name || '',
+        email,
+        contactNumber: supaUser.user_metadata?.contactNumber || '',
+        role: desiredRole || supaUser.user_metadata?.role || 'Customer',
+        isVerified: !!supaUser.email_confirmed_at,
+        authMethod: 'supabase',
+      });
+    } else {
+      // Keep linkage and verification status in sync
+      if (!user.supabaseId) user.supabaseId = supaUser.id;
+      if (supaUser.email_confirmed_at && !user.isVerified) user.isVerified = true;
+      await user.save();
+    }
+
+    if (!process.env.JWT_SECRET) {
+      console.error('JWT_SECRET is not configured');
+      return res.status(500).json({ message: 'Server auth misconfiguration' });
+    }
+
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
+    return res.status(200).json({ token });
+  } catch (err) {
+    console.error('supabaseLogin error:', err);
+    return res.status(500).json({ message: 'Auth error', error: err.message });
+  }
+};
         await user.save();
       } catch (err) {
         console.error('Error creating store:', err.message);
@@ -439,4 +496,5 @@ module.exports = {
   refreshToken,
   updateProfile,
   uploadProfileImage,
+  supabaseLogin,
 };

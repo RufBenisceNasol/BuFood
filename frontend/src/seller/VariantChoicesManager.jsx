@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { MdAdd, MdDelete, MdEdit, MdSave, MdClose, MdImage, MdExpandMore, MdExpandLess } from 'react-icons/md';
+import { API_BASE_URL } from '../api';
+import { getToken } from '../utils/tokenUtils';
 
 /**
  * DEEP LOGIC: Variant Choices Manager Component
@@ -27,6 +29,7 @@ import { MdAdd, MdDelete, MdEdit, MdSave, MdClose, MdImage, MdExpandMore, MdExpa
 const VariantChoicesManager = ({ variants = [], onChange }) => {
   const [expandedVariants, setExpandedVariants] = useState({});
   const [editingChoice, setEditingChoice] = useState(null);
+  const API_ORIGIN = (API_BASE_URL || '').replace(/\/api$/, '');
 
   /**
    * DEEP LOGIC: Add new variant category
@@ -149,19 +152,24 @@ const VariantChoicesManager = ({ variants = [], onChange }) => {
     try {
       const formData = new FormData();
       formData.append('image', file);
-
-      const response = await fetch('/api/upload/image', {
+      const token = getToken();
+      const response = await fetch(`${API_ORIGIN}/api/upload/image`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Authorization': token ? `Bearer ${token}` : '',
         },
         body: formData,
       });
 
+      if (!response.ok) {
+        const errText = await response.text();
+        throw new Error(errText || `Upload failed with status ${response.status}`);
+      }
       const data = await response.json();
-      
-      if (data.success) {
+      if (data?.success && data.imageUrl) {
         updateChoice(variantId, choiceId, 'image', data.imageUrl);
+      } else {
+        throw new Error(data?.message || 'Upload failed');
       }
     } catch (error) {
       console.error('Image upload error:', error);
