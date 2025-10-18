@@ -1,11 +1,16 @@
 const mongoose = require('mongoose');
 
-// Define the Product schema
+// Define the Product schema (flat product model)
 const productSchema = new mongoose.Schema({
   name: {
     type: String,
     required: true,
     trim: true,
+  },
+  slug: {
+    type: String,
+    index: true,
+    sparse: true,
   },
   description: {
     type: String,
@@ -49,6 +54,10 @@ const productSchema = new mongoose.Schema({
     min: 0,
     max: 100,
     default: 0, // Percentage discount (0-100)
+  },
+  metadata: {
+    type: mongoose.Schema.Types.Mixed,
+    default: undefined,
   },
   // Legacy simple variants (kept for backward compatibility)
   variants: [
@@ -101,6 +110,7 @@ const productSchema = new mongoose.Schema({
     ref: 'Store',
     required: true,
   },
+  createdAt: { type: Date, default: Date.now }
 }, {
   timestamps: true, // Adds createdAt and updatedAt
 });

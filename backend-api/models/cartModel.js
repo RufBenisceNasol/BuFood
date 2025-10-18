@@ -6,6 +6,9 @@ const cartItemSchema = new mongoose.Schema({
     ref: 'Product',
     required: true,
   },
+  // Server-snapshotted fields so cart remains stable if product changes
+  name: { type: String },
+  image: { type: String },
   selectedVariantId: {
     type: String
   },

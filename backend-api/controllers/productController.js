@@ -13,47 +13,92 @@ const deleteFile = async (filePath) => {
   }
 };
 
-// Create a product
+// Bulk create flat products
+const bulkCreateProducts = async (req, res) => {
+  try {
+    const sellerId = req.user._id;
+    const store = await Store.findOne({ owner: sellerId });
+    if (!store) return res.status(404).json({ message: 'Store not found' });
+
+    const items = Array.isArray(req.body) ? req.body : (Array.isArray(req.body.items) ? req.body.items : []);
+    if (!Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({ message: 'No products provided' });
+    }
+
+    // Validate and map inputs
+    const docs = [];
+    const errors = [];
+    items.forEach((it, idx) => {
+      const name = (it.name || '').toString().trim();
+      const price = Number(it.price);
+      const stock = it.stock != null ? Number(it.stock) : 0;
+      const category = (it.category || '').toString().trim();
+      const description = (it.description || '').toString();
+      const image = (it.image || '').toString();
+      if (!name || !(price >= 0) || !category || !image) {
+        errors.push({ index: idx, message: 'Invalid product row: name, price>=0, category, image required' });
+        return;
+      }
+      docs.push({
+        name,
+        slug: toSlug(name),
+        description,
+        price,
+        category,
+        sellerId,
+        storeId: store._id,
+        image,
+        stock: isNaN(stock) ? 0 : stock,
+      });
+    });
+
+    if (docs.length === 0) {
+      return res.status(400).json({ message: 'All rows invalid', errors });
+    }
+
+    const inserted = await Product.insertMany(docs, { ordered: false });
+    return res.status(201).json({ inserted, errors });
+  } catch (err) {
+    // insertMany with ordered:false may still throw write errors, return partials when possible
+    console.error('Bulk create error:', err);
+    return res.status(500).json({ message: 'Bulk create failed', error: err.message });
+  }
+};
+
+// Utility: simple slugify
+const toSlug = (str) => (str || '')
+  .toString()
+  .trim()
+  .toLowerCase()
+  .replace(/[^a-z0-9\s-]/g, '')
+  .replace(/\s+/g, '-')
+  .replace(/-+/g, '-');
+
+// Create a flat product (no variants)
 const createProduct = async (req, res) => {
   try {
-    const { name, description, price, category, availability, estimatedTime, shippingFee, stock, discount } = req.body;
+    const { name, description, price, category, availability, estimatedTime, shippingFee, stock, discount, image: imageFromBody } = req.body;
     const sellerId = req.user._id;
 
     // Find the store associated with the seller
     const store = await Store.findOne({ owner: sellerId });
     if (!store) return res.status(404).json({ message: 'Store not found' });
 
-    let imageUrl;
-
-    // Check if file is uploaded
-    if (req.file) {
+    let imageUrl = imageFromBody;
+    // If client didn't provide a Cloudinary URL, accept file upload
+    if (!imageUrl && req.file) {
       const result = await uploadToCloudinary(req.file.path, 'product-images');
       imageUrl = result.secure_url;
-
-      // Delete the file from local storage after upload
       await deleteFile(req.file.path);
-    } else {
-      // If no image is uploaded, set the default image
+    }
+    if (!imageUrl) {
       imageUrl = Product.schema.path('image').defaultValue;
     }
 
-    // Parse optional variants/options (may come as JSON strings in multipart/form-data)
-    let variants; // legacy simple variants OR mistakenly nested variants
-    let variantChoices; // new nested variant choices field
-    let options;
-    if (req.body.variants) {
-      try { variants = typeof req.body.variants === 'string' ? JSON.parse(req.body.variants) : req.body.variants; } catch (_) { variants = undefined; }
-    }
-    if (req.body.variantChoices) {
-      try { variantChoices = typeof req.body.variantChoices === 'string' ? JSON.parse(req.body.variantChoices) : req.body.variantChoices; } catch (_) { variantChoices = undefined; }
-    }
-    if (req.body.options) {
-      try { options = typeof req.body.options === 'string' ? JSON.parse(req.body.options) : req.body.options; } catch (_) { options = undefined; }
-    }
-
-    // Create the product with shipping/time and optional options
+    // Create the flat product
     const newProduct = new Product({
       name,
+      slug: toSlug(name),
       description,
       price,
       category,
@@ -65,19 +110,6 @@ const createProduct = async (req, res) => {
       shippingFee: shippingFee || 0, // Default 0 if not provided
       stock: stock || 0,
       discount: discount || 0,
-      // If client sent nested variants under 'variants' (variantName/options), map to variantChoices
-      ...(Array.isArray(variantChoices) ? { variantChoices } : {}),
-      ...(
-        Array.isArray(variants)
-          ? (
-              // Detect nested structure vs legacy
-              variants.length > 0 && variants[0] && variants[0].variantName
-                ? { variantChoices: variants }
-                : { variants }
-            )
-          : {}
-      ),
-      ...(options && typeof options === 'object' ? { options } : {}),
     });
 
     // Save the product and update the store with the new product
@@ -107,10 +139,16 @@ const getSellerProducts = async (req, res) => {
   }
 };
 
-// Get all products (public route)
+// Get all products (public route) with filters: category, sellerId, q
 const getAllProducts = async (req, res) => {
   try {
-    const products = await Product.find()
+    const { category, sellerId, q } = req.query || {};
+    const filter = {};
+    if (category) filter.category = category;
+    if (sellerId) filter.sellerId = sellerId;
+    if (q) filter.name = { $regex: new RegExp(q, 'i') };
+
+    const products = await Product.find(filter)
       .populate('storeId', 'storeName')
       .populate('sellerId', 'name email');
 
@@ -401,6 +439,7 @@ const getSellerAnalytics = async (req, res) => {
 
 module.exports = {
   createProduct,
+  bulkCreateProducts,
   getSellerProducts,
   getAllProducts,
   getProductById,

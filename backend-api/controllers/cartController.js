@@ -23,7 +23,7 @@ const createResponse = (success, message, data = null, error = null) => ({
   error
 });
 
-// Add product to cart
+// Add product to cart (flat product model)
 const addToCart = async (req, res) => {
   try {
     // Check authentication first
@@ -39,16 +39,21 @@ const addToCart = async (req, res) => {
     const session = await mongoose.startSession();
     session.startTransaction();
 
-    try {      const { productId, quantity, selectedVariantId, selectedOptions } = req.body;
+    try {
+      const { productId, qty } = req.body;
 
       // Input validation
-      if (!productId || !quantity || quantity <= 0) {
+      if (!productId || !qty || qty <= 0) {
         return res.status(400).json(createResponse(
           false,
           'Invalid input',
           null,
-          'Product ID and positive quantity are required'
+          'Product ID and positive qty are required'
         ));
+      }
+
+      if (!mongoose.Types.ObjectId.isValid(productId)) {
+        return res.status(400).json(createResponse(false, 'Invalid productId'));
       }
 
       const product = await Product.findById(productId);
@@ -58,62 +63,59 @@ const addToCart = async (req, res) => {
           'Product not found'
         ));
       }
-      
-      // Stock validation
-      if (product.availability === 'Out of Stock' || product.quantity < quantity) {
-        return res.status(400).json(createResponse(
+
+      // Stock validation against flat stock
+      const available = typeof product.stock === 'number' ? product.stock : 0;
+      if (available <= 0 || qty > available) {
+        return res.status(409).json(createResponse(
           false,
           'Insufficient stock',
-          { available: product.quantity }
+          { available }
         ));
-      }      // Compute unit price based on selected variant (options groups have no price in Phase 2)
-      let unitPrice = product.price;
-      if (selectedVariantId && Array.isArray(product.variants)) {
-        const v = product.variants.find(v => String(v.id || v._id || v.name) === String(selectedVariantId));
-        if (v && typeof v.price === 'number') {
-          unitPrice = v.price;
-        }
       }
-      const optionsObj = selectedOptions && typeof selectedOptions === 'object' ? selectedOptions : undefined;
+
+      // Server-snapshotted fields
+      const unitPrice = product.price;
+      const snapshotName = product.name;
+      const snapshotImage = product.image;
+
       let cart = await Cart.findOne({ user: req.user._id }).session(session);
 
       if (!cart) {
         cart = new Cart({
           user: req.user._id,
-
-          items: [{ 
-            product: productId, 
-            selectedVariantId: selectedVariantId || undefined,
-            selectedOptions: optionsObj,
-            quantity, 
+          items: [{
+            product: productId,
+            name: snapshotName,
+            image: snapshotImage,
+            quantity: qty,
             price: unitPrice,
-            subtotal: unitPrice * quantity 
+            subtotal: unitPrice * qty,
           }],
-          total: unitPrice * quantity
+          total: unitPrice * qty,
         });
       } else {
-        const itemIndex = cart.items.findIndex(item => {
-          const sameProduct = item.product.toString() === productId;
-          const sameVariant = String(item.selectedVariantId || '') === String(selectedVariantId || '');
-          const existingOpts = item.selectedOptions ? Object.fromEntries(item.selectedOptions) : undefined;
-          const sameOptions = JSON.stringify(existingOpts || {}) === JSON.stringify(optionsObj || {});
-          return sameProduct && sameVariant && sameOptions;
-        });
+        const itemIndex = cart.items.findIndex(item => item.product.toString() === productId);
 
         if (itemIndex > -1) {
-          cart.items[itemIndex].quantity = cart.items[itemIndex].quantity + quantity;
-          // Keep stored unit price for this line
-          const linePrice = cart.items[itemIndex].price || unitPrice;
+          const newQty = cart.items[itemIndex].quantity + qty;
+          if (newQty > available) {
+            return res.status(409).json(createResponse(false, 'Insufficient stock', { available }));
+          }
+          const linePrice = cart.items[itemIndex].price || unitPrice; // preserve prior snapshot
+          cart.items[itemIndex].quantity = newQty;
+          cart.items[itemIndex].name = cart.items[itemIndex].name || snapshotName;
+          cart.items[itemIndex].image = cart.items[itemIndex].image || snapshotImage;
           cart.items[itemIndex].price = linePrice;
-          cart.items[itemIndex].subtotal = cart.items[itemIndex].quantity * linePrice;
+          cart.items[itemIndex].subtotal = newQty * linePrice;
         } else {
-          cart.items.push({ 
-            product: productId, 
-            selectedVariantId: selectedVariantId || undefined,
-            selectedOptions: optionsObj,
-            quantity, 
+          cart.items.push({
+            product: productId,
+            name: snapshotName,
+            image: snapshotImage,
+            quantity: qty,
             price: unitPrice,
-            subtotal: unitPrice * quantity 
+            subtotal: unitPrice * qty,
           });
         }
 

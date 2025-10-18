@@ -32,6 +32,7 @@ const router = express.Router();
 
 const {
   createProduct,
+  bulkCreateProducts,
   getAllProducts,
   getProductById,
   updateProduct,
@@ -142,6 +143,14 @@ router.post(
   createProductValidation,
   handleValidation,
   createProduct
+);
+
+// Bulk create products: expects JSON array body (items)
+router.post(
+  '/bulk',
+  authenticate,
+  checkRole('Seller'),
+  bulkCreateProducts
 );
 
 /**

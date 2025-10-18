@@ -398,7 +398,7 @@ const AddProductPage = () => {
                   <div style={styles.optionGroupHeader}>
                     <input
                       type="text"
-                      placeholder="Variant Category (e.g., Size, Flavor, Color)"
+                      placeholder="V Category (e.g., Size, Flavor, Color)"
                       value={variant.variantName}
                       onChange={(e) => updateVariantName(vIdx, e.target.value)}
                       style={{ ...styles.input, flex: 1 }}
