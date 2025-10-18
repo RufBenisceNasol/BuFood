@@ -77,8 +77,12 @@ const toSlug = (str) => (str || '')
 // Create a flat product (no variants)
 const createProduct = async (req, res) => {
   try {
-    console.log('createProduct: incoming body:', req.body);
-    console.log('createProduct: has file:', !!req.file, 'filename:', req.file?.originalname);
+    const requestId = Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8);
+    const ctype = req.headers['content-type'] || '';
+    console.log(`[createProduct:${requestId}] content-type:`, ctype);
+    console.log(`[createProduct:${requestId}] incoming body:`, req.body);
+    console.log(`[createProduct:${requestId}] req.user:`, req.user ? { id: req.user._id, email: req.user.email, role: req.user.role } : null);
+    console.log(`[createProduct:${requestId}] has file:`, !!req.file, 'filename:', req.file?.originalname, 'mimetype:', req.file?.mimetype, 'size:', req.file?.size);
     const { name, description } = req.body;
     const imageFromBody = req.body?.image;
     let price = req.body?.price;
@@ -98,7 +102,9 @@ const createProduct = async (req, res) => {
         imagesFromBody = [];
       }
     }
-    console.log('createProduct: parsed imagesFromBody length:', imagesFromBody.length);
+    // Sanitize images array: keep only non-empty strings
+    imagesFromBody = (Array.isArray(imagesFromBody) ? imagesFromBody : []).filter(u => typeof u === 'string' && u.trim().length > 0);
+    console.log(`[createProduct:${requestId}] parsed imagesFromBody length:`, imagesFromBody.length);
 
     price = Number(price);
     stock = stock != null ? Number(stock) : 0;
@@ -108,36 +114,47 @@ const createProduct = async (req, res) => {
     category = (category || '').toString().trim();
     availability = availability || 'Available';
 
-    if (!name || !(price >= 0) || !category) {
-      console.log('createProduct: validation failed', { name, price, category });
-      return res.status(400).json({ message: 'Invalid input: name, price>=0, and category are required' });
+    if (!name) {
+      console.log(`[createProduct:${requestId}] missing field: name`);
+      return res.status(400).json({ success: false, message: 'Missing field: name' });
+    }
+    if (!(price >= 0) || Number.isNaN(price)) {
+      console.log(`[createProduct:${requestId}] invalid field: price`, price);
+      return res.status(400).json({ success: false, message: 'Invalid field: price must be a number >= 0' });
+    }
+    if (!category) {
+      console.log(`[createProduct:${requestId}] missing field: category`);
+      return res.status(400).json({ success: false, message: 'Missing field: category' });
     }
 
     const sellerId = req.user._id;
     const store = await Store.findOne({ owner: sellerId });
     if (!store) {
-      console.log('createProduct: store not found for seller:', sellerId);
-      return res.status(404).json({ message: 'Store not found' });
+      console.log(`[createProduct:${requestId}] store not found for seller:`, sellerId);
+      return res.status(404).json({ success: false, message: 'Store not found for current seller' });
     }
 
     let imageUrl = imageFromBody;
     if (!imageUrl && req.file) {
       try {
-        console.log('createProduct: uploading file to Cloudinary...');
+        console.log(`[createProduct:${requestId}] uploading file to Cloudinary...`);
         const result = await uploadToCloudinary(req.file.path, 'product-images');
         imageUrl = result.secure_url;
-        console.log('createProduct: Cloudinary uploaded url:', imageUrl);
+        console.log(`[createProduct:${requestId}] Cloudinary uploaded url:`, imageUrl);
       } catch (upErr) {
-        console.error('createProduct: Cloudinary upload failed:', upErr);
-        return res.status(502).json({ message: 'Image upload failed', error: upErr.message });
+        console.error(`[createProduct:${requestId}] Cloudinary upload failed:`, upErr?.stack || upErr);
+        return res.status(502).json({ success: false, message: 'Image upload failed', error: upErr.message });
       } finally {
-        try { if (req.file?.path) await deleteFile(req.file.path); } catch (delErr) { console.warn('createProduct: cleanup file error:', delErr.message); }
+        try { if (req.file?.path) await deleteFile(req.file.path); } catch (delErr) { console.warn(`[createProduct:${requestId}] cleanup file error:`, delErr.message); }
       }
     }
     if (!imageUrl) imageUrl = imagesFromBody[0];
-    if (!imageUrl) imageUrl = Product.schema.path('image').defaultValue;
+    if (!imageUrl) {
+      console.log(`[createProduct:${requestId}] no image provided, using default`);
+      imageUrl = Product.schema.path('image').defaultValue;
+    }
 
-    console.log('createProduct: creating Product doc with:', { name, price, category, availability, estimatedTime, shippingFee, stock, discount, imageUrl });
+    console.log(`[createProduct:${requestId}] creating Product doc with:`, { name, price, category, availability, estimatedTime, shippingFee, stock, discount, imageUrl, storeId: store._id });
     const newProduct = new Product({
       name,
       slug: toSlug(name),
@@ -155,15 +172,33 @@ const createProduct = async (req, res) => {
       discount,
     });
 
-    const savedProduct = await newProduct.save();
-    store.products.push(savedProduct._id);
-    await store.save();
+    console.log(`[createProduct:${requestId}] saving product to DB...`);
+    let savedProduct;
+    try {
+      savedProduct = await newProduct.save();
+    } catch (dbErr) {
+      console.error(`[createProduct:${requestId}] product save failed:`, dbErr?.stack || dbErr);
+      const status = dbErr?.name === 'ValidationError' ? 400 : 500;
+      return res.status(status).json({ success: false, message: 'Failed to save product', error: dbErr.message });
+    }
+    console.log(`[createProduct:${requestId}] product saved, updating store products array...`);
+    try {
+      store.products.push(savedProduct._id);
+      await store.save();
+    } catch (storeErr) {
+      console.error(`[createProduct:${requestId}] store save failed:`, storeErr?.stack || storeErr);
+      return res.status(500).json({ success: false, message: 'Product saved but failed to update store', error: storeErr.message, productId: savedProduct._id });
+    }
 
-    console.log('createProduct: saved product id:', savedProduct._id);
-    res.status(201).json(savedProduct);
+    console.log(`[createProduct:${requestId}] saved product id:`, savedProduct._id);
+    res.status(201).json({ success: true, product: savedProduct });
   } catch (err) {
-    console.error('createProduct error:', err);
-    res.status(500).json({ message: 'Create product failed', error: err.message });
+    console.error(`[createProduct:${requestId}] unexpected error:`, err?.stack || err);
+    // Map common mongoose/cast errors to 400
+    if (err?.name === 'ValidationError' || err?.name === 'CastError') {
+      return res.status(400).json({ success: false, message: 'Invalid product payload', error: err.message });
+    }
+    res.status(500).json({ success: false, message: 'Create product failed', error: err.message });
   }
 };
 
