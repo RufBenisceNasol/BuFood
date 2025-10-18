@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { product, API_BASE_URL } from '../api';
+import api, { product, API_BASE_URL } from '../api';
 import { MdArrowBack, MdAdd, MdDelete, MdImage } from 'react-icons/md';
 import { getToken } from '../utils/tokenUtils';
 
@@ -96,23 +96,10 @@ const AddProductPage = () => {
 
   // Upload a single file to backend /api/upload/image (JWT protected)
   const uploadOneImage = async (file) => {
-    const token = getToken(); // prefer centralized util (checks localStorage + sessionStorage)
-    if (!token) throw new Error('Not authenticated');
     const form = new FormData();
     form.append('image', file);
-    const res = await fetch(`${API_ORIGIN}/api/upload/image`, {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${token}` },
-      body: form,
-    });
-    if (res.status === 401 || res.status === 403) {
-      throw new Error('Unauthorized to upload. Please log in as a seller.');
-    }
-    const data = await res.json();
-    if (!data?.success || !data?.imageUrl) {
-      throw new Error(data?.message || 'Upload failed');
-    }
-    return data.imageUrl;
+    const res = await api.post('/upload/image', form);
+    return res.data; // expect { success, imageUrl }
   };
 
   // Handle multiple images selection and upload sequentially (or small parallel batches)
@@ -167,25 +154,13 @@ const AddProductPage = () => {
         return;
       }
 
-      // Fallback to server upload (requires valid auth token)
-      const token = getToken();
-      if (!token) {
-        setError('Please log in to upload images');
-        return;
-      }
+      // Fallback to server upload
       const form = new FormData();
       form.append('image', file);
-      const res = await fetch(`${API_ORIGIN}/api/upload/image`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
-        body: form,
-      });
-      if (res.status === 401 || res.status === 403) {
-        setError('Unauthorized to upload images. Please log in as a seller.');
-        return;
-      }
-      const data = await res.json();
-      if (data?.success && data.imageUrl) {
+      const res = await api.post('/upload/image', form);
+      // handle res.data
+      if (res.data?.success && res.data.imageUrl) {
+        updateOptionField(variantIdx, optionIdx, 'image', res.data.imageUrl);
         updateOptionField(variantIdx, optionIdx, 'image', data.imageUrl);
       } else {
         setError(data?.message || 'Failed to upload option image');

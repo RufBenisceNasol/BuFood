@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { MdAdd, MdDelete, MdEdit, MdSave, MdClose, MdImage, MdExpandMore, MdExpandLess } from 'react-icons/md';
-import { API_BASE_URL } from '../api';
-import { getToken } from '../utils/tokenUtils';
+import api, { API_BASE_URL } from '../api';
 
 /**
  * DEEP LOGIC: Variant Choices Manager Component
@@ -152,20 +151,7 @@ const VariantChoicesManager = ({ variants = [], onChange }) => {
     try {
       const formData = new FormData();
       formData.append('image', file);
-      const token = getToken();
-      const response = await fetch(`${API_ORIGIN}/api/upload/image`, {
-        method: 'POST',
-        headers: {
-          'Authorization': token ? `Bearer ${token}` : '',
-        },
-        body: formData,
-      });
-
-      if (!response.ok) {
-        const errText = await response.text();
-        throw new Error(errText || `Upload failed with status ${response.status}`);
-      }
-      const data = await response.json();
+      const { data } = await api.post('/upload/image', formData);
       if (data?.success && data.imageUrl) {
         updateChoice(variantId, choiceId, 'image', data.imageUrl);
       } else {
