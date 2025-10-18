@@ -77,34 +77,67 @@ const toSlug = (str) => (str || '')
 // Create a flat product (no variants)
 const createProduct = async (req, res) => {
   try {
-    const { name, description, price, category, availability, estimatedTime, shippingFee, stock, discount, image: imageFromBody } = req.body;
-    // Parse optional images array (may be JSON string if multipart/form-data)
+    console.log('createProduct: incoming body:', req.body);
+    console.log('createProduct: has file:', !!req.file, 'filename:', req.file?.originalname);
+    const { name, description } = req.body;
+    const imageFromBody = req.body?.image;
+    let price = req.body?.price;
+    let category = req.body?.category;
+    let availability = req.body?.availability;
+    let estimatedTime = req.body?.estimatedTime;
+    let shippingFee = req.body?.shippingFee;
+    let stock = req.body?.stock;
+    let discount = req.body?.discount;
+
     let imagesFromBody = [];
     if (req.body.images) {
       try {
         imagesFromBody = Array.isArray(req.body.images) ? req.body.images : JSON.parse(req.body.images);
-      } catch (_) {
+      } catch (e) {
+        console.log('createProduct: failed to parse images array:', e.message);
         imagesFromBody = [];
       }
     }
-    const sellerId = req.user._id;
+    console.log('createProduct: parsed imagesFromBody length:', imagesFromBody.length);
 
-    // Find the store associated with the seller
+    price = Number(price);
+    stock = stock != null ? Number(stock) : 0;
+    shippingFee = shippingFee != null ? Number(shippingFee) : 0;
+    discount = discount != null ? Number(discount) : 0;
+    estimatedTime = estimatedTime != null ? Number(estimatedTime) : 30;
+    category = (category || '').toString().trim();
+    availability = availability || 'Available';
+
+    if (!name || !(price >= 0) || !category) {
+      console.log('createProduct: validation failed', { name, price, category });
+      return res.status(400).json({ message: 'Invalid input: name, price>=0, and category are required' });
+    }
+
+    const sellerId = req.user._id;
     const store = await Store.findOne({ owner: sellerId });
-    if (!store) return res.status(404).json({ message: 'Store not found' });
+    if (!store) {
+      console.log('createProduct: store not found for seller:', sellerId);
+      return res.status(404).json({ message: 'Store not found' });
+    }
 
     let imageUrl = imageFromBody;
-    // If client didn't provide a Cloudinary URL, accept file upload
     if (!imageUrl && req.file) {
-      const result = await uploadToCloudinary(req.file.path, 'product-images');
-      imageUrl = result.secure_url;
-      await deleteFile(req.file.path);
+      try {
+        console.log('createProduct: uploading file to Cloudinary...');
+        const result = await uploadToCloudinary(req.file.path, 'product-images');
+        imageUrl = result.secure_url;
+        console.log('createProduct: Cloudinary uploaded url:', imageUrl);
+      } catch (upErr) {
+        console.error('createProduct: Cloudinary upload failed:', upErr);
+        return res.status(502).json({ message: 'Image upload failed', error: upErr.message });
+      } finally {
+        try { if (req.file?.path) await deleteFile(req.file.path); } catch (delErr) { console.warn('createProduct: cleanup file error:', delErr.message); }
+      }
     }
-    // If still no imageUrl, fall back to images[0] if provided, else default
     if (!imageUrl) imageUrl = imagesFromBody[0];
     if (!imageUrl) imageUrl = Product.schema.path('image').defaultValue;
 
-    // Create the flat product
+    console.log('createProduct: creating Product doc with:', { name, price, category, availability, estimatedTime, shippingFee, stock, discount, imageUrl });
     const newProduct = new Product({
       name,
       slug: toSlug(name),
@@ -113,24 +146,24 @@ const createProduct = async (req, res) => {
       category,
       availability,
       sellerId,
-      storeId: store._id,  // Ensure the storeId is correctly referenced
-      image: imageUrl, // Set the image URL (either uploaded or default)
+      storeId: store._id,
+      image: imageUrl,
       images: Array.isArray(imagesFromBody) ? imagesFromBody : [],
-      estimatedTime: estimatedTime || 30, // Default 30 minutes if not provided
-      shippingFee: shippingFee || 0, // Default 0 if not provided
-      stock: stock || 0,
-      discount: discount || 0,
+      estimatedTime,
+      shippingFee,
+      stock,
+      discount,
     });
 
-    // Save the product and update the store with the new product
     const savedProduct = await newProduct.save();
     store.products.push(savedProduct._id);
     await store.save();
 
+    console.log('createProduct: saved product id:', savedProduct._id);
     res.status(201).json(savedProduct);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: 'Server error' });
+    console.error('createProduct error:', err);
+    res.status(500).json({ message: 'Create product failed', error: err.message });
   }
 };
 
