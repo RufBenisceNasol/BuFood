@@ -37,9 +37,6 @@ async function postWithRetry(url, data, config = {}, retries = 2, baseDelayMs = 
 // Create axios instance with default config
 const api = axios.create({
     baseURL: API_BASE_URL,
-    headers: {
-        'Content-Type': 'application/json',
-    },
     // Prevent requests from hanging indefinitely (helps surface errors faster)
     // Note: deployed server (cold starts) may need longer
     timeout: 30000,
@@ -50,6 +47,12 @@ api.interceptors.request.use((config) => {
     const token = getToken();
     if (token) {
         config.headers.Authorization = `Bearer ${token}`;
+    }
+    // If sending FormData, let axios/browser set proper multipart boundary
+    if (typeof FormData !== 'undefined' && config.data instanceof FormData) {
+        if (config.headers && config.headers['Content-Type']) {
+            delete config.headers['Content-Type'];
+        }
     }
     return config;
 });
@@ -306,9 +309,7 @@ export const product = {
     createProduct: async (formData) => {
         try {
             // Backend route: POST /api/products
-            const response = await api.post('/products', formData, {
-                headers: { 'Content-Type': 'multipart/form-data' }
-            });
+            const response = await api.post('/products', formData);
             return response.data;
         } catch (error) {
             throw error.response?.data || error.message;
