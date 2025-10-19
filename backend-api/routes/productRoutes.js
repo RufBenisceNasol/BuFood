@@ -139,7 +139,18 @@ router.post(
   '/',
   authenticate,
   checkRole('Seller'),
-  uploadProductImage.single('image'),
+  // Wrap multer to handle file errors gracefully
+  (req, res, next) => {
+    const mw = uploadProductImage.single('image');
+    mw(req, res, (err) => {
+      if (!err) return next();
+      const code = err?.code;
+      if (code === 'LIMIT_FILE_SIZE') {
+        return res.status(400).json({ success: false, message: 'Image too large', code });
+      }
+      return res.status(400).json({ success: false, message: err.message || 'Invalid image upload', code });
+    });
+  },
   createProductValidation,
   handleValidation,
   createProduct

@@ -81,10 +81,20 @@ const createProduct = async (req, res) => {
     const ctype = req.headers['content-type'] || '';
     // Expose requestId to client for correlation
     res.set('X-Request-Id', requestId);
+    if (req.id) {
+      res.set('X-Server-Request-Id', req.id);
+    }
     console.log(`[createProduct:${requestId}] content-type:`, ctype);
+    console.log(`[createProduct:${requestId}] server req.id:`, req.id);
+    console.log(`[createProduct:${requestId}] incoming body keys:`, Object.keys(req.body || {}));
     console.log(`[createProduct:${requestId}] incoming body:`, req.body);
     console.log(`[createProduct:${requestId}] req.user:`, req.user ? { id: req.user._id, email: req.user.email, role: req.user.role } : null);
     console.log(`[createProduct:${requestId}] has file:`, !!req.file, 'filename:', req.file?.originalname, 'mimetype:', req.file?.mimetype, 'size:', req.file?.size);
+    // Some multer configs use req.files; log if present
+    if (req.files) {
+      const fileKeys = Array.isArray(req.files) ? req.files.map(f => f.fieldname) : Object.keys(req.files);
+      console.log(`[createProduct:${requestId}] req.files keys:`, fileKeys);
+    }
     const { name, description } = req.body;
     const imageFromBody = req.body?.image;
     let price = req.body?.price;
@@ -118,22 +128,22 @@ const createProduct = async (req, res) => {
 
     if (!name) {
       console.log(`[createProduct:${requestId}] missing field: name`);
-      return res.status(400).json({ success: false, message: 'Missing field: name', requestId });
+      return res.status(400).json({ success: false, message: 'Missing field: name', requestId, serverRequestId: req.id });
     }
     if (!(price >= 0) || Number.isNaN(price)) {
       console.log(`[createProduct:${requestId}] invalid field: price`, price);
-      return res.status(400).json({ success: false, message: 'Invalid field: price must be a number >= 0', requestId });
+      return res.status(400).json({ success: false, message: 'Invalid field: price must be a number >= 0', requestId, serverRequestId: req.id });
     }
     if (!category) {
       console.log(`[createProduct:${requestId}] missing field: category`);
-      return res.status(400).json({ success: false, message: 'Missing field: category', requestId });
+      return res.status(400).json({ success: false, message: 'Missing field: category', requestId, serverRequestId: req.id });
     }
 
     const sellerId = req.user._id;
     const store = await Store.findOne({ owner: sellerId });
     if (!store) {
       console.log(`[createProduct:${requestId}] store not found for seller:`, sellerId);
-      return res.status(404).json({ success: false, message: 'Store not found for current seller', requestId });
+      return res.status(404).json({ success: false, message: 'Store not found for current seller', requestId, serverRequestId: req.id });
     }
 
     let imageUrl = imageFromBody;
@@ -145,7 +155,7 @@ const createProduct = async (req, res) => {
         console.log(`[createProduct:${requestId}] Cloudinary uploaded url:`, imageUrl);
       } catch (upErr) {
         console.error(`[createProduct:${requestId}] Cloudinary upload failed:`, upErr?.stack || upErr);
-        return res.status(502).json({ success: false, message: 'Image upload failed', error: upErr.message, requestId });
+        return res.status(502).json({ success: false, message: 'Image upload failed', error: upErr.message, requestId, serverRequestId: req.id });
       } finally {
         try { if (req.file?.path) await deleteFile(req.file.path); } catch (delErr) { console.warn(`[createProduct:${requestId}] cleanup file error:`, delErr.message); }
       }
@@ -181,7 +191,7 @@ const createProduct = async (req, res) => {
     } catch (dbErr) {
       console.error(`[createProduct:${requestId}] product save failed:`, dbErr?.stack || dbErr);
       const status = dbErr?.name === 'ValidationError' ? 400 : 500;
-      return res.status(status).json({ success: false, message: 'Failed to save product', error: dbErr.message, requestId });
+      return res.status(status).json({ success: false, message: 'Failed to save product', error: dbErr.message, requestId, serverRequestId: req.id });
     }
     console.log(`[createProduct:${requestId}] product saved, updating store products array...`);
     try {
@@ -189,18 +199,18 @@ const createProduct = async (req, res) => {
       await store.save();
     } catch (storeErr) {
       console.error(`[createProduct:${requestId}] store save failed:`, storeErr?.stack || storeErr);
-      return res.status(500).json({ success: false, message: 'Product saved but failed to update store', error: storeErr.message, productId: savedProduct._id, requestId });
+      return res.status(500).json({ success: false, message: 'Product saved but failed to update store', error: storeErr.message, productId: savedProduct._id, requestId, serverRequestId: req.id });
     }
 
     console.log(`[createProduct:${requestId}] saved product id:`, savedProduct._id);
-    res.status(201).json({ success: true, product: savedProduct, requestId });
+    res.status(201).json({ success: true, product: savedProduct, requestId, serverRequestId: req.id });
   } catch (err) {
     console.error(`[createProduct:${requestId}] unexpected error:`, err?.stack || err);
     // Map common mongoose/cast errors to 400
     if (err?.name === 'ValidationError' || err?.name === 'CastError') {
-      return res.status(400).json({ success: false, message: 'Invalid product payload', error: err.message, requestId });
+      return res.status(400).json({ success: false, message: 'Invalid product payload', error: err.message, requestId, serverRequestId: req.id });
     }
-    res.status(500).json({ success: false, message: 'Create product failed', error: err.message, requestId });
+    res.status(500).json({ success: false, message: 'Create product failed', error: err.message, requestId, serverRequestId: req.id });
   }
 };
 

@@ -176,7 +176,8 @@ app.get('/', (req, res) => {
 // Routes with caching where appropriate
 app.use('/api/auth', authRoutes); // Legacy JWT authentication
 app.use('/api/auth/supabase', supabaseAuthRoutes); // New Supabase authentication
-app.use('/api/products', cache('10 minutes'), productRoutes);
+// IMPORTANT: Do not apply cache globally to /api/products, since POST/PATCH use multipart/form-data
+app.use('/api/products', productRoutes);
 // Do NOT apply cache middleware globally to /api/store to avoid interfering with multipart/form-data on PUT/POST
 app.use('/api/store', storeRoutes);
 app.use('/api/store', storeMemberRoutes);
