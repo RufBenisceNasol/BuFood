@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { getToken, getRefreshToken, removeToken, removeRefreshToken, removeUser, setToken } from './utils/tokenUtils';
+import { getToken, getRefreshToken, removeToken, removeRefreshToken, removeUser, setToken, setRefreshToken } from './utils/tokenUtils';
 
 // Prefer explicit VITE_API_BASE_URL in all modes. If not set:
 //  - In dev, fall back to '/api' (Vite proxy)
@@ -42,17 +42,55 @@ const api = axios.create({
     timeout: 30000,
 });
 
-// Add auth token to requests if available
-api.interceptors.request.use((config) => {
+// Small JWT decoder to inspect exp (no validation)
+function decodeJwt(token) {
+    try {
+        const [, payload] = token.split('.');
+        return JSON.parse(atob(payload.replace(/-/g, '+').replace(/_/g, '/')));
+    } catch { return null; }
+}
+
+let refreshInFlight = null; // single-flight promise
+
+async function refreshAccessTokenIfNeeded() {
+    const token = getToken();
+    const refreshToken = getRefreshToken();
+    if (!token || !refreshToken) return null;
+    const decoded = decodeJwt(token);
+    const now = Math.floor(Date.now() / 1000);
+    const exp = decoded?.exp || 0;
+    const secondsLeft = exp - now;
+    if (secondsLeft > 30) return null; // not near expiry
+
+    if (!refreshInFlight) {
+        refreshInFlight = (async () => {
+            const resp = await axios.post(`${API_BASE_URL}/auth/refresh-token`, { refreshToken });
+            const newAccess = resp.data?.accessToken || resp.data?.token;
+            const newRefresh = resp.data?.refreshToken;
+            if (!newAccess) throw new Error('Refresh failed: no access token');
+            setToken(newAccess, true);
+            if (newRefresh) setRefreshToken(newRefresh, true);
+            return newAccess;
+        })().finally(() => { refreshInFlight = null; });
+    }
+    return refreshInFlight;
+}
+
+// Add auth token to requests and proactively refresh if near expiry
+api.interceptors.request.use(async (config) => {
+    // If sending FormData, let axios/browser set proper multipart boundary
+    if (typeof FormData !== 'undefined' && config.data instanceof FormData) {
+        if (config.headers && config.headers['Content-Type']) delete config.headers['Content-Type'];
+    }
+
+    // Proactive refresh if close to expiry
+    try { await refreshAccessTokenIfNeeded(); } catch (_) {
+        // ignore; response interceptor will handle 401
+    }
+
     const token = getToken();
     if (token) {
         config.headers.Authorization = `Bearer ${token}`;
-    }
-    // If sending FormData, let axios/browser set proper multipart boundary
-    if (typeof FormData !== 'undefined' && config.data instanceof FormData) {
-        if (config.headers && config.headers['Content-Type']) {
-            delete config.headers['Content-Type'];
-        }
     }
     return config;
 });
@@ -61,33 +99,43 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
     (response) => response,
     async (error) => {
-        const originalRequest = error.config;
+        const originalRequest = error.config || {};
+        const status = error.response?.status;
+        const code = error.response?.data?.code;
 
-        if (error.response?.status !== 401 || originalRequest.url === '/auth/refresh-token') {
+        const isRefreshCall = originalRequest.url?.includes('/auth/refresh-token');
+        if (status !== 401 || isRefreshCall) {
             return Promise.reject(error);
         }
 
         try {
-            const refreshToken = getRefreshToken();
-            if (!refreshToken) {
-                throw new Error('No refresh token available');
+            if (!refreshInFlight) {
+                const rt = getRefreshToken();
+                if (!rt) throw new Error('No refresh token');
+                refreshInFlight = axios.post(`${API_BASE_URL}/auth/refresh-token`, { refreshToken: rt })
+                    .then((resp) => {
+                        const newAccess = resp.data?.accessToken || resp.data?.token;
+                        const newRefresh = resp.data?.refreshToken;
+                        if (!newAccess) throw new Error('Refresh failed: no token');
+                        setToken(newAccess, true);
+                        if (newRefresh) setRefreshToken(newRefresh, true);
+                        return newAccess;
+                    })
+                    .finally(() => { refreshInFlight = null; });
             }
-
-            const response = await axios.post(`${API_BASE_URL}/auth/refresh-token`, {
-                refreshToken
-            });
-
-            if (response.data.accessToken) {
-                setToken(response.data.accessToken, true); // Always persist refreshed token
-                api.defaults.headers.common['Authorization'] = `Bearer ${response.data.accessToken}`;
-                originalRequest.headers['Authorization'] = `Bearer ${response.data.accessToken}`;
-                return api(originalRequest);
-            }
+            const newAccess = await refreshInFlight;
+            // retry original request with new token
+            originalRequest.headers = originalRequest.headers || {};
+            originalRequest.headers['Authorization'] = `Bearer ${newAccess}`;
+            return api(originalRequest);
         } catch (err) {
-            removeToken();
-            removeRefreshToken();
-            removeUser();
-            window.location.href = '/login';
+            // Optionally: attempt silent Supabase login here if you store supabase session
+            if (code === 'TOKEN_EXPIRED' || status === 401) {
+                removeToken();
+                removeRefreshToken();
+                removeUser();
+                window.location.href = '/login';
+            }
             return Promise.reject(err);
         }
     }
@@ -802,8 +850,12 @@ export const review = {
 // Intentionally ignores errors and times out quickly
 export const warmup = async () => {
     try {
-        // Hit the backend health endpoint (proxied in dev via /health)
-        await axios.get(import.meta.env.DEV ? '/health' : (new URL('/health', API_BASE_URL.replace(/\/api$/, ''))).toString(), {
+        // Build backend health URL safely
+        const isAbsolute = /^https?:\/\//.test(API_BASE_URL);
+        const healthUrl = isAbsolute
+            ? (new URL('/health', API_BASE_URL.replace(/\/api$/, ''))).toString()
+            : '/api/health'; // dev: rely on Vite proxy
+        await axios.get(healthUrl, {
             timeout: 2500,
             params: { _t: Date.now() }
         });

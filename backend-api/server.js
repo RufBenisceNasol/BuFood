@@ -77,29 +77,29 @@ const speedLimiter = slowDown({
 // Middleware
 app.use(compression()); // Compress responses
 
-// Allow CORS from specific origins
-const allowedOrigins = [
-    'http://localhost:3000', // React dev server (if used)
-    'http://localhost:5173', // Vite dev server (added for local frontend)
-    'https://capstonedelibup-o7sl.onrender.com', // Production backend (if needed)
-    'capacitor://localhost', // Capacitor Android/iOS
-    'http://localhost', // Android emulator
-    'https://localhost', // Android WebView (for CORS)
-    'https://dellibup.onrender.com', // Deployed frontend
-    // Add your deployed frontend URL here if different
-];
+// Allow CORS from specific origins (deployed), and broadly allow localhost/127.0.0.1 (any port) for dev
+const allowedOrigins = new Set([
+    'https://capstonedelibup-o7sl.onrender.com', // Backend
+    'https://dellibup.onrender.com',             // Frontend
+]);
 
 app.use(cors({
     origin: function (origin, callback) {
         // allow requests with no origin (like mobile apps or curl)
         if (!origin) return callback(null, true);
-        if (allowedOrigins.indexOf(origin) !== -1) {
-            return callback(null, true);
-        } else {
-            return callback(new Error('Not allowed by CORS'));
-        }
+        try {
+            const u = new URL(origin);
+            const host = u.hostname;
+            if (allowedOrigins.has(origin)) return callback(null, true);
+            // Allow localhost and 127.0.0.1 on any port for development
+            if (host === 'localhost' || host === '127.0.0.1') return callback(null, true);
+            // Allow Capacitor/WebView
+            if (origin === 'capacitor://localhost') return callback(null, true);
+        } catch (_) {}
+        return callback(new Error('Not allowed by CORS'));
     },
     credentials: true,
+    optionsSuccessStatus: 200,
 }));
 
 app.use(express.json({ limit: '10mb' }));
