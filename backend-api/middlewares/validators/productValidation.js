@@ -8,8 +8,7 @@ const createProductValidation = [
 
   // Validate description: not empty and length between 10 and 500 characters
   body('description')
-    .notEmpty().withMessage('Product description is required')
-    .isLength({ min: 10, max: 500 }).withMessage('Product description must be between 10 and 500 characters'),
+    .optional(),
 
   // Validate price: must be a valid float greater than 0
   body('price')
@@ -52,8 +51,6 @@ const updateProductValidation = [
   // Validate description if provided
   body('description')
     .optional()
-    .isLength({ min: 10, max: 500 })
-    .withMessage('Product description must be between 10 and 500 characters')
     .trim(),
 
   // Validate price if provided
