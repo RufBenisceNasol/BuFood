@@ -6,7 +6,7 @@ const productImageStorage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: {
     folder: 'product-images',  // Define the folder for product images
-    allowed_formats: ['jpg', 'jpeg', 'png'],
+    allowed_formats: ['jpg', 'jpeg', 'png', 'webp'],
     transformation: [{ width: 800, height: 800, crop: 'limit' }],
   },
 });
