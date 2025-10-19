@@ -80,7 +80,8 @@ app.use(compression()); // Compress responses
 // Allow CORS from specific origins (deployed), and broadly allow localhost/127.0.0.1 (any port) for dev
 const allowedOrigins = new Set([
     'https://capstonedelibup-o7sl.onrender.com', // Backend
-    'https://dellibup.onrender.com',             // Frontend
+    'https://dellibup.onrender.com',             // Frontend (Render)
+    'https://capstonedelibup.vercel.app',        // Frontend (Vercel)
 ]);
 
 app.use(cors({
