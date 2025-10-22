@@ -106,6 +106,8 @@ const createProduct = async (req, res) => {
     let discount = req.body?.discount;
 
     let imagesFromBody = [];
+    let variantsFromBody = [];
+    let variantChoicesFromBody = [];
     if (req.body.images) {
       try {
         imagesFromBody = Array.isArray(req.body.images) ? req.body.images : JSON.parse(req.body.images);
@@ -117,6 +119,61 @@ const createProduct = async (req, res) => {
     // Sanitize images array: keep only non-empty strings
     imagesFromBody = (Array.isArray(imagesFromBody) ? imagesFromBody : []).filter(u => typeof u === 'string' && u.trim().length > 0);
     console.log(`[createProduct:${requestId}] parsed imagesFromBody length:`, imagesFromBody.length);
+    if (req.body.variants) {
+      try {
+        variantsFromBody = Array.isArray(req.body.variants) ? req.body.variants : JSON.parse(req.body.variants);
+      } catch (e) {
+        variantsFromBody = [];
+      }
+    }
+    if (req.body.variantChoices) {
+      try {
+        variantChoicesFromBody = Array.isArray(req.body.variantChoices) ? req.body.variantChoices : JSON.parse(req.body.variantChoices);
+      } catch (e) {
+        variantChoicesFromBody = [];
+      }
+    }
+    variantsFromBody = Array.isArray(variantsFromBody) ? variantsFromBody : [];
+    const variants = variantsFromBody.map(v => {
+      const id = (v.id || '').toString();
+      const name = (v.name || '').toString();
+      const price = v.price != null ? Number(v.price) : undefined;
+      const image = (v.image || '').toString();
+      const stock = v.stock != null ? Number(v.stock) : undefined;
+      const sku = (v.sku || '').toString();
+      const isAvailable = v.isAvailable != null ? !!v.isAvailable : undefined;
+      const obj = {};
+      if (id) obj.id = id;
+      if (name) obj.name = name;
+      if (!Number.isNaN(price)) obj.price = price;
+      if (image) obj.image = image;
+      if (!Number.isNaN(stock)) obj.stock = stock;
+      if (sku) obj.sku = sku;
+      if (isAvailable !== undefined) obj.isAvailable = isAvailable;
+      return obj;
+    }).filter(o => Object.keys(o).length > 0);
+
+    // Sanitize variantChoices structure
+    const variantChoices = (Array.isArray(variantChoicesFromBody) ? variantChoicesFromBody : []).map(vc => {
+      const variantName = (vc.variantName || '').toString();
+      const options = Array.isArray(vc.options) ? vc.options : [];
+      const safeOptions = options.map(opt => {
+        const optionName = (opt.optionName || '').toString();
+        const price = opt.price != null ? Number(opt.price) : undefined;
+        const stock = opt.stock != null ? Number(opt.stock) : undefined;
+        const image = (opt.image || '').toString();
+        const obj = {};
+        if (optionName) obj.optionName = optionName;
+        if (!Number.isNaN(price)) obj.price = price;
+        if (!Number.isNaN(stock)) obj.stock = stock;
+        if (image) obj.image = image;
+        return obj;
+      }).filter(o => Object.keys(o).length > 0);
+      const out = {};
+      if (variantName) out.variantName = variantName;
+      if (safeOptions.length > 0) out.options = safeOptions;
+      return out;
+    }).filter(v => v.variantName && Array.isArray(v.options));
 
     price = Number(price);
     stock = stock != null ? Number(stock) : 0;
@@ -166,7 +223,7 @@ const createProduct = async (req, res) => {
       imageUrl = Product.schema.path('image').defaultValue;
     }
 
-    console.log(`[createProduct:${requestId}] creating Product doc with:`, { name, price, category, availability, estimatedTime, shippingFee, stock, discount, imageUrl, storeId: store._id });
+    console.log(`[createProduct:${requestId}] creating Product doc with:`, { name, price, category, availability, estimatedTime, shippingFee, stock, discount, imageUrl, storeId: store._id, variantsCount: variants.length, variantChoicesCount: variantChoices.length });
     const newProduct = new Product({
       name,
       slug: toSlug(name),
@@ -178,6 +235,8 @@ const createProduct = async (req, res) => {
       storeId: store._id,
       image: imageUrl,
       images: Array.isArray(imagesFromBody) ? imagesFromBody : [],
+      variants,
+      variantChoices,
       estimatedTime,
       shippingFee,
       stock,
@@ -325,6 +384,8 @@ const getProductById = async (req, res) => {
     const result = product.toObject();
     result.soldCount = soldCount;
     result.peakOrderTimes = peakOrderTimes;
+    // Ensure variants is always present as array for clients
+    if (!Array.isArray(result.variants)) result.variants = [];
     res.json(result);
   } catch (err) {
     res.status(500).json({ message: 'Server error' });
@@ -342,12 +403,12 @@ const updateProduct = async (req, res) => {
 
     // Only allow updating specific fields
     const updates = {};
-    const allowedUpdates = ['name', 'description', 'price', 'category', 'availability', 'estimatedTime', 'shippingFee', 'stock', 'discount', 'variants', 'options'];
+    const allowedUpdates = ['name', 'description', 'price', 'category', 'availability', 'estimatedTime', 'shippingFee', 'stock', 'discount', 'variants', 'options', 'variantChoices'];
     
     allowedUpdates.forEach(field => {
       if (req.body[field] !== undefined) {
         // Parse JSON for variants/options if needed
-        if ((field === 'variants' || field === 'options') && typeof req.body[field] === 'string') {
+        if ((field === 'variants' || field === 'options' || field === 'variantChoices') && typeof req.body[field] === 'string') {
           try {
             const parsed = JSON.parse(req.body[field]);
             updates[field] = parsed;

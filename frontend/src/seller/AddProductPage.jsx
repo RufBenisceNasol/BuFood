@@ -158,12 +158,10 @@ const AddProductPage = () => {
       const form = new FormData();
       form.append('image', file);
       const res = await api.post('/upload/image', form);
-      // handle res.data
       if (res.data?.success && res.data.imageUrl) {
         updateOptionField(variantIdx, optionIdx, 'image', res.data.imageUrl);
-        updateOptionField(variantIdx, optionIdx, 'image', data.imageUrl);
       } else {
-        setError(data?.message || 'Failed to upload option image');
+        setError(res.data?.message || 'Failed to upload option image');
       }
     } catch (err) {
       setError('Failed to upload option image');
@@ -199,7 +197,7 @@ const AddProductPage = () => {
         throw new Error('Please complete all required fields.');
       }
 
-      // Validate variants/options and format to desired schema
+      // Validate variants/options and format to desired schema (variantChoices)
       const formattedVariants = (variants || [])
         .filter(v => v.variantName && (v.options || []).length > 0)
         .map(v => ({
@@ -216,7 +214,7 @@ const AddProductPage = () => {
         .filter(v => v.options.length > 0);
 
       if (formattedVariants.length > 0) {
-        submitData.append('variants', JSON.stringify(formattedVariants));
+        submitData.append('variantChoices', JSON.stringify(formattedVariants));
       }
       
       if (selectedImage) {

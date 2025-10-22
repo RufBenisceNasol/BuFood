@@ -64,17 +64,20 @@ const productSchema = new mongoose.Schema({
     default: undefined,
   },
   // Legacy simple variants (kept for backward compatibility)
-  variants: [
-    {
-      id: { type: String },
-      name: { type: String },
-      price: { type: Number, min: 0 },
-      image: { type: String, default: '' },
-      stock: { type: Number, min: 0, default: 0 },
-      sku: { type: String, default: '' },
-      isAvailable: { type: Boolean, default: true }
-    }
-  ],
+  variants: {
+    type: [
+      new mongoose.Schema({
+        id: { type: String },
+        name: { type: String },
+        price: { type: Number, min: 0 },
+        image: { type: String, default: '' },
+        stock: { type: Number, min: 0, default: 0 },
+        sku: { type: String, default: '' },
+        isAvailable: { type: Boolean, default: true }
+      }, { _id: false })
+    ],
+    default: []
+  },
   
   // New nested variant choices structure
   // Example: [{ variantName: 'Size', options: [{ optionName:'Large', price:120, stock:10, image:'...' }] }]

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { product } from '../api';
+import api, { product } from '../api';
+
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { MdArrowBack, MdEdit } from 'react-icons/md';
@@ -23,6 +24,10 @@ const EditProductPage = () => {
         estimatedTime: '', // New field for estimated delivery time
         shippingFee: '0', // New field for shipping fee
     });
+    const [variants, setVariants] = useState([]);
+    const [variantChoices, setVariantChoices] = useState([]);
+    const [variantUploading, setVariantUploading] = useState({});
+
     const [selectedImage, setSelectedImage] = useState(null);
     const [previewUrl, setPreviewUrl] = useState('');
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -41,7 +46,10 @@ const EditProductPage = () => {
                     shippingFee: data.shippingFee || '0', // Set from product data
                 });
                 setPreviewUrl(data.image);
+                setVariants(Array.isArray(data.variants) ? data.variants : []);
+                setVariantChoices(Array.isArray(data.variantChoices) ? data.variantChoices : []);
                 setLoading(false);
+
             } catch (err) {
                 setError(err.message || 'Failed to fetch product');
                 setLoading(false);
@@ -80,46 +88,51 @@ const EditProductPage = () => {
             if (selectedImage) {
                 submitData.append('image', selectedImage);
             }
+            // Include variants as JSON string
+            submitData.append('variants', JSON.stringify(variants || []));
+            // Include variantChoices to preserve/edit nested options
+            submitData.append('variantChoices', JSON.stringify(variantChoices || []));
 
             // Update the product
             await product.updateProduct(productId, submitData);
-            
+
             // Delay before verifying update to allow server processing
             await new Promise(resolve => setTimeout(resolve, 1000));
-            
+
             // Refresh the product data after successful update with cache-busting
             let updatedProduct;
+
             let retryCount = 0;
             const maxRetries = 3;
-            
+
             while (retryCount < maxRetries) {
                 try {
                     // Add timestamp to prevent caching
                     updatedProduct = await product.getProductById(productId);
-                    
+
                     // Verify if image was updated by checking the timestamp in URL
                     let imageUpdated = true;
                     if (selectedImage && updatedProduct.image) {
                         // Simple check - if image URL doesn't contain timestamp parameter yet
                         // this means the server might not have processed the update fully
-                        const imageHasTimestamp = updatedProduct.image.includes('?') || 
-                                                 updatedProduct.image.includes('&t=') || 
-                                                 updatedProduct.image.includes('&_t=');
-                        
+                        const imageHasTimestamp = updatedProduct.image.includes('?') ||
+                            updatedProduct.image.includes('&t=') ||
+                            updatedProduct.image.includes('&_t=');
+
                         if (!imageHasTimestamp) {
                             // If no timestamp in image URL, it might be server cache
                             imageUpdated = false;
                         }
                     }
-                    
+
                     // If name and other fields are updated and image is updated (if applicable),
                     // we consider the update successful
-                    if (updatedProduct.name === formData.name && 
+                    if (updatedProduct.name === formData.name &&
                         updatedProduct.price.toString() === formData.price.toString() &&
                         (selectedImage ? imageUpdated : true)) {
                         break;  // Exit the retry loop if everything is verified
                     }
-                    
+
                     // If update not fully processed, wait and retry
                     await new Promise(resolve => setTimeout(resolve, 1000));
                     retryCount++;
@@ -128,7 +141,7 @@ const EditProductPage = () => {
                     await new Promise(resolve => setTimeout(resolve, 1000));
                 }
             }
-            
+
             // Update local form data with the fetched data
             if (updatedProduct) {
                 setFormData({
@@ -140,20 +153,22 @@ const EditProductPage = () => {
                     estimatedTime: updatedProduct.estimatedTime || '',
                     shippingFee: updatedProduct.shippingFee || '0',
                 });
-                
+                setVariants(Array.isArray(updatedProduct.variants) ? updatedProduct.variants : []);
+                setVariantChoices(Array.isArray(updatedProduct.variantChoices) ? updatedProduct.variantChoices : []);
+
                 // Add timestamp to image URL to prevent browser caching
                 const imageWithTimestamp = `${updatedProduct.image}${updatedProduct.image.includes('?') ? '&' : '?'}_t=${Date.now()}`;
                 setPreviewUrl(imageWithTimestamp);
             }
-            
+
             setSuccess('Product updated successfully!');
             toast.success('Product updated successfully!');
-            
+
             // Increase timeout to ensure server processes the update
             setTimeout(() => {
                 // Navigate with state to inform detail page of the update
                 navigate(`/seller/product/${productId}`, {
-                    state: { 
+                    state: {
                         fromEdit: true,
                         timestamp: Date.now(),
                         imageUpdated: selectedImage ? true : false
@@ -191,6 +206,7 @@ const EditProductPage = () => {
 
                 <div style={styles.formContainer}>
                     <form onSubmit={handleSubmit} style={styles.form} className="product-form">
+
                         <div style={styles.imagePreviewContainer}>
                             {previewUrl ? (
                                 <>
@@ -329,6 +345,118 @@ const EditProductPage = () => {
                                 <option value="Out of Stock">Out of Stock</option>
                             </select>
                         </div>
+
+                        {/* Variants management */}
+                        <div style={{ ...styles.inputGroup, marginTop: '8px' }}>
+                            <label style={styles.label}>Variants</label>
+                            <div style={styles.variantsBox}>
+                                {variants.length === 0 && (
+                                    <div style={styles.variantEmpty}>No variants yet.</div>
+                                )}
+                                {variants.map((v, idx) => {
+                                    const key = v.id || idx;
+                                    return (
+                                        <div key={key} style={styles.variantRow}>
+                                            <div style={styles.variantImageWrap}>
+                                                {v.image ? (
+                                                    <img src={v.image} alt={v.name || 'Variant'} style={styles.variantImage} />
+                                                ) : (
+                                                    <div style={styles.variantImagePlaceholder}>No image</div>
+                                                )}
+                                                <input
+                                                    type="file"
+                                                    accept="image/*"
+                                                    style={styles.variantFileInput}
+                                                    onChange={async (e) => {
+                                                        const file = e.target.files?.[0];
+                                                        if (!file) return;
+                                                        setVariantUploading(prev => ({ ...prev, [key]: true }));
+                                                        try {
+                                                            const fd = new FormData();
+                                                            fd.append('image', file);
+                                                            const { data } = await api.post('/upload/image', fd);
+                                                            if (data?.success && data.imageUrl) {
+                                                                setVariants(prev => prev.map((it, i) => i === idx ? { ...it, image: data.imageUrl } : it));
+                                                            }
+                                                        } catch (_) {
+                                                            toast.error('Failed to upload variant image');
+                                                        } finally {
+                                                            setVariantUploading(prev => ({ ...prev, [key]: false }));
+                                                        }
+                                                    }}
+                                                />
+                                                {variantUploading[key] && <div style={styles.variantUploading}>Uploading...</div>}
+                                            </div>
+                                            <div style={styles.variantFields}>
+                                                <input
+                                                    type="text"
+                                                    placeholder="Variant name"
+                                                    value={v.name || ''}
+                                                    onChange={(e) => setVariants(prev => prev.map((it, i) => i === idx ? { ...it, name: e.target.value } : it))}
+                                                    style={styles.variantInput}
+                                                />
+                                                <div style={styles.variantInlineFields}>
+                                                    <input
+                                                        type="number"
+                                                        placeholder="Price"
+                                                        value={v.price ?? ''}
+                                                        onChange={(e) => setVariants(prev => prev.map((it, i) => i === idx ? { ...it, price: e.target.value } : it))}
+                                                        style={{ ...styles.variantInput, width: '45%' }}
+                                                        min="0"
+                                                        step="0.01"
+                                                    />
+                                                    <input
+                                                        type="number"
+                                                        placeholder="Stock"
+                                                        value={v.stock ?? ''}
+                                                        onChange={(e) => setVariants(prev => prev.map((it, i) => i === idx ? { ...it, stock: e.target.value } : it))}
+                                                        style={{ ...styles.variantInput, width: '45%' }}
+                                                        min="0"
+                                                    />
+                                                </div>
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={() => setVariants(prev => prev.filter((_, i) => i !== idx))}
+                                                style={styles.variantDeleteBtn}
+                                            >Delete</button>
+                                        </div>
+                                    );
+                                })}
+                                <button
+                                    type="button"
+                                    onClick={() => setVariants(prev => [...prev, { id: crypto.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2, 6)}`, name: '', price: 0, stock: 0, image: '' }])}
+                                    style={styles.addVariantBtn}
+                                >+ Add Variant</button>
+                            </div>
+                        </div>
+
+                        {/* Variant Choices (read-only preview; editing supported in Add page) */}
+                        {Array.isArray(variantChoices) && variantChoices.length > 0 && (
+                          <div style={{ ...styles.inputGroup, marginTop: '8px' }}>
+                            <label style={styles.label}>Variant Choices</label>
+                            <div style={styles.variantChoicesBox}>
+                              {variantChoices.map((vc, vci) => (
+                                <div key={vci} style={styles.vcGroup}>
+                                  <div style={styles.vcTitle}>{vc.variantName}</div>
+                                  <div style={styles.vcOptionsGrid}>
+                                    {(vc.options || []).map((opt, oi) => (
+                                      <div key={oi} style={styles.vcOptionCard}>
+                                        {opt.image ? (
+                                          <img src={opt.image} alt={opt.optionName || 'option'} style={styles.vcImage} />
+                                        ) : (
+                                          <div style={styles.vcImagePlaceholder}>No image</div>
+                                        )}
+                                        <div style={styles.vcOptName}>{opt.optionName || 'Option'}</div>
+                                        <div style={styles.vcOptMeta}>₱{Number(opt.price || 0).toFixed(2)} · Stock: {Number(opt.stock || 0)}</div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
 
                         <div style={styles.buttonRow}>
                             <button
@@ -557,6 +685,96 @@ const styles = {
         maxWidth: '90%',
         maxHeight: '90%',
         borderRadius: '10px',
+    },
+    variantsBox: {
+        padding: '10px',
+        backgroundColor: '#f9f9f9',
+        borderRadius: '10px',
+        boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+    },
+    variantEmpty: {
+        padding: '10px',
+        textAlign: 'center',
+        color: '#666',
+    },
+    variantRow: {
+        display: 'flex',
+        gap: '10px',
+        padding: '10px',
+        borderBottom: '1px solid #ddd',
+    },
+    variantImageWrap: {
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        width: '100px',
+    },
+    variantImage: {
+        width: '100%',
+        height: '100px',
+        objectFit: 'cover',
+        borderRadius: '10px',
+    },
+    variantImagePlaceholder: {
+        width: '100%',
+        height: '100px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: '#eee',
+        borderRadius: '10px',
+        color: '#666',
+    },
+    variantFileInput: {
+        width: '100%',
+        padding: '5px',
+        fontSize: '14px',
+        color: '#666',
+    },
+    variantUploading: {
+        fontSize: '14px',
+        color: '#666',
+        opacity: 0.7,
+    },
+    variantFields: {
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '8px',
+        flex: 1,
+    },
+    variantInput: {
+        padding: '8px 12px',
+        borderRadius: '8px',
+        border: '1px solid #ddd',
+        fontSize: '14px',
+        width: '100%',
+        boxSizing: 'border-box',
+        backgroundColor: '#f9f9f9',
+    },
+    variantInlineFields: {
+        display: 'flex',
+        gap: '10px',
+    },
+    variantDeleteBtn: {
+        padding: '8px 12px',
+        borderRadius: '8px',
+        border: 'none',
+        fontSize: '14px',
+        color: '#666',
+        cursor: 'pointer',
+        backgroundColor: '#f9f9f9',
+        transition: 'all 0.2s',
+    },
+    addVariantBtn: {
+        padding: '8px 12px',
+        borderRadius: '8px',
+        border: 'none',
+        fontSize: '14px',
+        color: '#666',
+        cursor: 'pointer',
+        backgroundColor: '#f9f9f9',
+        transition: 'all 0.2s',
     },
 };
 

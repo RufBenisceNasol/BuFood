@@ -148,6 +148,26 @@ const ProductList = () => {
                                 </div>
                                 <div style={styles.productInfo}>
                                     <h3 style={styles.productName}>{prod.name}</h3>
+                                    {Array.isArray(prod.variants) && prod.variants.length > 0 && (
+                                      <div style={styles.variantsContainer}>
+                                        <div style={styles.variantsHeader}>Variants</div>
+                                        <div style={styles.variantList}>
+                                          {prod.variants.map((v, idx) => (
+                                            <div key={v.id || idx} style={styles.variantItem}>
+                                              {v.image ? (
+                                                <img src={v.image} alt={v.name || 'Variant'} style={styles.variantImage} />
+                                              ) : (
+                                                <div style={styles.variantImagePlaceholder}>No image</div>
+                                              )}
+                                              <div style={styles.variantMeta}>
+                                                <div style={styles.variantName}>{v.name || 'Unnamed'}</div>
+                                                <div style={styles.variantSub}>₱{Number(v.price || 0).toFixed(2)} · Stock: {Number(v.stock || 0)}</div>
+                                              </div>
+                                            </div>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    )}
                                     <div style={styles.productActions}>
                                     </div>
                                 </div>
@@ -339,6 +359,65 @@ const styles = {
         fontSize: '16px',
         fontWeight: '600',
         color: '#333',
+    },
+    variantsContainer: {
+        backgroundColor: '#fafafa',
+        border: '1px solid #eee',
+        borderRadius: '8px',
+        padding: '8px',
+        marginTop: '6px',
+    },
+    variantsHeader: {
+        fontSize: '12px',
+        fontWeight: 600,
+        color: '#666',
+        marginBottom: '6px',
+    },
+    variantList: {
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '6px',
+        maxHeight: '120px',
+        overflowY: 'auto',
+    },
+    variantItem: {
+        display: 'flex',
+        alignItems: 'center',
+        gap: '8px',
+    },
+    variantImage: {
+        width: '36px',
+        height: '36px',
+        borderRadius: '6px',
+        objectFit: 'cover',
+        background: '#f0f0f0',
+        border: '1px solid #eee',
+    },
+    variantImagePlaceholder: {
+        width: '36px',
+        height: '36px',
+        borderRadius: '6px',
+        background: '#f5f5f5',
+        border: '1px dashed #ddd',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        color: '#999',
+        fontSize: '10px',
+    },
+    variantMeta: {
+        display: 'flex',
+        flexDirection: 'column',
+        lineHeight: 1.2,
+    },
+    variantName: {
+        fontSize: '13px',
+        color: '#333',
+        fontWeight: 600,
+    },
+    variantSub: {
+        fontSize: '12px',
+        color: '#777',
     },
     productActions: {
         display: 'flex',
