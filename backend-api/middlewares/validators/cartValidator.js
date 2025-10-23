@@ -1,4 +1,5 @@
-const { body } = require('express-validator');
+const { body, oneOf } = require('express-validator');
+
 const rateLimit = require('express-rate-limit');
 const handleValidation = require('./handleValidation');
 
@@ -13,16 +14,20 @@ const cartLimiter = rateLimit({
 });
 
 // Validation for adding a product to the cart
-const addToCartValidator = [  body('productId')
+const addToCartValidator = [
+  body('productId')
     .notEmpty()
     .withMessage('Product ID is required')
     .isMongoId()
     .withMessage('Invalid product ID format'),
-  body('quantity')
-    .notEmpty()
-    .withMessage('Quantity is required')
-    .isInt({ min: 1 })
-    .withMessage('Quantity must be a positive number'),
+  oneOf([
+    body('quantity').notEmpty(),
+    body('qty').notEmpty()
+  ], 'Quantity is required'),
+  oneOf([
+    body('quantity').isInt({ min: 1 }),
+    body('qty').isInt({ min: 1 })
+  ], 'Quantity must be a positive number'),
   handleValidation
 ];
 

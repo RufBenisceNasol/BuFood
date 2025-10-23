@@ -40,10 +40,21 @@ const addToCart = async (req, res) => {
     session.startTransaction();
 
     try {
-      const { productId, qty, variant } = req.body;
+      const { productId } = req.body;
+      const quantity = Number(req.body.quantity ?? req.body.qty);
+      // Build variant object from either nested or flat fields
+      const variant = req.body.variant || (req.body.variantName || req.body.variantId || req.body.variantPrice || req.body.variantImage
+        ? {
+            variantName: req.body.variantName,
+            optionName: req.body.variantOption || req.body.optionName, // accept either
+            price: req.body.variantPrice,
+            image: req.body.variantImage,
+            id: req.body.variantId
+          }
+        : undefined);
 
       // Input validation
-      if (!productId || !qty || qty <= 0) {
+      if (!productId || !Number.isFinite(quantity) || quantity <= 0) {
         return res.status(400).json(createResponse(
           false,
           'Invalid input',
@@ -100,7 +111,7 @@ const addToCart = async (req, res) => {
       }
 
       // Stock validation
-      if (available <= 0 || qty > available) {
+      if (available <= 0 || quantity > available) {
         return res.status(409).json(createResponse(
           false,
           'Insufficient stock',
@@ -121,11 +132,12 @@ const addToCart = async (req, res) => {
             product: productId,
             name: snapshotName,
             image: snapshotImage,
-            quantity: qty,
+            selectedVariant: selectedVariant || undefined,
+            quantity: quantity,
             price: unitPrice,
-            subtotal: unitPrice * qty,
+            subtotal: unitPrice * quantity,
           }],
-          total: unitPrice * qty,
+          total: unitPrice * quantity,
         });
       } else {
         // Merge line items by product + selected option (if present)
@@ -136,7 +148,7 @@ const addToCart = async (req, res) => {
         ));
 
         if (itemIndex > -1) {
-          const newQty = cart.items[itemIndex].quantity + qty;
+          const newQty = cart.items[itemIndex].quantity + quantity;
           if (newQty > available) {
             return res.status(409).json(createResponse(false, 'Insufficient stock', { available }));
           }
@@ -152,9 +164,9 @@ const addToCart = async (req, res) => {
             name: snapshotName,
             image: snapshotImage,
             selectedVariant: selectedVariant || undefined,
-            quantity: qty,
+            quantity: quantity,
             price: unitPrice,
-            subtotal: unitPrice * qty,
+            subtotal: unitPrice * quantity,
           });
         }
 

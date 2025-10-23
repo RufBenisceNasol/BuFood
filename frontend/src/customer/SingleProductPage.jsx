@@ -706,7 +706,7 @@ const SingleProductPage = () => {
                 };
                 const body = {
                     productId,
-                    qty: modalQuantity,
+                    quantity: Number(modalQuantity),
                     variant: {
                         variantName: choice.variantName,
                         optionName: choice.optionName,
@@ -716,6 +716,7 @@ const SingleProductPage = () => {
                 const res = await fetch(`${API_BASE_URL}/carts`, { method: 'POST', headers, body: JSON.stringify(body) });
                 const contentType = res.headers.get('content-type') || '';
                 const data = contentType.includes('application/json') ? await res.json() : { success: false, message: await res.text() };
+                console.log('Add to cart response:', data);
                 if (!res.ok || !data.success) throw new Error(data?.message || 'Failed to add to cart');
                 alert(`Added ${choice.optionName} ${productData.name} to your cart!`);
             } else if (modalAction === 'fav') {
@@ -787,7 +788,7 @@ const SingleProductPage = () => {
             if (hasVariantChoices && selectedVariantChoice) {
                 body = {
                     productId,
-                    qty: quantity,
+                    quantity: Number(quantity),
                     variant: {
                         variantName: selectedVariantChoice.variantName,
                         optionName: selectedVariantChoice.optionName,
@@ -802,7 +803,7 @@ const SingleProductPage = () => {
                     option: sel.choice,
                     variantId: sel.choiceId,
                     price: calculatedPrice || sel.price || productData.price,
-                    qty: quantity,
+                    quantity: Number(quantity),
                     image: sel.image || productData.image,
                 };
             } else {
@@ -810,7 +811,7 @@ const SingleProductPage = () => {
                     productId,
                     variantSelections,
                     price: calculatedPrice || productData.price,
-                    qty: quantity,
+                    quantity: Number(quantity),
                 };
             }
 
@@ -821,6 +822,7 @@ const SingleProductPage = () => {
             });
             const contentType = response.headers.get('content-type') || '';
             const data = contentType.includes('application/json') ? await response.json() : { success: false, message: await response.text() };
+            console.log('Add to cart response:', data);
             if (!response.ok || !data.success) {
                 const msg = data?.message || 'Failed to add product to cart';
                 throw new Error(msg);
