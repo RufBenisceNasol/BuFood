@@ -192,6 +192,11 @@ app.use('/api', reviewRoutes);
 app.use('/api/favorites', favoriteRoutes);
 app.use('/api/upload', uploadRoutes);
 
+// JSON 404 fallback for API routes
+app.use('/api', (req, res, next) => {
+    res.status(404).json({ success: false, message: 'API route not found' });
+});
+
 // Error handling
 app.use(errorLogger);
 app.use((err, req, res, next) => {

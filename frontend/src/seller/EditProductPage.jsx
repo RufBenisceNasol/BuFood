@@ -349,89 +349,94 @@ const EditProductPage = () => {
                         {/* Variants management */}
                         <div style={{ ...styles.inputGroup, marginTop: '8px' }}>
                             <label style={styles.label}>Variants</label>
-                            <div style={styles.variantsBox}>
-                                {variants.length === 0 && (
-                                    <div style={styles.variantEmpty}>No variants yet.</div>
-                                )}
-                                {variants.map((v, idx) => {
-                                    const key = v.id || idx;
-                                    return (
-                                        <div key={key} style={styles.variantRow}>
-                                            <div style={styles.variantImageWrap}>
-                                                {v.image ? (
-                                                    <img src={v.image} alt={v.name || 'Variant'} style={styles.variantImage} />
-                                                ) : (
-                                                    <div style={styles.variantImagePlaceholder}>No image</div>
-                                                )}
-                                                <input
-                                                    type="file"
-                                                    accept="image/*"
-                                                    style={styles.variantFileInput}
-                                                    onChange={async (e) => {
-                                                        const file = e.target.files?.[0];
-                                                        if (!file) return;
-                                                        setVariantUploading(prev => ({ ...prev, [key]: true }));
-                                                        try {
-                                                            const fd = new FormData();
-                                                            fd.append('image', file);
-                                                            const { data } = await api.post('/upload/image', fd);
-                                                            if (data?.success && data.imageUrl) {
-                                                                setVariants(prev => prev.map((it, i) => i === idx ? { ...it, image: data.imageUrl } : it));
-                                                            }
-                                                        } catch (_) {
-                                                            toast.error('Failed to upload variant image');
-                                                        } finally {
-                                                            setVariantUploading(prev => ({ ...prev, [key]: false }));
-                                                        }
-                                                    }}
-                                                />
-                                                {variantUploading[key] && <div style={styles.variantUploading}>Uploading...</div>}
-                                            </div>
-                                            <div style={styles.variantFields}>
-                                                <input
-                                                    type="text"
-                                                    placeholder="Variant name"
-                                                    value={v.name || ''}
-                                                    onChange={(e) => setVariants(prev => prev.map((it, i) => i === idx ? { ...it, name: e.target.value } : it))}
-                                                    style={styles.variantInput}
-                                                />
-                                                <div style={styles.variantInlineFields}>
-                                                    <input
-                                                        type="number"
-                                                        placeholder="Price"
-                                                        value={v.price ?? ''}
-                                                        onChange={(e) => setVariants(prev => prev.map((it, i) => i === idx ? { ...it, price: e.target.value } : it))}
-                                                        style={{ ...styles.variantInput, width: '45%' }}
-                                                        min="0"
-                                                        step="0.01"
-                                                    />
-                                                    <input
-                                                        type="number"
-                                                        placeholder="Stock"
-                                                        value={v.stock ?? ''}
-                                                        onChange={(e) => setVariants(prev => prev.map((it, i) => i === idx ? { ...it, stock: e.target.value } : it))}
-                                                        style={{ ...styles.variantInput, width: '45%' }}
-                                                        min="0"
-                                                    />
-                                                </div>
-                                            </div>
-                                            <button
-                                                type="button"
-                                                onClick={() => setVariants(prev => prev.filter((_, i) => i !== idx))}
-                                                style={styles.variantDeleteBtn}
-                                            >Delete</button>
-                                        </div>
-                                    );
-                                })}
-                                <button
-                                    type="button"
-                                    onClick={() => setVariants(prev => [...prev, { id: crypto.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2, 6)}`, name: '', price: 0, stock: 0, image: '' }])}
-                                    style={styles.addVariantBtn}
-                                >+ Add Variant</button>
+                            {variants.length === 0 && (
+                              <div style={styles.variantEmpty}>No variants yet.</div>
+                            )}
+                            <div className="variants-grid" style={styles.variantsGrid}> 
+                              {variants.map((v, idx) => {
+                                const key = v.id || idx;
+                                return (
+                                  <div key={key} style={styles.variantCard}>
+                                    {v.image ? (
+                                      <img
+                                        src={v.image}
+                                        alt={v.name || 'Variant'}
+                                        style={styles.variantSmallImage}
+                                        onError={(e) => {
+                                          e.currentTarget.onerror = null;
+                                          e.currentTarget.src = 'data:image/svg+xml;utf8,<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"96\" height=\"96\"><rect width=\"100%\" height=\"100%\" fill=\"%23f3f4f6\"/><text x=\"50%\" y=\"50%\" dominant-baseline=\"middle\" text-anchor=\"middle\" fill=\"%239ca3af\" font-size=\"10\">No image</text></svg>';
+                                        }}
+                                      />
+                                    ) : (
+                                      <div style={styles.variantSmallPlaceholder}>No image</div>
+                                    )}
+                                    <input
+                                      type="file"
+                                      accept="image/*"
+                                      style={styles.variantFileInput}
+                                      onChange={async (e) => {
+                                        const file = e.target.files?.[0];
+                                        if (!file) return;
+                                        const k = v.id || idx;
+                                        setVariantUploading(prev => ({ ...prev, [k]: true }));
+                                        try {
+                                          const fd = new FormData();
+                                          fd.append('image', file);
+                                          const { data } = await api.post('/upload/image', fd);
+                                          if (data?.success && data.imageUrl) {
+                                            setVariants(prev => prev.map((it, i) => i === idx ? { ...it, image: data.imageUrl } : it));
+                                          }
+                                        } catch (_) {
+                                          toast.error('Failed to upload variant image');
+                                        } finally {
+                                          setVariantUploading(prev => ({ ...prev, [k]: false }));
+                                        }
+                                      }}
+                                    />
+                                    {variantUploading[key] && <div style={styles.variantUploading}>Uploading...</div>}
+                                    <input
+                                      type="text"
+                                      placeholder="Variant name"
+                                      value={v.name || ''}
+                                      onChange={(e) => setVariants(prev => prev.map((it, i) => i === idx ? { ...it, name: e.target.value } : it))}
+                                      style={{ ...styles.variantInput, marginTop: '6px' }}
+                                    />
+                                    <div className="variants-grid-inline" style={styles.variantInlineGrid}>
+                                      <input
+                                        type="number"
+                                        placeholder="Price"
+                                        value={v.price ?? ''}
+                                        onChange={(e) => setVariants(prev => prev.map((it, i) => i === idx ? { ...it, price: e.target.value } : it))}
+                                        style={{ ...styles.variantInput }}
+                                        min="0"
+                                        step="0.01"
+                                      />
+                                      <input
+                                        type="number"
+                                        placeholder="Stock"
+                                        value={v.stock ?? ''}
+                                        onChange={(e) => setVariants(prev => prev.map((it, i) => i === idx ? { ...it, stock: e.target.value } : it))}
+                                        style={{ ...styles.variantInput }}
+                                        min="0"
+                                      />
+                                    </div>
+                                    <button
+                                      type="button"
+                                      onClick={() => setVariants(prev => prev.filter((_, i) => i !== idx))}
+                                      style={{ ...styles.variantDeleteBtn, marginTop: '6px' }}
+                                    >Delete</button>
+                                  </div>
+                                );
+                              })}
                             </div>
+                            <button
+                              type="button"
+                              onClick={() => setVariants(prev => [...prev, { id: crypto.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2, 6)}`, name: '', price: 0, stock: 0, image: '' }])}
+                              style={{ ...styles.addVariantBtn, marginTop: '10px' }}
+                            >+ Add Variant</button>
                         </div>
 
-                        {/* Variant Choices (read-only preview; editing supported in Add page) */}
+                        {/* Variant Choices (read-only preview) */}
                         {Array.isArray(variantChoices) && variantChoices.length > 0 && (
                           <div style={{ ...styles.inputGroup, marginTop: '8px' }}>
                             <label style={styles.label}>Variant Choices</label>
@@ -439,11 +444,19 @@ const EditProductPage = () => {
                               {variantChoices.map((vc, vci) => (
                                 <div key={vci} style={styles.vcGroup}>
                                   <div style={styles.vcTitle}>{vc.variantName}</div>
-                                  <div style={styles.vcOptionsGrid}>
+                                  <div className="vc-grid" style={styles.vcOptionsGrid}>
                                     {(vc.options || []).map((opt, oi) => (
                                       <div key={oi} style={styles.vcOptionCard}>
                                         {opt.image ? (
-                                          <img src={opt.image} alt={opt.optionName || 'option'} style={styles.vcImage} />
+                                          <img
+                                            src={opt.image}
+                                            alt={opt.optionName || 'option'}
+                                            style={styles.vcImage}
+                                            onError={(e) => {
+                                              e.currentTarget.onerror = null;
+                                              e.currentTarget.src = 'data:image/svg+xml;utf8,<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"96\" height=\"96\"><rect width=\"100%\" height=\"100%\" fill=\"%23f3f4f6\"/><text x=\"50%\" y=\"50%\" dominant-baseline=\"middle\" text-anchor=\"middle\" fill=\"%239ca3af\" font-size=\"10\">No image</text></svg>';
+                                            }}
+                                          />
                                         ) : (
                                           <div style={styles.vcImagePlaceholder}>No image</div>
                                         )}
@@ -697,34 +710,38 @@ const styles = {
         textAlign: 'center',
         color: '#666',
     },
-    variantRow: {
-        display: 'flex',
-        gap: '10px',
-        padding: '10px',
-        borderBottom: '1px solid #ddd',
+    variantsGrid: {
+        display: 'grid',
+        gap: '12px',
     },
-    variantImageWrap: {
+    variantCard: {
         display: 'flex',
         flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        width: '100px',
-    },
-    variantImage: {
-        width: '100%',
-        height: '100px',
-        objectFit: 'cover',
+        alignItems: 'stretch',
+        padding: '10px',
+        background: '#fff',
+        border: '1px solid #e5e7eb',
         borderRadius: '10px',
+        boxShadow: '0 1px 2px rgba(0,0,0,0.04)'
     },
-    variantImagePlaceholder: {
+    variantSmallImage: {
         width: '100%',
-        height: '100px',
+        height: '110px',
+        objectFit: 'cover',
+        borderRadius: '8px',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+    },
+    variantSmallPlaceholder: {
+        width: '100%',
+        height: '110px',
+        borderRadius: '8px',
+        background: '#f3f4f6',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: '#eee',
-        borderRadius: '10px',
-        color: '#666',
+        color: '#9ca3af',
+        fontSize: '12px',
+        border: '1px dashed #d1d5db'
     },
     variantFileInput: {
         width: '100%',
@@ -752,9 +769,11 @@ const styles = {
         boxSizing: 'border-box',
         backgroundColor: '#f9f9f9',
     },
-    variantInlineFields: {
-        display: 'flex',
+    variantInlineGrid: {
+        display: 'grid',
+        gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
         gap: '10px',
+        marginTop: '6px'
     },
     variantDeleteBtn: {
         padding: '8px 12px',
@@ -775,6 +794,58 @@ const styles = {
         cursor: 'pointer',
         backgroundColor: '#f9f9f9',
         transition: 'all 0.2s',
+    },
+    // Variant Choices styles
+    vcGroup: {
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '8px',
+        marginBottom: '8px'
+    },
+    vcTitle: {
+        fontSize: '14px',
+        fontWeight: 600,
+        color: '#374151'
+    },
+    vcOptionsGrid: {
+        display: 'grid',
+        gap: '12px'
+    },
+    vcOptionCard: {
+        border: '1px solid #e5e7eb',
+        borderRadius: '8px',
+        padding: '8px',
+        background: '#f9fafb'
+    },
+    vcImage: {
+        width: '100%',
+        height: '96px',
+        objectFit: 'cover',
+        borderRadius: '8px',
+        marginBottom: '6px',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+    },
+    vcImagePlaceholder: {
+        width: '100%',
+        height: '96px',
+        background: '#fff',
+        border: '1px dashed #d1d5db',
+        borderRadius: '8px',
+        marginBottom: '6px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        color: '#9ca3af',
+        fontSize: '12px'
+    },
+    vcOptName: {
+        fontSize: '13px',
+        fontWeight: 600,
+        color: '#374151'
+    },
+    vcOptMeta: {
+        fontSize: '12px',
+        color: '#6b7280'
     },
 };
 
@@ -821,6 +892,45 @@ const ResponsiveStyle = () => (
             background: rgba(255, 140, 0, 0.5);
         }
         
+        .variants-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+        }
+        @media (max-width: 420px) {
+            .variants-grid { grid-template-columns: repeat(1, minmax(0, 1fr)); }
+        }
+        @media (min-width: 640px) {
+            .variants-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+        }
+        @media (min-width: 768px) {
+            .variants-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+        }
+
+        .vc-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+        }
+        @media (max-width: 420px) {
+            .vc-grid { grid-template-columns: repeat(1, minmax(0, 1fr)); }
+        }
+        @media (min-width: 640px) {
+            .vc-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+        }
+        @media (min-width: 768px) {
+            .vc-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+        }
+
+        .variants-grid-inline {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+        }
+        @media (max-width: 420px) {
+            .variants-grid-inline { grid-template-columns: repeat(1, minmax(0, 1fr)); }
+        }
+
         @media (max-width: 768px) {
             .form {
                 padding: 20px 15px;

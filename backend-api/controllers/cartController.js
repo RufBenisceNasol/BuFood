@@ -40,7 +40,7 @@ const addToCart = async (req, res) => {
     session.startTransaction();
 
     try {
-      const { productId, qty } = req.body;
+      const { productId, qty, variant } = req.body;
 
       // Input validation
       if (!productId || !qty || qty <= 0) {
@@ -64,8 +64,42 @@ const addToCart = async (req, res) => {
         ));
       }
 
-      // Stock validation against flat stock
-      const available = typeof product.stock === 'number' ? product.stock : 0;
+      // Determine stock and price, taking variant into account if provided
+      let available = typeof product.stock === 'number' ? product.stock : Infinity;
+      let unitPrice = product.price;
+      let selectedVariant = null;
+
+      if (variant && (variant.variantName || variant.optionName)) {
+        // Try to locate matching variant in product.variantChoices
+        const choices = Array.isArray(product.variantChoices) ? product.variantChoices : [];
+        const vGroup = choices.find(v => v.variantName === variant.variantName);
+        const vOpt = vGroup && Array.isArray(vGroup.options)
+          ? vGroup.options.find(o => o.optionName === variant.optionName)
+          : null;
+        if (vOpt) {
+          const optStock = Number(vOpt.stock || 0);
+          available = isNaN(optStock) ? available : optStock;
+          const priceFromOpt = Number(vOpt.price || unitPrice);
+          unitPrice = !isNaN(priceFromOpt) ? priceFromOpt : unitPrice;
+          selectedVariant = {
+            variantName: variant.variantName || vGroup?.variantName || '',
+            optionName: variant.optionName || vOpt.optionName || '',
+            price: Number(variant.price ?? vOpt.price ?? unitPrice) || unitPrice,
+            image: variant.image || vOpt.image || product.image || ''
+          };
+        } else {
+          // Fall back to client-provided variant price if any
+          selectedVariant = {
+            variantName: variant.variantName || '',
+            optionName: variant.optionName || '',
+            price: Number(variant.price ?? unitPrice) || unitPrice,
+            image: variant.image || product.image || ''
+          };
+          unitPrice = selectedVariant.price || unitPrice;
+        }
+      }
+
+      // Stock validation
       if (available <= 0 || qty > available) {
         return res.status(409).json(createResponse(
           false,
@@ -75,7 +109,6 @@ const addToCart = async (req, res) => {
       }
 
       // Server-snapshotted fields
-      const unitPrice = product.price;
       const snapshotName = product.name;
       const snapshotImage = product.image;
 
@@ -95,7 +128,12 @@ const addToCart = async (req, res) => {
           total: unitPrice * qty,
         });
       } else {
-        const itemIndex = cart.items.findIndex(item => item.product.toString() === productId);
+        // Merge line items by product + selected option (if present)
+        const itemIndex = cart.items.findIndex(item => (
+          item.product.toString() === productId &&
+          ((selectedVariant && item.selectedVariant && item.selectedVariant.optionName === selectedVariant.optionName) ||
+           (!selectedVariant && !item.selectedVariant))
+        ));
 
         if (itemIndex > -1) {
           const newQty = cart.items[itemIndex].quantity + qty;
@@ -113,6 +151,7 @@ const addToCart = async (req, res) => {
             product: productId,
             name: snapshotName,
             image: snapshotImage,
+            selectedVariant: selectedVariant || undefined,
             quantity: qty,
             price: unitPrice,
             subtotal: unitPrice * qty,

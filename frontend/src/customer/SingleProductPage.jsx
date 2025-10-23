@@ -29,6 +29,7 @@ import { Favorite, FavoriteBorder } from '@mui/icons-material';
 import { toggleFavorite, isInFavorites } from '../utils/favoriteUtils';
 import styled from 'styled-components';
 import { getUser } from '../utils/tokenUtils';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 // Styled Components
 const PageContainer = styled.div`
@@ -48,6 +49,85 @@ const PageContainer = styled.div`
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overscroll-behavior-y: none;
+`;
+
+// Modal styles
+const ModalOverlay = styled.div`
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 2100;
+  animation: fadeIn 180ms ease;
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+`;
+
+const ModalPanel = styled.div`
+  background: #fff;
+  width: 100%;
+  max-width: 560px;
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
+  box-shadow: 0 -4px 24px rgba(0,0,0,0.2);
+  padding: 16px;
+  animation: slideUp 220ms ease;
+
+  @keyframes slideUp {
+    from { transform: translateY(24px); opacity: 0.96; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+
+  @media (min-width: 700px) {
+    border-radius: 12px;
+    margin: 48px 16px;
+    align-self: center;
+  }
+`;
+
+const ModalHeader = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+`;
+
+const ModalTitle = styled.h4`
+  margin: 0;
+  font-size: 1.05rem;
+  color: #333;
+`;
+
+const ModalCloseBtn = styled.button`
+  border: none;
+  background: none;
+  font-size: 1.25rem;
+  cursor: pointer;
+  color: #666;
+`;
+
+const ModalFooter = styled.div`
+  display: flex;
+  gap: 10px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+`;
+
+const ConfirmBtn = styled.button`
+  flex: 1;
+  min-width: 180px;
+  background: linear-gradient(135deg, #fbaa39, #fc753b);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 16px;
+  font-weight: 700;
+  cursor: pointer;
 `;
 
 const Header = styled.header`
@@ -414,6 +494,13 @@ const SingleProductPage = () => {
     const [isSelectionsValid, setIsSelectionsValid] = useState(false);
     const [calculatedPrice, setCalculatedPrice] = useState(0);
     const [relatedProducts, setRelatedProducts] = useState([]);
+    const [selectedVariantChoice, setSelectedVariantChoice] = useState(null);
+    const [selectedVariant, setSelectedVariant] = useState(null);
+    const [isVariantModalOpen, setIsVariantModalOpen] = useState(false);
+    const [showVariantModal, setShowVariantModal] = useState(false);
+    const [modalAction, setModalAction] = useState(null); // 'cart' | 'fav'
+    const [modalQuantity, setModalQuantity] = useState(1);
+    const [modalSelectedChoice, setModalSelectedChoice] = useState(null);
 
     useEffect(() => {
         // Load current user from localStorage (for review name/image resolution)
@@ -524,8 +611,18 @@ const SingleProductPage = () => {
 
     const handleAddToFavorites = async () => {
         try {
-            const hasVariants = Array.isArray(productData?.variants) && productData.variants.length > 0;
-            if (hasVariants && !isSelectionsValid) {
+            const hasVariantChoices = Array.isArray(productData?.variantChoices) && productData.variantChoices.length > 0;
+            const hasLegacyVariants = Array.isArray(productData?.variants) && productData.variants.length > 0;
+            if (hasVariantChoices && !selectedVariantChoice) {
+                // Trigger modal UX instead
+                setModalAction('fav');
+                setIsVariantModalOpen(true);
+                setShowVariantModal(true);
+                setModalQuantity(1);
+                setModalSelectedChoice(null);
+                return;
+            }
+            if (!hasVariantChoices && hasLegacyVariants && !isSelectionsValid) {
                 toast.error('Please select required options');
                 return;
             }
@@ -537,7 +634,16 @@ const SingleProductPage = () => {
             };
 
             let body;
-            if (Array.isArray(variantSelections) && variantSelections.length === 1) {
+            if (hasVariantChoices && selectedVariantChoice) {
+                body = {
+                    productId,
+                    variant: {
+                        variantName: selectedVariantChoice.variantName,
+                        optionName: selectedVariantChoice.optionName,
+                        price: selectedVariantChoice.price,
+                    }
+                };
+            } else if (Array.isArray(variantSelections) && variantSelections.length === 1) {
                 const sel = variantSelections[0];
                 body = {
                     productId,
@@ -555,24 +661,107 @@ const SingleProductPage = () => {
                 };
             }
 
-            const res = await fetch('/api/favorites', {
-                method: 'POST',
-                headers,
-                body: JSON.stringify(body),
-            });
-            const data = await res.json();
-            if (!res.ok || data?.error) throw new Error(data?.message || 'Failed to add to favorites');
-            toast.success('Added to favorites');
+            if (!token) {
+                // Fallback to localStorage if not logged in
+                const existing = (() => {
+                    try { return JSON.parse(localStorage.getItem('favorites') || '[]'); } catch { return []; }
+                })();
+                const newFav = hasVariantChoices && selectedVariantChoice ? {
+                    productId,
+                    variant: {
+                        variantName: selectedVariantChoice.variantName,
+                        optionName: selectedVariantChoice.optionName,
+                    }
+                } : body;
+                localStorage.setItem('favorites', JSON.stringify([...existing, newFav]));
+                alert('Added to favorites!');
+            } else {
+                const res = await fetch(`${API_BASE_URL}/favorites`, {
+                    method: 'POST',
+                    headers,
+                    body: JSON.stringify(body),
+                });
+                const data = await res.json();
+                if (!res.ok || data?.error) throw new Error(data?.message || 'Failed to add to favorites');
+                toast.success('Added to favorites');
+            }
         } catch (err) {
             toast.error(err.message || 'Failed to add to favorites');
         }
     };
 
+    // Modal confirm handler
+    const confirmVariantModal = async () => {
+        const choice = modalSelectedChoice;
+        if (!choice) {
+            alert('Please select a variant.');
+            return;
+        }
+        try {
+            if (modalAction === 'cart') {
+                const token = localStorage.getItem('token');
+                const headers = {
+                    'Content-Type': 'application/json',
+                    ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+                };
+                const body = {
+                    productId,
+                    qty: modalQuantity,
+                    variant: {
+                        variantName: choice.variantName,
+                        optionName: choice.optionName,
+                        price: choice.price,
+                    },
+                };
+                const res = await fetch(`${API_BASE_URL}/carts`, { method: 'POST', headers, body: JSON.stringify(body) });
+                const contentType = res.headers.get('content-type') || '';
+                const data = contentType.includes('application/json') ? await res.json() : { success: false, message: await res.text() };
+                if (!res.ok || !data.success) throw new Error(data?.message || 'Failed to add to cart');
+                alert(`Added ${choice.optionName} ${productData.name} to your cart!`);
+            } else if (modalAction === 'fav') {
+                const token = localStorage.getItem('token');
+                const headers = {
+                    'Content-Type': 'application/json',
+                    ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+                };
+                const body = {
+                    productId,
+                    variant: { variantName: choice.variantName, optionName: choice.optionName },
+                };
+                if (!token) {
+                    const existing = (() => { try { return JSON.parse(localStorage.getItem('favorites') || '[]'); } catch { return []; } })();
+                    localStorage.setItem('favorites', JSON.stringify([...existing, body]));
+                    alert('Added to favorites!');
+                } else {
+                    const res = await fetch(`${API_BASE_URL}/favorites`, { method: 'POST', headers, body: JSON.stringify(body) });
+                    const contentType = res.headers.get('content-type') || '';
+                    const data = contentType.includes('application/json') ? await res.json() : { error: true, message: await res.text() };
+                    if (!res.ok || data?.error) throw new Error(data?.message || 'Failed to add to favorites');
+                    toast.success('Added to favorites');
+                }
+            }
+            setIsVariantModalOpen(false);
+            setShowVariantModal(false);
+            setModalAction(null);
+        } catch (err) {
+            toast.error(err.message || 'Failed to process request');
+        }
+    };
+
     const handleAddToCart = async () => {
         try {
-            // If product has variants in new schema, ensure selections are valid
-            const hasVariants = Array.isArray(productData?.variants) && productData.variants.length > 0;
-            if (hasVariants && !isSelectionsValid) {
+            const hasVariantChoices = Array.isArray(productData?.variantChoices) && productData.variantChoices.length > 0;
+            const hasLegacyVariants = Array.isArray(productData?.variants) && productData.variants.length > 0;
+            if (hasVariantChoices && !selectedVariantChoice) {
+                // Open modal for selection
+                setModalAction('cart');
+                setIsVariantModalOpen(true);
+                setShowVariantModal(true);
+                setModalQuantity(1);
+                setModalSelectedChoice(null);
+                return;
+            }
+            if (!hasVariantChoices && hasLegacyVariants && !isSelectionsValid) {
                 toast.error('Please select required options');
                 return;
             }
@@ -595,7 +784,17 @@ const SingleProductPage = () => {
             };
 
             let body;
-            if (Array.isArray(variantSelections) && variantSelections.length === 1) {
+            if (hasVariantChoices && selectedVariantChoice) {
+                body = {
+                    productId,
+                    qty: quantity,
+                    variant: {
+                        variantName: selectedVariantChoice.variantName,
+                        optionName: selectedVariantChoice.optionName,
+                        price: selectedVariantChoice.price,
+                    },
+                };
+            } else if (Array.isArray(variantSelections) && variantSelections.length === 1) {
                 const sel = variantSelections[0];
                 body = {
                     productId,
@@ -603,7 +802,7 @@ const SingleProductPage = () => {
                     option: sel.choice,
                     variantId: sel.choiceId,
                     price: calculatedPrice || sel.price || productData.price,
-                    quantity,
+                    qty: quantity,
                     image: sel.image || productData.image,
                 };
             } else {
@@ -611,22 +810,27 @@ const SingleProductPage = () => {
                     productId,
                     variantSelections,
                     price: calculatedPrice || productData.price,
-                    quantity,
+                    qty: quantity,
                 };
             }
 
-            const response = await fetch('/api/carts', {
+            const response = await fetch(`${API_BASE_URL}/carts`, {
                 method: 'POST',
                 headers,
                 body: JSON.stringify(body),
             });
-            const data = await response.json();
+            const contentType = response.headers.get('content-type') || '';
+            const data = contentType.includes('application/json') ? await response.json() : { success: false, message: await response.text() };
             if (!response.ok || !data.success) {
                 const msg = data?.message || 'Failed to add product to cart';
                 throw new Error(msg);
             }
-            setSuccessModal({ open: true, message: 'Product added to cart successfully' });
-            setTimeout(() => setSuccessModal({ open: false, message: '' }), 1200);
+            if (hasVariantChoices && selectedVariantChoice) {
+                alert(`Added ${selectedVariantChoice.optionName} ${productData.name} to your cart!`);
+            } else {
+                setSuccessModal({ open: true, message: 'Product added to cart successfully' });
+                setTimeout(() => setSuccessModal({ open: false, message: '' }), 1200);
+            }
         } catch (err) {
             const errorMessage = err.message || 'Failed to add product to cart';
             toast.error(errorMessage);
@@ -715,7 +919,15 @@ const SingleProductPage = () => {
                                 <FavoriteButton 
                                     onClick={async (e) => {
                                         e.stopPropagation();
-                                        await handleAddToFavorites();
+                                        const hasVariantChoices = Array.isArray(productData?.variantChoices) && productData.variantChoices.length > 0;
+                                        if (hasVariantChoices) {
+                                            setModalAction('fav');
+                                            setIsVariantModalOpen(true);
+                                            setModalQuantity(1);
+                                            setModalSelectedChoice(selectedVariantChoice || null);
+                                        } else {
+                                            await handleAddToFavorites();
+                                        }
                                     }}
                                     aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
                                 >
@@ -736,7 +948,73 @@ const SingleProductPage = () => {
                                 <DescriptionText>{productData.description}</DescriptionText>
                             </Section>
 
-                            {/* Variant Selector (map API schema to selector schema) */}
+                            {/* Variant Choices (new schema) */}
+                            {Array.isArray(productData.variantChoices) && productData.variantChoices.length > 0 && (
+                                <Section>
+                                    <SectionTitle>Choose a Variant</SectionTitle>
+                                    {productData.variantChoices.map((variant) => (
+                                        <div key={variant.variantName} style={{ marginBottom: 10 }}>
+                                            <p style={{ margin: '0 0 8px', color: '#333' }}><strong>{variant.variantName}</strong></p>
+                                            <div className="variant-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: 12 }}>
+                                                {(variant.options || []).map((opt) => {
+                                                    const active = selectedVariantChoice && selectedVariantChoice.optionName === opt.optionName && selectedVariantChoice.variantName === variant.variantName;
+                                                    return (
+                                                        <div
+                                                            key={opt.optionName}
+                                                            className={`variant-card${active ? ' active' : ''}`}
+                                                            style={{
+                                                                border: active ? '2px solid #007bff' : '1px solid #ccc',
+                                                                borderRadius: 8,
+                                                                textAlign: 'center',
+                                                                padding: 10,
+                                                                cursor: 'pointer',
+                                                                transition: '0.3s',
+                                                                background: active ? '#f0f8ff' : '#fff',
+                                                                boxShadow: active ? '0 2px 5px rgba(0,0,0,0.1)' : 'none'
+                                                            }}
+                                                            onClick={() => {
+                                                                const sel = {
+                                                                    variantName: variant.variantName,
+                                                                    optionName: opt.optionName,
+                                                                    price: Number(opt.price || 0),
+                                                                    image: opt.image || '',
+                                                                    stock: Number(opt.stock || 0),
+                                                                };
+                                                                setSelectedVariantChoice(sel);
+                                                                setSelectedVariant(sel);
+                                                            }}
+                                                        >
+                                                            {opt.image ? (
+                                                                <img
+                                                                    src={opt.image}
+                                                                    alt={opt.optionName}
+                                                                    style={{ width: '100%', height: 80, objectFit: 'cover', borderRadius: 6 }}
+                                                                    onError={(e) => {
+                                                                        e.currentTarget.onerror = null;
+                                                                        e.currentTarget.src = 'data:image/svg+xml;utf8,<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"200\" height=\"120\"><rect width=\"100%\" height=\"100%\" fill=\"%23eeeeee\"/><text x=\"50%\" y=\"50%\" dominant-baseline=\"middle\" text-anchor=\"middle\" fill=\"%23999\" font-size=\"12\">No image</text></svg>';
+                                                                    }}
+                                                                />
+                                                            ) : (
+                                                                <div style={{ width: '100%', height: 80, background: '#f5f5f5', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#999' }}>No image</div>
+                                                            )}
+                                                            <p style={{ margin: '8px 0 0', fontSize: 13, color: '#333' }}>{opt.optionName}</p>
+                                                            <p style={{ margin: '4px 0 0', fontSize: 13, fontWeight: 600, color: '#f97316' }}>₱{Number(opt.price || 0).toFixed(2)}</p>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+                                    ))}
+                                    <style>{`
+                                        .variant-card:hover { border-color: #007bff; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+                                        @media (max-width: 600px) {
+                                            .variant-grid { grid-template-columns: repeat(2, 1fr) !important; }
+                                        }
+                                    `}</style>
+                                </Section>
+                            )}
+
+                            {/* Variant Selector (legacy mapping) */}
                             {Array.isArray(productData.variants) && productData.variants.length > 0 && (
                                 <Section>
                                     <SectionTitle>Options</SectionTitle>
@@ -816,7 +1094,17 @@ const SingleProductPage = () => {
                                     </QuantitySelector>
 
                                     <AddToCartButton 
-                                        onClick={handleAddToCart}
+                                        onClick={() => {
+                                            const hasVariantChoices = Array.isArray(productData?.variantChoices) && productData.variantChoices.length > 0;
+                                            if (hasVariantChoices) {
+                                                setModalAction('cart');
+                                                setIsVariantModalOpen(true);
+                                                setModalQuantity(1);
+                                                setModalSelectedChoice(selectedVariantChoice || null);
+                                            } else {
+                                                handleAddToCart();
+                                            }
+                                        }}
                                         disabled={(() => {
                                             const hasVariants = Array.isArray(productData?.variants) && productData.variants.length > 0;
                                             const eff = getEffectiveStock();
@@ -922,6 +1210,90 @@ const SingleProductPage = () => {
 
                 </ContentContainer>
             </ScrollableContent>
+
+            {/* Variant Picker Modal */}
+            {isVariantModalOpen && (
+                <ModalOverlay onClick={() => setIsVariantModalOpen(false)}>
+                    <ModalPanel onClick={(e) => e.stopPropagation()}>
+                        <ModalHeader>
+                            <ModalTitle>{modalAction === 'cart' ? 'Select Variant & Quantity' : 'Select Variant'}</ModalTitle>
+                            <ModalCloseBtn onClick={() => setIsVariantModalOpen(false)}>×</ModalCloseBtn>
+                        </ModalHeader>
+
+                        {Array.isArray(productData.variantChoices) && productData.variantChoices.length > 0 && (
+                            <div>
+                                {productData.variantChoices.map(variant => (
+                                    <div key={variant.variantName} style={{ marginBottom: 10 }}>
+                                        <p style={{ margin: '0 0 8px', color: '#333' }}><strong>{variant.variantName}</strong></p>
+                                        <div className="variant-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: 12 }}>
+                                            {(variant.options || []).map(opt => {
+                                                const active = modalSelectedChoice && modalSelectedChoice.optionName === opt.optionName && modalSelectedChoice.variantName === variant.variantName;
+                                                return (
+                                                    <div
+                                                        key={opt.optionName}
+                                                        className={`variant-card${active ? ' active' : ''}`}
+                                                        style={{
+                                                            border: active ? '2px solid #007bff' : '1px solid #ccc',
+                                                            borderRadius: 8,
+                                                            textAlign: 'center',
+                                                            padding: 10,
+                                                            cursor: 'pointer',
+                                                            transition: '0.3s',
+                                                            background: active ? '#f0f8ff' : '#fff',
+                                                            boxShadow: active ? '0 2px 5px rgba(0,0,0,0.1)' : 'none'
+                                                        }}
+                                                        onClick={() => setModalSelectedChoice({
+                                                            variantName: variant.variantName,
+                                                            optionName: opt.optionName,
+                                                            price: Number(opt.price || 0),
+                                                            image: opt.image || '',
+                                                            stock: Number(opt.stock || 0),
+                                                        })}
+                                                    >
+                                                        {opt.image ? (
+                                                            <img
+                                                                src={opt.image}
+                                                                alt={opt.optionName}
+                                                                style={{ width: '100%', height: 80, objectFit: 'cover', borderRadius: 6 }}
+                                                                onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = 'data:image/svg+xml;utf8,<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"200\" height=\"120\"><rect width=\"100%\" height=\"100%\" fill=\"%23eeeeee\"/><text x=\"50%\" y=\"50%\" dominant-baseline=\"middle\" text-anchor=\"middle\" fill=\"%23999\" font-size=\"12\">No image</text></svg>'; }}
+                                                            />
+                                                        ) : (
+                                                            <div style={{ width: '100%', height: 80, background: '#f5f5f5', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#999' }}>No image</div>
+                                                        )}
+                                                        <p style={{ margin: '8px 0 0', fontSize: 13, color: '#333' }}>{opt.optionName}</p>
+                                                        <p style={{ margin: '4px 0 0', fontSize: 13, fontWeight: 600, color: '#f97316' }}>₱{Number(opt.price || 0).toFixed(2)}</p>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                ))}
+                                <style>{`
+                                    .variant-card:hover { border-color: #007bff; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+                                    @media (max-width: 600px) {
+                                        .variant-grid { grid-template-columns: repeat(2, 1fr) !important; }
+                                    }
+                                `}</style>
+                            </div>
+                        )}
+
+                        {modalAction === 'cart' && (
+                            <div style={{ marginTop: 10 }}>
+                                <p style={{ margin: '0 0 6px', color: '#333' }}><strong>Quantity</strong></p>
+                                <QuantitySelector>
+                                    <QuantityButton onClick={() => setModalQuantity(Math.max(1, modalQuantity - 1))}><MdRemove size={20} /></QuantityButton>
+                                    <QuantityDisplay>{modalQuantity}</QuantityDisplay>
+                                    <QuantityButton onClick={() => setModalQuantity(modalQuantity + 1)}><MdAdd size={20} /></QuantityButton>
+                                </QuantitySelector>
+                            </div>
+                        )}
+
+                        <ModalFooter>
+                            <ConfirmBtn onClick={confirmVariantModal}>{modalAction === 'cart' ? 'Confirm and Add to Cart' : 'Confirm Favorite'}</ConfirmBtn>
+                        </ModalFooter>
+                    </ModalPanel>
+                </ModalOverlay>
+            )}
         </PageContainer>
     );
 };

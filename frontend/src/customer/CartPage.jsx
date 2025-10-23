@@ -442,16 +442,16 @@ const CartPage = () => {
             setSuccess(null);
             if (showLoader) setLoading(true);
             const response = await cart.viewCart();
-            console.log('Cart response:', response); // Debug log
+            console.log('Cart API data:', response); // Debug log
             setCartData(response);
             const count = Array.isArray(response?.items)
-                ? response.items.reduce((sum, item) => sum + (item.quantity || 0), 0)
+                ? response.items.reduce((sum, item) => sum + (item?.quantity || 0), 0)
                 : 0;
             setCartCount(count);
             const initialSelected = {};
-            if (response?.items) {
+            if (Array.isArray(response?.items)) {
                 response.items.forEach(item => {
-                    initialSelected[item.product._id] = false;
+                    if (item?.product?._id) initialSelected[item.product._id] = false;
                 });
             }
             setSelectedItems(initialSelected);
@@ -514,8 +514,11 @@ const CartPage = () => {
     const getSelectedTotal = () => {
         if (!cartData?.items) return 0;
         return cartData.items.reduce((total, item) => {
-            if (selectedItems[item.product._id]) {
-                return total + (item.product.price * item.quantity);
+            const pid = item?.product?._id;
+            const unitPrice = Number(item?.selectedVariant?.price ?? item?.price ?? item?.product?.price ?? 0);
+            const qty = Number(item?.quantity || 0);
+            if (pid && selectedItems[pid]) {
+                return total + (unitPrice * qty);
             }
             return total;
         }, 0);
@@ -664,57 +667,71 @@ const CartPage = () => {
                                     <SkeletonRow key={`cart-skeleton-${i}`} height={96} />
                                 ))
                             )}
-                            {cartData?.items && cartData.items.length > 0 ? (
-                                cartData.items.map((item) => (
-                                    <ProductCard key={item.product._id}>
-                                        <ProductCardContent>
-                                            <Checkbox 
-                                                checked={selectedItems[item.product._id]}
-                                                onChange={() => handleSelectItem(item.product._id)}
-                                                style={{ marginRight: 1 }}
-                                            />
-                                            <ImageContainer>
-                                                <ProductImage 
-                                                    src={item.product.image} 
-                                                    alt={item.product.name}
-                                                    onClick={() => navigateToProduct(item.product._id)}
-                                                    loading="lazy"
-                                                />
-                                            </ImageContainer>
-                                            <ProductInfo>
-                                                <ProductName>{item.product.name}</ProductName>
-                                                <SubtotalText>
-                                                    ₱{Number(item.product.price).toFixed(0)} × {item.quantity} = ₱{(item.product.price * item.quantity).toFixed(0)}
-                                                </SubtotalText>
-                                            </ProductInfo>
-                                            <ProductRight>
-                                                <ProductPrice>₱{(item.product.price * item.quantity).toFixed(0)}</ProductPrice>
-                                                <QuantityControl aria-busy={!!updating[item.product._id]}>
-                                                    <QuantityButton 
-                                                        size={window.innerWidth < 600 ? "small" : "medium"}
-                                                        onClick={() => handleQuantityChange(item.product._id, item.quantity - 1)}
-                                                        disabled={!!updating[item.product._id]}
+                            {Array.isArray(cartData?.items) && cartData.items.length > 0 ? (
+                                cartData.items.map((item, idx) => {
+                                    const prod = item?.product || {};
+                                    const pid = prod?._id;
+                                    const unitPrice = Number(item?.selectedVariant?.price ?? item?.price ?? prod?.price ?? 0);
+                                    const qty = Number(item?.quantity || 0);
+                                    const lineTotal = (unitPrice * qty).toFixed(0);
+                                    const displayName = prod?.name || item?.name || 'Unknown';
+                                    const displayImg = item?.selectedVariant?.image || prod?.image || '';
+                                    const k = item?._id || (pid ? `${pid}-${item?.selectedVariant?.optionName || ''}` : `idx-${idx}`);
+                                    const canInteract = Boolean(pid);
+                                    return (
+                                        <ProductCard key={k}>
+                                            <ProductCardContent>
+                                                {canInteract ? (
+                                                    <Checkbox 
+                                                        checked={!!selectedItems[pid]}
+                                                        onChange={() => handleSelectItem(pid)}
+                                                        style={{ marginRight: 1 }}
+                                                    />
+                                                ) : <div style={{ width: 42 }} />}
+                                                <ImageContainer>
+                                                    <ProductImage 
+                                                        src={displayImg}
+                                                        alt={displayName}
+                                                        onClick={() => canInteract && navigateToProduct(pid)}
+                                                        loading="lazy"
+                                                    />
+                                                </ImageContainer>
+                                                <ProductInfo>
+                                                    <ProductName>{displayName}</ProductName>
+                                                    <SubtotalText>
+                                                        ₱{unitPrice.toFixed(0)} × {qty} = ₱{lineTotal}
+                                                    </SubtotalText>
+                                                </ProductInfo>
+                                                <ProductRight>
+                                                    <ProductPrice>₱{lineTotal}</ProductPrice>
+                                                    <QuantityControl aria-busy={!!(canInteract && updating[pid])}>
+                                                        <QuantityButton 
+                                                            size={window.innerWidth < 600 ? "small" : "medium"}
+                                                            onClick={() => canInteract && handleQuantityChange(pid, qty - 1)}
+                                                            disabled={!canInteract || !!updating[pid]}
+                                                        >
+                                                            <Remove />
+                                                        </QuantityButton>
+                                                        <QuantityValue>{qty}</QuantityValue>
+                                                        <QuantityButton 
+                                                            size={window.innerWidth < 600 ? "small" : "medium"}
+                                                            onClick={() => canInteract && handleQuantityChange(pid, qty + 1)}
+                                                            disabled={!canInteract || !!updating[pid]}
+                                                        >
+                                                            <Add />
+                                                        </QuantityButton>
+                                                    </QuantityControl>
+                                                    <RemoveItemButton
+                                                        onClick={() => canInteract && handleRemoveItem(pid)}
+                                                        disabled={!canInteract}
                                                     >
-                                                        <Remove />
-                                                    </QuantityButton>
-                                                    <QuantityValue>{item.quantity}</QuantityValue>
-                                                    <QuantityButton 
-                                                        size={window.innerWidth < 600 ? "small" : "medium"}
-                                                        onClick={() => handleQuantityChange(item.product._id, item.quantity + 1)}
-                                                        disabled={!!updating[item.product._id]}
-                                                    >
-                                                        <Add />
-                                                    </QuantityButton>
-                                                </QuantityControl>
-                                                <RemoveItemButton
-                                                    onClick={() => handleRemoveItem(item.product._id)}
-                                                >
-                                                    <CloseIcon />
-                                                </RemoveItemButton>
-                                            </ProductRight>
-                                        </ProductCardContent>
-                                    </ProductCard>
-                                ))
+                                                        <CloseIcon />
+                                                    </RemoveItemButton>
+                                                </ProductRight>
+                                            </ProductCardContent>
+                                        </ProductCard>
+                                    );
+                                })
                             ) : null}
                         </ProductList>
                     </FormContainer>

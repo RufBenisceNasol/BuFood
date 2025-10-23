@@ -76,7 +76,17 @@ const {
  *       401:
  *         description: Unauthorized
  */
+// View cart (GET /)
 router.get('/', authenticate, cartLimiter, viewCart);
+
+// Add to cart (POST /) — supports plural mount at /api/carts
+router.post('/', authenticate, cartLimiter, addToCartValidator, addToCart);
+
+// Update cart item (PUT /) — alias for /update
+router.put('/', authenticate, cartLimiter, updateCartValidator, updateCartItem);
+
+// Clear cart (DELETE /) — alias for /clear
+router.delete('/', authenticate, cartLimiter, clearCart);
 
 /**
  * @swagger
@@ -100,6 +110,7 @@ router.get('/', authenticate, cartLimiter, viewCart);
  *       401:
  *         description: Unauthorized
  */
+// Backward-compatible: POST /add
 router.post('/add', authenticate, cartLimiter, addToCartValidator, addToCart);
 
 /**

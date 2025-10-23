@@ -9,6 +9,12 @@ const cartItemSchema = new mongoose.Schema({
   // Server-snapshotted fields so cart remains stable if product changes
   name: { type: String },
   image: { type: String },
+  selectedVariant: {
+    variantName: { type: String },
+    optionName: { type: String },
+    price: { type: Number, min: 0 },
+    image: { type: String }
+  },
   selectedVariantId: {
     type: String
   },
