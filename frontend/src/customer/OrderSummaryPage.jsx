@@ -498,21 +498,38 @@ const OrderSummaryPage = () => {
                     {/* Order Items Summary */}
                     <Section>
                         <SectionTitle>Order Items</SectionTitle>
-                        {cartItems.map((item) => (
-                            <OrderItem key={item.product._id}>
-                                <div style={{ display: 'flex', alignItems: 'center' }}>
-                                    <ItemImage 
-                                        src={item.product.image} 
-                                        alt={item.product.name}
-                                    />
-                                    <ItemInfo>
-                                        <ItemName>{item.product.name}</ItemName>
-                                        <ItemQuantity>Quantity: {item.quantity}</ItemQuantity>
-                                    </ItemInfo>
-                                </div>
-                                <ItemPrice>₱{(item.product.price * item.quantity).toFixed(2)}</ItemPrice>
-                            </OrderItem>
-                        ))}
+                        {cartItems.map((item, idx) => {
+                            const prod = item?.product || {};
+                            const variant = item?.selectedVariant || item?.variant; // support pre-order cart variant or post-order variant
+                            const img = variant?.image || prod?.image || '';
+                            const baseName = prod?.name || 'Product';
+                            const variantLabel = variant?.variantName && variant?.optionName
+                                ? `${variant.variantName}: ${variant.optionName}`
+                                : '';
+                            const unitPrice = Number(variant?.price ?? item?.price ?? prod?.price ?? 0);
+                            const qty = Number(item?.quantity || 0);
+                            const key = prod?._id || item?._id || `idx-${idx}`;
+                            return (
+                                <OrderItem key={key}>
+                                    <div style={{ display: 'flex', alignItems: 'center' }}>
+                                        <ItemImage 
+                                            src={img}
+                                            alt={baseName}
+                                        />
+                                        <ItemInfo>
+                                            <ItemName>{baseName}</ItemName>
+                                            {variantLabel ? (
+                                                <Typography variant="body2" color="text.secondary" style={{ marginTop: -2 }}>
+                                                    Variant: {variantLabel}
+                                                </Typography>
+                                            ) : null}
+                                            <ItemQuantity>Quantity: {qty}</ItemQuantity>
+                                        </ItemInfo>
+                                    </div>
+                                    <ItemPrice>₱{(unitPrice * qty).toFixed(2)}</ItemPrice>
+                                </OrderItem>
+                            );
+                        })}
                         <Divider sx={{ my: 2 }} />
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <TotalLabel>Total Amount:</TotalLabel>

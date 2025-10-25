@@ -479,6 +479,86 @@ const ErrorContainer = styled.div`
   text-align: center;
 `;
 
+// Confirmation Modal Styles
+const ConfirmOverlay = styled.div`
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,0.35);
+  z-index: 2200;
+  animation: fadeIn 150ms ease-in;
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+`;
+
+const ConfirmBox = styled.div`
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.18);
+  padding: 20px 22px;
+  width: 100%;
+  max-width: 420px;
+  transform: translateY(4px);
+  animation: popIn 180ms ease-out;
+
+  @keyframes popIn {
+    from { transform: translateY(12px); opacity: 0.96; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+`;
+
+const ConfirmTitle = styled.div`
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #2E7D32;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+`;
+
+const ConfirmInfo = styled.div`
+  font-size: 0.95rem;
+  color: #333;
+  margin-bottom: 16px;
+  line-height: 1.5;
+`;
+
+const ConfirmActions = styled.div`
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+`;
+
+const ConfirmButtonPrimary = styled.button`
+  flex: 1;
+  min-width: 160px;
+  background: linear-gradient(135deg, #fbaa39, #fc753b);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-weight: 700;
+  cursor: pointer;
+`;
+
+const ConfirmButtonSecondary = styled.button`
+  flex: 1;
+  min-width: 160px;
+  background: #f1f1f1;
+  color: #333;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-weight: 700;
+  cursor: pointer;
+`;
+
 const SingleProductPage = () => {
     const { productId } = useParams();
     const navigate = useNavigate();
@@ -489,7 +569,7 @@ const SingleProductPage = () => {
     const [isFavorite, setIsFavorite] = useState(false);
     const [reviews, setReviews] = useState([]);
     const [currentUser, setCurrentUser] = useState(null);
-    const [successModal, setSuccessModal] = useState({ open: false, message: '' });
+    const [successModal, setSuccessModal] = useState({ open: false, productName: '', variantText: '', quantity: 1 });
     const [variantSelections, setVariantSelections] = useState([]);
     const [isSelectionsValid, setIsSelectionsValid] = useState(false);
     const [calculatedPrice, setCalculatedPrice] = useState(0);
@@ -718,7 +798,12 @@ const SingleProductPage = () => {
                 const data = contentType.includes('application/json') ? await res.json() : { success: false, message: await res.text() };
                 console.log('Add to cart response:', data);
                 if (!res.ok || !data.success) throw new Error(data?.message || 'Failed to add to cart');
-                alert(`Added ${choice.optionName} ${productData.name} to your cart!`);
+                setSuccessModal({
+                    open: true,
+                    productName: productData?.name || 'Product',
+                    variantText: `${choice.variantName}: ${choice.optionName}`,
+                    quantity: Number(modalQuantity) || 1,
+                });
             } else if (modalAction === 'fav') {
                 const token = localStorage.getItem('token');
                 const headers = {
@@ -828,10 +913,23 @@ const SingleProductPage = () => {
                 throw new Error(msg);
             }
             if (hasVariantChoices && selectedVariantChoice) {
-                alert(`Added ${selectedVariantChoice.optionName} ${productData.name} to your cart!`);
+                setSuccessModal({
+                    open: true,
+                    productName: productData?.name || 'Product',
+                    variantText: `${selectedVariantChoice.variantName}: ${selectedVariantChoice.optionName}`,
+                    quantity: Number(quantity) || 1,
+                });
             } else {
-                setSuccessModal({ open: true, message: 'Product added to cart successfully' });
-                setTimeout(() => setSuccessModal({ open: false, message: '' }), 1200);
+                // Legacy variants or no variants; build best-effort label
+                const label = Array.isArray(variantSelections) && variantSelections.length > 0
+                  ? variantSelections.map(v => `${v.variant?.name || v.variant || ''}${v.choice ? `: ${v.choice}` : ''}`).filter(Boolean).join(', ')
+                  : '';
+                setSuccessModal({
+                    open: true,
+                    productName: productData?.name || 'Product',
+                    variantText: label,
+                    quantity: Number(quantity) || 1,
+                });
             }
         } catch (err) {
             const errorMessage = err.message || 'Failed to add product to cart';
@@ -851,45 +949,31 @@ const SingleProductPage = () => {
     return (
         <PageContainer>
             <ToastContainer position="top-right" autoClose={3000} />
-            {/* Success Modal */}
+            {/* Confirmation Modal: Added to Cart */}
             {successModal.open && (
-                <div
-                    onClick={() => setSuccessModal({ open: false, message: '' })}
-                    style={{
-                        position: 'fixed',
-                        top: 0,
-                        left: 0,
-                        right: 0,
-                        bottom: 0,
-                        background: 'rgba(0,0,0,0.25)',
-                        zIndex: 2000,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center'
-                    }}
-                >
-                    <div
-                        onClick={(e) => e.stopPropagation()}
-                        style={{
-                            background: '#fff',
-                            borderRadius: 12,
-                            boxShadow: '0 8px 24px rgba(0,0,0,0.18)',
-                            padding: '22px 28px',
-                            minWidth: 260,
-                            maxWidth: '90vw',
-                            textAlign: 'center',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            gap: 10,
-                            alignItems: 'center'
-                        }}
-                    >
-                        <MdCheckCircle size={44} color="#2E7D32" />
-                        <div style={{ fontSize: 16, fontWeight: 600, color: '#2E7D32', marginTop: 6 }}>
-                            {successModal.message || 'Success'}
-                        </div>
-                    </div>
-                </div>
+                <ConfirmOverlay onClick={() => setSuccessModal(prev => ({ ...prev, open: false }))}>
+                    <ConfirmBox onClick={(e) => e.stopPropagation()}>
+                        <ConfirmTitle>
+                            <MdCheckCircle size={22} color="#2E7D32" />
+                            Added to Cart!
+                        </ConfirmTitle>
+                        <ConfirmInfo>
+                            <div style={{ fontWeight: 700 }}>{successModal.productName}</div>
+                            {successModal.variantText ? (
+                                <div>Variant: {successModal.variantText}</div>
+                            ) : null}
+                            <div>Quantity: {successModal.quantity}</div>
+                        </ConfirmInfo>
+                        <ConfirmActions>
+                            <ConfirmButtonSecondary onClick={() => setSuccessModal(prev => ({ ...prev, open: false }))}>
+                                Continue Shopping
+                            </ConfirmButtonSecondary>
+                            <ConfirmButtonPrimary onClick={() => navigate('/customer/cart')}>
+                                Go to Cart
+                            </ConfirmButtonPrimary>
+                        </ConfirmActions>
+                    </ConfirmBox>
+                </ConfirmOverlay>
             )}
             
             <Header>

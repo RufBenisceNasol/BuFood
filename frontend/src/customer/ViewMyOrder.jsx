@@ -475,30 +475,36 @@ const ViewMyOrder = () => {
                     <div style={{ fontSize: 12, color: '#888', marginTop: 2 }}>{new Date(order.createdAt).toLocaleString()}</div>
                   </div>
                   {(() => { const { bg, fg } = statusStyles(order.status); return (
-                    <StatusBadge $bg={bg} $fg={fg}>
-                      {order.status}
-                    </StatusBadge>
+                    <StatusBadge $bg={bg} $fg={fg}>{order.status}</StatusBadge>
                   ); })()}
                 </OrderHeader>
                 <OrderBody>
                   {order.items && order.items.slice(0, expandedOrder === (order._id || order.id) ? order.items.length : 2).map((item, index) => {
-                    // Get product image and name
                     const product = item.product || {};
-                    const imageUrl = product.image || defPic;
-                    const productName = product.name || item.name || 'Product';
+                    const variant = item.variant || item.selectedVariant || {};
+                    const imageUrl = variant.image || product.image || defPic;
+                    const baseName = product.name || item.name || 'Product';
+                    const variantLabel = (variant.variantName && variant.optionName)
+                      ? `${variant.variantName}: ${variant.optionName}`
+                      : (variant.name || '');
+                    const unitPrice = Number(variant.price ?? item.price ?? product.price ?? 0);
+                    const qty = Number(item.quantity || 0);
                     return (
                       <div key={index} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
                         <div style={{ display: 'flex', alignItems: 'center', minWidth: 0, flex: 1 }}>
-                          <ProductImage src={imageUrl} alt={productName} onError={e => { e.target.onerror = null; e.target.src = defPic; }} />
+                          <ProductImage src={imageUrl} alt={baseName} onError={e => { e.target.onerror = null; e.target.src = defPic; }} />
                           <div style={{ minWidth: 0 }}>
-                            <div style={{ fontSize: 14, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{productName}</div>
-                            <div style={{ fontSize: 12, color: '#777' }}>{formatCurrency(item.price || product.price || 0)} × {item.quantity}</div>
+                            <div style={{ fontSize: 14, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{baseName}</div>
+                            {variantLabel ? (
+                              <div style={{ fontSize: 12, color: '#777', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Variant: {variantLabel}</div>
+                            ) : null}
+                            <div style={{ fontSize: 12, color: '#777' }}>{formatCurrency(unitPrice)} × {qty}</div>
                           </div>
                         </div>
                         <span style={{ fontSize: 14, fontWeight: 700 }}>
-                          {formatCurrency((item.price || product.price || 0) * item.quantity)}
+                          {formatCurrency(unitPrice * qty)}
                         </span>
-                    </div>
+                      </div>
                     );
                   })}
                   {order.items && order.items.length > 2 && expandedOrder !== (order._id || order.id) && (
@@ -524,40 +530,29 @@ const ViewMyOrder = () => {
                   </div>
                   {expandedOrder === (order._id || order.id) && (
                     <>
-                    <div style={{ marginTop: 16, padding: 12, backgroundColor: '#fafafa', borderRadius: 10, border: '1px solid #f0f0f0' }}>
-                      <p style={{ fontSize: '14px', fontWeight: 600, margin: '0 0 12px 0' }}>Order Details</p>
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                        <div>
-                          <p style={{ fontSize: '12px', color: '#666', margin: '0 0 4px 0' }}>Payment Method</p>
-                          <p style={{ fontSize: '14px', margin: 0 }}>{order.paymentMethod}</p>
-                        </div>
-                        <div style={{ borderLeft: '1px solid #f0f0f0', paddingLeft: 12 }}>
-                          <p style={{ fontSize: '12px', color: '#666', margin: '0 0 4px 0' }}>Payment Status</p>
-                          <p style={{ fontSize: '14px', margin: 0 }}>
-                            {order.paymentStatus || 'Pending'}
-                          </p>
-                        </div>
-                        <div>
-                          <p style={{ fontSize: '12px', color: '#666', margin: '0 0 4px 0' }}>Status</p>
-                          <p style={{ 
-                            fontSize: '14px', 
-                            margin: 0,
-                            color: statusStyles(order.status).fg,
-                            fontWeight: 500
-                          }}>
+                      <div style={{ marginTop: 16, padding: 12, backgroundColor: '#fafafa', borderRadius: 10, border: '1px solid #f0f0f0' }}>
+                        <p style={{ fontSize: '14px', fontWeight: 600, margin: '0 0 12px 0' }}>Order Details</p>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                          <div>
+                            <p style={{ fontSize: '12px', color: '#666', margin: '0 0 4px 0' }}>Payment Method</p>
+                            <p style={{ fontSize: '14px', margin: 0 }}>{order.paymentMethod}</p>
+                          </div>
+                          <div style={{ borderLeft: '1px solid #f0f0f0', paddingLeft: 12 }}>
+                            <p style={{ fontSize: '12px', color: '#666', margin: '0 0 4px 0' }}>Payment Status</p>
+                            <p style={{ fontSize: '14px', margin: 0 }}>{order.paymentStatus || 'Pending'}</p>
+                          </div>
+                          <div>
+                            <p style={{ fontSize: '12px', color: '#666', margin: '0 0 4px 0' }}>Status</p>
+                            <p style={{ fontSize: '14px', margin: 0, color: statusStyles(order.status).fg, fontWeight: 500 }}>
                               {order.status}
-                            {order.cancelReason && (
-                              <span style={{ display: 'block', fontSize: '12px', color: '#666', marginTop: '2px' }}>
-                                Reason: {order.cancelReason}
-                              </span>
-                            )}
-                          </p>
-                        </div>
-                        <div style={{ borderLeft: '1px solid #f0f0f0', paddingLeft: 12 }}>
-                          <p style={{ fontSize: '12px', color: '#666', margin: '0 0 4px 0' }}>Estimated Delivery</p>
-                          <p style={{ fontSize: '14px', margin: 0 }}>
-                              {order.estimatedDelivery ? new Date(order.estimatedDelivery).toLocaleString() : 'N/A'}
-                          </p>
+                              {order.cancelReason && (
+                                <span style={{ display: 'block', fontSize: '12px', color: '#666', marginTop: '2px' }}>Reason: {order.cancelReason}</span>
+                              )}
+                            </p>
+                          </div>
+                          <div style={{ borderLeft: '1px solid #f0f0f0', paddingLeft: 12 }}>
+                            <p style={{ fontSize: '12px', color: '#666', margin: '0 0 4px 0' }}>Estimated Delivery</p>
+                            <p style={{ fontSize: '14px', margin: 0 }}>{order.estimatedDelivery ? new Date(order.estimatedDelivery).toLocaleString() : 'N/A'}</p>
                           </div>
                         </div>
                       </div>

@@ -698,6 +698,11 @@ const CartPage = () => {
                                                 </ImageContainer>
                                                 <ProductInfo>
                                                     <ProductName>{displayName}</ProductName>
+                                                    {item?.selectedVariant?.variantName && item?.selectedVariant?.optionName ? (
+                                                      <span style={{ fontSize: '0.85rem', color: '#666', marginBottom: 2 }}>
+                                                        Variant: {item.selectedVariant.variantName} / {item.selectedVariant.optionName}
+                                                      </span>
+                                                    ) : null}
                                                     <SubtotalText>
                                                         ₱{unitPrice.toFixed(0)} × {qty} = ₱{lineTotal}
                                                     </SubtotalText>

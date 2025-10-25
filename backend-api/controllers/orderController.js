@@ -124,14 +124,23 @@ const createOrderFromCart = async (req, res) => {
         ? Math.max(...items.map(item => item.product.estimatedTime || 30)) + 30 // Add 30 minutes for delivery
         : null;
 
-      // Create order items (use stored cart item price and selections)
+      // Create order items (use stored cart item price and selections, snapshot variant details if present)
       const orderItems = items.map(item => ({
         product: item.product._id,
         selectedVariantId: item.selectedVariantId,
         selectedOptions: item.selectedOptions,
         quantity: item.quantity,
-        price: typeof item.price === 'number' ? item.price : item.product.price,
-        subtotal: item.subtotal
+        // Prefer variant price snapshot, then cart item price, then product price
+        price: typeof item?.selectedVariant?.price === 'number' ? item.selectedVariant.price
+          : (typeof item.price === 'number' ? item.price : item.product.price),
+        subtotal: item.subtotal,
+        variant: item?.selectedVariant ? {
+          variantName: item.selectedVariant.variantName,
+          optionName: item.selectedVariant.optionName,
+          name: [item.selectedVariant.variantName, item.selectedVariant.optionName].filter(Boolean).join(': '),
+          image: item.selectedVariant.image,
+          price: item?.selectedVariant?.price
+        } : undefined
       }));
 
       // Validate delivery details for delivery orders
