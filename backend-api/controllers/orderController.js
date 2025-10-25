@@ -124,23 +124,15 @@ const createOrderFromCart = async (req, res) => {
         ? Math.max(...items.map(item => item.product.estimatedTime || 30)) + 30 // Add 30 minutes for delivery
         : null;
 
-      // Create order items (use stored cart item price and selections, snapshot variant details if present)
+      // Create order items (use stored cart item price and selections)
       const orderItems = items.map(item => ({
         product: item.product._id,
+        selectedVariant: item.selectedVariant || undefined,
         selectedVariantId: item.selectedVariantId,
         selectedOptions: item.selectedOptions,
         quantity: item.quantity,
-        // Prefer variant price snapshot, then cart item price, then product price
-        price: typeof item?.selectedVariant?.price === 'number' ? item.selectedVariant.price
-          : (typeof item.price === 'number' ? item.price : item.product.price),
-        subtotal: item.subtotal,
-        variant: item?.selectedVariant ? {
-          variantName: item.selectedVariant.variantName,
-          optionName: item.selectedVariant.optionName,
-          name: [item.selectedVariant.variantName, item.selectedVariant.optionName].filter(Boolean).join(': '),
-          image: item.selectedVariant.image,
-          price: item?.selectedVariant?.price
-        } : undefined
+        price: typeof item.price === 'number' ? item.price : (item?.selectedVariant?.price ?? item.product.price),
+        subtotal: item.subtotal
       }));
 
       // Validate delivery details for delivery orders
@@ -933,17 +925,9 @@ const createDirectOrder = async (req, res) => {
 
       // Determine unit price: variant overrides base price if provided
       let unitPrice = product.price;
-      let variantSnapshot = undefined;
       if (orderItem?.selectedVariantId && Array.isArray(product.variants)) {
         const v = product.variants.find(v => String(v.id || v._id || v.name) === String(orderItem.selectedVariantId));
-        if (v) {
-          if (typeof v.price === 'number') unitPrice = v.price;
-          variantSnapshot = {
-            name: v.name || undefined,
-            image: v.image || undefined,
-            price: typeof v.price === 'number' ? v.price : undefined
-          };
-        }
+        if (v && typeof v.price === 'number') unitPrice = v.price;
       }
 
       acc[storeId].items.push({
@@ -952,8 +936,7 @@ const createDirectOrder = async (req, res) => {
         selectedOptions: orderItem?.selectedOptions,
         quantity: orderItem.quantity,
         price: unitPrice,
-        subtotal: unitPrice * orderItem.quantity,
-        variant: variantSnapshot
+        subtotal: unitPrice * orderItem.quantity
       });
 
       return acc;

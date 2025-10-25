@@ -500,33 +500,31 @@ const OrderSummaryPage = () => {
                         <SectionTitle>Order Items</SectionTitle>
                         {cartItems.map((item, idx) => {
                             const prod = item?.product || {};
-                            const variant = item?.selectedVariant || item?.variant; // support pre-order cart variant or post-order variant
-                            const img = variant?.image || prod?.image || '';
-                            const baseName = prod?.name || 'Product';
-                            const variantLabel = variant?.variantName && variant?.optionName
-                                ? `${variant.variantName}: ${variant.optionName}`
-                                : '';
-                            const unitPrice = Number(variant?.price ?? item?.price ?? prod?.price ?? 0);
+                            const sv = item?.selectedVariant || item?.variant || {};
+                            const img = sv?.image || prod?.image;
+                            const name = prod?.name || item?.name || 'Unknown';
+                            const unitPrice = Number(sv?.price ?? item?.price ?? prod?.price ?? 0);
                             const qty = Number(item?.quantity || 0);
-                            const key = prod?._id || item?._id || `idx-${idx}`;
+                            const lineTotal = (unitPrice * qty).toFixed(2);
+                            const key = prod?._id || `idx-${idx}`;
                             return (
                                 <OrderItem key={key}>
                                     <div style={{ display: 'flex', alignItems: 'center' }}>
                                         <ItemImage 
                                             src={img}
-                                            alt={baseName}
+                                            alt={name}
                                         />
                                         <ItemInfo>
-                                            <ItemName>{baseName}</ItemName>
-                                            {variantLabel ? (
-                                                <Typography variant="body2" color="text.secondary" style={{ marginTop: -2 }}>
-                                                    Variant: {variantLabel}
+                                            <ItemName>{name}</ItemName>
+                                            {sv?.variantName && sv?.optionName ? (
+                                                <Typography variant="body2" color="text.secondary" style={{ marginBottom: 4 }}>
+                                                    Variant: {sv.variantName} / {sv.optionName}
                                                 </Typography>
                                             ) : null}
                                             <ItemQuantity>Quantity: {qty}</ItemQuantity>
                                         </ItemInfo>
                                     </div>
-                                    <ItemPrice>₱{(unitPrice * qty).toFixed(2)}</ItemPrice>
+                                    <ItemPrice>₱{lineTotal}</ItemPrice>
                                 </OrderItem>
                             );
                         })}

@@ -6,13 +6,11 @@ const orderItemSchema = new mongoose.Schema({
         ref: 'Product',
         required: true
     },
-    // Snapshot of variant details at ordering time (if applicable)
-    variant: {
+    selectedVariant: {
         variantName: { type: String },
         optionName: { type: String },
-        name: { type: String }, // convenience label e.g. "Size: Large"
-        image: { type: String },
-        price: { type: Number, min: 0 }
+        price: { type: Number, min: 0 },
+        image: { type: String }
     },
     selectedVariantId: {
         type: String
