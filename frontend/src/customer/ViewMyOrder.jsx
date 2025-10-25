@@ -483,7 +483,7 @@ const ViewMyOrder = () => {
                     const product = item.product || {};
                     const variant = item.variant || item.selectedVariant || {};
                     const imageUrl = variant.image || product.image || defPic;
-                    const baseName = product.name || item.name || 'Product';
+                    const baseName = variant.name || product.name || item.name || 'Product';
                     const variantLabel = (variant.variantName && variant.optionName)
                       ? `${variant.variantName}: ${variant.optionName}`
                       : (variant.name || '');

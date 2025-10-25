@@ -933,9 +933,17 @@ const createDirectOrder = async (req, res) => {
 
       // Determine unit price: variant overrides base price if provided
       let unitPrice = product.price;
+      let variantSnapshot = undefined;
       if (orderItem?.selectedVariantId && Array.isArray(product.variants)) {
         const v = product.variants.find(v => String(v.id || v._id || v.name) === String(orderItem.selectedVariantId));
-        if (v && typeof v.price === 'number') unitPrice = v.price;
+        if (v) {
+          if (typeof v.price === 'number') unitPrice = v.price;
+          variantSnapshot = {
+            name: v.name || undefined,
+            image: v.image || undefined,
+            price: typeof v.price === 'number' ? v.price : undefined
+          };
+        }
       }
 
       acc[storeId].items.push({
@@ -944,7 +952,8 @@ const createDirectOrder = async (req, res) => {
         selectedOptions: orderItem?.selectedOptions,
         quantity: orderItem.quantity,
         price: unitPrice,
-        subtotal: unitPrice * orderItem.quantity
+        subtotal: unitPrice * orderItem.quantity,
+        variant: variantSnapshot
       });
 
       return acc;
