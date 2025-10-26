@@ -483,20 +483,25 @@ const ViewMyOrder = () => {
                 <OrderBody>
                   {order.items && order.items.slice(0, expandedOrder === (order._id || order.id) ? order.items.length : 2).map((item, index) => {
                     // Get product image and name
-                    const product = item.product || {};
-                    const imageUrl = product.image || defPic;
-                    const productName = product.name || item.name || 'Product';
+                    const prod = item?.product || {};
+                    const displayImg = item?.selectedVariant?.image || prod?.image;
+                    const displayName = prod?.name || item?.name || 'Product';
                     return (
                       <div key={index} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
                         <div style={{ display: 'flex', alignItems: 'center', minWidth: 0, flex: 1 }}>
-                          <ProductImage src={imageUrl} alt={productName} onError={e => { e.target.onerror = null; e.target.src = defPic; }} />
+                          <ProductImage src={displayImg || defPic} alt={displayName} onError={e => { e.target.onerror = null; e.target.src = defPic; }} />
                           <div style={{ minWidth: 0 }}>
-                            <div style={{ fontSize: 14, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{productName}</div>
-                            <div style={{ fontSize: 12, color: '#777' }}>{formatCurrency(item.price || product.price || 0)} × {item.quantity}</div>
+                            <div style={{ fontSize: 14, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{displayName}</div>
+                            {item?.selectedVariant?.variantName && item?.selectedVariant?.optionName ? (
+                              <p className="variant-label" style={{ fontSize: 12, color: '#666', margin: '2px 0 0 0' }}>
+                                Variant: {item.selectedVariant.variantName} / {item.selectedVariant.optionName}
+                              </p>
+                            ) : null}
+                            <div style={{ fontSize: 12, color: '#777' }}>{formatCurrency(item.price || prod.price || 0)} × {item.quantity}</div>
                           </div>
                         </div>
                         <span style={{ fontSize: 14, fontWeight: 700 }}>
-                          {formatCurrency((item.price || product.price || 0) * item.quantity)}
+                          {formatCurrency((item.price || prod.price || 0) * item.quantity)}
                         </span>
                     </div>
                     );
