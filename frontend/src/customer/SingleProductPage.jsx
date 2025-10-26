@@ -581,6 +581,40 @@ const SingleProductPage = () => {
     const [modalAction, setModalAction] = useState(null); // 'cart' | 'fav'
     const [modalQuantity, setModalQuantity] = useState(1);
     const [modalSelectedChoice, setModalSelectedChoice] = useState(null);
+    const [loginPrompt, setLoginPrompt] = useState(false);
+
+    const getAuthToken = () => {
+        // Prefer app token from localStorage/sessionStorage
+        const token = window.localStorage.getItem('token') || window.sessionStorage.getItem('token');
+        if (token) return token;
+        // Fallback to accessToken (set by supabaseAuthService)
+        const accessToken = window.localStorage.getItem('accessToken');
+        if (accessToken) return accessToken;
+        // Fallback to Supabase stored session under custom storageKey
+        try {
+            const sbRaw = window.localStorage.getItem('bufood-auth-token');
+            if (sbRaw) {
+                const parsed = JSON.parse(sbRaw);
+                if (parsed && parsed.currentSession && parsed.currentSession.access_token) {
+                    return parsed.currentSession.access_token;
+                }
+                if (parsed && parsed.access_token) {
+                    return parsed.access_token;
+                }
+            }
+            // Common Supabase keys
+            const sbAccess = window.localStorage.getItem('sb-access-token');
+            if (sbAccess) return sbAccess;
+            const sbAuthToken = window.localStorage.getItem('supabase.auth.token');
+            if (sbAuthToken) {
+                const parsed = JSON.parse(sbAuthToken);
+                if (parsed && parsed.currentSession && parsed.currentSession.access_token) {
+                    return parsed.currentSession.access_token;
+                }
+            }
+        } catch (_) {}
+        return null;
+    };
 
     useEffect(() => {
         // Load current user from localStorage (for review name/image resolution)
@@ -707,10 +741,14 @@ const SingleProductPage = () => {
                 return;
             }
 
-            const token = localStorage.getItem('token');
+            const token = getAuthToken();
+            if (!token) {
+                setLoginPrompt(true);
+                return;
+            }
             const headers = {
                 'Content-Type': 'application/json',
-                ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+                'Authorization': `Bearer ${token}`,
             };
 
             let body;
@@ -779,10 +817,14 @@ const SingleProductPage = () => {
         }
         try {
             if (modalAction === 'cart') {
-                const token = localStorage.getItem('token');
+                const token = getAuthToken();
+                if (!token) {
+                    setLoginPrompt(true);
+                    return;
+                }
                 const headers = {
                     'Content-Type': 'application/json',
-                    ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+                    'Authorization': `Bearer ${token}`,
                 };
                 const body = {
                     productId,
@@ -797,6 +839,10 @@ const SingleProductPage = () => {
                 const contentType = res.headers.get('content-type') || '';
                 const data = contentType.includes('application/json') ? await res.json() : { success: false, message: await res.text() };
                 console.log('Add to cart response:', data);
+                if (res.status === 401) {
+                    setLoginPrompt(true);
+                    return;
+                }
                 if (!res.ok || !data.success) throw new Error(data?.message || 'Failed to add to cart');
                 setSuccessModal({
                     open: true,
@@ -908,6 +954,10 @@ const SingleProductPage = () => {
             const contentType = response.headers.get('content-type') || '';
             const data = contentType.includes('application/json') ? await response.json() : { success: false, message: await response.text() };
             console.log('Add to cart response:', data);
+            if (response.status === 401) {
+                setLoginPrompt(true);
+                return;
+            }
             if (!response.ok || !data.success) {
                 const msg = data?.message || 'Failed to add product to cart';
                 throw new Error(msg);
@@ -949,6 +999,23 @@ const SingleProductPage = () => {
     return (
         <PageContainer>
             <ToastContainer position="top-right" autoClose={3000} />
+            {/* Login Prompt Modal */}
+            {loginPrompt && (
+                <ConfirmOverlay onClick={() => setLoginPrompt(false)}>
+                    <ConfirmBox onClick={(e) => e.stopPropagation()}>
+                        <ConfirmTitle>
+                            Authentication Required
+                        </ConfirmTitle>
+                        <ConfirmInfo>
+                            You must be logged in to add items to your cart.
+                        </ConfirmInfo>
+                        <ConfirmActions>
+                            <ConfirmButtonSecondary onClick={() => setLoginPrompt(false)}>Cancel</ConfirmButtonSecondary>
+                            <ConfirmButtonPrimary onClick={() => navigate('/login')}>Go to Login</ConfirmButtonPrimary>
+                        </ConfirmActions>
+                    </ConfirmBox>
+                </ConfirmOverlay>
+            )}
             {/* Confirmation Modal: Added to Cart */}
             {successModal.open && (
                 <ConfirmOverlay onClick={() => setSuccessModal(prev => ({ ...prev, open: false }))}>

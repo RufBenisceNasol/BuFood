@@ -763,67 +763,88 @@ const cancelOrder = async (req, res) => {
     // Save the updated order
     await order.save({ session });
 
-    // Return items to cart if customer wants to reorder later
+    // Return items to cart (with required price field) if customer wants to reorder later
     const existingCart = await Cart.findOne({ user: req.user._id }).session(session);
-    
-    if (existingCart) {
-      // Add items back to existing cart
-      const updatedItems = [...existingCart.items];
-      
-      for (const orderItem of order.items) {
-        const existingItemIndex = updatedItems.findIndex(
-          item => item.product.toString() === orderItem.product.toString()
-        );
 
-        if (existingItemIndex > -1) {
-          // Update quantity if product already in cart
-          updatedItems[existingItemIndex].quantity += orderItem.quantity;
-          updatedItems[existingItemIndex].subtotal += orderItem.subtotal;
-        } else {
-          // Add new item to cart
-          updatedItems.push({
-            product: orderItem.product,
-            quantity: orderItem.quantity,
-            subtotal: orderItem.subtotal
-          });
+    // Normalize order items to cart item shape and ensure price/subtotal exist
+    const normalizedItems = order.items.map((oi) => {
+      const price = typeof oi.price === 'number'
+        ? oi.price
+        : (oi?.selectedVariant?.price ?? 0);
+      const quantity = Number(oi.quantity) || 0;
+      const subtotal = price * quantity;
+      return {
+        product: oi.product,
+        name: oi.name, // optional snapshot if ever present
+        image: oi.image, // optional snapshot if ever present
+        selectedVariant: oi.selectedVariant ? {
+          variantName: oi.selectedVariant.variantName,
+          optionName: oi.selectedVariant.optionName,
+          price: oi.selectedVariant.price,
+          image: oi.selectedVariant.image,
+        } : undefined,
+        selectedVariantId: oi.selectedVariantId,
+        selectedOptions: oi.selectedOptions,
+        quantity,
+        price,
+        subtotal,
+      };
+    }).filter(ci => ci.quantity > 0);
+
+    if (normalizedItems.length > 0) {
+      if (existingCart) {
+        // Merge with existing cart items by product + selectedVariant option
+        const updatedItems = [...existingCart.items];
+        for (const nItem of normalizedItems) {
+          const idx = updatedItems.findIndex(it => (
+            it.product.toString() === nItem.product.toString() &&
+            ((it.selectedVariant && nItem.selectedVariant && it.selectedVariant.optionName === nItem.selectedVariant.optionName) ||
+             (!it.selectedVariant && !nItem.selectedVariant))
+          ));
+          if (idx > -1) {
+            const newQty = (Number(updatedItems[idx].quantity) || 0) + nItem.quantity;
+            updatedItems[idx].quantity = newQty;
+            // Keep existing line price snapshot, recompute subtotal
+            const linePrice = typeof updatedItems[idx].price === 'number' ? updatedItems[idx].price : nItem.price;
+            updatedItems[idx].price = linePrice;
+            updatedItems[idx].subtotal = newQty * linePrice;
+            // Preserve name/image if present, or set if missing
+            updatedItems[idx].name = updatedItems[idx].name || nItem.name;
+            updatedItems[idx].image = updatedItems[idx].image || nItem.image;
+          } else {
+            updatedItems.push(nItem);
+          }
         }
+        existingCart.items = updatedItems;
+        existingCart.total = updatedItems.reduce((sum, item) => sum + (Number(item.subtotal) || 0), 0);
+        await existingCart.save({ session });
+      } else {
+        // Only create a new cart if there are valid items to return
+        const newCart = new Cart({
+          user: req.user._id,
+          items: normalizedItems,
+          total: normalizedItems.reduce((sum, item) => sum + (Number(item.subtotal) || 0), 0)
+        });
+        await newCart.save({ session });
       }
-
-      existingCart.items = updatedItems;
-      existingCart.total = updatedItems.reduce((sum, item) => sum + item.subtotal, 0);
-      await existingCart.save({ session });
-    } else {
-      // Create new cart with the order items
-      const newCart = new Cart({
-        user: req.user._id,
-        items: order.items.map(item => ({
-          product: item.product,
-          quantity: item.quantity,
-          subtotal: item.subtotal
-        })),
-        total: order.items.reduce((sum, item) => sum + item.subtotal, 0)
-      });
-      await newCart.save({ session });
     }
 
     // Commit the transaction
     await session.commitTransaction();
 
     // Prepare success response
-    const responseData = {
-      order: {
-        _id: order._id,
-        status: order.status,
-        store: order.store.name,
-        canceledAt: order.canceledAt,
-        cancellationReason: order.cancellationReason
-      }
-    };
-
     res.status(200).json(createResponse(
       true,
       'Order cancelled successfully',
-      responseData
+      {
+        order: {
+          _id: order._id,
+          status: order.status,
+          store: order.store.name,
+          canceledAt: order.canceledAt,
+          cancellationReason: order.cancellationReason
+        }
+      }
     ));
 
   } catch (error) {
