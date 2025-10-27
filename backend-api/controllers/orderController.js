@@ -2,6 +2,8 @@ const mongoose = require('mongoose');
 const Order = require('../models/orderModel');
 const Cart = require('../models/cartModel');
 const Product = require('../models/productModel');
+const Conversation = require('../models/conversationModel');
+const Message = require('../models/messageModel');
 const Store = require('../models/storeModel');
 const { validationResult } = require('express-validator');
 const ApiError = require('../utils/ApiError');
@@ -16,6 +18,56 @@ const createResponse = (success, message, data = null, error = null) => ({
   data,
   error
 });
+
+// Ensure conversation between two users exists, return the document
+async function getOrCreateConversation(userIdA, userIdB) {
+  const a = userIdA.toString();
+  const b = userIdB.toString();
+  let convo = await Conversation.findOne({ participants: { $all: [a, b], $size: 2 } });
+  if (!convo) {
+    convo = await Conversation.create({ participants: [a, b] });
+  }
+  return convo;
+}
+
+// After orders are created, send system message to the seller with order summary
+async function sendOrderPlacedChats(req, orders) {
+  try {
+    const io = req.app?.get('io');
+    const customerId = req.user._id;
+    const customerName = req.user.name || 'Customer';
+    for (const order of orders) {
+      const sellerId = order.seller;
+      // Collect product names for summary
+      const productIds = (order.items || []).map(it => it.product);
+      const prods = await Product.find({ _id: { $in: productIds } }).select('name');
+      const names = prods.map(p => p.name).filter(Boolean);
+      const summary = names.length ? names.join(', ') : `${productIds.length} item(s)`;
+      const text = `Customer ${customerName} placed an order: ${summary}.`;
+
+      const conversation = await getOrCreateConversation(customerId, sellerId);
+      const message = await Message.create({
+        conversationId: conversation._id,
+        orderId: order._id,
+        senderId: customerId,
+        receiverId: sellerId,
+        text,
+      });
+
+      conversation.lastMessage = message.text;
+      conversation.lastSenderId = customerId;
+      await conversation.save();
+
+      if (io) {
+        io.to(sellerId.toString()).emit('message:new', { conversationId: conversation._id, message });
+        io.to(conversation._id.toString()).emit('message:new', { conversationId: conversation._id, message });
+      }
+    }
+  } catch (e) {
+    // Non-blocking; log and continue
+    console.error('sendOrderPlacedChats error:', e);
+  }
+}
 
 // Create order from cart
 const createOrderFromCart = async (req, res) => {
@@ -192,6 +244,9 @@ const createOrderFromCart = async (req, res) => {
 
     // Commit the transaction
     await session.commitTransaction();
+
+    // Create or reuse chat conversations and send first message
+    await sendOrderPlacedChats(req, orders);
 
     res.status(201).json(createResponse(
       true,
@@ -1045,6 +1100,9 @@ const createDirectOrder = async (req, res) => {
 
     // Commit the transaction
     await session.commitTransaction();
+
+    // Create or reuse chat conversations and send first message for each order
+    await sendOrderPlacedChats(req, orders);
 
     res.status(201).json(createResponse(
       true,

@@ -8,6 +8,10 @@ const MessageSchema = new mongoose.Schema(
       required: true,
       index: true,
     },
+    orderId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Order',
+    },
     senderId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
