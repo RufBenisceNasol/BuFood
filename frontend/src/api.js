@@ -826,6 +826,28 @@ export const customer = {
     }
 };
 
+// Chat API endpoints
+export const chat = {
+  // Get all conversations for the current user
+  getConversations: () => api.get('/chat/conversations'),
+  
+  // Create or fetch a conversation
+  createOrFetchConversation: (participantIds, orderId = null) => 
+    api.post('/chat/conversations', { participantIds, orderId }),
+  
+  // Get messages for a conversation
+  getMessages: (conversationId) => 
+    api.get(`/chat/messages/${conversationId}`),
+  
+  // Send a message
+  sendMessage: (conversationId, text, orderRef = null) => 
+    api.post('/chat/messages', { conversationId, text, orderRef }),
+  
+  // Mark conversation as read
+  markAsRead: (conversationId) => 
+    api.post(`/chat/conversations/${conversationId}/read`)
+};
+
 // Review API endpoints
 export const review = {
     // List reviews for a product

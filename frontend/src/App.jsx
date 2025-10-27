@@ -4,6 +4,7 @@ import SplashScreen from './components/SplashScreen'
 import { Box } from '@mui/material'
 import './App.css'
 import { supabase } from './utils/supabaseClient'
+import { ChatProvider } from './contexts/ChatContext'
 
 // Lazy-loaded routes (code splitting)
 const LoginPage = lazy(() => import('./auth/loginPage'))
@@ -25,6 +26,7 @@ const SellerProductDetailPage = lazy(() => import('./seller/SellerProductDetailP
 const EditProductPage = lazy(() => import('./seller/EditProductPage'))
 const AnalyticsPage = lazy(() => import('./seller/AnalyticsPage'))
 const SellerSettingsPage = lazy(() => import('./seller/SellerSettingsPage'))
+const SellerChatPage = lazy(() => import('./pages/chat/SellerChatPage'))
 
 // Customer
 const HomePage = lazy(() => import('./customer/HomePage'))
@@ -41,8 +43,15 @@ const StoreDetailPage = lazy(() => import('./customer/StoreDetailPage'))
 const ViewMyOrder = lazy(() => import('./customer/ViewMyOrder'))
 const FavoritesPage = lazy(() => import('./customer/FavoritesPage'))
 const GCashCallback = lazy(() => import('./customer/GCashCallback'))
+const CustomerChatPage = lazy(() => import('./pages/chat/CustomerChatPage'))
 
 const CustomerLayout = ({ children }) => (
+  <Box sx={{ minHeight: '100vh', bgcolor: '#f5f5f5' }}>
+    {children}
+  </Box>
+);
+
+const SellerLayout = ({ children }) => (
   <Box sx={{ minHeight: '100vh', bgcolor: '#f5f5f5' }}>
     {children}
   </Box>
@@ -73,7 +82,8 @@ function App() {
   return (
     <div className="app-container">
       <Router>
-        <Suspense fallback={<div style={{ padding: 24, textAlign: 'center' }}>Loading...</div>}>
+        <ChatProvider>
+          <Suspense fallback={<div style={{ padding: 24, textAlign: 'center' }}>Loading...</div>}>
           <Routes>
             {/* Auth and Splash Routes */}
             <Route path="/" element={<SplashScreen />} />
@@ -126,8 +136,17 @@ function App() {
             <Route path="/product/:productId" element={<CustomerLayout><SingleProductPage /></CustomerLayout>} />
             <Route path="/products" element={<CustomerLayout><ProductPage /></CustomerLayout>} />
             <Route path="/favorites" element={<CustomerLayout><FavoritesPage /></CustomerLayout>} />
+            
+            {/* Chat Routes */}
+            <Route path="/customer/chat" element={<CustomerLayout><CustomerChatPage /></CustomerLayout>} />
+            <Route path="/customer/chat/:conversationId" element={<CustomerLayout><CustomerChatPage /></CustomerLayout>} />
+            
+            {/* Seller Chat Routes */}
+            <Route path="/seller/chat" element={<SellerLayout><SellerChatPage /></SellerLayout>} />
+            <Route path="/seller/chat/:conversationId" element={<SellerLayout><SellerChatPage /></SellerLayout>} />
           </Routes>
-        </Suspense>
+          </Suspense>
+        </ChatProvider>
       </Router>
     </div>
   )
