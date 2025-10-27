@@ -56,10 +56,17 @@ const addToFavorites = async (req, res) => {
     }
 
     // Check if product (with same variant) already in favorites
-    const exists = favorites.items.find(item =>
-      item.product.toString() === productId &&
-      item.variantId === (variantId || null)
-    );
+    const exists = favorites.items.find(item => {
+      if (item.product.toString() !== productId) return false;
+      // Prefer strict variantId match when provided
+      if ((variantId || null) === (item.variantId || null)) return true;
+      // Fallback: compare selectedVariant names when variantId not available
+      const a = selectedVariant || {};
+      const b = item.selectedVariant || {};
+      const aKey = `${a.variantName || ''}::${a.optionName || ''}`;
+      const bKey = `${b.variantName || ''}::${b.optionName || ''}`;
+      return aKey && aKey.length > 2 && aKey === bKey;
+    });
 
     if (exists) {
       return res.status(400).json({ 
