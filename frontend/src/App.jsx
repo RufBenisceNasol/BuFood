@@ -4,6 +4,7 @@ import SplashScreen from './components/SplashScreen'
 import { Box } from '@mui/material'
 import './App.css'
 import { supabase } from './utils/supabaseClient'
+import ChatEntry from './chat/ChatEntry'
 
 // Lazy-loaded routes (code splitting)
 const LoginPage = lazy(() => import('./auth/loginPage'))
@@ -41,6 +42,7 @@ const StoreDetailPage = lazy(() => import('./customer/StoreDetailPage'))
 const ViewMyOrder = lazy(() => import('./customer/ViewMyOrder'))
 const FavoritesPage = lazy(() => import('./customer/FavoritesPage'))
 const GCashCallback = lazy(() => import('./customer/GCashCallback'))
+const ChatPage = lazy(() => import('./chat/ChatPage'))
 
 const CustomerLayout = ({ children }) => (
   <Box sx={{ minHeight: '100vh', bgcolor: '#f5f5f5' }}>
@@ -73,6 +75,7 @@ function App() {
   return (
     <div className="app-container">
       <Router>
+        <ChatEntry />
         <Suspense fallback={<div style={{ padding: 24, textAlign: 'center' }}>Loading...</div>}>
           <Routes>
             {/* Auth and Splash Routes */}
@@ -114,6 +117,9 @@ function App() {
             <Route path="/gcash-callback" element={<GCashCallback />} />
             <Route path="/supabase-reset" element={<SupabaseResetPasswordPage />} />
             <Route path="/verified" element={<SupabaseVerifyPage />} />
+
+            {/* Chat */}
+            <Route path="/chat" element={<ChatPage />} />
 
             {/* Redirects for root-level customer routes to /customer/* */}
             <Route path="/home" element={<CustomerLayout><HomePage /></CustomerLayout>} />
