@@ -511,12 +511,20 @@ const OrdersPage = () => {
                                 <div className="order-details-row"><b>Items:</b></div>
                                 <ul style={{ margin: '4px 0 8px 16px' }}>
                                   {orderDetails.items.map((item, idx) => {
-                                    const imageUrl = item.product?.image || defPic;
-                                    const productName = item.product?.name || 'Product';
+                                    const displayImg = item?.selectedVariant?.image || item?.product?.image || defPic;
+                                    const displayName = item?.product?.name || 'Product';
                                     return (
                                       <li key={idx} style={{ display: 'flex', alignItems: 'center', marginBottom: 4 }}>
-                                        <img src={imageUrl} alt={productName} style={{ width: 36, height: 36, objectFit: 'cover', borderRadius: 6, marginRight: 8, background: '#f0f0f0' }} onError={e => { e.target.onerror = null; e.target.src = defPic; }} />
-                                        <span>{productName} x{item.quantity} @ ₱{item.price.toFixed(2)}</span>
+                                        <img src={displayImg} alt={displayName} style={{ width: 36, height: 36, objectFit: 'cover', borderRadius: 6, marginRight: 8, background: '#f0f0f0' }} onError={e => { e.target.onerror = null; e.target.src = defPic; }} />
+                                        <div>
+                                          <div>{displayName}</div>
+                                          {item?.selectedVariant?.variantName && item?.selectedVariant?.optionName ? (
+                                            <p className="variant-label" style={{ fontSize: 11, color: '#666', margin: '2px 0' }}>
+                                              Variant: {item.selectedVariant.variantName} / {item.selectedVariant.optionName}
+                                            </p>
+                                          ) : null}
+                                          <span>x{item.quantity} @ ₱{item.price.toFixed(2)}</span>
+                                        </div>
                                       </li>
                                     );
                                   })}
@@ -737,12 +745,20 @@ const OrdersPage = () => {
                           <div className="order-details-row"><b>Items:</b></div>
                           <ul style={{ margin: '4px 0 8px 16px' }}>
                             {orderDetails.items.map((item, idx) => {
-                              const imageUrl = item.product?.image || defPic;
-                              const productName = item.product?.name || 'Product';
+                              const displayImg = item?.selectedVariant?.image || item?.product?.image || defPic;
+                              const displayName = item?.product?.name || 'Product';
                               return (
                                 <li key={idx} style={{ display: 'flex', alignItems: 'center', marginBottom: 4 }}>
-                                  <img src={imageUrl} alt={productName} style={{ width: 36, height: 36, objectFit: 'cover', borderRadius: 6, marginRight: 8, background: '#f0f0f0' }} onError={e => { e.target.onerror = null; e.target.src = defPic; }} />
-                                  <span>{productName} x{item.quantity} @ ₱{item.price.toFixed(2)}</span>
+                                  <img src={displayImg} alt={displayName} style={{ width: 36, height: 36, objectFit: 'cover', borderRadius: 6, marginRight: 8, background: '#f0f0f0' }} onError={e => { e.target.onerror = null; e.target.src = defPic; }} />
+                                  <div>
+                                    <div>{displayName}</div>
+                                    {item?.selectedVariant?.variantName && item?.selectedVariant?.optionName ? (
+                                      <p className="variant-label" style={{ fontSize: 11, color: '#666', margin: '2px 0' }}>
+                                        Variant: {item.selectedVariant.variantName} / {item.selectedVariant.optionName}
+                                      </p>
+                                    ) : null}
+                                    <span>x{item.quantity} @ ₱{item.price.toFixed(2)}</span>
+                                  </div>
                                 </li>
                               );
                             })}
