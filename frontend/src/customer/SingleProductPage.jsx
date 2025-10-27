@@ -764,12 +764,8 @@ const SingleProductPage = () => {
             };
 
             if (!token) {
-                // Fallback to localStorage if not logged in
-                const existing = (() => {
-                    try { return JSON.parse(localStorage.getItem('favorites') || '[]'); } catch { return []; }
-                })();
-                localStorage.setItem('favorites', JSON.stringify([...existing, body]));
-                alert('Added to favorites!');
+                setLoginPrompt(true);
+                return;
             } else {
                 const res = await apiRequest('/favorites', {
                     method: 'POST',
@@ -826,9 +822,8 @@ const SingleProductPage = () => {
                     },
                 };
                 if (!token) {
-                    const existing = (() => { try { return JSON.parse(localStorage.getItem('favorites') || '[]'); } catch { return []; } })();
-                    localStorage.setItem('favorites', JSON.stringify([...existing, body]));
-                    alert('Added to favorites!');
+                    setLoginPrompt(true);
+                    return;
                 } else {
                     const res = await apiRequest('/favorites', { method: 'POST', body: JSON.stringify(body) });
                     const data = await res.json();
@@ -950,7 +945,7 @@ const SingleProductPage = () => {
                             Authentication Required
                         </ConfirmTitle>
                         <ConfirmInfo>
-                            You must be logged in to add items to your cart.
+                            You must be logged in to add items to your favorites.
                         </ConfirmInfo>
                         <ConfirmActions>
                             <ConfirmButtonSecondary onClick={() => setLoginPrompt(false)}>Cancel</ConfirmButtonSecondary>

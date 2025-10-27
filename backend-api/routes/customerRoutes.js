@@ -17,16 +17,16 @@ const router = express.Router();
  */
 
 const { authenticate, checkRole } = require('../middlewares/authMiddleware');
+const { authenticateWithSupabase } = require('../middlewares/supabaseAuthMiddleware');
 const handleValidation = require('../middlewares/validators/handleValidation');
 
 const {
   getCustomerProfile,
   getAllStoresForCustomer,
   viewStore,
-  addToFavorites,
-  getFavorites,
-  removeFromFavorites
 } = require('../controllers/customerController');
+// Unify favorites under Supabase-based favoriteController
+const favoriteController = require('../controllers/favoriteController');
 
 /**
  * @swagger
@@ -76,7 +76,12 @@ router.get('/profile', authenticate, checkRole('Customer'), getCustomerProfile);
  *       404:
  *         description: Product not found
  */
-router.post('/favorites/:productId', authenticate, checkRole('Customer'), addToFavorites);
+// Unified: Use Supabase auth and favoriteController; map :productId into body
+router.post('/favorites/:productId', authenticateWithSupabase, (req, _res, next) => {
+  if (!req.body) req.body = {};
+  req.body.productId = req.params.productId;
+  next();
+}, favoriteController.addToFavorites);
 
 /**
  * @swagger
@@ -104,7 +109,11 @@ router.post('/favorites/:productId', authenticate, checkRole('Customer'), addToF
  *       404:
  *         description: User not found
  */
-router.delete('/favorites/:productId', authenticate, checkRole('Customer'), removeFromFavorites);
+// Unified: remove by product via favoriteController route semantics
+router.delete('/favorites/:productId', authenticateWithSupabase, (req, _res, next) => {
+  // favoriteController exposes removeProductFromFavorites expecting req.params.productId
+  next();
+}, favoriteController.removeProductFromFavorites);
 
 /**
  * @swagger
@@ -135,7 +144,8 @@ router.delete('/favorites/:productId', authenticate, checkRole('Customer'), remo
  *       404:
  *         description: User not found
  */
-router.get('/favorites', authenticate, checkRole('Customer'), getFavorites);
+// Unified: get favorites via favoriteController
+router.get('/favorites', authenticateWithSupabase, favoriteController.getFavorites);
 
 /**
  * @swagger

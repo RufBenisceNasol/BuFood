@@ -10,6 +10,9 @@ const authenticateWithSupabase = async (req, res, next) => {
     const authHeader = req.headers.authorization;
 
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      if ((req.path || '').includes('/favorites')) {
+        return res.status(401).json({ success: false, code: 'TOKEN_EXPIRED', message: 'Please log in again to add favorites.' });
+      }
       return res.status(401).json({ success: false, code: 'NO_TOKEN', message: 'Unauthorized: No token provided' });
     }
 
@@ -49,6 +52,9 @@ const authenticateWithSupabase = async (req, res, next) => {
     }
     
     if (err.message && err.message.includes('expired')) {
+      if ((req.path || '').includes('/favorites')) {
+        return res.status(401).json({ success: false, code: 'TOKEN_EXPIRED', message: 'Please log in again to add favorites.' });
+      }
       return res.status(401).json({ success: false, code: 'TOKEN_EXPIRED', message: 'Unauthorized: Token expired' });
     }
     
