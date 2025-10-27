@@ -19,7 +19,7 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import api, { product, cart, review } from '../api';
+import { product, cart, review } from '../api';
 import VariantSelector from './VariantSelector';
 
 import { toast, ToastContainer } from 'react-toastify';
@@ -742,70 +742,48 @@ const SingleProductPage = () => {
             }
 
             const token = getAuthToken();
-            if (!token) {
-                setLoginPrompt(true);
-                return;
-            }
-            const headers = {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`,
-            };
+            const hasChoice = hasVariantChoices && selectedVariantChoice;
+            const selectedVarSnapshot = hasChoice ? {
+                variantName: selectedVariantChoice.variantName,
+                optionName: selectedVariantChoice.optionName,
+                image: selectedVariantChoice.image || productData?.image || ''
+            } : undefined;
 
-            let body;
-            if (hasVariantChoices && selectedVariantChoice) {
-                body = {
-                    productId,
-                    selectedVariant: {
-                        variantName: selectedVariantChoice.variantName,
-                        optionName: selectedVariantChoice.optionName,
-                        price: selectedVariantChoice.price,
-                        image: selectedVariantImage || productData?.image || null,
-                    }
-                };
-            } else if (Array.isArray(variantSelections) && variantSelections.length === 1) {
-                const sel = variantSelections[0];
-                body = {
-                    productId,
-                    selectedVariant: {
-                        variantId: sel.choiceId,
-                        variantName: sel.variant?.name || sel.variant,
-                        optionName: sel.choice || null,
-                        price: calculatedPrice || sel.price || productData.price,
-                        image: sel.image || productData.image,
-                    }
-                };
-            } else {
-                body = {
-                    productId,
-                };
-            }
+            const body = hasChoice ? {
+                productId,
+                selectedVariant: selectedVarSnapshot,
+            } : {
+                productId,
+                // best-effort legacy mapping
+                selectedVariant: (Array.isArray(variantSelections) && variantSelections.length === 1) ? {
+                    variantName: variantSelections[0]?.variant || null,
+                    optionName: variantSelections[0]?.choice || null,
+                    image: variantSelections[0]?.image || productData?.image || ''
+                } : undefined,
+            };
 
             if (!token) {
                 // Fallback to localStorage if not logged in
                 const existing = (() => {
                     try { return JSON.parse(localStorage.getItem('favorites') || '[]'); } catch { return []; }
                 })();
-                const newFav = hasVariantChoices && selectedVariantChoice ? {
-                    productId,
-                    variant: {
-                        variantName: selectedVariantChoice.variantName,
-                        optionName: selectedVariantChoice.optionName,
-                    }
-                } : body;
-                localStorage.setItem('favorites', JSON.stringify([...existing, newFav]));
+                localStorage.setItem('favorites', JSON.stringify([...existing, body]));
                 alert('Added to favorites!');
             } else {
-                try {
-                    await api.post('/favorites', body);
-                    toast.success('Added to favorites');
-                } catch (e) {
-                    if (e?.response?.status === 401) {
-                        setLoginPrompt(true);
-                        return;
-                    }
-                    const msg = e?.response?.data?.message || e?.message || 'Failed to add to favorites';
-                    throw new Error(msg);
-                }
+                const headers = {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`,
+                };
+                const res = await fetch(`${API_BASE_URL}/favorites`, {
+                    method: 'POST',
+                    headers,
+                    body: JSON.stringify(body),
+                });
+                const contentType = res.headers.get('content-type') || '';
+                const data = contentType.includes('application/json') ? await res.json() : { error: true, message: await res.text() };
+                if (res.status === 401) { setLoginPrompt(true); return; }
+                if (!res.ok || data?.error) throw new Error(data?.message || 'Failed to add to favorites');
+                toast.success('Added to favorites');
             }
         } catch (err) {
             toast.error(err.message || 'Failed to add to favorites');
@@ -855,18 +833,13 @@ const SingleProductPage = () => {
                     quantity: Number(modalQuantity) || 1,
                 });
             } else if (modalAction === 'fav') {
-                const token = localStorage.getItem('token');
-                const headers = {
-                    'Content-Type': 'application/json',
-                    ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
-                };
+                const token = getAuthToken();
                 const body = {
                     productId,
                     selectedVariant: {
                         variantName: choice.variantName,
                         optionName: choice.optionName,
-                        price: choice.price,
-                        image: selectedVariantImage || productData?.image || null,
+                        image: choice.image || productData?.image || ''
                     },
                 };
                 if (!token) {
@@ -874,17 +847,16 @@ const SingleProductPage = () => {
                     localStorage.setItem('favorites', JSON.stringify([...existing, body]));
                     alert('Added to favorites!');
                 } else {
-                    try {
-                        await api.post('/favorites', body);
-                        toast.success('Added to favorites');
-                    } catch (e) {
-                        if (e?.response?.status === 401) {
-                            setLoginPrompt(true);
-                            return;
-                        }
-                        const msg = e?.response?.data?.message || e?.message || 'Failed to add to favorites';
-                        throw new Error(msg);
-                    }
+                    const headers = {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`,
+                    };
+                    const res = await fetch(`${API_BASE_URL}/favorites`, { method: 'POST', headers, body: JSON.stringify(body) });
+                    const contentType = res.headers.get('content-type') || '';
+                    const data = contentType.includes('application/json') ? await res.json() : { error: true, message: await res.text() };
+                    if (res.status === 401) { setLoginPrompt(true); return; }
+                    if (!res.ok || data?.error) throw new Error(data?.message || 'Failed to add to favorites');
+                    toast.success('Added to favorites');
                 }
             }
             setIsVariantModalOpen(false);

@@ -6,13 +6,18 @@ const favoriteItemSchema = new mongoose.Schema({
     ref: 'Product',
     required: true,
   },
-  // Store full selectedVariant details to keep UI consistent with cart/orders
+  variantId: {
+    type: String,
+    default: null, // If user favorited a specific variant
+  },
+  variantName: {
+    type: String,
+    default: null,
+  },
   selectedVariant: {
-    variantId: { type: String, default: null },
-    variantName: { type: String, default: null },
-    optionName: { type: String, default: null },
-    image: { type: String, default: null },
-    price: { type: Number, default: null },
+    variantName: { type: String },
+    optionName: { type: String },
+    image: { type: String }
   },
   addedAt: {
     type: Date,
@@ -38,8 +43,6 @@ const favoriteSchema = new mongoose.Schema(
 // Index for faster queries
 favoriteSchema.index({ user: 1 });
 favoriteSchema.index({ 'items.product': 1 });
-// Helpful index for checking duplicates by variant when present
-favoriteSchema.index({ 'items.product': 1, 'items.selectedVariant.variantId': 1 });
 
 const Favorite = mongoose.model('Favorite', favoriteSchema);
 module.exports = Favorite;

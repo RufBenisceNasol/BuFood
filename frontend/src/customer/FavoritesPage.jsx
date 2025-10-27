@@ -117,7 +117,6 @@ const ContentWrapper = styled.div`
 
 const FavoritesPage = () => {
   const [favorites, setFavorites] = useState([]);
-  const [favoriteItems, setFavoriteItems] = useState([]); // backend favorites with selectedVariant
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [activeTab, setActiveTab] = useState('products');
@@ -241,19 +240,6 @@ const FavoritesPage = () => {
     // Read favorite product IDs and resolve them against cached/all products
     try {
       if (showLoader) setLoading(true);
-      // Try backend favorites first to get selectedVariant data
-      (async () => {
-        try {
-          const res = await fetch(`${import.meta.env.VITE_API_BASE_URL || '/api'}/favorites`, { headers: { 'Content-Type': 'application/json' } });
-          const data = await res.json();
-          const fav = data?.data || data;
-          const items = Array.isArray(fav?.items) ? fav.items : [];
-          setFavoriteItems(items);
-        } catch (_) {
-          setFavoriteItems([]);
-        }
-      })();
-
       const favoriteIds = getAllFavorites();
       if (favoriteIds.length > 0) {
         fetchFavoriteProducts(favoriteIds, { showLoader });
@@ -529,12 +515,12 @@ const FavoritesPage = () => {
 
           {activeTab === 'products' && (
             <GridContainer>
-              {isRefreshing && (favoriteItems.length > 0 || filteredProducts.length > 0) && (
+              {isRefreshing && filteredProducts.length > 0 && (
                 Array.from({ length: Math.min(4, filteredProducts.length) }).map((_, i) => (
                   <div key={`skeleton-prod-${i}`} style={{ background: '#f6f6f6', borderRadius: 12, height: 260, boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }} />
                 ))
               )}
-              {(favoriteItems.length === 0 && filteredProducts.length === 0) ? (
+              {filteredProducts.length === 0 ? (
                 <EmptyState>
                   <InfoIcon />
                   <EmptyText>
@@ -545,49 +531,7 @@ const FavoritesPage = () => {
                   </BrowseButton>
                 </EmptyState>
               ) : (
-                // Prefer backend favorites if present; fallback to product list
-                (favoriteItems.length > 0 ? favoriteItems.map((fav, idx) => {
-                  const prod = fav?.product || {};
-                  const displayImg = fav?.selectedVariant?.image || prod?.image || 'https://placehold.co/600x400/orange/white?text=Product';
-                  const displayName = prod?.name || 'Product';
-                  const price = (typeof fav?.selectedVariant?.price === 'number' ? fav.selectedVariant.price : prod?.price) || 0;
-                  return (
-                    <ProductCard key={fav?._id || prod?._id || `fav-${idx}`}>
-                      <ProductImage 
-                        src={displayImg}
-                        alt={displayName}
-                        onClick={() => prod?._id && handleViewProduct(prod._id)}
-                        loading="lazy"
-                        onError={(e) => { e.currentTarget.src = prod?.image || 'https://placehold.co/600x400/orange/white?text=Product'; }}
-                      />
-                      <ProductContent>
-                        <ProductTitle onClick={() => prod?._id && handleViewProduct(prod._id)}>
-                          {displayName}
-                        </ProductTitle>
-                        {fav?.selectedVariant?.variantName && fav?.selectedVariant?.optionName && (
-                          <div style={{ fontSize: '0.9rem', color: '#666', marginBottom: 6 }} className="variant-label">
-                            Variant: {fav.selectedVariant.variantName} / {fav.selectedVariant.optionName}
-                          </div>
-                        )}
-                        <Price>
-                          ₱{Number(price).toFixed(2)}
-                        </Price>
-                      </ProductContent>
-                      <ProductActions>
-                        {prod?._id && (
-                          <AddButton onClick={() => handleAddToCart(prod)}>
-                            <ShoppingCart style={{ marginRight: 6, fontSize: 18 }} /> Add to Cart
-                          </AddButton>
-                        )}
-                        {prod?._id && (
-                          <DeleteButton onClick={() => handleRemoveFavorite(prod._id)}>
-                            <Delete style={{ fontSize: 18 }} />
-                          </DeleteButton>
-                        )}
-                      </ProductActions>
-                    </ProductCard>
-                  );
-                }) : filteredProducts.map(product => (
+                filteredProducts.map(product => (
                   <ProductCard key={product._id}>
                     <ProductImage 
                       src={product.image || 'https://placehold.co/600x400/orange/white?text=Product'}
@@ -617,7 +561,7 @@ const FavoritesPage = () => {
                       </DeleteButton>
                     </ProductActions>
                   </ProductCard>
-                )))
+                ))
               )}
             </GridContainer>
           )}
