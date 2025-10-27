@@ -19,7 +19,7 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { product, cart, review } from '../api';
+import api, { product, cart, review } from '../api';
 import VariantSelector from './VariantSelector';
 
 import { toast, ToastContainer } from 'react-toastify';
@@ -795,14 +795,17 @@ const SingleProductPage = () => {
                 localStorage.setItem('favorites', JSON.stringify([...existing, newFav]));
                 alert('Added to favorites!');
             } else {
-                const res = await fetch(`${API_BASE_URL}/favorites`, {
-                    method: 'POST',
-                    headers,
-                    body: JSON.stringify(body),
-                });
-                const data = await res.json();
-                if (!res.ok || data?.error) throw new Error(data?.message || 'Failed to add to favorites');
-                toast.success('Added to favorites');
+                try {
+                    await api.post('/favorites', body);
+                    toast.success('Added to favorites');
+                } catch (e) {
+                    if (e?.response?.status === 401) {
+                        setLoginPrompt(true);
+                        return;
+                    }
+                    const msg = e?.response?.data?.message || e?.message || 'Failed to add to favorites';
+                    throw new Error(msg);
+                }
             }
         } catch (err) {
             toast.error(err.message || 'Failed to add to favorites');
@@ -871,11 +874,17 @@ const SingleProductPage = () => {
                     localStorage.setItem('favorites', JSON.stringify([...existing, body]));
                     alert('Added to favorites!');
                 } else {
-                    const res = await fetch(`${API_BASE_URL}/favorites`, { method: 'POST', headers, body: JSON.stringify(body) });
-                    const contentType = res.headers.get('content-type') || '';
-                    const data = contentType.includes('application/json') ? await res.json() : { error: true, message: await res.text() };
-                    if (!res.ok || data?.error) throw new Error(data?.message || 'Failed to add to favorites');
-                    toast.success('Added to favorites');
+                    try {
+                        await api.post('/favorites', body);
+                        toast.success('Added to favorites');
+                    } catch (e) {
+                        if (e?.response?.status === 401) {
+                            setLoginPrompt(true);
+                            return;
+                        }
+                        const msg = e?.response?.data?.message || e?.message || 'Failed to add to favorites';
+                        throw new Error(msg);
+                    }
                 }
             }
             setIsVariantModalOpen(false);

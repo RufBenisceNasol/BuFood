@@ -40,6 +40,8 @@ const api = axios.create({
     // Prevent requests from hanging indefinitely (helps surface errors faster)
     // Note: deployed server (cold starts) may need longer
     timeout: 30000,
+    // Allow sending/receiving cookies for auth refresh when backend uses httpOnly cookies
+    withCredentials: true,
 });
 
 // Small JWT decoder to inspect exp (no validation)
@@ -55,7 +57,9 @@ let refreshInFlight = null; // single-flight promise
 async function refreshAccessTokenIfNeeded() {
     const token = getToken();
     const refreshToken = getRefreshToken();
-    if (!token || !refreshToken) return null;
+    // If no token, or token not near expiry, return early. If no refresh token stored,
+    // we will still attempt cookie-based refresh on 401 in the response interceptor.
+    if (!token) return null;
     const decoded = decodeJwt(token);
     const now = Math.floor(Date.now() / 1000);
     const exp = decoded?.exp || 0;
@@ -64,7 +68,9 @@ async function refreshAccessTokenIfNeeded() {
 
     if (!refreshInFlight) {
         refreshInFlight = (async () => {
-            const resp = await axios.post(`${API_BASE_URL}/auth/refresh-token`, { refreshToken });
+            // Prefer cookie-based refresh if no stored refreshToken
+            const payload = refreshToken ? { refreshToken } : {};
+            const resp = await axios.post(`${API_BASE_URL}/auth/refresh-token`, payload, { withCredentials: true });
             const newAccess = resp.data?.accessToken || resp.data?.token;
             const newRefresh = resp.data?.refreshToken;
             if (!newAccess) throw new Error('Refresh failed: no access token');
@@ -111,8 +117,8 @@ api.interceptors.response.use(
         try {
             if (!refreshInFlight) {
                 const rt = getRefreshToken();
-                if (!rt) throw new Error('No refresh token');
-                refreshInFlight = axios.post(`${API_BASE_URL}/auth/refresh-token`, { refreshToken: rt })
+                // Attempt cookie-based refresh first (works when server sets httpOnly cookie)
+                const doRefresh = () => axios.post(`${API_BASE_URL}/auth/refresh-token`, rt ? { refreshToken: rt } : {}, { withCredentials: true })
                     .then((resp) => {
                         const newAccess = resp.data?.accessToken || resp.data?.token;
                         const newRefresh = resp.data?.refreshToken;
@@ -120,8 +126,8 @@ api.interceptors.response.use(
                         setToken(newAccess, true);
                         if (newRefresh) setRefreshToken(newRefresh, true);
                         return newAccess;
-                    })
-                    .finally(() => { refreshInFlight = null; });
+                    });
+                refreshInFlight = doRefresh().finally(() => { refreshInFlight = null; });
             }
             const newAccess = await refreshInFlight;
             // retry original request with new token
