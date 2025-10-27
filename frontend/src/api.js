@@ -869,27 +869,3 @@ export const warmup = async () => {
 
 export default api;
 export { API_BASE_URL };
-
-// Chat API endpoints
-export const chat = {
-    listConversations: async () => {
-        const { data } = await api.get('/chat/conversations');
-        return data.data;
-    },
-    getMessages: async (conversationId) => {
-        const { data } = await api.get(`/chat/${conversationId}/messages`);
-        return data.data;
-    },
-    send: async ({ receiverId, text }) => {
-        const { data } = await api.post('/chat/send', { receiverId, text });
-        return data.data;
-    },
-    markSeen: async (conversationId) => {
-        const { data } = await api.post(`/chat/${conversationId}/seen`);
-        return data.data;
-    },
-    unread: async () => {
-        const { data } = await api.get('/chat/unread');
-        return data.data;
-    },
-};

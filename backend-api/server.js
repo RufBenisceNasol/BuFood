@@ -11,8 +11,6 @@ if (missingEnvVars.length > 0) {
 
 const express = require('express');
 const mongoose = require('mongoose');
-const http = require('http');
-const { Server } = require('socket.io');
 const rateLimit = require('express-rate-limit');
 const slowDown = require('express-slow-down');
 const swaggerUi = require('swagger-ui-express');
@@ -38,16 +36,12 @@ const storeMemberRoutes = require('./routes/storeMemberRoutes');
 const reviewRoutes = require('./routes/reviewRoutes');
 const favoriteRoutes = require('./routes/favorites');
 const uploadRoutes = require('./routes/uploadRoutes');
-const chatRoutes = require('./routes/chatRoutes');
-const { verifySupabaseToken } = require('./config/supabaseConfig');
-const User = require('./models/userModel');
 
 const app = express();
 // Trust the reverse proxy (e.g., Render, Nginx) so req.ip reflects the real client IP
 // and express-rate-limit can safely use X-Forwarded-For
 app.set('trust proxy', 1);
 const port = process.env.PORT || 8000;
-const server = http.createServer(app);
 
 // Security middleware
 app.use(helmet({
@@ -57,7 +51,7 @@ app.use(helmet({
             scriptSrc: ["'self'", "'unsafe-inline'"],
             styleSrc: ["'self'", "'unsafe-inline'"],
             imgSrc: ["'self'", "data:", "https:", "http:"],
-            connectSrc: ["'self'", "https:", "http:", "ws:", "wss:"]
+            connectSrc: ["'self'", "https:", "http:"]
         }
     },
     crossOriginResourcePolicy: { policy: "cross-origin" },
@@ -197,7 +191,6 @@ app.use('/api/orders', orderRoutes);
 app.use('/api', reviewRoutes);
 app.use('/api/favorites', favoriteRoutes);
 app.use('/api/upload', uploadRoutes);
-app.use('/api/chat', chatRoutes);
 
 // JSON 404 fallback for API routes
 app.use('/api', (req, res, next) => {
@@ -252,66 +245,8 @@ const gracefulShutdown = async () => {
 process.on('SIGTERM', gracefulShutdown);
 process.on('SIGINT', gracefulShutdown);
 
-// Socket.io setup with Supabase auth
-const io = new Server(server, {
-    cors: {
-        origin: (origin, callback) => {
-            if (!origin) return callback(null, true);
-            try {
-                const u = new URL(origin);
-                const host = u.hostname;
-                if (['localhost', '127.0.0.1'].includes(host)) return callback(null, true);
-            } catch (_) {}
-            // Allow the same origins as HTTP CORS
-            return callback(null, true);
-        },
-        credentials: true,
-    }
-});
-
-// Expose io for controllers
-app.set('io', io);
-
-io.use(async (socket, next) => {
-    try {
-        const token = socket.handshake.auth?.token || socket.handshake.headers['authorization']?.replace('Bearer ', '');
-        if (!token) return next(new Error('Unauthorized'));
-
-        const supabaseUser = await verifySupabaseToken(token);
-        if (!supabaseUser) return next(new Error('Unauthorized'));
-
-        const user = await User.findOne({ supabaseId: supabaseUser.id }).select('-password');
-        if (!user) return next(new Error('Unauthorized'));
-
-        socket.data.user = { id: user._id.toString(), role: user.role };
-        return next();
-    } catch (err) {
-        return next(new Error('Unauthorized'));
-    }
-});
-
-io.on('connection', (socket) => {
-    const userId = socket.data.user?.id;
-    if (userId) {
-        socket.join(userId);
-        io.to(userId).emit('user:online', { userId });
-    }
-
-    socket.on('conversation:join', (conversationId) => {
-        if (typeof conversationId === 'string' && conversationId) {
-            socket.join(conversationId);
-        }
-    });
-
-    socket.on('disconnect', () => {
-        if (userId) {
-            io.to(userId).emit('user:offline', { userId });
-        }
-    });
-});
-
 // Start server
-server.listen(port, '0.0.0.0', () => {
+app.listen(port, '0.0.0.0', () => {
     logger.info(`🚀 Server started on port ${port}`);
     logger.info(`📚 API Documentation available at http://[YOUR_IP]:${port}/api-docs`);
 });
