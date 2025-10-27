@@ -10,7 +10,7 @@ const authenticateWithSupabase = async (req, res, next) => {
     const authHeader = req.headers.authorization;
 
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return res.status(401).json({ error: 'Unauthorized: No token provided' });
+      return res.status(401).json({ success: false, code: 'NO_TOKEN', message: 'Unauthorized: No token provided' });
     }
 
     const token = authHeader.split(' ')[1];
@@ -19,7 +19,7 @@ const authenticateWithSupabase = async (req, res, next) => {
     const supabaseUser = await verifySupabaseToken(token);
 
     if (!supabaseUser) {
-      return res.status(401).json({ error: 'Unauthorized: Invalid token' });
+      return res.status(401).json({ success: false, code: 'INVALID_TOKEN', message: 'Unauthorized: Invalid token' });
     }
 
     // Find corresponding user in MongoDB using supabaseId
@@ -27,7 +27,9 @@ const authenticateWithSupabase = async (req, res, next) => {
 
     if (!user) {
       return res.status(401).json({ 
-        error: 'Unauthorized: User not found in database',
+        success: false,
+        code: 'USER_NOT_FOUND',
+        message: 'Unauthorized: User not found in database',
         supabaseId: supabaseUser.id 
       });
     }
@@ -40,15 +42,15 @@ const authenticateWithSupabase = async (req, res, next) => {
   } catch (err) {
     console.error('Supabase auth middleware error:', err);
     
-    if (err.message.includes('expired')) {
-      return res.status(401).json({ error: 'Unauthorized: Token expired' });
+    if (err.message && err.message.includes('expired')) {
+      return res.status(401).json({ success: false, code: 'TOKEN_EXPIRED', message: 'Unauthorized: Token expired' });
     }
     
-    if (err.message.includes('Invalid')) {
-      return res.status(401).json({ error: 'Unauthorized: Invalid token' });
+    if (err.message && err.message.includes('Invalid')) {
+      return res.status(401).json({ success: false, code: 'INVALID_TOKEN', message: 'Unauthorized: Invalid token' });
     }
 
-    res.status(500).json({ error: 'Internal server error during authentication' });
+    res.status(500).json({ success: false, code: 'AUTH_SERVER_ERROR', message: 'Internal server error during authentication' });
   }
 };
 
