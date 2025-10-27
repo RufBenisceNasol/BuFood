@@ -8,7 +8,11 @@ const Product = require('../models/productModel');
 const addToFavorites = async (req, res) => {
   try {
     const userId = req.user._id;
-    const { productId, variantId, variantName } = req.body;
+    const { productId } = req.body;
+    // Accept either legacy flat fields or nested selectedVariant
+    const selectedVariant = req.body.selectedVariant || req.body.variant || null;
+    const legacyVariantId = req.body.variantId || null;
+    const legacyVariantName = req.body.variantName || null;
 
     if (!productId) {
       return res.status(400).json({ message: 'Product ID is required' });
@@ -28,10 +32,19 @@ const addToFavorites = async (req, res) => {
     }
 
     // Check if product (with same variant) already in favorites
-    const existingIndex = favorites.items.findIndex(item => 
-      item.product.toString() === productId && 
-      item.variantId === (variantId || null)
-    );
+    const existingIndex = favorites.items.findIndex(item => {
+      if (item.product.toString() !== productId) return false;
+      const a = item.selectedVariant || {};
+      const b = selectedVariant || {};
+      // Prefer variantId for strict equality when present
+      if ((a.variantId || null) || (legacyVariantId || b.variantId || null)) {
+        return (a.variantId || null) === (legacyVariantId || b.variantId || null);
+      }
+      // Fallback to name/option match if no variantId provided
+      const aKey = `${a.variantName || ''}||${a.optionName || ''}`;
+      const bKey = `${legacyVariantName || b.variantName || ''}||${b.optionName || ''}`;
+      return aKey === bKey;
+    });
 
     if (existingIndex !== -1) {
       return res.status(400).json({ 
@@ -40,11 +53,25 @@ const addToFavorites = async (req, res) => {
       });
     }
 
+    // Build selectedVariant payload
+    const sv = selectedVariant ? {
+      variantId: selectedVariant.variantId || legacyVariantId || null,
+      variantName: selectedVariant.variantName || legacyVariantName || null,
+      optionName: selectedVariant.optionName || null,
+      image: selectedVariant.image || null,
+      price: typeof selectedVariant.price === 'number' ? selectedVariant.price : null,
+    } : {
+      variantId: legacyVariantId || null,
+      variantName: legacyVariantName || null,
+      optionName: null,
+      image: null,
+      price: null,
+    };
+
     // Add to favorites
     favorites.items.push({
       product: productId,
-      variantId: variantId || null,
-      variantName: variantName || null,
+      selectedVariant: sv,
     });
 
     await favorites.save();
@@ -150,7 +177,7 @@ const removeProductFromFavorites = async (req, res) => {
   try {
     const userId = req.user._id;
     const { productId } = req.params;
-    const { variantId } = req.query;
+    const { variantId, variantName, optionName } = req.query;
 
     const favorites = await Favorite.findOne({ user: userId });
 
@@ -161,10 +188,17 @@ const removeProductFromFavorites = async (req, res) => {
       });
     }
 
-    // Remove product (optionally matching variant)
+    // Remove product (optionally matching variant). Support nested selectedVariant
     favorites.items = favorites.items.filter(item => {
       if (item.product.toString() !== productId) return true;
-      if (variantId && item.variantId !== variantId) return true;
+      const sv = item.selectedVariant || {};
+      if (variantId) return sv.variantId !== variantId; // keep if not matching
+      if (variantName || optionName) {
+        const aKey = `${sv.variantName || ''}||${sv.optionName || ''}`;
+        const bKey = `${variantName || ''}||${optionName || ''}`;
+        return aKey !== bKey; // keep if not equal
+      }
+      // No specific variant provided: remove all for this product
       return false;
     });
 

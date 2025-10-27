@@ -755,27 +755,28 @@ const SingleProductPage = () => {
             if (hasVariantChoices && selectedVariantChoice) {
                 body = {
                     productId,
-                    variant: {
+                    selectedVariant: {
                         variantName: selectedVariantChoice.variantName,
                         optionName: selectedVariantChoice.optionName,
                         price: selectedVariantChoice.price,
+                        image: selectedVariantImage || productData?.image || null,
                     }
                 };
             } else if (Array.isArray(variantSelections) && variantSelections.length === 1) {
                 const sel = variantSelections[0];
                 body = {
                     productId,
-                    variant: sel.variant,
-                    option: sel.choice,
-                    variantId: sel.choiceId,
-                    price: calculatedPrice || sel.price || productData.price,
-                    image: sel.image || productData.image,
+                    selectedVariant: {
+                        variantId: sel.choiceId,
+                        variantName: sel.variant?.name || sel.variant,
+                        optionName: sel.choice || null,
+                        price: calculatedPrice || sel.price || productData.price,
+                        image: sel.image || productData.image,
+                    }
                 };
             } else {
                 body = {
                     productId,
-                    variantSelections,
-                    price: calculatedPrice || productData.price,
                 };
             }
 
@@ -858,7 +859,12 @@ const SingleProductPage = () => {
                 };
                 const body = {
                     productId,
-                    variant: { variantName: choice.variantName, optionName: choice.optionName },
+                    selectedVariant: {
+                        variantName: choice.variantName,
+                        optionName: choice.optionName,
+                        price: choice.price,
+                        image: selectedVariantImage || productData?.image || null,
+                    },
                 };
                 if (!token) {
                     const existing = (() => { try { return JSON.parse(localStorage.getItem('favorites') || '[]'); } catch { return []; } })();
