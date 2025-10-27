@@ -1,5 +1,7 @@
 const Favorite = require('../models/favoriteModel');
 const Product = require('../models/productModel');
+const jwt = require('jsonwebtoken');
+const User = require('../models/userModel');
 
 /**
  * Add product to favorites
@@ -7,9 +9,36 @@ const Product = require('../models/productModel');
  */
 const addToFavorites = async (req, res) => {
   try {
-    const userId = req.user._id;
-    const { productId, variantId, variantName, selectedVariant } = req.body;
+    let userId;
 
+    // Decode Supabase token locally (no upstream call)
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      const token = authHeader.split(' ')[1];
+      const decoded = jwt.decode(token);
+      if (decoded && decoded.sub) {
+        userId = decoded.sub; // Supabase user ID
+      }
+    }
+
+    // If we decoded a Supabase user id (UUID), resolve to Mongo user _id without calling Supabase
+    if (userId && typeof userId === 'string') {
+      const mapped = await User.findOne({ supabaseId: userId }).select('_id');
+      if (mapped) userId = mapped._id;
+      else userId = null; // force unauthorized below if mapping not found
+    }
+
+    // Fallback to middleware user (Mongo user _id) if available
+    if (!userId && req.user?._id) userId = req.user._id;
+
+    if (!userId) {
+      return res.status(401).json({ 
+        success: false, 
+        message: 'Unauthorized: No valid user found' 
+      });
+    }
+
+    const { productId, variantId, variantName, selectedVariant } = req.body;
     if (!productId) {
       return res.status(400).json({ message: 'Product ID is required' });
     }
@@ -22,21 +51,20 @@ const addToFavorites = async (req, res) => {
 
     // Find or create favorites list for user
     let favorites = await Favorite.findOne({ user: userId });
-    
     if (!favorites) {
       favorites = new Favorite({ user: userId, items: [] });
     }
 
     // Check if product (with same variant) already in favorites
-    const existingIndex = favorites.items.findIndex(item => 
-      item.product.toString() === productId && 
+    const exists = favorites.items.find(item =>
+      item.product.toString() === productId &&
       item.variantId === (variantId || null)
     );
 
-    if (existingIndex !== -1) {
+    if (exists) {
       return res.status(400).json({ 
-        message: 'This item is already in your favorites',
-        success: false 
+        success: false, 
+        message: 'This item is already in your favorites' 
       });
     }
 
@@ -48,13 +76,12 @@ const addToFavorites = async (req, res) => {
       selectedVariant: selectedVariant ? {
         variantName: selectedVariant.variantName || null,
         optionName: selectedVariant.optionName || null,
+        price: typeof selectedVariant.price === 'number' ? selectedVariant.price : undefined,
         image: selectedVariant.image || null,
       } : undefined,
     });
 
     await favorites.save();
-
-    // Populate product details
     await favorites.populate('items.product');
 
     res.status(200).json({
@@ -64,10 +91,10 @@ const addToFavorites = async (req, res) => {
     });
   } catch (error) {
     console.error('Add to favorites error:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       success: false,
       message: 'Failed to add to favorites',
-      error: error.message 
+      error: error.message,
     });
   }
 };
@@ -78,7 +105,26 @@ const addToFavorites = async (req, res) => {
  */
 const getFavorites = async (req, res) => {
   try {
-    const userId = req.user._id;
+    let userId = null;
+    // Try middleware user first
+    if (req.user?._id) {
+      userId = req.user._id;
+    } else {
+      // Attempt local decode and map to Mongo user id
+      const authHeader = req.headers.authorization;
+      if (authHeader && authHeader.startsWith('Bearer ')) {
+        const token = authHeader.split(' ')[1];
+        const decoded = jwt.decode(token);
+        if (decoded?.sub) {
+          const mapped = await User.findOne({ supabaseId: decoded.sub }).select('_id');
+          if (mapped) userId = mapped._id;
+        }
+      }
+    }
+
+    if (!userId) {
+      return res.status(401).json({ success: false, message: 'Unauthorized' });
+    }
 
     const favorites = await Favorite.findOne({ user: userId })
       .populate({

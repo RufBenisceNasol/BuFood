@@ -8,7 +8,7 @@ const {
   checkFavorite,
   clearFavorites,
 } = require('../controllers/favoriteController');
-const { authenticateWithSupabase } = require('../middlewares/supabaseAuthMiddleware');
+const { authenticateWithSupabase, optionalAuth } = require('../middlewares/supabaseAuthMiddleware');
 
 /**
  * @swagger
@@ -39,7 +39,7 @@ const { authenticateWithSupabase } = require('../middlewares/supabaseAuthMiddlew
  *       400:
  *         description: Already in favorites
  */
-router.post('/', authenticateWithSupabase, addToFavorites);
+router.post('/', optionalAuth, addToFavorites);
 
 /**
  * @swagger
@@ -53,7 +53,7 @@ router.post('/', authenticateWithSupabase, addToFavorites);
  *       200:
  *         description: Favorites retrieved successfully
  */
-router.get('/', authenticateWithSupabase, getFavorites);
+router.get('/', optionalAuth, getFavorites);
 
 /**
  * @swagger
@@ -73,7 +73,7 @@ router.get('/', authenticateWithSupabase, getFavorites);
  *       200:
  *         description: Removed from favorites
  */
-router.delete('/:itemId', authenticateWithSupabase, removeFromFavorites);
+router.delete('/:itemId', optionalAuth, removeFromFavorites);
 
 /**
  * @swagger
@@ -97,7 +97,7 @@ router.delete('/:itemId', authenticateWithSupabase, removeFromFavorites);
  *       200:
  *         description: Removed from favorites
  */
-router.delete('/product/:productId', authenticateWithSupabase, removeProductFromFavorites);
+router.delete('/product/:productId', optionalAuth, removeProductFromFavorites);
 
 /**
  * @swagger
@@ -121,7 +121,7 @@ router.delete('/product/:productId', authenticateWithSupabase, removeProductFrom
  *       200:
  *         description: Favorite status retrieved
  */
-router.get('/check/:productId', authenticateWithSupabase, checkFavorite);
+router.get('/check/:productId', optionalAuth, checkFavorite);
 
 /**
  * @swagger
@@ -135,6 +135,6 @@ router.get('/check/:productId', authenticateWithSupabase, checkFavorite);
  *       200:
  *         description: Favorites cleared
  */
-router.delete('/clear/all', authenticateWithSupabase, clearFavorites);
+router.delete('/clear/all', optionalAuth, clearFavorites);
 
 module.exports = router;
