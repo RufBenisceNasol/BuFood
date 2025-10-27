@@ -17,6 +17,7 @@ const favoriteItemSchema = new mongoose.Schema({
   selectedVariant: {
     variantName: { type: String },
     optionName: { type: String },
+    price: { type: Number, min: 0 },
     image: { type: String }
   },
   addedAt: {
