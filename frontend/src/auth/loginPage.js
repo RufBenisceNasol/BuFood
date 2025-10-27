@@ -82,6 +82,17 @@ const LoginPage = () => {
                 setRefreshToken(data.refreshToken, rememberMe);
                 setUser(data.user, rememberMe);
                 axios.defaults.headers.common['Authorization'] = `Bearer ${data.accessToken}`;
+                // Seed Supabase session so apiRequest can get and refresh tokens reliably
+                try {
+                    const { supabase } = await import('../utils/supabaseClient');
+                    await supabase.auth.setSession({
+                        access_token: data.accessToken,
+                        refresh_token: data.refreshToken,
+                    });
+                    try { localStorage.setItem('access_token', data.accessToken); } catch (_) {}
+                } catch (e) {
+                    console.warn('Failed to seed Supabase session from backend login tokens:', e);
+                }
                 if (data.user.role === 'Seller') {
                     navigate('/seller/dashboard');
                 } else {

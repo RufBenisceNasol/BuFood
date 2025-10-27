@@ -51,6 +51,14 @@ const CustomerLayout = ({ children }) => (
 function App() {
   // Keep token updated automatically
   React.useEffect(() => {
+    // Seed current token on first load
+    (async () => {
+      try {
+        const { data } = await supabase.auth.getSession();
+        const tok = data?.session?.access_token;
+        if (tok) localStorage.setItem('access_token', tok);
+      } catch {}
+    })();
     const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
       if (session?.access_token) {
         localStorage.setItem('access_token', session.access_token)

@@ -41,6 +41,12 @@ const authenticateWithSupabase = async (req, res, next) => {
     next();
   } catch (err) {
     console.error('Supabase auth middleware error:', err);
+    const msg = String(err?.message || '');
+    const causeCode = err?.cause?.code || '';
+    // Network/host resolution issues to Supabase should not be treated as TOKEN_EXPIRED
+    if (msg.includes('fetch failed') || msg.includes('getaddrinfo') || causeCode === 'ENOTFOUND') {
+      return res.status(503).json({ success: false, code: 'AUTH_UPSTREAM_UNREACHABLE', message: 'Authentication service temporarily unreachable' });
+    }
     
     if (err.message && err.message.includes('expired')) {
       return res.status(401).json({ success: false, code: 'TOKEN_EXPIRED', message: 'Unauthorized: Token expired' });

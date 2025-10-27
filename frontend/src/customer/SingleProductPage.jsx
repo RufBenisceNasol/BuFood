@@ -794,15 +794,6 @@ const SingleProductPage = () => {
         }
         try {
             if (modalAction === 'cart') {
-                const token = getAuthToken();
-                if (!token) {
-                    setLoginPrompt(true);
-                    return;
-                }
-                const headers = {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`,
-                };
                 const body = {
                     productId,
                     quantity: Number(modalQuantity),
@@ -812,14 +803,10 @@ const SingleProductPage = () => {
                         price: choice.price,
                     },
                 };
-                const res = await fetch(`${API_BASE_URL}/carts`, { method: 'POST', headers, body: JSON.stringify(body) });
-                const contentType = res.headers.get('content-type') || '';
-                const data = contentType.includes('application/json') ? await res.json() : { success: false, message: await res.text() };
+                const res = await apiRequest('/carts', { method: 'POST', body: JSON.stringify(body) });
+                const data = await res.json();
                 console.log('Add to cart response:', data);
-                if (res.status === 401) {
-                    setLoginPrompt(true);
-                    return;
-                }
+                if (res.status === 401) { setLoginPrompt(true); return; }
                 if (!res.ok || !data.success) throw new Error(data?.message || 'Failed to add to cart');
                 setSuccessModal({
                     open: true,
@@ -881,28 +868,16 @@ const SingleProductPage = () => {
                 toast.error('Selected option is out of stock');
                 return;
             }
-            if (quantity > effStock) {
-                toast.error(`Only ${effStock} left in stock`);
-                return;
-            }
-
-            // Use direct fetch to support variant selections payload
-            const token = localStorage.getItem('token');
-            const headers = {
-                'Content-Type': 'application/json',
-                ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
-            };
 
             let body;
             if (hasVariantChoices && selectedVariantChoice) {
                 body = {
                     productId,
-                    quantity: Number(quantity),
                     variant: {
                         variantName: selectedVariantChoice.variantName,
                         optionName: selectedVariantChoice.optionName,
                         price: selectedVariantChoice.price,
-                    },
+                    }
                 };
             } else if (Array.isArray(variantSelections) && variantSelections.length === 1) {
                 const sel = variantSelections[0];
@@ -912,7 +887,6 @@ const SingleProductPage = () => {
                     option: sel.choice,
                     variantId: sel.choiceId,
                     price: calculatedPrice || sel.price || productData.price,
-                    quantity: Number(quantity),
                     image: sel.image || productData.image,
                 };
             } else {
@@ -920,26 +894,17 @@ const SingleProductPage = () => {
                     productId,
                     variantSelections,
                     price: calculatedPrice || productData.price,
-                    quantity: Number(quantity),
                 };
             }
 
-            const response = await fetch(`${API_BASE_URL}/carts`, {
-                method: 'POST',
-                headers,
-                body: JSON.stringify(body),
-            });
-            const contentType = response.headers.get('content-type') || '';
-            const data = contentType.includes('application/json') ? await response.json() : { success: false, message: await response.text() };
-            console.log('Add to cart response:', data);
-            if (response.status === 401) {
-                setLoginPrompt(true);
-                return;
-            }
+            const response = await apiRequest('/carts', { method: 'POST', body: JSON.stringify(body) });
+            const data = await response.json();
+            if (response.status === 401) { setLoginPrompt(true); return; }
             if (!response.ok || !data.success) {
                 const msg = data?.message || 'Failed to add product to cart';
                 throw new Error(msg);
             }
+
             if (hasVariantChoices && selectedVariantChoice) {
                 setSuccessModal({
                     open: true,
