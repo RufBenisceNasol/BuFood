@@ -29,6 +29,7 @@ import { Favorite, FavoriteBorder } from '@mui/icons-material';
 import { toggleFavorite, isInFavorites } from '../utils/favoriteUtils';
 import styled from 'styled-components';
 import { getUser } from '../utils/tokenUtils';
+import { apiRequest } from '../utils/api';
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 // Styled Components
@@ -770,18 +771,12 @@ const SingleProductPage = () => {
                 localStorage.setItem('favorites', JSON.stringify([...existing, body]));
                 alert('Added to favorites!');
             } else {
-                const headers = {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`,
-                };
-                const res = await fetch(`${API_BASE_URL}/favorites`, {
+                const res = await apiRequest('/favorites', {
                     method: 'POST',
-                    headers,
                     body: JSON.stringify(body),
                 });
-                const contentType = res.headers.get('content-type') || '';
-                const data = contentType.includes('application/json') ? await res.json() : { error: true, message: await res.text() };
-                if (res.status === 401) { setLoginPrompt(true); return; }
+                const data = await res.json();
+                if (res.status === 401 || data?.code === 'TOKEN_EXPIRED') { setLoginPrompt(true); return; }
                 if (!res.ok || data?.error) throw new Error(data?.message || 'Failed to add to favorites');
                 toast.success('Added to favorites');
             }
@@ -839,6 +834,7 @@ const SingleProductPage = () => {
                     selectedVariant: {
                         variantName: choice.variantName,
                         optionName: choice.optionName,
+                        price: choice.price,
                         image: choice.image || productData?.image || ''
                     },
                 };
@@ -847,14 +843,9 @@ const SingleProductPage = () => {
                     localStorage.setItem('favorites', JSON.stringify([...existing, body]));
                     alert('Added to favorites!');
                 } else {
-                    const headers = {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`,
-                    };
-                    const res = await fetch(`${API_BASE_URL}/favorites`, { method: 'POST', headers, body: JSON.stringify(body) });
-                    const contentType = res.headers.get('content-type') || '';
-                    const data = contentType.includes('application/json') ? await res.json() : { error: true, message: await res.text() };
-                    if (res.status === 401) { setLoginPrompt(true); return; }
+                    const res = await apiRequest('/favorites', { method: 'POST', body: JSON.stringify(body) });
+                    const data = await res.json();
+                    if (res.status === 401 || data?.code === 'TOKEN_EXPIRED') { setLoginPrompt(true); return; }
                     if (!res.ok || data?.error) throw new Error(data?.message || 'Failed to add to favorites');
                     toast.success('Added to favorites');
                 }

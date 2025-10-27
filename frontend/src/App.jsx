@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import SplashScreen from './components/SplashScreen'
 import { Box } from '@mui/material'
 import './App.css'
+import { supabase } from './utils/supabaseClient'
 
 // Lazy-loaded routes (code splitting)
 const LoginPage = lazy(() => import('./auth/loginPage'))
@@ -48,6 +49,19 @@ const CustomerLayout = ({ children }) => (
 );
 
 function App() {
+  // Keep token updated automatically
+  React.useEffect(() => {
+    const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
+      if (session?.access_token) {
+        localStorage.setItem('access_token', session.access_token)
+      } else {
+        localStorage.removeItem('access_token')
+      }
+    })
+    return () => {
+      sub?.subscription?.unsubscribe?.()
+    }
+  }, [])
   return (
     <div className="app-container">
       <Router>
