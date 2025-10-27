@@ -34,7 +34,7 @@ const cartRoutes = require('./routes/cartRoutes');
 const orderRoutes = require('./routes/orderRoutes');
 const storeMemberRoutes = require('./routes/storeMemberRoutes');
 const reviewRoutes = require('./routes/reviewRoutes');
-const favoriteRoutes = require('./routes/favoriteRoutes');
+const favoriteRoutes = require('./routes/favorites');
 const uploadRoutes = require('./routes/uploadRoutes');
 
 const app = express();

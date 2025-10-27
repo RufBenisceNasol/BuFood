@@ -735,18 +735,20 @@ export const customer = {
     },
 
     // Favorites management
-    addToFavorites: async (productId) => {
+    addToFavorites: async (productId, payload = {}) => {
         try {
-            const response = await api.post(`/customers/favorites/${productId}`);
+            // Unified: POST /favorites with body { productId, ...optional }
+            const response = await api.post(`/favorites`, { productId, ...payload });
             return response.data;
         } catch (error) {
             throw error.response?.data || error.message;
         }
     },
 
-    removeFromFavorites: async (productId) => {
+    removeFromFavorites: async (productId, params = {}) => {
         try {
-            const response = await api.delete(`/customers/favorites/${productId}`);
+            // Unified: DELETE /favorites/product/:productId (optional ?variantId=)
+            const response = await api.delete(`/favorites/product/${productId}`, { params });
             return response.data;
         } catch (error) {
             throw error.response?.data || error.message;
@@ -755,7 +757,8 @@ export const customer = {
 
     getFavorites: async () => {
         try {
-            const response = await api.get('/customers/favorites');
+            // Unified: GET /favorites
+            const response = await api.get('/favorites');
             return response.data;
         } catch (error) {
             throw error.response?.data || error.message;

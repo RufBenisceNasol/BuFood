@@ -135,6 +135,6 @@ router.get('/check/:productId', authenticateWithSupabase, checkFavorite);
  *       200:
  *         description: Favorites cleared
  */
-router.delete('/clear/all', authenticateWithSupabase, clearFavorites);
+router.delete('/clear', authenticateWithSupabase, clearFavorites);
 
 module.exports = router;

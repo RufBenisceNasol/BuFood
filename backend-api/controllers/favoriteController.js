@@ -3,33 +3,34 @@ const Product = require('../models/productModel');
 const jwt = require('jsonwebtoken');
 const User = require('../models/userModel');
 
+// Resolve the effective Mongo user _id for favorites operations
+const resolveUserId = async (req) => {
+  // Prefer middleware-populated Mongo user
+  if (req.user && req.user._id) return String(req.user._id);
+
+  // Fallback: decode Supabase token locally and map sub -> Mongo user
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) return null;
+
+  const token = authHeader.split(' ')[1];
+  try {
+    const decoded = jwt.decode(token);
+    const supabaseSub = decoded?.sub;
+    if (!supabaseSub) return null;
+    const mapped = await User.findOne({ supabaseId: supabaseSub }).select('_id');
+    return mapped ? String(mapped._id) : null;
+  } catch (_) {
+    return null;
+  }
+};
+
 /**
  * Add product to favorites
  * POST /api/favorites
  */
 const addToFavorites = async (req, res) => {
   try {
-    let userId;
-
-    // Decode Supabase token locally (no upstream call)
-    const authHeader = req.headers.authorization;
-    if (authHeader && authHeader.startsWith('Bearer ')) {
-      const token = authHeader.split(' ')[1];
-      const decoded = jwt.decode(token);
-      if (decoded && decoded.sub) {
-        userId = decoded.sub; // Supabase user ID
-      }
-    }
-
-    // If we decoded a Supabase user id (UUID), resolve to Mongo user _id without calling Supabase
-    if (userId && typeof userId === 'string') {
-      const mapped = await User.findOne({ supabaseId: userId }).select('_id');
-      if (mapped) userId = mapped._id;
-      else userId = null; // force unauthorized below if mapping not found
-    }
-
-    // Fallback to middleware user (Mongo user _id) if available
-    if (!userId && req.user?._id) userId = req.user._id;
+    const userId = await resolveUserId(req);
 
     if (!userId) {
       return res.status(401).json({ 
@@ -112,22 +113,7 @@ const addToFavorites = async (req, res) => {
  */
 const getFavorites = async (req, res) => {
   try {
-    let userId = null;
-    // Try middleware user first
-    if (req.user?._id) {
-      userId = req.user._id;
-    } else {
-      // Attempt local decode and map to Mongo user id
-      const authHeader = req.headers.authorization;
-      if (authHeader && authHeader.startsWith('Bearer ')) {
-        const token = authHeader.split(' ')[1];
-        const decoded = jwt.decode(token);
-        if (decoded?.sub) {
-          const mapped = await User.findOne({ supabaseId: decoded.sub }).select('_id');
-          if (mapped) userId = mapped._id;
-        }
-      }
-    }
+    const userId = await resolveUserId(req);
 
     if (!userId) {
       return res.status(401).json({ success: false, message: 'Unauthorized' });
@@ -166,7 +152,8 @@ const getFavorites = async (req, res) => {
  */
 const removeFromFavorites = async (req, res) => {
   try {
-    const userId = req.user._id;
+    const userId = await resolveUserId(req);
+    if (!userId) return res.status(401).json({ success: false, message: 'Unauthorized' });
     const { itemId } = req.params;
 
     const favorites = await Favorite.findOne({ user: userId });
@@ -206,7 +193,8 @@ const removeFromFavorites = async (req, res) => {
  */
 const removeProductFromFavorites = async (req, res) => {
   try {
-    const userId = req.user._id;
+    const userId = await resolveUserId(req);
+    if (!userId) return res.status(401).json({ success: false, message: 'Unauthorized' });
     const { productId } = req.params;
     const { variantId } = req.query;
 
@@ -249,7 +237,10 @@ const removeProductFromFavorites = async (req, res) => {
  */
 const checkFavorite = async (req, res) => {
   try {
-    const userId = req.user._id;
+    const userId = await resolveUserId(req);
+    if (!userId) {
+      return res.status(200).json({ success: true, isFavorite: false });
+    }
     const { productId } = req.params;
     const { variantId } = req.query;
 
@@ -287,7 +278,8 @@ const checkFavorite = async (req, res) => {
  */
 const clearFavorites = async (req, res) => {
   try {
-    const userId = req.user._id;
+    const userId = await resolveUserId(req);
+    if (!userId) return res.status(401).json({ success: false, message: 'Unauthorized' });
 
     const favorites = await Favorite.findOne({ user: userId });
 
@@ -324,3 +316,4 @@ module.exports = {
   checkFavorite,
   clearFavorites,
 };
+
