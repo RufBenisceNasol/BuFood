@@ -148,23 +148,6 @@ class SocketService {
       console.log('[Socket] Disconnected and cleaned up.');
     }
   }
-      });
-    });
-  }
-
-  // Join a conversation room
-  joinConversation(conversationId) {
-    if (this.socket && this.connected) {
-      this.socket.emit('conversation:join', { conversationId });
-    }
-  }
-
-  // Leave a conversation room
-  leaveConversation(conversationId) {
-    if (this.socket && this.connected) {
-      this.socket.emit('conversation:leave', { conversationId });
-    }
-  }
 }
 
 // Create a singleton instance

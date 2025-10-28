@@ -1,6 +1,8 @@
 const { verifySupabaseToken } = require('../config/supabaseConfig');
 const jwt = require('jsonwebtoken');
 const { sendMessageSocket } = require('../controllers/chatController');
+const Conversation = require('../models/Conversation');
+const Message = require('../models/Message');
 
 let ioRef = null;
 
@@ -68,6 +70,36 @@ function setupSocket(server, options) {
           if (typeof cb === 'function') cb({ ok: false, error: err.message });
         }
       });
+
+      // New API: message:send (manual send)
+      socket.on('message:send', async (data, cb) => {
+        try {
+          const payload = {
+            conversationId: data.conversationId,
+            receiverId: data.receiverId, // optional, will default in controller
+            text: data.text,
+            attachments: data.attachments,
+            orderRef: data.orderRef,
+          };
+          const msg = await sendMessageSocket(socket.user, payload, ioRef);
+          if (typeof cb === 'function') cb({ ok: true, message: msg });
+        } catch (err) {
+          if (typeof cb === 'function') cb({ ok: false, error: err.message });
+        }
+      });
+
+      // Rooms for conversations (optional)
+      socket.on('join:conversation', (conversationId) => {
+        if (!conversationId) return;
+        socket.join(`conversation:${conversationId}`);
+        console.log(`📨 Joined conversation:${conversationId}`);
+      });
+
+      socket.on('leave:conversation', (conversationId) => {
+        if (!conversationId) return;
+        socket.leave(`conversation:${conversationId}`);
+        console.log(`🚫 Left conversation:${conversationId}`);
+      });
     } catch (err) {
       console.error('❌ Socket auth failed:', err.message);
       socket.disconnect();
@@ -85,7 +117,13 @@ function emitToUser(userId, event, payload) {
   ioRef.to(String(userId)).emit(event, payload);
 }
 
+function emitToConversation(conversationId, event, payload) {
+  if (!ioRef) return;
+  ioRef.to(`conversation:${conversationId}`).emit(event, payload);
+}
+
 module.exports = {
   setupSocket,
   emitToUser,
+  emitToConversation,
 };
