@@ -8,6 +8,10 @@ const ApiError = require('../utils/ApiError');
 const { createGCashSource } = require('../utils/paymongo');
 const uploadToCloudinary = require('../utils/uploadToCloudinary');
 const fs = require('fs').promises;
+const Conversation = require('../models/Conversation');
+const Message = require('../models/Message');
+const { emitToUser } = require('../utils/socket');
+const { randomUUID } = require('crypto');
 
 // Helper function for consistent response structure
 const createResponse = (success, message, data = null, error = null) => ({
@@ -571,6 +575,8 @@ const acceptOrder = async (req, res) => {
   try {
     const { orderId } = req.params;
     const { estimatedPreparationTime, note } = req.body;
+    const idempotencyKey = req.get('Idempotency-Key') || `order:${orderId}:accept`;
+    const requestId = randomUUID();
 
     // Check if user is authenticated and is a seller
     if (!req.user || !req.user._id) {
@@ -661,31 +667,118 @@ const acceptOrder = async (req, res) => {
     // Save the updated order
     await order.save({ session });
 
+    // Upsert conversation for this order between customer and seller
+    const customerId = order.customer._id || order.customer; // populated or ObjectId
+    const sellerId = order.seller; // ObjectId
+    const participants = [String(customerId), String(sellerId)].sort();
+    const participantsKey = participants.join('|');
+
+    let conversation = await Conversation.findOneAndUpdate(
+      { participantsKey, orderId: String(order._id) },
+      {
+        $setOnInsert: {
+          participants: [customerId, sellerId],
+          participantsKey,
+          orderId: String(order._id),
+          createdBy: 'system'
+        }
+      },
+      { new: true, upsert: true, session }
+    );
+
+    // Create idempotent system message summarizing the acceptance
+    const orderSnapshot = {
+      orderId: String(order._id),
+      items: (order.items || []).map(it => ({
+        productId: String(it.product),
+        name: it.name || undefined,
+        qty: Number(it.quantity) || 0,
+        price: typeof it.price === 'number' ? it.price : (it?.selectedVariant?.price ?? 0)
+      })),
+      total: Number(order.totalAmount) || 0,
+      acceptedAt: order.acceptedAt,
+      expectedReadyTime: order.estimatedCompletionTime
+    };
+    const sysText = `Seller ${order.store?.name || ''} accepted your order. Total ₱${orderSnapshot.total}. Ready around ${order.estimatedCompletionTime?.toISOString?.() || ''}.`;
+
+    let systemMessage;
+    try {
+      systemMessage = await Message.create([{
+        conversationId: conversation._id,
+        type: 'system',
+        text: sysText.substring(0, 2048),
+        senderId: null,
+        receiverId: null,
+        orderRef: { orderId: String(order._id), summary: `Accepted • ₱${orderSnapshot.total}` },
+        orderSnapshot,
+        requestId,
+        idempotencyKey
+      }], { session });
+      systemMessage = systemMessage[0];
+    } catch (e) {
+      // Duplicate due to idempotency
+      if (e && e.code === 11000) {
+        systemMessage = await Message.findOne({ idempotencyKey }).session(session);
+      } else {
+        throw e;
+      }
+    }
+
+    // Update conversation lastMessage and unread count for customer
+    const recipientKey = String(customerId);
+    const lastMessage = {
+      id: systemMessage._id,
+      text: systemMessage.text,
+      type: 'system',
+      senderId: null,
+      senderName: null,
+      createdAt: systemMessage.createdAt,
+      orderRef: systemMessage.orderRef || null
+    };
+    conversation = await Conversation.findOneAndUpdate(
+      { _id: conversation._id },
+      {
+        $set: { lastMessage },
+        $inc: { [`unreadCounts.${recipientKey}`]: 1 },
+        $currentDate: { updatedAt: true }
+      },
+      { new: true, session }
+    );
+
     // Commit the transaction
     await session.commitTransaction();
 
-    // Prepare success response with order details
-    const responseData = {
-      order: {
-        _id: order._id,
-        status: order.status,
-        customer: {
-          name: order.customer.name,
-          email: order.customer.email
-        },
-        store: order.store.name,
-        acceptedAt: order.acceptedAt,
-        estimatedPreparationTime: order.estimatedPreparationTime,
-        estimatedCompletionTime: order.estimatedCompletionTime,
-        sellerNotes: order.sellerNotes
-      }
-    };
+    // Emit socket events (post-commit)
+    const convoPayload = conversation.toObject();
+    emitToUser(String(customerId), 'conversation:upserted', { conversation: convoPayload });
+    emitToUser(String(sellerId), 'conversation:upserted', { conversation: convoPayload });
+    emitToUser(String(customerId), 'message:created', { message: systemMessage });
+    emitToUser(String(sellerId), 'message:created', { message: systemMessage });
+    emitToUser(String(customerId), 'unread:update', { conversationId: conversation._id, unreadCounts: conversation.unreadCounts });
+    // Backward-compatible events with existing app
+    emitToUser(String(customerId), 'conversation:updated', { conversationId: conversation._id, lastMessage });
+    emitToUser(String(customerId), 'message:received', systemMessage);
 
-    res.status(200).json(createResponse(
-      true,
-      'Order accepted successfully',
-      responseData
-    ));
+    // Prepare success response with enriched details
+    return res.status(200).json({
+      success: true,
+      message: 'Order accepted successfully',
+      data: {
+        order: {
+          _id: order._id,
+          status: order.status,
+          customer: { name: order.customer.name, email: order.customer.email },
+          store: order.store.name,
+          acceptedAt: order.acceptedAt,
+          estimatedPreparationTime: order.estimatedPreparationTime,
+          estimatedCompletionTime: order.estimatedCompletionTime,
+          sellerNotes: order.sellerNotes
+        },
+        conversation: convoPayload,
+        systemMessage: { id: systemMessage._id, text: systemMessage.text, createdAt: systemMessage.createdAt },
+        requestId
+      }
+    });
 
   } catch (error) {
     await session.abortTransaction();
