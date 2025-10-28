@@ -47,25 +47,35 @@ export default function ChatWindow({ conversation, messages, onLoadMore, hasMore
             <div className="dlb-date-separator">
               <span>{format(new Date(date), 'MMMM d, yyyy')}</span>
             </div>
-            {msgs.map((msg) => (
-              <div 
-                key={msg._id} 
-                className={`dlb-msg ${msg.senderId === conversation.me ? 'right' : 'left'}`}
-              >
-                <div className="dlb-msg-content">
-                  <div className="dlb-bubble">{msg.text}</div>
-                  {msg.orderRef?.summary && (
-                    <div className="dlb-order-ref">
-                      <div className="dlb-order-title">Order Reference</div>
-                      <div className="dlb-order-summary">{msg.orderRef.summary}</div>
-                    </div>
-                  )}
-                  <div className="dlb-time">
-                    {format(new Date(msg.createdAt), 'h:mm a')}
+            {msgs.map((msg) => {
+              const isSystem = msg.type === 'system';
+              const sideClass = isSystem ? 'system' : (msg.senderId === conversation.me ? 'right' : 'left');
+              return (
+                <div 
+                  key={msg._id}
+                  className={`dlb-msg ${sideClass}`}
+                >
+                  <div className="dlb-msg-content">
+                    {isSystem ? (
+                      <div className="dlb-system-text">{msg.text}</div>
+                    ) : (
+                      <>
+                        <div className="dlb-bubble">{msg.text}</div>
+                        {msg.orderRef?.summary && (
+                          <div className="dlb-order-ref">
+                            <div className="dlb-order-title">Order Reference</div>
+                            <div className="dlb-order-summary">{msg.orderRef.summary}</div>
+                          </div>
+                        )}
+                        <div className="dlb-time">
+                          {format(new Date(msg.createdAt), 'h:mm a')}
+                        </div>
+                      </>
+                    )}
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         ))}
         <div ref={messagesEndRef} />

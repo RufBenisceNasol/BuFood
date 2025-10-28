@@ -120,69 +120,92 @@ export const ChatProvider = ({ children }) => {
     }
   }, [currentConversation]);
 
-  // Handle incoming messages
+  // --- SOCKET EVENT SUBSCRIPTIONS PATCH ---
   useEffect(() => {
     const handleNewMessage = (message) => {
+      if (!message) return;
+      console.log('[Socket] message received:', message);
+
+      // Append to current messages if same conversation
       if (message.conversationId === currentConversation?._id) {
-        setMessages(prev => [...prev, message]);
+        setMessages((prev) => [...prev, message]);
       }
-      
-      // Update conversation list
-      setConversations(prev => {
-        const updated = prev.map(conv => {
+
+      // Update conversation list and unread counts
+      setConversations((prev) => {
+        const updated = prev.map((conv) => {
           if (conv._id === message.conversationId) {
             return {
               ...conv,
               lastMessage: message,
               updatedAt: new Date().toISOString(),
-              unreadCount: conv._id === currentConversation?._id ? 0 : (conv.unreadCount || 0) + 1
+              unreadCount:
+                conv._id === currentConversation?._id
+                  ? 0
+                  : (conv.unreadCount || 0) + 1,
             };
           }
           return conv;
         });
-        
-        // Sort by most recent
-        return updated.sort((a, b) => 
-          new Date(b.updatedAt) - new Date(a.updatedAt)
+        return updated.sort(
+          (a, b) => new Date(b.updatedAt) - new Date(a.updatedAt)
         );
       });
-      
-      // Update unread count
+
+      // Increase total unread count if message not from me
       if (message.senderId !== currentUser?.id) {
-        setUnreadCount(prev => prev + 1);
+        setUnreadCount((prev) => prev + 1);
       }
     };
-    
-    // Handle conversation updates
+
     const handleConversationUpdated = (conversation) => {
-      setConversations(prev => {
-        const exists = prev.some(c => c._id === conversation._id);
-        
+      if (!conversation) return;
+      console.log('[Socket] conversation upserted/updated:', conversation);
+      setConversations((prev) => {
+        const exists = prev.some((c) => c._id === conversation._id);
         if (exists) {
-          return prev.map(c => 
-            c._id === conversation._id ? { ...c, ...conversation } : c
-          ).sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+          return prev
+            .map((c) =>
+              c._id === conversation._id ? { ...c, ...conversation } : c
+            )
+            .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
         } else {
-          return [conversation, ...prev].sort((a, b) => 
-            new Date(b.updatedAt) - new Date(a.updatedAt)
+          return [conversation, ...prev].sort(
+            (a, b) => new Date(b.updatedAt) - new Date(a.updatedAt)
           );
         }
       });
     };
-    
-    // Subscribe to socket events
-    const unsubscribeMessage = socketService.on('message:received', handleNewMessage);
-    const unsubscribeConversation = socketService.on('conversation:updated', handleConversationUpdated);
-    
-    // Connect to socket when component mounts
-    socketService.connect();
-    
-    // Cleanup on unmount
-    return () => {
-      unsubscribeMessage();
-      unsubscribeConversation();
+
+    const handleUnreadUpdate = ({ conversationId, unreadCounts }) => {
+      console.log('[Socket] unread:update', unreadCounts);
+      setConversations((prev) =>
+        prev.map((c) =>
+          c._id === conversationId
+            ? { ...c, unreadCounts, unreadCount: unreadCounts?.[currentUser?.id] || 0 }
+            : c
+        )
+      );
     };
-  }, [currentConversation]);
+
+    // Subscribe to ALL new backend event names
+    const subs = [
+      socketService.on('message:created', handleNewMessage),
+      socketService.on('message:received', handleNewMessage), // backward compatible
+      socketService.on('newMessage', handleNewMessage),
+      socketService.on('new_message', handleNewMessage),
+      socketService.on('conversation:upserted', handleConversationUpdated),
+      socketService.on('conversation:updated', handleConversationUpdated),
+      socketService.on('unread:update', handleUnreadUpdate),
+    ];
+
+    socketService.connect();
+    console.log('ChatContext connected to socket events');
+
+    return () => {
+      subs.forEach((unsub) => unsub && unsub());
+    };
+  }, [currentConversation, currentUser]);
   
   // Load conversations on mount
   useEffect(() => {

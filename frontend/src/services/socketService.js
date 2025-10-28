@@ -1,139 +1,153 @@
 import { io } from 'socket.io-client';
-import { getToken } from '../utils/tokenUtils';
-import { API_BASE_URL } from '../api';
+import { supabase } from '../supabaseClient'; // adjust path to your setup
 
 class SocketService {
   constructor() {
     this.socket = null;
     this.listeners = new Map();
     this.connected = false;
-    this.connectionPromise = null;
   }
 
-  connect() {
-    if (this.connectionPromise) {
-      return this.connectionPromise;
+  async connect() {
+    try {
+      if (this.socket && this.connected) return this.socket;
+
+      const {
+        data: { user },
+        error
+      } = await supabase.auth.getUser();
+      if (error || !user) {
+        console.warn('[Socket] User not authenticated yet.');
+        return null;
+      }
+
+      const userId = user.id;
+      if (!userId) throw new Error('Supabase user ID missing.');
+
+      // Compute base URL (strip trailing /api if present)
+      const rawBase = import.meta.env.VITE_API_BASE_URL || '';
+      const baseUrl = rawBase.replace(/\/?api\/?$/, '');
+
+      // ⚡ Connect to backend Socket.IO server
+      this.socket = io(baseUrl, {
+        transports: ['websocket'],
+        reconnection: true,
+        reconnectionAttempts: 10,
+        // Provide both query userId and auth token for compatibility
+        query: { userId },
+        auth: async (cb) => {
+          try {
+            const { data } = await supabase.auth.getSession();
+            const token = data?.session?.access_token;
+            cb({ token });
+          } catch (_) {
+            cb({});
+          }
+        },
+      });
+
+      // On connect
+      this.socket.on('connect', () => {
+        this.connected = true;
+        console.log('[Socket] Connected:', this.socket.id);
+        this.joinUserRoom(userId);
+      });
+
+      // On disconnect
+      this.socket.on('disconnect', (reason) => {
+        this.connected = false;
+        console.warn('[Socket] Disconnected:', reason);
+      });
+
+      // Reconnect handler
+      this.socket.io.on('reconnect', (attempt) => {
+        console.log(`[Socket] Reconnected on attempt ${attempt}`);
+        this.joinUserRoom(userId);
+      });
+
+      return this.socket;
+    } catch (err) {
+      console.error('[Socket] Connection error:', err);
+      return null;
+    }
+  }
+
+  joinUserRoom(userId) {
+    if (!this.socket) return;
+    // Backend primarily uses auth token to join user-specific room; this is a no-op hint
+    this.socket.emit('join', userId);
+    console.log(`[Socket] Joined personal room: ${userId}`);
+  }
+
+  joinConversation(conversationId) {
+    if (!this.socket) return;
+    this.socket.emit('join:conversation', conversationId);
+    console.log(`[Socket] Joined conversation room: ${conversationId}`);
+  }
+
+  leaveConversation(conversationId) {
+    if (!this.socket) return;
+    this.socket.emit('leave:conversation', conversationId);
+    console.log(`[Socket] Left conversation room: ${conversationId}`);
+  }
+
+  // Generic message send helper (emits both new and legacy events)
+  async sendMessage(conversationId, text, orderRef = null) {
+    if (!this.socket) return;
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    const payload = {
+      conversationId,
+      text,
+      senderId: user?.id,
+      orderRef,
+      createdAt: new Date().toISOString(),
+    };
+
+    console.log('[Socket] Sending message:', payload);
+    // New/event name used by some clients
+    this.socket.emit('message:send', payload);
+    // Backward/compat with backend 'sendMessage' handler
+    this.socket.emit('sendMessage', payload, () => {});
+  }
+
+  // Register listener with cleanup support
+  on(event, callback) {
+    if (!this.socket) {
+      console.warn(`[Socket] Tried to listen to "${event}" before connection`);
+      return () => {};
     }
 
-    this.connectionPromise = new Promise((resolve, reject) => {
-      try {
-        const token = getToken();
-        if (!token) {
-          throw new Error('No authentication token found');
-        }
+    this.socket.on(event, callback);
+    this.listeners.set(callback, { event });
+    console.log(`[Socket] Listening for event: ${event}`);
 
-        // Extract the base URL from API_BASE_URL (remove /api if present)
-        const baseUrl = API_BASE_URL.replace(/\/api$/, '');
-        
-        this.socket = io(baseUrl, {
-          auth: { token },
-          transports: ['websocket'],
-          reconnection: true,
-          reconnectionAttempts: 5,
-          reconnectionDelay: 1000,
-          reconnectionDelayMax: 5000,
-          timeout: 20000,
-        });
+    return () => {
+      this.socket.off(event, callback);
+      this.listeners.delete(callback);
+      console.log(`[Socket] Unsubscribed from event: ${event}`);
+    };
+  }
 
-        this.socket.on('connect', () => {
-          console.log('Socket connected');
-          this.connected = true;
-          this.setupEventListeners();
-          resolve(this.socket);
-        });
-
-        this.socket.on('connect_error', (error) => {
-          console.error('Socket connection error:', error);
-          this.connected = false;
-          reject(error);
-          this.connectionPromise = null;
-        });
-
-        this.socket.on('disconnect', (reason) => {
-          console.log('Socket disconnected:', reason);
-          this.connected = false;
-          if (reason === 'io server disconnect') {
-            // Reconnect if the server disconnects us
-            this.socket.connect();
-          }
-        });
-
-      } catch (error) {
-        console.error('Socket initialization error:', error);
-        reject(error);
-        this.connectionPromise = null;
-      }
-    });
-
-    return this.connectionPromise;
+  emit(event, data) {
+    if (!this.socket) return;
+    this.socket.emit(event, data);
+    console.log(`[Socket] Emitted event: ${event}`, data);
   }
 
   disconnect() {
     if (this.socket) {
-      this.socket.disconnect();
-      this.socket = null;
-      this.connected = false;
-      this.connectionPromise = null;
-    }
-  }
-
-  setupEventListeners() {
-    if (!this.socket) return;
-
-    // Handle message received event
-    this.socket.on('message:received', (data) => {
-      this.emit('message:received', data);
-    });
-
-    // Handle conversation updated event
-    this.socket.on('conversation:updated', (data) => {
-      this.emit('conversation:updated', data);
-    });
-  }
-
-  // Subscribe to an event
-  on(event, callback) {
-    if (!this.listeners.has(event)) {
-      this.listeners.set(event, new Set());
-    }
-    this.listeners.get(event).add(callback);
-    return () => this.off(event, callback);
-  }
-
-  // Unsubscribe from an event
-  off(event, callback) {
-    if (this.listeners.has(event)) {
-      this.listeners.get(event).delete(callback);
-    }
-  }
-
-  // Emit an event to all listeners
-  emit(event, data) {
-    if (this.listeners.has(event)) {
-      this.listeners.get(event).forEach(callback => {
-        try {
-          callback(data);
-        } catch (error) {
-          console.error(`Error in ${event} handler:`, error);
-        }
+      this.listeners.forEach(({ event }, callback) => {
+        this.socket.off(event, callback);
       });
+      this.listeners.clear();
+      this.socket.disconnect();
+      this.connected = false;
+      console.log('[Socket] Disconnected and cleaned up.');
     }
   }
-
-  // Send a message through the socket
-  sendMessage(conversationId, text, orderRef = null) {
-    if (!this.connected || !this.socket) {
-      console.warn('Socket not connected, message not sent');
-      return Promise.reject(new Error('Socket not connected'));
-    }
-
-    return new Promise((resolve, reject) => {
-      this.socket.emit('message:send', { conversationId, text, orderRef }, (response) => {
-        if (response.error) {
-          reject(new Error(response.error));
-        } else {
-          resolve(response.data);
-        }
       });
     });
   }

@@ -6,7 +6,10 @@ const {
   getMessages, 
   sendMessage, 
   markRead, 
-  createOrFetch 
+  createOrFetch,
+  // new v2 handlers
+  getMessagesByOrder,
+  sendChatMessage
 } = require('../controllers/chatController');
 const { simulateOrder } = require('../controllers/chatOrderController');
 
@@ -30,5 +33,11 @@ router.post('/conversations/:id/read', markRead);
 
 // Test endpoint to simulate order placement
 router.post('/simulate-order', simulateOrder);
+
+// --- New REST endpoints ---
+// POST /api/chat — manual message create
+router.post('/', sendChatMessage);
+// GET /api/chat/:orderId — conversation + messages asc
+router.get('/:orderId', getMessagesByOrder);
 
 module.exports = router;
