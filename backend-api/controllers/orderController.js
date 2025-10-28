@@ -566,28 +566,70 @@ const getOrderDetails = async (req, res) => {
       error.message
     ));
   }
+
+  // Get the order with populated fields
+  const order = await Order.findById(orderId)
+    .populate('customer', 'name email')
+    .populate('store', 'name location')
+    .populate('items.product', 'name price image');
+
+  if (!order) {
+    return res.status(404).json(createResponse(
+      false,
+      'Order not found',
+      null,
+      'The specified order does not exist'
+    ));
+  }
+
+  // Verify that the user is either the customer or seller
+  if (order.seller.toString() !== req.user._id.toString() && 
+      order.customer._id.toString() !== req.user._id.toString()) {
+    return res.status(403).json(createResponse(
+      false,
+      'Unauthorized',
+      null,
+      'You do not have permission to view this order'
+    ));
+  }
+
+  res.status(200).json(createResponse(
+    true,
+    'Order details retrieved successfully',
+    { order }
+  ));
+
+} catch (error) {
+  console.error('Error getting order details:', error);
+  res.status(500).json(createResponse(
+    false,
+    'Failed to get order details',
+    null,
+    error.message
+  ));
+}
 };
 
 // Accept order (Seller only)
 const acceptOrder = async (req, res) => {
-  const session = await mongoose.startSession();
-  session.startTransaction();
+const session = await mongoose.startSession();
+session.startTransaction();
 
-  try {
-    const { orderId } = req.params;
-    const { estimatedPreparationTime, note } = req.body;
-    const idempotencyKey = req.get('Idempotency-Key') || `order:${orderId}:accept`;
-    const requestId = randomUUID();
+try {
+  const { orderId } = req.params;
+  const { estimatedPreparationTime, note } = req.body;
+  const idempotencyKey = req.get('Idempotency-Key') || `order:${orderId}:accept`;
+  const requestId = randomUUID();
 
-    // Check if user is authenticated and is a seller
-    if (!req.user || !req.user._id) {
-      return res.status(401).json(createResponse(
-        false,
-        'Authentication required',
-        null,
-        'User must be logged in to perform this action'
-      ));
-    }
+  // Check if user is authenticated and is a seller
+  if (!req.user || !req.user._id) {
+    return res.status(401).json(createResponse(
+      false,
+      'Authentication required',
+      null,
+      'User must be logged in to perform this action'
+    ));
+  }
 
     // Get the order
     const order = await Order.findById(orderId)
