@@ -3,7 +3,8 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import SplashScreen from './components/SplashScreen'
 import { Box } from '@mui/material'
 import './App.css'
-import { supabase } from './utils/supabaseClient'
+import { supabase } from './supabaseClient'
+import ProtectedRoute, { SellerRoute, CustomerRoute } from './components/ProtectedRoute'
 import { ChatProvider } from './contexts/ChatContext'
 
 // Lazy-loaded routes (code splitting)
@@ -95,32 +96,32 @@ function App() {
             <Route path="/verify" element={<SupabaseVerifyPage />} />
             <Route path="/verify/:token" element={<SupabaseVerifyPage />} />
 
-            {/* Seller Routes */}
-            <Route path="/seller/dashboard" element={<DashboardPage />} />
-            <Route path="/seller/add-product" element={<AddProductPage />} />
-            <Route path="/seller/product-list" element={<ProductList />} />
-            <Route path="/seller/store-settings" element={<StoreSettings />} />
-            <Route path="/seller/manage-orders" element={<OrdersPage />} />
-            <Route path="/seller/profile" element={<ProfilePage />} />
-            <Route path="/seller/settings" element={<SellerSettingsPage />} />
-            <Route path="/seller/product/:productId" element={<SellerProductDetailPage />} />
-            <Route path="/seller/edit-product/:productId" element={<EditProductPage />} />
-            <Route path="/seller/analytics" element={<AnalyticsPage />} />
+            {/* Seller Routes (protected) */}
+            <Route path="/seller/dashboard" element={<SellerRoute><SellerLayout><DashboardPage /></SellerLayout></SellerRoute>} />
+            <Route path="/seller/add-product" element={<SellerRoute><SellerLayout><AddProductPage /></SellerLayout></SellerRoute>} />
+            <Route path="/seller/product-list" element={<SellerRoute><SellerLayout><ProductList /></SellerLayout></SellerRoute>} />
+            <Route path="/seller/store-settings" element={<SellerRoute><SellerLayout><StoreSettings /></SellerLayout></SellerRoute>} />
+            <Route path="/seller/manage-orders" element={<SellerRoute><SellerLayout><OrdersPage /></SellerLayout></SellerRoute>} />
+            <Route path="/seller/profile" element={<SellerRoute><SellerLayout><ProfilePage /></SellerLayout></SellerRoute>} />
+            <Route path="/seller/settings" element={<SellerRoute><SellerLayout><SellerSettingsPage /></SellerLayout></SellerRoute>} />
+            <Route path="/seller/product/:productId" element={<SellerRoute><SellerLayout><SellerProductDetailPage /></SellerLayout></SellerRoute>} />
+            <Route path="/seller/edit-product/:productId" element={<SellerRoute><SellerLayout><EditProductPage /></SellerLayout></SellerRoute>} />
+            <Route path="/seller/analytics" element={<SellerRoute><SellerLayout><AnalyticsPage /></SellerLayout></SellerRoute>} />
 
-            {/* Customer Routes */}
-            <Route path="/customer/home" element={<CustomerLayout><HomePage /></CustomerLayout>} />
-            <Route path="/customer/profile" element={<CustomerLayout><CustomerProfilePage /></CustomerLayout>} />
-            <Route path="/customer/settings" element={<CustomerLayout><SettingsPage /></CustomerLayout>} />
-            <Route path="/customer/stores" element={<CustomerLayout><StoresPage /></CustomerLayout>} />
-            <Route path="/customer/store/:storeId" element={<CustomerLayout><StoreDetailPage /></CustomerLayout>} />
-            <Route path="/customer/cart" element={<CustomerLayout><CartPage /></CustomerLayout>} />
-            <Route path="/customer/orders" element={<CustomerLayout><CustomerOrdersPage /></CustomerLayout>} />
-            <Route path="/customer/order-summary" element={<CustomerLayout><OrderSummaryPage /></CustomerLayout>} />
-            <Route path="/customer/success-order" element={<CustomerLayout><SuccessOrderMessagePage /></CustomerLayout>} />
-            <Route path="/customer/product/:productId" element={<CustomerLayout><SingleProductPage /></CustomerLayout>} />
-            <Route path="/customer/products" element={<CustomerLayout><ProductPage /></CustomerLayout>} />
-            <Route path="/customer/view-my-order" element={<CustomerLayout><ViewMyOrder /></CustomerLayout>} />
-            <Route path="/customer/favorites" element={<CustomerLayout><FavoritesPage /></CustomerLayout>} />
+            {/* Customer Routes (protected) */}
+            <Route path="/customer/home" element={<CustomerRoute><CustomerLayout><HomePage /></CustomerLayout></CustomerRoute>} />
+            <Route path="/customer/profile" element={<CustomerRoute><CustomerLayout><CustomerProfilePage /></CustomerLayout></CustomerRoute>} />
+            <Route path="/customer/settings" element={<CustomerRoute><CustomerLayout><SettingsPage /></CustomerLayout></CustomerRoute>} />
+            <Route path="/customer/stores" element={<CustomerRoute><CustomerLayout><StoresPage /></CustomerLayout></CustomerRoute>} />
+            <Route path="/customer/store/:storeId" element={<CustomerRoute><CustomerLayout><StoreDetailPage /></CustomerLayout></CustomerRoute>} />
+            <Route path="/customer/cart" element={<CustomerRoute><CustomerLayout><CartPage /></CustomerLayout></CustomerRoute>} />
+            <Route path="/customer/orders" element={<CustomerRoute><CustomerLayout><CustomerOrdersPage /></CustomerLayout></CustomerRoute>} />
+            <Route path="/customer/order-summary" element={<CustomerRoute><CustomerLayout><OrderSummaryPage /></CustomerLayout></CustomerRoute>} />
+            <Route path="/customer/success-order" element={<CustomerRoute><CustomerLayout><SuccessOrderMessagePage /></CustomerLayout></CustomerRoute>} />
+            <Route path="/customer/product/:productId" element={<CustomerRoute><CustomerLayout><SingleProductPage /></CustomerLayout></CustomerRoute>} />
+            <Route path="/customer/products" element={<CustomerRoute><CustomerLayout><ProductPage /></CustomerLayout></CustomerRoute>} />
+            <Route path="/customer/view-my-order" element={<CustomerRoute><CustomerLayout><ViewMyOrder /></CustomerLayout></CustomerRoute>} />
+            <Route path="/customer/favorites" element={<CustomerRoute><CustomerLayout><FavoritesPage /></CustomerLayout></CustomerRoute>} />
             <Route path="/gcash-callback" element={<GCashCallback />} />
             <Route path="/supabase-reset" element={<SupabaseResetPasswordPage />} />
             <Route path="/verified" element={<SupabaseVerifyPage />} />
