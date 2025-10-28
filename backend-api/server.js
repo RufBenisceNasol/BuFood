@@ -38,6 +38,8 @@ const favoriteRoutes = require('./routes/favorites');
 const uploadRoutes = require('./routes/uploadRoutes');
 
 const app = express();
+const http = require('http');
+const { setupSocket } = require('./utils/socket');
 // Trust the reverse proxy (e.g., Render, Nginx) so req.ip reflects the real client IP
 // and express-rate-limit can safely use X-Forwarded-For
 app.set('trust proxy', 1);
@@ -245,8 +247,10 @@ const gracefulShutdown = async () => {
 process.on('SIGTERM', gracefulShutdown);
 process.on('SIGINT', gracefulShutdown);
 
-// Start server
-app.listen(port, '0.0.0.0', () => {
-    logger.info(`🚀 Server started on port ${port}`);
+// Start server with Socket.IO
+const server = http.createServer(app);
+setupSocket(server, { /* socket options can go here */ });
+server.listen(port, '0.0.0.0', () => {
+    logger.info(`🚀 Server + Socket started on port ${port}`);
     logger.info(`📚 API Documentation available at http://[YOUR_IP]:${port}/api-docs`);
 });

@@ -12,6 +12,7 @@ const Conversation = require('../models/Conversation');
 const Message = require('../models/Message');
 const { emitToUser } = require('../utils/socket');
 const { randomUUID } = require('crypto');
+const { mapToSupabaseId } = require('../helpers/idMapper');
 
 // Helper function for consistent response structure
 const createResponse = (success, message, data = null, error = null) => ({
@@ -748,16 +749,37 @@ const acceptOrder = async (req, res) => {
     // Commit the transaction
     await session.commitTransaction();
 
+    // Resolve socket rooms (prefer Supabase userId)
+    const sellerSupabaseId = await mapToSupabaseId(sellerId);
+    const customerSupabaseId = await mapToSupabaseId(customerId);
+    const sellerRoom = String(sellerSupabaseId || sellerId);
+    const customerRoom = String(customerSupabaseId || customerId);
+
     // Emit socket events (post-commit)
     const convoPayload = conversation.toObject();
-    emitToUser(String(customerId), 'conversation:upserted', { conversation: convoPayload });
-    emitToUser(String(sellerId), 'conversation:upserted', { conversation: convoPayload });
-    emitToUser(String(customerId), 'message:created', { message: systemMessage });
-    emitToUser(String(sellerId), 'message:created', { message: systemMessage });
-    emitToUser(String(customerId), 'unread:update', { conversationId: conversation._id, unreadCounts: conversation.unreadCounts });
+    emitToUser(customerRoom, 'conversation:upserted', { conversation: convoPayload });
+    emitToUser(sellerRoom, 'conversation:upserted', { conversation: convoPayload });
+    emitToUser(customerRoom, 'message:created', { message: systemMessage });
+    emitToUser(sellerRoom, 'message:created', { message: systemMessage });
+    emitToUser(customerRoom, 'unread:update', { conversationId: conversation._id, unreadCounts: conversation.unreadCounts });
     // Backward-compatible events with existing app
-    emitToUser(String(customerId), 'conversation:updated', { conversationId: conversation._id, lastMessage });
-    emitToUser(String(customerId), 'message:received', systemMessage);
+    emitToUser(customerRoom, 'conversation:updated', { conversationId: conversation._id, lastMessage });
+    emitToUser(customerRoom, 'message:received', systemMessage);
+
+    // Foodpanda-like generic event for simpler clients
+    const autoMessage = {
+      type: 'system',
+      text: systemMessage.text,
+      orderId: String(order._id),
+      storeId: String(order.store?._id || order.store),
+      total: Number(order.totalAmount) || 0,
+      timestamp: systemMessage.createdAt,
+    };
+    emitToUser(customerRoom, 'newMessage', autoMessage);
+    emitToUser(sellerRoom, 'newMessage', autoMessage);
+    // Legacy alias
+    emitToUser(customerRoom, 'new_message', autoMessage);
+    emitToUser(sellerRoom, 'new_message', autoMessage);
 
     // Prepare success response with enriched details
     return res.status(200).json({
