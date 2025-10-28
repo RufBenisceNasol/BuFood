@@ -541,8 +541,10 @@ const getOrderDetails = async (req, res) => {
     }
 
     // Verify that the user is either the customer or seller
-    if (order.seller.toString() !== req.user._id.toString() && 
-        order.customer._id.toString() !== req.user._id.toString()) {
+    if (
+      order.seller.toString() !== req.user._id.toString() &&
+      order.customer._id.toString() !== req.user._id.toString()
+    ) {
       return res.status(403).json(createResponse(
         false,
         'Unauthorized',
@@ -551,7 +553,7 @@ const getOrderDetails = async (req, res) => {
       ));
     }
 
-    res.status(200).json(createResponse(
+    return res.status(200).json(createResponse(
       true,
       'Order details retrieved successfully',
       { order }
@@ -559,55 +561,13 @@ const getOrderDetails = async (req, res) => {
 
   } catch (error) {
     console.error('Error getting order details:', error);
-    res.status(500).json(createResponse(
+    return res.status(500).json(createResponse(
       false,
       'Failed to get order details',
       null,
       error.message
     ));
   }
-
-  // Get the order with populated fields
-  const order = await Order.findById(orderId)
-    .populate('customer', 'name email')
-    .populate('store', 'name location')
-    .populate('items.product', 'name price image');
-
-  if (!order) {
-    return res.status(404).json(createResponse(
-      false,
-      'Order not found',
-      null,
-      'The specified order does not exist'
-    ));
-  }
-
-  // Verify that the user is either the customer or seller
-  if (order.seller.toString() !== req.user._id.toString() && 
-      order.customer._id.toString() !== req.user._id.toString()) {
-    return res.status(403).json(createResponse(
-      false,
-      'Unauthorized',
-      null,
-      'You do not have permission to view this order'
-    ));
-  }
-
-  res.status(200).json(createResponse(
-    true,
-    'Order details retrieved successfully',
-    { order }
-  ));
-
-} catch (error) {
-  console.error('Error getting order details:', error);
-  res.status(500).json(createResponse(
-    false,
-    'Failed to get order details',
-    null,
-    error.message
-  ));
-}
 };
 
 // Accept order (Seller only)
