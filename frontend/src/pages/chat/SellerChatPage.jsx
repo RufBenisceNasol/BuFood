@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Layout, Button, Badge } from 'antd';
 import { MessageOutlined, ArrowLeftOutlined } from '@ant-design/icons';
-import { useChat } from '../../../contexts/ChatContext';
+import { useChat } from '../../contexts/ChatContext';
 import ChatList from '../../components/chat/ChatList';
 import ChatWindow from '../../components/chat/ChatWindow';
 import './ChatPage.css';
@@ -61,7 +61,7 @@ const SellerChatPage = () => {
                   onClick={handleBackToDashboard}
                   className="back-button"
                 />
-                <h2>Messages</h2>
+                <h2>Chats</h2>
               </div>
               <ChatList 
                 onConversationSelect={handleConversationSelect}
@@ -88,7 +88,7 @@ const SellerChatPage = () => {
         <div className="chat-container">
           <div className="chat-sidebar">
             <div className="chat-header">
-              <h2>Customer Messages</h2>
+              <h2>Chats</h2>
               <Badge count={unreadCount} size="small">
                 <Button 
                   type="text" 

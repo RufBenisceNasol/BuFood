@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Badge, Button, Popover } from 'antd';
 import { MessageOutlined, CloseOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
-import { useChat } from '../../../contexts/ChatContext';
+import { useChat } from '../../contexts/ChatContext';
 import ChatList from './ChatList';
 import './ChatStyles.css';
 
@@ -84,8 +84,8 @@ const FloatingMessageButton = () => {
       <Popover
         content={content}
         trigger="click"
-        visible={isOpen}
-        onVisibleChange={setIsOpen}
+        open={isOpen}
+        onOpenChange={setIsOpen}
         placement="topRight"
         overlayClassName="chat-popover"
         destroyTooltipOnHide

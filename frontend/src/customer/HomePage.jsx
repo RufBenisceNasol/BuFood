@@ -20,7 +20,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MdSearch, MdHome, MdFavoriteBorder, MdShoppingCart, MdReceipt, MdPerson, MdFilterList, MdClose, MdMenuOpen, MdSettings, MdLogout, MdStore, MdAddShoppingCart, MdCheckCircle } from 'react-icons/md';
+import { MdSearch, MdHome, MdFavoriteBorder, MdShoppingCart, MdReceipt, MdPerson, MdFilterList, MdClose, MdMenuOpen, MdSettings, MdLogout, MdStore, MdAddShoppingCart, MdCheckCircle, MdMessage } from 'react-icons/md';
 import Slider from 'react-slick';
 // Removed react-toastify to avoid popups on the homepage
 import 'slick-carousel/slick/slick.css';
@@ -30,6 +30,7 @@ import '../styles/HomePage.css';
 import { getUser } from '../utils/tokenUtils';
 import useDebouncedRefresh from '../hooks/useDebouncedRefresh';
 import { SkeletonCard } from '../components/Skeletons';
+import { useChat } from '../contexts/ChatContext';
 
 const styles = {
   bannerContainer: {
@@ -101,6 +102,7 @@ const styles = {
 
 const HomePage = () => {
   const navigate = useNavigate();
+  const { unreadCount } = useChat();
   const [stores, setStores] = useState([]);
   const [allProducts, setAllProducts] = useState([]);
   const [filteredProducts, setFilteredProducts] = useState([]);
@@ -347,11 +349,13 @@ const HomePage = () => {
   const sliderSettings = {
     dots: true,
     infinite: true,
-    speed: 500,
+    speed: 400,
     slidesToShow: 1,
     slidesToScroll: 1,
     autoplay: true,
-    autoplaySpeed: 3000,
+    autoplaySpeed: 5000,
+    waitForAnimate: true,
+    lazyLoad: 'ondemand',
     arrows: true,
     pauseOnHover: true,
     responsive: [
@@ -886,6 +890,53 @@ const HomePage = () => {
             )}
           </div>
         </div>
+      {/* Floating Chat Button */}
+      <button
+        onClick={() => navigate('/customer/chat')}
+        aria-label="Messages"
+        style={{
+          position: 'fixed',
+          right: 20,
+          bottom: 75,
+          zIndex: 1100,
+          width: 50,
+          height: 50,
+          borderRadius: '50%',
+          border: 'none',
+          backgroundColor: '#FF7A00',
+          color: '#fff',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          cursor: 'pointer'
+        }}
+      >
+        <MdMessage size={24} />
+        {unreadCount > 0 && (
+          <span
+            style={{
+              position: 'absolute',
+              top: -2,
+              right: -2,
+              minWidth: 18,
+              height: 18,
+              padding: '0 4px',
+              borderRadius: 9,
+              backgroundColor: '#e53935',
+              color: '#fff',
+              fontSize: 11,
+              lineHeight: '18px',
+              textAlign: 'center',
+              fontWeight: 700,
+              boxShadow: '0 0 0 2px #fff'
+            }}
+          >
+            {unreadCount}
+          </span>
+        )}
+      </button>
+
       </div>      {/* Bottom Navigation */}
       <div className="bottomNav" style={styles.bottomNav}>
         <div className={"navItem activeNavItem"} onClick={() => navigate('/customer/home')}>

@@ -29,9 +29,12 @@ const ChatList = ({ onConversationSelect, selectedConversationId }) => {
   });
 
   const handleConversationClick = (conversation) => {
-    onConversationSelect(conversation);
-    // Update URL to reflect the selected conversation
-    navigate(`/chat/${conversation._id}`);
+    if (typeof onConversationSelect === 'function') {
+      onConversationSelect(conversation);
+    } else {
+      // Fallback: navigate to a default chat route
+      navigate(`/customer/chat/${conversation._id}`);
+    }
   };
 
   if (loading && conversations.length === 0) {
@@ -44,11 +47,9 @@ const ChatList = ({ onConversationSelect, selectedConversationId }) => {
 
   if (!loading && conversations.length === 0) {
     return (
-      <div className="chat-list-container empty-state">
-        <Empty
-          image={Empty.PRESENTED_IMAGE_SIMPLE}
-          description="No conversations yet"
-        />
+      <div className="chat-placeholder">
+        <MessageOutlined className="placeholder-icon" />
+        <div className="placeholder-title">No Chat History</div>
       </div>
     );
   }

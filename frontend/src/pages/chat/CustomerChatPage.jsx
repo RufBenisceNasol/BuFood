@@ -30,7 +30,7 @@ const CustomerChatPage = () => {
   }, []);
 
   const handleBackToProducts = () => {
-    navigate('/products');
+    navigate('/customer/home');
   };
 
   const handleConversationSelect = (conversation) => {
@@ -61,7 +61,7 @@ const CustomerChatPage = () => {
                   onClick={handleBackToProducts}
                   className="back-button"
                 />
-                <h2>Messages</h2>
+                <h2>Chats</h2>
               </div>
               <ChatList 
                 onConversationSelect={handleConversationSelect}
@@ -88,7 +88,13 @@ const CustomerChatPage = () => {
         <div className="chat-container">
           <div className="chat-sidebar">
             <div className="chat-header">
-              <h2>Messages</h2>
+              <Button 
+                type="text" 
+                icon={<ArrowLeftOutlined />} 
+                onClick={() => navigate('/customer/home')}
+                className="back-button"
+              />
+              <h2>Chats</h2>
               <Badge count={unreadCount} size="small">
                 <Button 
                   type="text" 

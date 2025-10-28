@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Avatar, List, Skeleton, Empty, Button, Tooltip } from 'antd';
 import { UserOutlined, CheckOutlined, ClockCircleOutlined, CloseCircleOutlined } from '@ant-design/icons';
 import { format } from 'date-fns';
-import { useChat } from '../../../contexts/ChatContext';
+import { useChat } from "../../contexts/ChatContext";
 import './ChatStyles.css';
 
 const ChatWindow = ({ conversation, currentUser, onBack }) => {
