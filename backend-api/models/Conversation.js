@@ -32,4 +32,4 @@ const conversationSchema = new Schema(
 conversationSchema.index({ participantsKey: 1, orderId: 1 }, { unique: true });
 conversationSchema.index({ updatedAt: -1 });
 
-module.exports = mongoose.model('Conversation', conversationSchema);
+module.exports = mongoose.models.Conversation || mongoose.model('Conversation', conversationSchema);
