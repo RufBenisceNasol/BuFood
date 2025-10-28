@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import { supabase } from '../supabaseClient';
 import { chat as chatApi } from '../api';
 import { socketService } from '../services/socketService';
 
@@ -11,6 +12,24 @@ export const ChatProvider = ({ children }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [currentUser, setCurrentUser] = useState(null);
+
+  // Load current user and subscribe to auth changes
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      const { data, error } = await supabase.auth.getUser();
+      if (!mounted) return;
+      if (!error) setCurrentUser(data?.user || null);
+    })();
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
+      setCurrentUser(session?.user || null);
+    });
+    return () => {
+      mounted = false;
+      sub?.subscription?.unsubscribe?.();
+    };
+  }, []);
 
   // Load conversations
   const loadConversations = useCallback(async () => {
@@ -82,7 +101,7 @@ export const ChatProvider = ({ children }) => {
         conversationId: currentConversation._id,
         text,
         orderRef,
-        sender: currentUser, // This should be set from your auth context
+        sender: currentUser || undefined,
         createdAt: new Date().toISOString(),
         _id: `temp-${Date.now()}`,
         status: 'sending'
@@ -233,6 +252,7 @@ export const ChatProvider = ({ children }) => {
     loading,
     error,
     unreadCount,
+    currentUser,
     loadConversations,
     loadMessages,
     sendMessage,
