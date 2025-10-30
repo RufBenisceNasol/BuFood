@@ -122,6 +122,9 @@ const productSchema = new mongoose.Schema({
   timestamps: true, // Adds createdAt and updatedAt
 });
 
+// Indexes for common queries
+productSchema.index({ createdAt: -1 });
+
 // Pre-save middleware to auto-update availability based on stock
 productSchema.pre('save', function(next) {
   if (this.isModified('stock')) {

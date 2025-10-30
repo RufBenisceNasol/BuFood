@@ -237,20 +237,18 @@ const LoginPage = () => {
                                     type={showPassword ? "text" : "password"}
                                     value={password}
                                     onChange={(e) => {
-                                        const value = e.target.value.slice(0, 8); // limit to 8 characters
+                                        const value = e.target.value;
                                         setPassword(value);
 
-                                        // Live hint if less than 8 characters
                                         if (value.length > 0 && value.length < 8) {
-                                            setPasswordError(`Password must be 8 characters (${value.length}/8)`);
+                                            setPasswordError(`Password must be at least 8 characters (${value.length}/8)`);
                                         } else {
                                             setPasswordError('');
                                         }
-                                        setError(''); // Clear any previous error when typing
+                                        setError('');
                                     }}
                                     required
                                     minLength={8}
-                                    maxLength={8}
                                     style={styles.input}
                                     disabled={loading}
                                     placeholder="Password"

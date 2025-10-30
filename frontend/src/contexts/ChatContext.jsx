@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
 import { supabase } from '../supabaseClient';
 import { chat as chatApi } from '../api';
 import { socketService } from '../services/socketService';
@@ -14,6 +14,8 @@ export const ChatProvider = ({ children }) => {
   const [unreadCount, setUnreadCount] = useState(0);
   const [currentUser, setCurrentUser] = useState(null);
   const [socketReady, setSocketReady] = useState(false);
+  const loadingConvRef = useRef(false);
+  const backoffRef = useRef(null);
 
   // Load current user and subscribe to auth changes
   useEffect(() => {
@@ -34,24 +36,34 @@ export const ChatProvider = ({ children }) => {
 
   // Load conversations
   const loadConversations = useCallback(async () => {
+    if (loadingConvRef.current) return [];
+    loadingConvRef.current = true;
     setLoading(true);
     setError(null);
     try {
       const response = await chatApi.getConversations();
       setConversations(response.data);
-      
       // Calculate total unread count
-      const totalUnread = response.data.reduce(
-        (sum, conv) => sum + (conv.unreadCount || 0), 0
-      );
+      const totalUnread = response.data.reduce((sum, conv) => sum + (conv.unreadCount || 0), 0);
       setUnreadCount(totalUnread);
-      
       return response.data;
     } catch (err) {
       console.error('Failed to load conversations:', err);
-      setError(err.message || 'Failed to load conversations');
+      const status = err?.response?.status || err?.status;
+      if (status === 429) {
+        if (backoffRef.current) clearTimeout(backoffRef.current);
+        backoffRef.current = setTimeout(() => {
+          loadingConvRef.current = false;
+          loadConversations();
+        }, 15000);
+      } else {
+        setError(err.message || 'Failed to load conversations');
+      }
       return [];
     } finally {
+      if (!backoffRef.current) {
+        loadingConvRef.current = false;
+      }
       setLoading(false);
     }
   }, []);

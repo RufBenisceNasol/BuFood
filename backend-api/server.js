@@ -22,6 +22,7 @@ const cors = require('cors');
 const helmet = require('helmet');
 const compression = require('compression');
 const { authenticate } = require('./middlewares/authMiddleware');
+const { authenticateWithSupabase } = require('./middlewares/supabaseAuthMiddleware');
 
 // Import routes
 const authRoutes = require('./routes/authRoutes');
@@ -195,6 +196,7 @@ app.use('/api', reviewRoutes);
 app.use('/api/favorites', favoriteRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/chat', chatRoutes);
+app.use('/api', authenticateWithSupabase, require('./routes/bootstrap'));
 
 // JSON 404 fallback for API routes
 app.use('/api', (req, res, next) => {

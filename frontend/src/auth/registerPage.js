@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { auth, warmup } from '../api';
-import { supabase } from '../lib/supabaseClient';
+import { supabase } from '../supabaseClient';
 import { useNavigate } from 'react-router-dom';
 import { FiUser, FiMail, FiPhone, FiLock, FiBriefcase, FiEye, FiEyeOff, FiKey } from 'react-icons/fi';
 import logod from '../assets/logod.png';
@@ -102,7 +102,11 @@ const RegisterPage = () => {
             const normalizedEmail = (formData.email || '').trim().toLowerCase();
             const { error: otpErr } = await supabase.auth.signInWithOtp({
                 email: normalizedEmail,
-                options: { shouldCreateUser: true }
+                options: { 
+                  shouldCreateUser: true,
+                  // If supported by SDK, pass initial metadata; otherwise we set it after verification
+                  data: { role: formData.role, name: formData.name, contactNumber: formData.contactNumber }
+                }
             });
             if (otpErr) {
                 setError(otpErr.message || 'Failed to send verification code');
@@ -176,6 +180,19 @@ const RegisterPage = () => {
             const supabaseUserId = data?.user?.id;
             if (!supabaseUserId) {
                 throw new Error('Failed to get Supabase user ID after verification');
+            }
+
+            // Ensure role and profile metadata are set on the Supabase user
+            try {
+              await supabase.auth.updateUser({
+                data: {
+                  role: formData.role,
+                  name: formData.name,
+                  contactNumber: formData.contactNumber,
+                }
+              });
+            } catch (metaErr) {
+              console.warn('Failed to set user metadata (role/name/contact):', metaErr);
             }
 
             // Create the user in our backend with Supabase ID

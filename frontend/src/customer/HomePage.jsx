@@ -18,7 +18,7 @@
   *  - Styled primarily via external CSS + inline styles
   */
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MdSearch, MdHome, MdFavoriteBorder, MdShoppingCart, MdReceipt, MdPerson, MdFilterList, MdClose, MdMenuOpen, MdSettings, MdLogout, MdStore, MdAddShoppingCart, MdCheckCircle, MdMessage } from 'react-icons/md';
 import Slider from 'react-slick';
@@ -26,6 +26,7 @@ import Slider from 'react-slick';
 import 'slick-carousel/slick/slick.css';
 import 'slick-carousel/slick/slick-theme.css';
 import { store as storeApi, product as productApi, auth, cart } from '../api';
+import { fetchBootstrap } from '../api/bootstrap';
 import '../styles/HomePage.css';
 import { getUser } from '../utils/tokenUtils';
 import useDebouncedRefresh from '../hooks/useDebouncedRefresh';
@@ -156,8 +157,16 @@ const HomePage = () => {
   const STORES_CACHE_KEY = 'bufood:stores';
   const PRODUCTS_CACHE_KEY = 'bufood:products';
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const didInitRef = useRef(false); // prevent StrictMode double-mount duplicate fetches
+  const fetchingRef = useRef(false);
+  const cartFetchingRef = useRef(false);
+  const dataBackoffRef = useRef(null);
+  const cartBackoffRef = useRef(null);
+  const bootstrapBackoffRef = useRef(null);
 
   useEffect(() => {
+    if (didInitRef.current) return; // StrictMode guard
+    didInitRef.current = true;
     // Cache-first render from localStorage, then refresh from API
     let hadCache = false;
     try {
@@ -191,6 +200,8 @@ const HomePage = () => {
   }, []);
 
   const fetchCartCount = async () => {
+    if (cartFetchingRef.current) return;
+    cartFetchingRef.current = true;
     try {
       const cartData = await cart.viewCart();
       const count = Array.isArray(cartData?.items)
@@ -198,8 +209,19 @@ const HomePage = () => {
         : 0;
       setCartCount(count);
     } catch (e) {
-      // silently ignore count errors
+      // backoff on 429
+      const status = e?.response?.status;
+      if (status === 429) {
+        if (cartBackoffRef.current) clearTimeout(cartBackoffRef.current);
+        cartBackoffRef.current = setTimeout(() => {
+          cartFetchingRef.current = false;
+          fetchCartCount();
+        }, 15000);
+        return;
+      }
       setCartCount(0);
+    } finally {
+      cartFetchingRef.current = false;
     }
   };
 
@@ -251,6 +273,8 @@ const HomePage = () => {
   }, [searchQuery, filters, allProducts]);
 
   const fetchData = async ({ showLoader = true } = {}) => {
+    if (fetchingRef.current) return;
+    fetchingRef.current = true;
     // Fetch stores and products concurrently; update caches on success
     if (showLoader) {
       setLoading(true);
@@ -258,11 +282,48 @@ const HomePage = () => {
     setError(null);
 
     try {
+      // Try aggregated bootstrap first
+      try {
+        const boot = await fetchBootstrap({ productLimit: 24, conversationLimit: 50, orderLimit: 50, storeLimit: 50 });
+        if (boot) {
+          const s = Array.isArray(boot.stores) ? boot.stores : [];
+          const p = Array.isArray(boot.products) ? boot.products : [];
+          const c = boot.cart?.items || [];
+          setStores(s);
+          setAllProducts(p);
+          setFilteredProducts(p);
+          setPopularProducts(p.slice(0, 4));
+          setCartCount(c.reduce((sum, it) => sum + (it.quantity || 0), 0));
+          const uniqueCategories = ['All', ...new Set(
+            p.filter(prod => prod && prod.category).map(prod => prod.category)
+          )];
+          setCategories(uniqueCategories);
+          try {
+            localStorage.setItem(STORES_CACHE_KEY, JSON.stringify(s));
+            localStorage.setItem(PRODUCTS_CACHE_KEY, JSON.stringify(p));
+          } catch (_) {}
+          return; // hydrated successfully
+        }
+      } catch (bootErr) {
+        const status = bootErr?.response?.status;
+        if (status === 429) {
+          if (bootstrapBackoffRef.current) clearTimeout(bootstrapBackoffRef.current);
+          bootstrapBackoffRef.current = setTimeout(() => {
+            fetchingRef.current = false;
+            fetchData({ showLoader: false });
+          }, 15000);
+          return; // don't fall through immediately on 429
+        }
+        // else fall back to separate endpoints below
+      }
+
       // Fire both requests concurrently
       const [storesRes, productsRes] = await Promise.allSettled([
         storeApi.getAllStores(),
         productApi.getAllProducts()
       ]);
+
+      let shouldBackoff = false;
 
       // Handle stores result
       if (storesRes.status === 'fulfilled') {
@@ -274,8 +335,8 @@ const HomePage = () => {
       } else {
         const storeErr = storesRes.reason;
         console.error('Error fetching stores:', storeErr);
+        if (storeErr?.response?.status === 429) shouldBackoff = true;
         setStores([]);
-        // Prefer not to override an existing error from products if that one also fails
         setError(prev => prev || storeErr?.message || 'Failed to load stores');
       }
 
@@ -303,10 +364,19 @@ const HomePage = () => {
       } else {
         const productErr = productsRes.reason;
         console.error('Error fetching products:', productErr);
+        if (productErr?.response?.status === 429) shouldBackoff = true;
         setAllProducts([]);
         setFilteredProducts([]);
         setPopularProducts([]);
         setError(prev => prev || productErr?.message || 'Failed to load products');
+      }
+
+      if (shouldBackoff) {
+        if (dataBackoffRef.current) clearTimeout(dataBackoffRef.current);
+        dataBackoffRef.current = setTimeout(() => {
+          fetchingRef.current = false;
+          fetchData({ showLoader: false });
+        }, 15000);
       }
 
     } catch (err) {
@@ -316,6 +386,8 @@ const HomePage = () => {
       if (showLoader) {
         setLoading(false);
       }
+      // Only release fetchingRef if no backoff scheduled
+      if (!dataBackoffRef.current && !bootstrapBackoffRef.current) fetchingRef.current = false;
     }
   };
 
@@ -769,40 +841,11 @@ const HomePage = () => {
                   </div>
                 ))
               ) : (
-                // Fallback sample products if API data is not available
-                [
-                  { id: 1, name: 'Chicken With Rice', storeName: 'Store Name', price: 49, image: 'https://i.ibb.co/YZDGnfr/chicken-rice.jpg' },
-                  { id: 2, name: 'Fries Buy 1 Take 2', storeName: 'Store Name', price: 50, image: 'https://i.ibb.co/4PYspP4/fries.jpg' },
-                  { id: 3, name: 'Milktea Medium', storeName: 'Store Name', price: 69, image: 'https://i.ibb.co/S7qRBBz/milktea.jpg' },
-                  { id: 4, name: 'Beef Cheesy Burger', storeName: 'Store Name', price: 49, image: 'https://i.ibb.co/GFqYQZg/burger.jpg' }
-                ].map(product => (
-                  <div key={product.id} className="productCard">
-                    <div className="productImageContainer">
-                      <img 
-                        src={product.image} 
-                        alt={product.name} 
-                        className="productImage"
-                        loading="lazy"
-                      />
-                    </div>
-                    <div className="productInfo">
-                      <h3 className="productName">{product.name}</h3>
-                      <p className="storeName">{product.storeName}</p>
-                      <div className="productPriceRow">
-                        <p className="productPrice">₱{product.price}</p>
-                        <button 
-                          className="addButton"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleAddToCart(product);
-                          }}
-                        >
-                          Add to Cart
-                        </button>
-                      </div>
-                    </div>
+                <div className="emptyState" style={{ gridColumn: `span ${gridCols}` }}>
+                  <div style={{ textAlign: 'center', color: '#777', padding: '16px 0' }}>
+                    No popular items yet.
                   </div>
-                ))
+                </div>
               )}
             </div>
           </div>
