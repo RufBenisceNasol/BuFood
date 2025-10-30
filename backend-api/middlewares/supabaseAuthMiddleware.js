@@ -65,15 +65,23 @@ const optionalAuth = async (req, res, next) => {
 
     // Resolve MongoDB user by supabaseId so downstream controllers have _id/role
     try {
-      const mongoUser = await User.findOne({ supabaseId: data.user.id }).lean();
-      if (mongoUser) {
-        // Attach mongo user as req.user to preserve existing controller expectations
-        req.user = mongoUser;
-      } else {
-        // Fallback: expose minimal user with supabase id for routes that only need identity
-        req.user = { _id: null, supabaseId: data.user.id, user_metadata: data.user.user_metadata };
+      let mongoUser = await User.findOne({ supabaseId: data.user.id });
+      if (!mongoUser) {
+        // Auto-provision a minimal user document for first-time Supabase logins
+        const name = data.user.user_metadata?.name || data.user.user_metadata?.full_name || data.user.email?.split('@')[0] || 'User';
+        const role = data.user.user_metadata?.role || 'Customer';
+        mongoUser = new User({
+          supabaseId: data.user.id,
+          name,
+          email: data.user.email,
+          role,
+        });
+        await mongoUser.save();
       }
-    } catch (_) {
+      // Attach mongo user as req.user to preserve existing controller expectations
+      req.user = mongoUser.toObject ? mongoUser.toObject() : mongoUser;
+    } catch (e) {
+      // Fallback: expose minimal user with supabase id
       req.user = { _id: null, supabaseId: data.user.id, user_metadata: data.user.user_metadata };
     }
 

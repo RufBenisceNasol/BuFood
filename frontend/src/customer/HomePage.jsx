@@ -27,6 +27,7 @@ import 'slick-carousel/slick/slick.css';
 import 'slick-carousel/slick/slick-theme.css';
 import { store as storeApi, product as productApi, auth, cart } from '../api';
 import { fetchBootstrap } from '../api/bootstrap';
+import { supabase } from '../supabaseClient';
 import '../styles/HomePage.css';
 import { getUser } from '../utils/tokenUtils';
 import useDebouncedRefresh from '../hooks/useDebouncedRefresh';
@@ -167,36 +168,45 @@ const HomePage = () => {
   useEffect(() => {
     if (didInitRef.current) return; // StrictMode guard
     didInitRef.current = true;
-    // Cache-first render from localStorage, then refresh from API
-    let hadCache = false;
-    try {
-      const cachedStores = JSON.parse(localStorage.getItem(STORES_CACHE_KEY) || 'null');
-      const cachedProducts = JSON.parse(localStorage.getItem(PRODUCTS_CACHE_KEY) || 'null');
-      if (Array.isArray(cachedStores) || Array.isArray(cachedProducts)) {
-        hadCache = true;
-        if (Array.isArray(cachedStores)) {
-          setStores(cachedStores);
-        }
-        if (Array.isArray(cachedProducts)) {
-          setAllProducts(cachedProducts);
-          setFilteredProducts(cachedProducts);
-          setPopularProducts(cachedProducts.slice(0, 4));
-          const uniqueCategories = ['All', ...new Set(
-            cachedProducts
-              .filter(p => p && p.category)
-              .map(p => p.category)
-          )];
-          setCategories(uniqueCategories);
-        }
-        // Since we rendered from cache, remove loader immediately
-        setLoading(false);
+    // Session guard: if no Supabase session, go to login
+    (async () => {
+      const { data } = await supabase.auth.getSession();
+      const hasSession = !!data?.session?.access_token;
+      if (!hasSession) {
+        navigate('/login', { replace: true });
+        return;
       }
-    } catch (_) {}
+      // Cache-first render from localStorage, then refresh from API
+      let hadCache = false;
+      try {
+        const cachedStores = JSON.parse(localStorage.getItem(STORES_CACHE_KEY) || 'null');
+        const cachedProducts = JSON.parse(localStorage.getItem(PRODUCTS_CACHE_KEY) || 'null');
+        if (Array.isArray(cachedStores) || Array.isArray(cachedProducts)) {
+          hadCache = true;
+          if (Array.isArray(cachedStores)) {
+            setStores(cachedStores);
+          }
+          if (Array.isArray(cachedProducts)) {
+            setAllProducts(cachedProducts);
+            setFilteredProducts(cachedProducts);
+            setPopularProducts(cachedProducts.slice(0, 4));
+            const uniqueCategories = ['All', ...new Set(
+              cachedProducts
+                .filter(p => p && p.category)
+                .map(p => p.category)
+            )];
+            setCategories(uniqueCategories);
+          }
+          // Since we rendered from cache, remove loader immediately
+          setLoading(false);
+        }
+      } catch (_) {}
 
-    // Always fetch fresh data; show loader only if no cache
-    fetchData({ showLoader: !hadCache });
-    // Fetch initial cart count
-    fetchCartCount();
+      // Always fetch fresh data; show loader only if no cache
+      fetchData({ showLoader: !hadCache });
+      // Fetch initial cart count
+      fetchCartCount();
+    })();
   }, []);
 
   const fetchCartCount = async () => {

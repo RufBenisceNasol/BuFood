@@ -1,5 +1,6 @@
 import axios from 'axios';
 import http from './api/http';
+import { supabase } from './supabaseClient';
 import { getToken, getRefreshToken, removeToken, removeRefreshToken, removeUser, setToken, setRefreshToken } from './utils/tokenUtils';
 
 // Prefer explicit VITE_API_BASE_URL in all modes. If not set:
@@ -179,9 +180,13 @@ export const auth = {
         } catch (_) {
             // Swallow errors/timeouts – client logout should proceed regardless
         } finally {
+            try { await supabase.auth.signOut(); } catch (_) {}
             removeToken();
             removeRefreshToken();
             removeUser();
+            if (typeof window !== 'undefined') {
+                window.location.replace('/login');
+            }
         }
     },
 
