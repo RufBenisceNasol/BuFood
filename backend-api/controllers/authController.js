@@ -12,7 +12,7 @@ const { createStoreForSeller } = require('./storeController');
 
 require('dotenv').config();
 
-// Nodemailer setup (explicit Gmail SMTP with STARTTLS, pooled, with timeouts)
+// lNodemailer setup (explicit Gmail SMTP with STARTTLS, pooled, with timeouts)
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST || 'smtp.gmail.com',
   port: parseInt(process.env.SMTP_PORT || (process.env.SMTP_SECURE === 'true' ? '465' : '587'), 10),
