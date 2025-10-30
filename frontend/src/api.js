@@ -715,7 +715,7 @@ export const customer = {
 
     getProfile: async () => {
         try {
-            const response = await api.get('/customers/profile');
+            const response = await http.get('/customers/profile');
             return response.data;
         } catch (error) {
             throw error.response?.data || error.message;
@@ -797,7 +797,7 @@ export const customer = {
     // Address management
     addAddress: async (addressData) => {
         try {
-            const response = await api.post('/customers/addresses', addressData);
+            const response = await http.post('/customers/addresses', addressData);
             return response.data;
         } catch (error) {
             throw error.response?.data || error.message;
@@ -806,7 +806,7 @@ export const customer = {
 
     updateAddress: async (addressId, addressData) => {
         try {
-            const response = await api.put(`/customers/addresses/${addressId}`, addressData);
+            const response = await http.put(`/customers/addresses/${addressId}`, addressData);
             return response.data;
         } catch (error) {
             throw error.response?.data || error.message;
@@ -815,7 +815,7 @@ export const customer = {
 
     deleteAddress: async (addressId) => {
         try {
-            const response = await api.delete(`/customers/addresses/${addressId}`);
+            const response = await http.delete(`/customers/addresses/${addressId}`);
             return response.data;
         } catch (error) {
             throw error.response?.data || error.message;
@@ -824,7 +824,7 @@ export const customer = {
 
     getAddresses: async () => {
         try {
-            const response = await api.get('/customers/addresses');
+            const response = await http.get('/customers/addresses');
             return response.data;
         } catch (error) {
             throw error.response?.data || error.message;

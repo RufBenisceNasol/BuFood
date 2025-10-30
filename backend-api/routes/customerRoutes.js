@@ -48,7 +48,7 @@ const favoriteController = require('../controllers/favoriteController');
  *       403:
  *         description: Forbidden - Not a customer
  */
-router.get('/profile', authenticate, checkRole('Customer'), getCustomerProfile);
+router.get('/profile', authenticateWithSupabase, checkRole('Customer'), getCustomerProfile);
 
 /**
  * @swagger

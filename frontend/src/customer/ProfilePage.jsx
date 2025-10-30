@@ -318,7 +318,7 @@ const ProfilePage = () => {
     if (showLoader) setLoading(true);
     setError('');
     try {
-      const rawResponse = await auth.getMe();
+      const rawResponse = await customer.getProfile();
       console.log('Raw API response:', rawResponse);
       
       let data;
