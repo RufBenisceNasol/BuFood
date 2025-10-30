@@ -1,4 +1,5 @@
 import axios from 'axios';
+import http from './api/http';
 import { getToken, getRefreshToken, removeToken, removeRefreshToken, removeUser, setToken, setRefreshToken } from './utils/tokenUtils';
 
 // Prefer explicit VITE_API_BASE_URL in all modes. If not set:
@@ -457,7 +458,7 @@ export const cart = {
             const payload = { productId, quantity };
             if (selectedVariantId) payload.selectedVariantId = selectedVariantId;
             if (selectedOptions) payload.selectedOptions = selectedOptions;
-            const response = await api.post('/cart/add', payload);
+            const response = await http.post('/cart/add', payload);
             return response.data.data.cart;
         } catch (error) {
             throw error.response?.data || error.message;
@@ -466,7 +467,7 @@ export const cart = {
 
     viewCart: async () => {
         try {
-            const response = await api.get('/cart');
+            const response = await http.get('/cart');
             return response.data.data.cart;
         } catch (error) {
             throw error.response?.data || error.message;
@@ -475,7 +476,7 @@ export const cart = {
 
     getCartSummary: async () => {
         try {
-            const response = await api.get('/cart/summary');
+            const response = await http.get('/cart/summary');
             return response.data;
         } catch (error) {
             throw error.response?.data || error.message;
@@ -483,7 +484,7 @@ export const cart = {
     },    removeFromCart: async (productId) => {
         try {
             console.log('Removing product:', productId); // Debug log
-            const response = await api.post('/cart/remove', { productId });
+            const response = await http.post('/cart/remove', { productId });
             if (response.data?.data?.cart) {
                 return response.data.data.cart;
             }
@@ -496,7 +497,7 @@ export const cart = {
 
     clearCart: async () => {
         try {
-            const response = await api.delete('/cart/clear');
+            const response = await http.delete('/cart/clear');
             return response.data.data.cart;
         } catch (error) {
             throw error.response?.data || error.message;
@@ -505,7 +506,7 @@ export const cart = {
 
     updateCartItem: async (productId, quantity) => {
         try {
-            const response = await api.put('/cart/update', { productId, quantity });
+            const response = await http.put('/cart/update', { productId, quantity });
             return response.data.data.cart;
         } catch (error) {
             throw error.response?.data || error.message;
@@ -734,11 +735,11 @@ export const customer = {
         }
     },
 
-    // Favorites management
+    // Favorites management (Supabase-authenticated)
     addToFavorites: async (productId, payload = {}) => {
         try {
             // Unified: POST /favorites with body { productId, ...optional }
-            const response = await api.post(`/favorites`, { productId, ...payload });
+            const response = await http.post(`/favorites`, { productId, ...payload });
             return response.data;
         } catch (error) {
             throw error.response?.data || error.message;
@@ -748,7 +749,7 @@ export const customer = {
     removeFromFavorites: async (productId, params = {}) => {
         try {
             // Unified: DELETE /favorites/product/:productId (optional ?variantId=)
-            const response = await api.delete(`/favorites/product/${productId}`, { params });
+            const response = await http.delete(`/favorites/product/${productId}`, { params });
             return response.data;
         } catch (error) {
             throw error.response?.data || error.message;
@@ -758,7 +759,7 @@ export const customer = {
     getFavorites: async () => {
         try {
             // Unified: GET /favorites
-            const response = await api.get('/favorites');
+            const response = await http.get('/favorites');
             return response.data;
         } catch (error) {
             throw error.response?.data || error.message;
@@ -829,23 +830,23 @@ export const customer = {
 // Chat API endpoints
 export const chat = {
   // Get all conversations for the current user
-  getConversations: () => api.get('/chat/conversations'),
+  getConversations: () => http.get('/chat/conversations'),
   
   // Create or fetch a conversation
   createOrFetchConversation: (participantIds, orderId = null) => 
-    api.post('/chat/conversations', { participantIds, orderId }),
+    http.post('/chat/conversations', { participantIds, orderId }),
   
   // Get messages for a conversation
   getMessages: (conversationId) => 
-    api.get(`/chat/messages/${conversationId}`),
+    http.get(`/chat/messages/${conversationId}`),
   
   // Send a message
   sendMessage: (conversationId, text, orderRef = null) => 
-    api.post('/chat/messages', { conversationId, text, orderRef }),
+    http.post('/chat/messages', { conversationId, text, orderRef }),
   
   // Mark conversation as read
   markAsRead: (conversationId) => 
-    api.post(`/chat/conversations/${conversationId}/read`)
+    http.post(`/chat/conversations/${conversationId}/read`)
 };
 
 // Review API endpoints

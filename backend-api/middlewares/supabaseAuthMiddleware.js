@@ -1,4 +1,5 @@
 const { supabase } = require('../config/supabaseConfig');
+const User = require('../models/userModel');
 
 /**
  * Authenticate using Supabase access token only.
@@ -54,13 +55,29 @@ const optionalAuth = async (req, res, next) => {
     }
 
     const token = authHeader.split(' ')[1];
-    const { data } = await supabase.auth.getUser(token);
-    if (data?.user) {
-      req.user = data.user;
-      req.supabaseUser = data.user;
+    const { data, error } = await supabase.auth.getUser(token);
+    if (error || !data?.user) {
+      return res.status(401).json({ success: false, message: 'Invalid or expired Supabase token' });
     }
 
-    next();
+    // Preserve raw Supabase user for consumers that need it
+    req.supabaseUser = data.user;
+
+    // Resolve MongoDB user by supabaseId so downstream controllers have _id/role
+    try {
+      const mongoUser = await User.findOne({ supabaseId: data.user.id }).lean();
+      if (mongoUser) {
+        // Attach mongo user as req.user to preserve existing controller expectations
+        req.user = mongoUser;
+      } else {
+        // Fallback: expose minimal user with supabase id for routes that only need identity
+        req.user = { _id: null, supabaseId: data.user.id, user_metadata: data.user.user_metadata };
+      }
+    } catch (_) {
+      req.user = { _id: null, supabaseId: data.user.id, user_metadata: data.user.user_metadata };
+    }
+
+    return next();
   } catch (err) {
     // Silently fail and continue without authentication
     next();

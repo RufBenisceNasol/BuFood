@@ -1,7 +1,7 @@
 // routes/cartRoutes.js
 const express = require('express');
 const router = express.Router();
-const { authenticate } = require('../middlewares/authMiddleware');
+const { authenticateWithSupabase } = require('../middlewares/supabaseAuthMiddleware');
 const { 
   cartLimiter,
   addToCartValidator,
@@ -77,16 +77,16 @@ const {
  *         description: Unauthorized
  */
 // View cart (GET /)
-router.get('/', authenticate, cartLimiter, viewCart);
+router.get('/', authenticateWithSupabase, cartLimiter, viewCart);
 
 // Add to cart (POST /) — supports plural mount at /api/carts
-router.post('/', authenticate, cartLimiter, addToCartValidator, addToCart);
+router.post('/', authenticateWithSupabase, cartLimiter, addToCartValidator, addToCart);
 
 // Update cart item (PUT /) — alias for /update
-router.put('/', authenticate, cartLimiter, updateCartValidator, updateCartItem);
+router.put('/', authenticateWithSupabase, cartLimiter, updateCartValidator, updateCartItem);
 
 // Clear cart (DELETE /) — alias for /clear
-router.delete('/', authenticate, cartLimiter, clearCart);
+router.delete('/', authenticateWithSupabase, cartLimiter, clearCart);
 
 /**
  * @swagger
@@ -111,7 +111,7 @@ router.delete('/', authenticate, cartLimiter, clearCart);
  *         description: Unauthorized
  */
 // Backward-compatible: POST /add
-router.post('/add', authenticate, cartLimiter, addToCartValidator, addToCart);
+router.post('/add', authenticateWithSupabase, cartLimiter, addToCartValidator, addToCart);
 
 /**
  * @swagger
@@ -127,7 +127,7 @@ router.post('/add', authenticate, cartLimiter, addToCartValidator, addToCart);
  *       401:
  *         description: Unauthorized
  */
-router.get('/summary', authenticate, cartLimiter, getCartSummary);
+router.get('/summary', authenticateWithSupabase, cartLimiter, getCartSummary);
 
 /**
  * @swagger
@@ -154,7 +154,7 @@ router.get('/summary', authenticate, cartLimiter, getCartSummary);
  *       401:
  *         description: Unauthorized
  */
-router.post('/remove', authenticate, cartLimiter, removeItemValidator, removeItemFromCart);
+router.post('/remove', authenticateWithSupabase, cartLimiter, removeItemValidator, removeItemFromCart);
 
 /**
  * @swagger
@@ -170,7 +170,7 @@ router.post('/remove', authenticate, cartLimiter, removeItemValidator, removeIte
  *       401:
  *         description: Unauthorized
  */
-router.delete('/clear', authenticate, cartLimiter, clearCart);
+router.delete('/clear', authenticateWithSupabase, cartLimiter, clearCart);
 
 /**
  * @swagger
@@ -194,6 +194,6 @@ router.delete('/clear', authenticate, cartLimiter, clearCart);
  *       401:
  *         description: Unauthorized
  */
-router.put('/update', authenticate, cartLimiter, updateCartValidator, updateCartItem);
+router.put('/update', authenticateWithSupabase, cartLimiter, updateCartValidator, updateCartItem);
 
 module.exports = router;
