@@ -65,16 +65,34 @@ const optionalAuth = async (req, res, next) => {
 
     // Resolve MongoDB user by supabaseId so downstream controllers have _id/role
     try {
-      let mongoUser = await User.findOne({ supabaseId: data.user.id });
+      const supaId = data.user.id;
+      const email = data.user.email;
+      const meta = data.user.user_metadata || {};
+      const role = meta.role || 'Customer';
+      const name = meta.name || meta.full_name || (email ? email.split('@')[0] : 'User');
+      // 1) Prefer match by supabaseId
+      let mongoUser = await User.findOne({ supabaseId: supaId });
+      // 2) If not found, try to link by email and set supabaseId
+      if (!mongoUser && email) {
+        mongoUser = await User.findOne({ email });
+        if (mongoUser && !mongoUser.supabaseId) {
+          mongoUser.supabaseId = supaId;
+          // prefer existing name/contact/role; only set if absent
+          if (!mongoUser.name) mongoUser.name = name;
+          if (!mongoUser.role) mongoUser.role = role;
+          await mongoUser.save();
+        }
+      }
+      // 3) If still not found, auto-provision minimal user (ensure required fields)
       if (!mongoUser) {
-        // Auto-provision a minimal user document for first-time Supabase logins
-        const name = data.user.user_metadata?.name || data.user.user_metadata?.full_name || data.user.email?.split('@')[0] || 'User';
-        const role = data.user.user_metadata?.role || 'Customer';
         mongoUser = new User({
-          supabaseId: data.user.id,
+          supabaseId: supaId,
+          email,
           name,
-          email: data.user.email,
           role,
+          contactNumber: '+00000000000', // satisfy required field; user can update later
+          authMethod: 'supabase',
+          isVerified: true,
         });
         await mongoUser.save();
       }
@@ -87,8 +105,8 @@ const optionalAuth = async (req, res, next) => {
 
     return next();
   } catch (err) {
-    // Silently fail and continue without authentication
-    next();
+    // Fail closed: if auth processing throws, return Unauthorized
+    return res.status(401).json({ success: false, message: 'Authentication failed' });
   }
 };
 

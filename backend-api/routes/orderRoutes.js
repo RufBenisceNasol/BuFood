@@ -1,6 +1,8 @@
 const express = require('express');
 const router = express.Router();
-const { authenticate, checkRole } = require('../middlewares/authMiddleware');
+const { checkRole } = require('../middlewares/authMiddleware');
+const { authenticateWithSupabase } = require('../middlewares/supabaseAuthMiddleware');
+
 const { 
   createOrderFromCart, 
   getSellerOrders, 
@@ -213,8 +215,8 @@ const {
  *           description: Additional notes for the order
  */
 
-// Apply authentication middleware to all routes
-router.use(authenticate);
+// Apply Supabase authentication middleware to all routes
+router.use(authenticateWithSupabase);
 
 /**
  * @swagger

@@ -524,7 +524,7 @@ export const order = {
     // Create order from cart
     createOrderFromCart: async (orderData) => {
         try {
-            const response = await api.post('/orders/create-from-cart', orderData);
+            const response = await http.post('/orders/create-from-cart', orderData);
             return response.data;
         } catch (error) {
             throw error.response?.data || error.message;
@@ -534,7 +534,7 @@ export const order = {
     // Create direct order (without cart)
     createDirectOrder: async (orderData) => {
         try {
-            const response = await api.post('/orders/create-direct', orderData);
+            const response = await http.post('/orders/create-direct', orderData);
             return response.data;
         } catch (error) {
             throw error.response?.data || error.message;
@@ -555,7 +555,7 @@ export const order = {
         } = params;
         
         try {
-            const response = await api.get('/orders/seller', { 
+            const response = await http.get('/orders/seller', { 
                 params: {
                     status,
                     orderType,
@@ -576,7 +576,7 @@ export const order = {
     // Get order details
     getOrderDetails: async (orderId) => {
         try {
-            const response = await api.get(`/orders/${orderId}`);
+            const response = await http.get(`/orders/${orderId}`);
             return response.data;
         } catch (error) {
             throw error.response?.data || error.message;
@@ -586,7 +586,7 @@ export const order = {
     // Update order status (Seller only)
     updateOrderStatus: async (orderId, statusData) => {
         try {
-            const response = await api.patch(`/orders/${orderId}/status`, statusData);
+            const response = await http.patch(`/orders/${orderId}/status`, statusData);
             return response.data;
         } catch (error) {
             throw error.response?.data || error.message;
@@ -596,7 +596,7 @@ export const order = {
     // Accept order (Seller only)
     acceptOrder: async (orderId, acceptData) => {
         try {
-            const response = await api.post(`/orders/${orderId}/accept`, acceptData);
+            const response = await http.post(`/orders/${orderId}/accept`, acceptData);
             return response.data;
         } catch (error) {
             throw error.response?.data || error.message;
@@ -606,7 +606,7 @@ export const order = {
     // Cancel order (Customer only, for pending orders)
     cancelOrder: async (orderId, cancelData = {}) => {
         try {
-            const response = await api.post(`/orders/${orderId}/cancel`, cancelData);
+            const response = await http.post(`/orders/${orderId}/cancel`, cancelData);
             return response.data;
         } catch (error) {
             throw error.response?.data || error.message;
@@ -616,7 +616,7 @@ export const order = {
     // Get customer orders
     getCustomerOrders: async () => {
         try {
-            const response = await api.get('/orders/my-orders');
+            const response = await http.get('/orders/my-orders');
             return response.data;
         } catch (error) {
             throw error.response?.data || error.message;
@@ -669,7 +669,7 @@ export const order = {
     // GCash checkout
     gcashCheckout: async ({ amount, orderId, redirectUrl }) => {
         try {
-            const response = await api.post('/orders/gcash/checkout', { amount, orderId, redirectUrl });
+            const response = await http.post('/orders/gcash/checkout', { amount, orderId, redirectUrl });
             return response.data.data.checkoutUrl;
         } catch (error) {
             throw error.response?.data || error.message;
@@ -682,7 +682,7 @@ export const order = {
             const form = new FormData();
             if (file) form.append('proof', file);
             if (gcashRef) form.append('gcashRef', gcashRef);
-            const response = await api.post(`/orders/${orderId}/gcash-manual/proof`, form, {
+            const response = await http.post(`/orders/${orderId}/gcash-manual/proof`, form, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
             return response.data;
@@ -694,7 +694,7 @@ export const order = {
     // Manual GCash: seller approve/reject
     approveManualGcash: async (orderId) => {
         try {
-            const response = await api.post(`/orders/${orderId}/gcash-manual/approve`);
+            const response = await http.post(`/orders/${orderId}/gcash-manual/approve`);
             return response.data;
         } catch (error) {
             throw error.response?.data || error.message;
@@ -702,7 +702,7 @@ export const order = {
     },
     rejectManualGcash: async (orderId, reason) => {
         try {
-            const response = await api.post(`/orders/${orderId}/gcash-manual/reject`, { reason });
+            const response = await http.post(`/orders/${orderId}/gcash-manual/reject`, { reason });
             return response.data;
         } catch (error) {
             throw error.response?.data || error.message;
