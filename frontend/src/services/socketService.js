@@ -12,7 +12,7 @@ class SocketService {
     try {
       if (this.socket && this.connected) return this.socket;
 
-      // Wait for Supabase session hydration
+      // Always fetch a fresh session/token right before connecting
       const { data: sessionData } = await supabase.auth.getSession();
       const token = sessionData?.session?.access_token;
       const user = sessionData?.session?.user;
@@ -59,10 +59,33 @@ class SocketService {
         console.warn('[Socket] Disconnected:', reason);
       });
 
+      // Before each reconnect attempt, refresh the token and attach it
+      this.socket.io.on('reconnect_attempt', async () => {
+        try {
+          const { data } = await supabase.auth.getSession();
+          const fresh = data?.session?.access_token;
+          if (fresh) {
+            this.socket.auth = { token: fresh };
+          }
+        } catch (_) {}
+      });
+
       // Reconnect handler
       this.socket.io.on('reconnect', (attempt) => {
         console.log(`[Socket] Reconnected on attempt ${attempt}`);
         this.joinUserRoom(userId);
+      });
+
+      // Keep auth token updated when Supabase session changes (e.g., refresh)
+      supabase.auth.onAuthStateChange((_evt, newSession) => {
+        const newToken = newSession?.access_token;
+        if (newToken && this.socket) {
+          this.socket.auth = { token: newToken };
+          if (!this.connected) {
+            // Trigger connect if we're currently disconnected
+            try { this.socket.connect(); } catch (_) {}
+          }
+        }
       });
 
       return this.socket;

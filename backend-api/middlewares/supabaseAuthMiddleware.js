@@ -32,14 +32,16 @@ const authenticateWithSupabase = async (req, res, next) => {
  * Middleware to check user role
  * Works with both old JWT and new Supabase authentication
  */
-const checkRole = (requiredRole) => {
-  return (req, res, next) => {
-    const role = req.user?.role || req.user?.user_metadata?.role;
-    if (!role || role !== requiredRole) {
-      return res.status(403).json({ message: 'Access denied. Insufficient role.' });
-    }
-    next();
-  };
+const checkRole = (requiredRole) => (req, res, next) => {
+  const supaMetaRole = req.supabaseUser?.user_metadata?.role;
+  const userMetaRole = req.user?.user_metadata?.role;
+  const mongoRole = req.user?.role;
+  const effectiveRole = supaMetaRole || mongoRole || userMetaRole;
+  if (!effectiveRole || effectiveRole !== requiredRole) {
+    console.warn(`[Auth] Role mismatch. Expected: ${requiredRole}, Got: ${effectiveRole}`);
+    return res.status(403).json({ message: 'Access denied. Insufficient role.' });
+  }
+  next();
 };
 
 /**
