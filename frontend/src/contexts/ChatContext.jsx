@@ -13,6 +13,7 @@ export const ChatProvider = ({ children }) => {
   const [error, setError] = useState(null);
   const [unreadCount, setUnreadCount] = useState(0);
   const [currentUser, setCurrentUser] = useState(null);
+  const [socketReady, setSocketReady] = useState(false);
 
   // Load current user and subscribe to auth changes
   useEffect(() => {
@@ -139,92 +140,103 @@ export const ChatProvider = ({ children }) => {
     }
   }, [currentConversation]);
 
-  // --- SOCKET EVENT SUBSCRIPTIONS PATCH ---
-  useEffect(() => {
-    const handleNewMessage = (message) => {
-      if (!message) return;
-      console.log('[Socket] message received:', message);
+  // Stable handlers
+  const handleNewMessage = useCallback((message) => {
+    if (!message) return;
+    console.log('[Socket] message received:', message);
 
-      // Append to current messages if same conversation
-      if (message.conversationId === currentConversation?._id) {
-        setMessages((prev) => [...prev, message]);
-      }
+    if (message.conversationId === currentConversation?._id) {
+      setMessages((prev) => [...prev, message]);
+    }
 
-      // Update conversation list and unread counts
-      setConversations((prev) => {
-        const updated = prev.map((conv) => {
-          if (conv._id === message.conversationId) {
-            return {
-              ...conv,
-              lastMessage: message,
-              updatedAt: new Date().toISOString(),
-              unreadCount:
-                conv._id === currentConversation?._id
-                  ? 0
-                  : (conv.unreadCount || 0) + 1,
-            };
-          }
-          return conv;
-        });
-        return updated.sort(
-          (a, b) => new Date(b.updatedAt) - new Date(a.updatedAt)
-        );
-      });
-
-      // Increase total unread count if message not from me
-      if (message.senderId !== currentUser?.id) {
-        setUnreadCount((prev) => prev + 1);
-      }
-    };
-
-    const handleConversationUpdated = (conversation) => {
-      if (!conversation) return;
-      console.log('[Socket] conversation upserted/updated:', conversation);
-      setConversations((prev) => {
-        const exists = prev.some((c) => c._id === conversation._id);
-        if (exists) {
-          return prev
-            .map((c) =>
-              c._id === conversation._id ? { ...c, ...conversation } : c
-            )
-            .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
-        } else {
-          return [conversation, ...prev].sort(
-            (a, b) => new Date(b.updatedAt) - new Date(a.updatedAt)
-          );
+    setConversations((prev) => {
+      const updated = prev.map((conv) => {
+        if (conv._id === message.conversationId) {
+          return {
+            ...conv,
+            lastMessage: message,
+            updatedAt: new Date().toISOString(),
+            unreadCount:
+              conv._id === currentConversation?._id
+                ? 0
+                : (conv.unreadCount || 0) + 1,
+          };
         }
+        return conv;
       });
+      return updated.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+    });
+
+    if (message.senderId !== currentUser?.id) {
+      setUnreadCount((prev) => prev + 1);
+    }
+  }, [currentConversation, currentUser]);
+
+  const handleConversationUpdated = useCallback((conversation) => {
+    if (!conversation) return;
+    console.log('[Socket] conversation upserted/updated:', conversation);
+    setConversations((prev) => {
+      const exists = prev.some((c) => c._id === conversation._id);
+      if (exists) {
+        return prev
+          .map((c) => (c._id === conversation._id ? { ...c, ...conversation } : c))
+          .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+      } else {
+        return [conversation, ...prev].sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+      }
+    });
+  }, []);
+
+  const handleUnreadUpdate = useCallback(({ conversationId, unreadCounts }) => {
+    console.log('[Socket] unread:update', unreadCounts);
+    setConversations((prev) =>
+      prev.map((c) =>
+        c._id === conversationId
+          ? { ...c, unreadCounts, unreadCount: unreadCounts?.[currentUser?.id] || 0 }
+          : c
+      )
+    );
+  }, [currentUser?.id]);
+
+  // Attach listeners only after socket connects AND user exists
+  useEffect(() => {
+    let unsubscribers = [];
+    let mounted = true;
+
+    const initSocket = async () => {
+      if (!currentUser) {
+        console.log('[Chat] No user yet, delaying socket connect...');
+        setSocketReady(false);
+        socketService.disconnect();
+        return;
+      }
+
+      const socket = await socketService.connect();
+      if (!mounted || !socket) {
+        console.warn('[Chat] Socket not connected, retrying later...');
+        return;
+      }
+      setSocketReady(true);
+      console.log('[Chat] Socket connected, now attaching listeners.');
+      unsubscribers = [
+        socketService.on('message:created', handleNewMessage),
+        socketService.on('message:received', handleNewMessage),
+        socketService.on('newMessage', handleNewMessage),
+        socketService.on('new_message', handleNewMessage),
+        socketService.on('conversation:upserted', handleConversationUpdated),
+        socketService.on('conversation:updated', handleConversationUpdated),
+        socketService.on('unread:update', handleUnreadUpdate),
+      ];
     };
 
-    const handleUnreadUpdate = ({ conversationId, unreadCounts }) => {
-      console.log('[Socket] unread:update', unreadCounts);
-      setConversations((prev) =>
-        prev.map((c) =>
-          c._id === conversationId
-            ? { ...c, unreadCounts, unreadCount: unreadCounts?.[currentUser?.id] || 0 }
-            : c
-        )
-      );
-    };
-
-    // Subscribe to ALL new backend event names
-    const subs = [
-      socketService.on('message:created', handleNewMessage),
-      socketService.on('message:received', handleNewMessage), // backward compatible
-      socketService.on('newMessage', handleNewMessage),
-      socketService.on('new_message', handleNewMessage),
-      socketService.on('conversation:upserted', handleConversationUpdated),
-      socketService.on('conversation:updated', handleConversationUpdated),
-      socketService.on('unread:update', handleUnreadUpdate),
-    ];
-
-    socketService.connect();
-    console.log('ChatContext connected to socket events');
+    initSocket();
 
     return () => {
-      subs.forEach((unsub) => unsub && unsub());
+      mounted = false;
+      unsubscribers.forEach((u) => u && u());
+      if (!currentUser) socketService.disconnect();
     };
-  }, [currentConversation, currentUser]);
+  }, [handleNewMessage, handleConversationUpdated, handleUnreadUpdate, currentUser]);
   
   // Load conversations on mount
   useEffect(() => {
@@ -253,6 +265,7 @@ export const ChatProvider = ({ children }) => {
     error,
     unreadCount,
     currentUser,
+    socketReady,
     loadConversations,
     loadMessages,
     sendMessage,

@@ -12,12 +12,20 @@ class SocketService {
     try {
       if (this.socket && this.connected) return this.socket;
 
-      const {
-        data: { user },
-        error
-      } = await supabase.auth.getUser();
-      if (error || !user) {
-        console.warn('[Socket] User not authenticated yet.');
+      // Wait for Supabase session hydration
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData?.session?.access_token;
+      const user = sessionData?.session?.user;
+      if (!token || !user) {
+        console.warn('[Socket] No Supabase session yet — delaying connection');
+        // One-time listener to connect when session becomes available
+        const { data: sub } = supabase.auth.onAuthStateChange((_evt, newSession) => {
+          if (newSession?.access_token && newSession.user) {
+            try { sub?.subscription?.unsubscribe?.(); } catch (_) {}
+            console.log('[Socket] Session restored, connecting socket...');
+            this.connect();
+          }
+        });
         return null;
       }
 
@@ -35,15 +43,7 @@ class SocketService {
         reconnectionAttempts: 10,
         // Provide both query userId and auth token for compatibility
         query: { userId },
-        auth: async (cb) => {
-          try {
-            const { data } = await supabase.auth.getSession();
-            const token = data?.session?.access_token;
-            cb({ token });
-          } catch (_) {
-            cb({});
-          }
-        },
+        auth: (cb) => cb({ token }),
       });
 
       // On connect

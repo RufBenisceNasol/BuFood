@@ -4,8 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import logod from '../assets/logod.png';
 import { MdMailOutline, MdLockOpen } from 'react-icons/md';
 import { FiEye, FiEyeOff } from 'react-icons/fi';
-import { auth, warmup } from '../api';
-import { setToken, setRefreshToken, setUser, getToken, getUser } from '../utils/tokenUtils';
+import { warmup } from '../api';
+import { supabase } from '../supabaseClient';
 
 const LoginPage = () => {
     const [email, setEmail] = useState('');
@@ -25,17 +25,30 @@ const LoginPage = () => {
     const resendTimerRef = React.useRef(null);
     const navigate = useNavigate();
 
-    // Redirect if already logged in
+    // Redirect if already logged in (Supabase session)
     React.useEffect(() => {
-        const token = getToken();
-        const user = getUser();
-        if (token && user && user.role) {
-            if (user.role === 'Seller') {
-                navigate('/seller/dashboard');
-            } else {
-                navigate('/customer/home');
+        let mounted = true;
+        (async () => {
+            try {
+                const { data } = await supabase.auth.getSession();
+                if (!mounted) return;
+                const user = data?.session?.user;
+                if (user) {
+                    const role = user.user_metadata?.role || user.role;
+                    if (role === 'Seller') navigate('/seller/dashboard');
+                    else navigate('/customer/home');
+                }
+            } catch (_) {}
+        })();
+        const { data: sub } = supabase.auth.onAuthStateChange((_evt, session) => {
+            const user = session?.user;
+            if (user) {
+                const role = user.user_metadata?.role || user.role;
+                if (role === 'Seller') navigate('/seller/dashboard');
+                else navigate('/customer/home');
             }
-        }
+        });
+        return () => { mounted = false; sub?.subscription?.unsubscribe?.(); };
     }, [navigate]);
 
     // Non-blocking warmup ping on mount to help wake sleeping servers
@@ -75,32 +88,21 @@ const LoginPage = () => {
 
         console.log('Remember me value on submit:', rememberMe);
         try {
-            const data = await auth.login(email, password);
-            // Safely check for accessToken and refreshToken before using any data properties
-            if (data?.accessToken && data?.refreshToken) {
-                setToken(data.accessToken, rememberMe);
-                setRefreshToken(data.refreshToken, rememberMe);
-                setUser(data.user, rememberMe);
-                axios.defaults.headers.common['Authorization'] = `Bearer ${data.accessToken}`;
-                // Seed Supabase session so apiRequest can get and refresh tokens reliably
-                try {
-                    const { supabase } = await import('../utils/supabaseClient');
-                    await supabase.auth.setSession({
-                        access_token: data.accessToken,
-                        refresh_token: data.refreshToken,
-                    });
-                    try { localStorage.setItem('access_token', data.accessToken); } catch (_) {}
-                } catch (e) {
-                    console.warn('Failed to seed Supabase session from backend login tokens:', e);
-                }
-                if (data.user.role === 'Seller') {
-                    navigate('/seller/dashboard');
-                } else {
-                    navigate('/customer/home');
-                }
-            } else {
-                setError('Login failed: No tokens received. Please check your credentials or contact support.');
+            const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+            if (error) throw error;
+
+            const user = data?.user;
+            const accessToken = data?.session?.access_token;
+            const refreshToken = data?.session?.refresh_token;
+
+            if (accessToken) {
+                axios.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
+                try { localStorage.setItem('access_token', accessToken); } catch (_) {}
             }
+
+            const role = user?.user_metadata?.role || user?.role;
+            if (role === 'Seller') navigate('/seller/dashboard');
+            else navigate('/customer/home');
         } catch (err) {
             // Robust error handling for various backend error shapes
             const backendMsg = err.response?.data?.message || err.message || '';

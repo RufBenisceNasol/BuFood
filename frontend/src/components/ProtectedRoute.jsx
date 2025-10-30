@@ -1,55 +1,59 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../contexts/SupabaseAuthContext';
 import { CircularProgress, Box } from '@mui/material';
+import { supabase } from '../supabaseClient';
 
-/**
- * Protected Route Component
- * Redirects to login if user is not authenticated
- */
+// Protected Route using Supabase session directly
 const ProtectedRoute = ({ children, requiredRole = null }) => {
-  const { user, loading, isAuthenticated } = useAuth();
   const location = useLocation();
+  const [ready, setReady] = useState(false);
+  const [user, setUser] = useState(null);
 
-  // Show loading spinner while checking authentication
-  if (loading) {
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      const { data } = await supabase.auth.getSession();
+      if (!mounted) return;
+      setUser(data?.session?.user || null);
+      setReady(true);
+    })();
+    const { data: sub } = supabase.auth.onAuthStateChange((_evt, session) => {
+      setUser(session?.user || null);
+    });
+    return () => {
+      mounted = false;
+      sub?.subscription?.unsubscribe?.();
+    };
+  }, []);
+
+  if (!ready) {
     return (
-      <Box
-        display="flex"
-        justifyContent="center"
-        alignItems="center"
-        minHeight="100vh"
-      >
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="100vh">
         <CircularProgress />
       </Box>
     );
   }
 
-  // Redirect to login if not authenticated
-  if (!isAuthenticated) {
+  if (!user) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  // Check role if required
-  if (requiredRole && user?.role !== requiredRole) {
-    return <Navigate to="/unauthorized" replace />;
+  if (requiredRole) {
+    const role = user.role || user.user_metadata?.role;
+    if (!role || role !== requiredRole) {
+      return <Navigate to="/unauthorized" replace />;
+    }
   }
 
   return children;
 };
 
-/**
- * Customer-only protected route
- */
-export const CustomerRoute = ({ children }) => {
-  return <ProtectedRoute requiredRole="Customer">{children}</ProtectedRoute>;
-};
+export const CustomerRoute = ({ children }) => (
+  <ProtectedRoute requiredRole="Customer">{children}</ProtectedRoute>
+);
 
-/**
- * Seller-only protected route
- */
-export const SellerRoute = ({ children }) => {
-  return <ProtectedRoute requiredRole="Seller">{children}</ProtectedRoute>;
-};
+export const SellerRoute = ({ children }) => (
+  <ProtectedRoute requiredRole="Seller">{children}</ProtectedRoute>
+);
 
 export default ProtectedRoute;
