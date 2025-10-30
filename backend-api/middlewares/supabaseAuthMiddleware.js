@@ -1,5 +1,4 @@
-const { verifySupabaseToken } = require('../config/supabaseConfig');
-const User = require('../models/userModel');
+const { supabase } = require('../config/supabaseConfig');
 
 /**
  * Middleware to authenticate requests using Supabase JWT tokens
@@ -17,29 +16,15 @@ const authenticateWithSupabase = async (req, res, next) => {
     }
 
     const token = authHeader.split(' ')[1];
-
-    // Verify token with Supabase
-    const supabaseUser = await verifySupabaseToken(token);
-
-    if (!supabaseUser) {
+    // Verify token with Supabase directly
+    const { data, error } = await supabase.auth.getUser(token);
+    if (error || !data?.user) {
       return res.status(401).json({ success: false, code: 'INVALID_TOKEN', message: 'Unauthorized: Invalid token' });
     }
 
-    // Find corresponding user in MongoDB using supabaseId
-    const user = await User.findOne({ supabaseId: supabaseUser.id }).select('-password');
-
-    if (!user) {
-      return res.status(401).json({ 
-        success: false,
-        code: 'USER_NOT_FOUND',
-        message: 'Unauthorized: User not found in database',
-        supabaseId: supabaseUser.id 
-      });
-    }
-
-    // Attach both Supabase user and MongoDB user to request
-    req.supabaseUser = supabaseUser;
-    req.user = user;
+    // Attach Supabase user to request
+    req.user = data.user;
+    req.supabaseUser = data.user;
     
     next();
   } catch (err) {
@@ -72,7 +57,8 @@ const authenticateWithSupabase = async (req, res, next) => {
  */
 const checkRole = (requiredRole) => {
   return (req, res, next) => {
-    if (!req.user || !req.user.role || req.user.role !== requiredRole) {
+    const role = req.user?.role || req.user?.user_metadata?.role;
+    if (!role || role !== requiredRole) {
       return res.status(403).json({ message: 'Access denied. Insufficient role.' });
     }
     next();
@@ -92,14 +78,10 @@ const optionalAuth = async (req, res, next) => {
     }
 
     const token = authHeader.split(' ')[1];
-    const supabaseUser = await verifySupabaseToken(token);
-
-    if (supabaseUser) {
-      const user = await User.findOne({ supabaseId: supabaseUser.id }).select('-password');
-      if (user) {
-        req.supabaseUser = supabaseUser;
-        req.user = user;
-      }
+    const { data, error } = await supabase.auth.getUser(token);
+    if (!error && data?.user) {
+      req.user = data.user;
+      req.supabaseUser = data.user;
     }
 
     next();
