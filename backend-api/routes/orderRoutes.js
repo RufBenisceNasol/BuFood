@@ -514,9 +514,9 @@ router.post('/gcash/webhook', paymongoWebhook);
 const multer = require('multer');
 const upload = multer({ dest: 'uploads/' });
 // Customer upload proof
-router.post('/:orderId/gcash-manual/proof', authenticate, checkRole('Customer'), upload.single('proof'), uploadManualGcashProof);
+router.post('/:orderId/gcash-manual/proof', authenticateWithSupabase, checkRole('Customer'), upload.single('proof'), uploadManualGcashProof);
 // Seller approve/reject
-router.post('/:orderId/gcash-manual/approve', authenticate, checkRole('Seller'), approveManualGcash);
-router.post('/:orderId/gcash-manual/reject', authenticate, checkRole('Seller'), rejectManualGcash);
+router.post('/:orderId/gcash-manual/approve', authenticateWithSupabase, checkRole('Seller'), approveManualGcash);
+router.post('/:orderId/gcash-manual/reject', authenticateWithSupabase, checkRole('Seller'), rejectManualGcash);
 
-module.exports = router; 
+module.exports = router;
