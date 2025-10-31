@@ -50,7 +50,6 @@ class SocketService {
       this.socket.on('connect', () => {
         this.connected = true;
         console.log('[Socket] Connected:', this.socket.id);
-        this.joinUserRoom(userId);
       });
 
       // On disconnect
@@ -73,7 +72,6 @@ class SocketService {
       // Reconnect handler
       this.socket.io.on('reconnect', (attempt) => {
         console.log(`[Socket] Reconnected on attempt ${attempt}`);
-        this.joinUserRoom(userId);
       });
 
       // Keep auth token updated when Supabase session changes (e.g., refresh)

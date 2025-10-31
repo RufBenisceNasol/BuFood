@@ -6,38 +6,43 @@ import { supabase } from '../supabaseClient';
 const ProtectedRoute = ({ children, requiredRole = null }) => {
   const location = useLocation();
   const [ready, setReady] = useState(false);
-  const [user, setUser] = useState(null);
-  const [checking, setChecking] = useState(true);
+  const [user, setUser] = useState(undefined); // undefined = loading
 
   useEffect(() => {
-    let mounted = true;
+    let isMounted = true;
 
-    const initAuth = async () => {
+    const init = async () => {
       try {
         const { data } = await supabase.auth.getSession();
-        const sessionUser = data?.session?.user || null;
-        if (mounted) setUser(sessionUser);
-        setChecking(false);
+        if (!isMounted) return;
+        const currentUser = data?.session?.user || null;
+        setUser(currentUser);
         setReady(true);
-      } catch (err) {
-        console.error('[ProtectedRoute] Failed to load Supabase session:', err);
-        if (mounted) setReady(true);
+      } catch (error) {
+        console.error('[ProtectedRoute] Session load error:', error);
+        if (isMounted) {
+          setUser(null);
+          setReady(true);
+        }
       }
     };
 
-    initAuth();
+    init();
 
-    const { data: sub } = supabase.auth.onAuthStateChange((_evt, session) => {
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!isMounted) return;
       setUser(session?.user || null);
+      setReady(true);
     });
 
     return () => {
-      mounted = false;
+      isMounted = false;
       sub?.subscription?.unsubscribe?.();
     };
   }, []);
 
-  if (!ready || checking) {
+  // Still waiting for Supabase to respond — show loader
+  if (!ready || user === undefined) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" minHeight="100vh">
         <CircularProgress />
@@ -45,15 +50,21 @@ const ProtectedRoute = ({ children, requiredRole = null }) => {
     );
   }
 
+  // No user found after Supabase check
   if (!user) {
-    console.warn('[ProtectedRoute] No user → redirecting to /login');
+    console.warn('[ProtectedRoute] No Supabase session found — redirecting to login once');
+    if (location.pathname === '/login') {
+      // Avoid re-looping if this guard is ever applied on the login route
+      return children;
+    }
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
+  // Optional role restriction
   if (requiredRole) {
-    const role = user.user_metadata?.role || user.role;
-    console.log('[ProtectedRoute] Detected role:', role);
+    const role = user.user_metadata?.role || null;
     if (!role || role !== requiredRole) {
+      console.warn(`[ProtectedRoute] Role mismatch (${role}) → redirecting to /unauthorized`);
       return <Navigate to="/unauthorized" replace />;
     }
   }

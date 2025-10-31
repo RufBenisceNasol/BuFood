@@ -101,7 +101,7 @@ const LoginPage = () => {
             }
 
             // Persist role and user id for routing/guards
-            const role = user?.user_metadata?.role || user?.role;
+            const role = (user?.user_metadata?.role ?? 'Customer');
             try { if (role) localStorage.setItem('user_role', role); } catch (_) {}
             try { if (user?.id) localStorage.setItem('user_id', user.id); } catch (_) {}
             if (role === 'Seller') navigate('/seller/dashboard');

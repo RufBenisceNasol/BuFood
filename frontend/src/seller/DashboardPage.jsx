@@ -68,7 +68,10 @@ const DashboardPage = () => {
     } catch (_) {}
 
     // Fetch store data; show loader only if no cache
-    fetchStoreData({ showLoader: !hadCache });
+    // Debounce initial call slightly to allow token/session to settle
+    const initialTimer = setTimeout(() => {
+      fetchStoreData({ showLoader: !hadCache });
+    }, 300);
 
     // Defer orders fetching until after first paint/idle
     const defer = (fn) => {
@@ -94,6 +97,7 @@ const DashboardPage = () => {
 
     return () => {
       if (typeof idleId === 'number') clearTimeout(idleId);
+      if (typeof initialTimer === 'number') clearTimeout(initialTimer);
       // requestIdleCallback cancel not standardized across browsers; safe to ignore
     };
   }, []);
