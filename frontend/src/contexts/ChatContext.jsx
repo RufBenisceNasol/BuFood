@@ -214,15 +214,9 @@ export const ChatProvider = ({ children }) => {
   useEffect(() => {
     let unsubscribers = [];
     let mounted = true;
+    let connectTimeout = null;
 
     const initSocket = async () => {
-      if (!currentUser) {
-        console.log('[Chat] No user yet, delaying socket connect...');
-        setSocketReady(false);
-        socketService.disconnect();
-        return;
-      }
-
       const socket = await socketService.connect();
       if (!mounted || !socket) {
         console.warn('[Chat] Socket not connected, retrying later...');
@@ -241,10 +235,21 @@ export const ChatProvider = ({ children }) => {
       ];
     };
 
-    initSocket();
+    // Debounce connect until auth settles
+    if (connectTimeout) clearTimeout(connectTimeout);
+    if (!currentUser) {
+      console.warn('[Chat] No user yet, delaying socket connect...');
+      setSocketReady(false);
+      socketService.disconnect();
+    } else {
+      connectTimeout = setTimeout(() => {
+        if (mounted) initSocket();
+      }, 300);
+    }
 
     return () => {
       mounted = false;
+      if (connectTimeout) clearTimeout(connectTimeout);
       unsubscribers.forEach((u) => u && u());
       if (!currentUser) socketService.disconnect();
     };

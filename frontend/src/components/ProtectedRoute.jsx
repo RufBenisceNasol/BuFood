@@ -6,32 +6,38 @@ import { supabase } from '../supabaseClient';
 const ProtectedRoute = ({ children, requiredRole = null }) => {
   const location = useLocation();
   const [ready, setReady] = useState(false);
-  const [session, setSession] = useState(null);
+  const [user, setUser] = useState(null);
+  const [checking, setChecking] = useState(true);
 
   useEffect(() => {
     let mounted = true;
 
-    const initSession = async () => {
-      const { data } = await supabase.auth.getSession();
-      if (mounted) {
-        setSession(data?.session || null);
+    const initAuth = async () => {
+      try {
+        const { data } = await supabase.auth.getSession();
+        const sessionUser = data?.session?.user || null;
+        if (mounted) setUser(sessionUser);
+        setChecking(false);
         setReady(true);
+      } catch (err) {
+        console.error('[ProtectedRoute] Failed to load Supabase session:', err);
+        if (mounted) setReady(true);
       }
     };
 
-    initSession();
+    initAuth();
 
-    const { data: listener } = supabase.auth.onAuthStateChange((_evt, newSession) => {
-      if (mounted) setSession(newSession || null);
+    const { data: sub } = supabase.auth.onAuthStateChange((_evt, session) => {
+      setUser(session?.user || null);
     });
 
     return () => {
       mounted = false;
-      listener?.subscription?.unsubscribe?.();
+      sub?.subscription?.unsubscribe?.();
     };
   }, []);
 
-  if (!ready) {
+  if (!ready || checking) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" minHeight="100vh">
         <CircularProgress />
@@ -39,16 +45,17 @@ const ProtectedRoute = ({ children, requiredRole = null }) => {
     );
   }
 
-  // Not logged in
-  if (!session?.user) {
+  if (!user) {
+    console.warn('[ProtectedRoute] No user → redirecting to /login');
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  // Role check from user_metadata only
-  const role = session.user.user_metadata?.role || null;
-  if (requiredRole && role !== requiredRole) {
-    console.warn(`[Auth] Access denied for role ${role}, required ${requiredRole}`);
-    return <Navigate to="/unauthorized" replace />;
+  if (requiredRole) {
+    const role = user.user_metadata?.role || user.role;
+    console.log('[ProtectedRoute] Detected role:', role);
+    if (!role || role !== requiredRole) {
+      return <Navigate to="/unauthorized" replace />;
+    }
   }
 
   return children;

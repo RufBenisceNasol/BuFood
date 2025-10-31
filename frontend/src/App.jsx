@@ -5,6 +5,7 @@ import { Box } from '@mui/material'
 import './App.css'
 import { supabase } from './supabaseClient'
 import ProtectedRoute, { SellerRoute, CustomerRoute } from './components/ProtectedRoute'
+import useSupabaseAxiosSync from './hooks/useSupabaseAxiosSync'
 import { ChatProvider } from './contexts/ChatContext'
 
 // Lazy-loaded routes (code splitting)
@@ -59,6 +60,7 @@ const SellerLayout = ({ children }) => (
 );
 
 function App() {
+  useSupabaseAxiosSync();
   // Keep token updated automatically
   React.useEffect(() => {
     // Seed current token on first load
