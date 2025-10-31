@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { MdArrowBack, MdFavorite, MdFavoriteBorder, MdShoppingCart, MdAdd, MdRemove } from 'react-icons/md';
 import VariantSelector from './VariantSelector';
+import { cart as cartAPI, product as productAPI, customer as customerAPI } from '../api';
 
 /**
  * DEEP LOGIC: Single Product Page with Variant Choices
@@ -41,12 +42,10 @@ const SingleProductPageWithChoices = () => {
   const fetchProduct = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`/api/products/${productId}`);
-      const data = await response.json();
-      
-      if (data.success) {
-        setProduct(data.product);
-        setCalculatedPrice(data.product.basePrice);
+      const data = await productAPI.getProductById(productId);
+      if (data) {
+        setProduct(data);
+        setCalculatedPrice(data.basePrice || data.price || 0);
       } else {
         setError('Product not found');
       }
@@ -113,13 +112,6 @@ const SingleProductPageWithChoices = () => {
    */
   const handleAddToCart = async () => {
     try {
-      // Check authentication
-      const token = localStorage.getItem('token');
-      if (!token) {
-        navigate('/login');
-        return;
-      }
-
       // Validate variant selections
       if (product.variants && product.variants.length > 0 && !isSelectionsValid) {
         setError('Please select all required options');
@@ -129,34 +121,16 @@ const SingleProductPageWithChoices = () => {
       setAddingToCart(true);
       setError('');
 
-      // Prepare request
-      const requestBody = {
-        productId: product._id,
-        quantity,
-        variantSelections,
-      };
+      // Use shared API wrapper (injects Supabase token)
+      await cartAPI.addToCart(product._id, quantity, null, variantSelections);
 
-      // Send to backend
-      const response = await fetch('/api/carts', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify(requestBody),
-      });
-
-      const data = await response.json();
-
-      if (data.success) {
+      {
         // Show success message
         setShowSuccess(true);
         setTimeout(() => setShowSuccess(false), 3000);
         
         // Reset quantity
         setQuantity(1);
-      } else {
-        setError(data.message || 'Failed to add to cart');
       }
 
     } catch (err) {
@@ -172,35 +146,13 @@ const SingleProductPageWithChoices = () => {
    */
   const handleToggleFavorite = async () => {
     try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        navigate('/login');
-        return;
-      }
-
+      if (!product?._id) return;
       if (isFavorite) {
-        // Remove from favorites
-        // Note: This requires finding the favorite item ID first
-        // For simplicity, we'll just toggle the UI
+        await customerAPI.removeFromFavorites(product._id);
         setIsFavorite(false);
       } else {
-        // Add to favorites
-        const response = await fetch('/api/favorites', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            productId: product._id,
-            variantSelections,
-          }),
-        });
-
-        const data = await response.json();
-        if (data.success) {
-          setIsFavorite(true);
-        }
+        await customerAPI.addToFavorites(product._id, { variantSelections });
+        setIsFavorite(true);
       }
     } catch (err) {
       console.error('Failed to toggle favorite:', err);

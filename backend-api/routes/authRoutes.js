@@ -19,7 +19,8 @@ const {
     resetPasswordOtp,
     resendPasswordOtp,
     // Supabase bridging
-    markVerified
+    markVerified,
+    syncSupabaseUser
 } = require('../controllers/authController');
 // Import supabaseLogin from Supabase controller to provide a flat route alias
 const { supabaseLogin } = require('../controllers/supabaseAuthController');
@@ -124,6 +125,9 @@ router.post('/register', registerValidation, handleValidation, register);
 
 // Exchange Supabase access token for backend JWT (flat path)
 router.post('/supabase-login', supabaseLogin);
+
+// Sync Supabase user into MongoDB (idempotent upsert)
+router.post('/sync', syncSupabaseUser);
 
 /**
  * @swagger

@@ -114,6 +114,57 @@ const sendVerificationEmail = async (email, verificationLink) => {
   }
 };
 
+// Sync/Upsert a Mongo user from a Supabase user payload
+const syncSupabaseUser = async (req, res) => {
+  try {
+    const supabaseUser = req.body?.supabaseUser || req.body?.user || req.body;
+    if (!supabaseUser || !supabaseUser.id || !supabaseUser.email) {
+      return res.status(400).json({ success: false, message: 'Missing Supabase user data' });
+    }
+
+    const supabaseId = supabaseUser.id;
+    const email = (supabaseUser.email || '').trim().toLowerCase();
+    const meta = supabaseUser.user_metadata || {};
+    const name = meta.name || meta.fullName || email.split('@')[0];
+    const contactNumber = meta.contactNumber || '+00000000000';
+    const role = meta.role || 'Customer';
+
+    // Prefer existing by supabaseId, else by email for first-time linkage
+    let user = await User.findOne({ supabaseId });
+    if (!user) {
+      user = await User.findOne({ email });
+      if (user && !user.supabaseId) {
+        user.supabaseId = supabaseId;
+      }
+    }
+
+    if (!user) {
+      user = new User({
+        supabaseId,
+        email,
+        name,
+        contactNumber,
+        role,
+        authMethod: 'supabase',
+        isVerified: true,
+      });
+      await user.save();
+      console.log(`[MongoDB] Created new user for ${email}`);
+    } else {
+      // Update basic profile fields from Supabase metadata
+      user.name = user.name || name;
+      if (contactNumber && !user.contactNumber) user.contactNumber = contactNumber;
+      if (role && !user.role) user.role = role;
+      await user.save();
+    }
+
+    return res.json({ success: true, user });
+  } catch (error) {
+    console.error('Error syncing Supabase user:', error);
+    res.status(500).json({ success: false, message: 'Server error while syncing user' });
+  }
+};
+
 // Permanently delete the authenticated user's account and all related data (legacy auth path)
 const deleteAccount = async (req, res) => {
   try {
@@ -784,4 +835,5 @@ module.exports = {
   uploadProfileImage,
   markVerified,
   deleteAccount,
+  syncSupabaseUser,
 };
