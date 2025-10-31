@@ -100,7 +100,10 @@ const LoginPage = () => {
                 try { localStorage.setItem('access_token', accessToken); } catch (_) {}
             }
 
+            // Persist role and user id for routing/guards
             const role = user?.user_metadata?.role || user?.role;
+            try { if (role) localStorage.setItem('user_role', role); } catch (_) {}
+            try { if (user?.id) localStorage.setItem('user_id', user.id); } catch (_) {}
             if (role === 'Seller') navigate('/seller/dashboard');
             else navigate('/customer/home');
         } catch (err) {
