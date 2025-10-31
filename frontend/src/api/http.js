@@ -5,12 +5,41 @@ const base = import.meta.env.VITE_API_BASE_URL; // includes /api
 
 const http = axios.create({ baseURL: base });
 
+// Wait briefly for Supabase session to exist (handles app boot and token refresh)
+async function waitForSession(msTotal = 1200, stepMs = 150) {
+  const start = Date.now();
+  while (Date.now() - start < msTotal) {
+    try {
+      const { data } = await supabase.auth.getSession();
+      const token = data?.session?.access_token;
+      if (token) return token;
+    } catch (_) {}
+    await new Promise(r => setTimeout(r, stepMs));
+  }
+  return null;
+}
+
 http.interceptors.request.use(async (config) => {
   try {
+    // First attempt: immediate session read
     const { data } = await supabase.auth.getSession();
-    const token = data?.session?.access_token;
-    if (token) config.headers.Authorization = `Bearer ${token}`;
-  } catch (_) {}
+    let token = data?.session?.access_token;
+
+    // If no token yet, wait briefly (app just loaded or token rotating)
+    if (!token) {
+      console.warn('[HTTP] No token found initially for', config.url, '— waiting for session...');
+      token = await waitForSession();
+    }
+
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+      if (import.meta.env.DEV) console.log('[HTTP] Attached Supabase token');
+    } else {
+      console.warn('[HTTP] No token found for request', config.url);
+    }
+  } catch (err) {
+    console.error('[HTTP] Error attaching token:', err);
+  }
   return config;
 });
 

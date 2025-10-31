@@ -3,7 +3,8 @@ const User = require('../models/userModel');
 
 /**
  * Authenticate using Supabase access token only.
- * Verifies token via supabase.auth.getUser(token).
+ * Verifies token via supabase.auth.getUser(token), then resolves MongoDB user
+ * by supabaseId/email. Auto-provisions minimal user if not found.
  */
 const authenticateWithSupabase = async (req, res, next) => {
   try {
@@ -19,8 +20,48 @@ const authenticateWithSupabase = async (req, res, next) => {
       return res.status(401).json({ success: false, message: 'Invalid or expired Supabase token' });
     }
 
-    req.user = data.user;
+    // Preserve raw Supabase user
     req.supabaseUser = data.user;
+
+    // Resolve MongoDB user for downstream controllers
+    try {
+      const supaId = data.user.id;
+      const email = data.user.email;
+      const meta = data.user.user_metadata || {};
+      const role = meta.role || 'Customer';
+      const name = meta.name || meta.full_name || (email ? email.split('@')[0] : 'User');
+
+      // 1) Prefer match by supabaseId
+      let mongoUser = await User.findOne({ supabaseId: supaId });
+      // 2) Else attempt to link by email and set supabaseId
+      if (!mongoUser && email) {
+        mongoUser = await User.findOne({ email });
+        if (mongoUser && !mongoUser.supabaseId) {
+          mongoUser.supabaseId = supaId;
+          if (!mongoUser.name) mongoUser.name = name;
+          if (!mongoUser.role) mongoUser.role = role;
+          await mongoUser.save();
+        }
+      }
+      // 3) Else auto-provision minimal user
+      if (!mongoUser) {
+        mongoUser = new User({
+          supabaseId: supaId,
+          email,
+          name,
+          role,
+          contactNumber: '+00000000000',
+          authMethod: 'supabase',
+          isVerified: true,
+        });
+        await mongoUser.save();
+      }
+      req.user = mongoUser.toObject ? mongoUser.toObject() : mongoUser;
+    } catch (linkErr) {
+      console.warn('[Auth] Failed to resolve Mongo user, passing minimal identity:', linkErr?.message);
+      req.user = { _id: null, supabaseId: data.user.id, user_metadata: data.user.user_metadata };
+    }
+
     return next();
   } catch (err) {
     console.error('Supabase auth middleware error:', err);
