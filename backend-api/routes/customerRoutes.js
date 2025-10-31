@@ -16,8 +16,7 @@ const router = express.Router();
  *           type: string
  */
 
-const { authenticate, checkRole } = require('../middlewares/authMiddleware');
-const { authenticateWithSupabase } = require('../middlewares/supabaseAuthMiddleware');
+const { authenticateWithSupabase, checkRole } = require('../middlewares/supabaseAuthMiddleware');
 const handleValidation = require('../middlewares/validators/handleValidation');
 
 const {
