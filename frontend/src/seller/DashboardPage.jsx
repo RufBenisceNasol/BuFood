@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { store, order, auth } from '../api';
+import { supabase } from '../supabaseClient';
 import '../styles/DashboardPage.css';
 import { 
   MdMenuOpen, 
@@ -185,9 +186,21 @@ const DashboardPage = () => {
     } catch (err) {
       const status = err?.response?.status || err?.status;
       if (status === 401) {
-        // Session expired; redirect to login
-        try { await auth.logout(); } catch (_) {}
-        navigate('/login', { replace: true, state: { message: 'Your session expired. Please sign in again.' } });
+        // Avoid loop: check if Supabase session exists and retry once
+        try {
+          const { data: sessionData } = await supabase.auth.getSession();
+          if (sessionData?.session?.access_token) {
+            // brief wait to allow interceptor to attach fresh token
+            await new Promise(r => setTimeout(r, 200));
+            const retry = await store.getMyStore();
+            setStoreData(retry);
+            try { localStorage.setItem('bufood:seller:store', JSON.stringify(retry)); } catch (_) {}
+            setError(null);
+            return;
+          }
+        } catch (_) {}
+        // No session -> navigate to login (do not call logout to avoid cascading loops)
+        navigate('/login', { replace: true, state: { message: 'Please sign in to continue.' } });
         return;
       }
       // Only show fatal error if we did not have cached data to display
@@ -547,7 +560,7 @@ const DashboardPage = () => {
             alignItems: 'center',
             justifyContent: 'center',
             textDecoration: 'none',
-            position: 'fixed'
+            
           }}
         >
           <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>

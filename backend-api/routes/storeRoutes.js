@@ -38,7 +38,7 @@ const {
   getMyStore
 } = require('../controllers/storeController');
 
-const { authenticate, checkRole } = require('../middlewares/authMiddleware');
+const { authenticateWithSupabase, checkRole } = require('../middlewares/supabaseAuthMiddleware');
 const checkStoreOwnership = require('../utils/checkOwnership');
 const uploadStoreImage = require('../middlewares/uploadStoreMiddleware'); 
 const { cache } = require('../utils/cacheConfig');
@@ -105,7 +105,7 @@ router.get('/', cache('15 minutes'), getAllStores);
  */
 router.get(
   '/my-store',
-  authenticate,
+  authenticateWithSupabase,
   checkRole('Seller'),
   getMyStore
 );
@@ -178,7 +178,7 @@ router.get('/:id/products', cache('15 minutes'), getStoreProducts);
  *         description: Forbidden - Not store owner
  */
 router.put('/:id', 
-  authenticate, 
+  authenticateWithSupabase, 
   checkStoreOwnership, 
   safeUpload,
   updateStore
@@ -206,6 +206,6 @@ router.put('/:id',
  *       403:
  *         description: Forbidden - Not store owner
  */
-router.delete('/:id', authenticate, checkStoreOwnership, deleteStore);
+router.delete('/:id', authenticateWithSupabase, checkStoreOwnership, deleteStore);
 
 module.exports = router;

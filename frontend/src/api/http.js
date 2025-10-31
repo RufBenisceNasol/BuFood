@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { supabase } from '../supabaseClient';
 
-const base = import.meta.env.VITE_API_BASE_URL; // includes /api
+const base = import.meta.env.VITE_API_BASE_URL || 'https://capstonedelibup-o7sl.onrender.com/api'; // includes /api
 
 const http = axios.create({ baseURL: base });
 

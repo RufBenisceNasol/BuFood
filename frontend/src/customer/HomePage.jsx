@@ -25,7 +25,7 @@ import Slider from 'react-slick';
 // Removed react-toastify to avoid popups on the homepage
 import 'slick-carousel/slick/slick.css';
 import 'slick-carousel/slick/slick-theme.css';
-import { store as storeApi, product as productApi, auth, cart } from '../api';
+import { store as storeApi, product as productApi, auth, cart, customer } from '../api';
 import { fetchBootstrap } from '../api/bootstrap';
 import { supabase } from '../supabaseClient';
 import '../styles/HomePage.css';
@@ -175,6 +175,15 @@ const HomePage = () => {
       if (!hasSession) {
         navigate('/login', { replace: true });
         return;
+      }
+      // Ensure greeting uses up-to-date Mongo profile
+      try {
+        const profile = await customer.getProfile();
+        const p = profile?.user || profile?.data || profile;
+        const name = p?.name || p?.fullName || p?.username || '';
+        if (name) setUserName(name);
+      } catch (_) {
+        // fallback to whatever is cached
       }
       // Cache-first render from localStorage, then refresh from API
       let hadCache = false;

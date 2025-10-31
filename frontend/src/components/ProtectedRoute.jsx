@@ -3,26 +3,31 @@ import { Navigate, useLocation } from 'react-router-dom';
 import { CircularProgress, Box } from '@mui/material';
 import { supabase } from '../supabaseClient';
 
-// Protected Route using Supabase session directly
 const ProtectedRoute = ({ children, requiredRole = null }) => {
   const location = useLocation();
   const [ready, setReady] = useState(false);
-  const [user, setUser] = useState(null);
+  const [session, setSession] = useState(null);
 
   useEffect(() => {
     let mounted = true;
-    (async () => {
+
+    const initSession = async () => {
       const { data } = await supabase.auth.getSession();
-      if (!mounted) return;
-      setUser(data?.session?.user || null);
-      setReady(true);
-    })();
-    const { data: sub } = supabase.auth.onAuthStateChange((_evt, session) => {
-      setUser(session?.user || null);
+      if (mounted) {
+        setSession(data?.session || null);
+        setReady(true);
+      }
+    };
+
+    initSession();
+
+    const { data: listener } = supabase.auth.onAuthStateChange((_evt, newSession) => {
+      if (mounted) setSession(newSession || null);
     });
+
     return () => {
       mounted = false;
-      sub?.subscription?.unsubscribe?.();
+      listener?.subscription?.unsubscribe?.();
     };
   }, []);
 
@@ -34,15 +39,16 @@ const ProtectedRoute = ({ children, requiredRole = null }) => {
     );
   }
 
-  if (!user) {
+  // Not logged in
+  if (!session?.user) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  if (requiredRole) {
-    const role = user.user_metadata?.role || user.role;
-    if (!role || role !== requiredRole) {
-      return <Navigate to="/unauthorized" replace />;
-    }
+  // Role check from user_metadata only
+  const role = session.user.user_metadata?.role || null;
+  if (requiredRole && role !== requiredRole) {
+    console.warn(`[Auth] Access denied for role ${role}, required ${requiredRole}`);
+    return <Navigate to="/unauthorized" replace />;
   }
 
   return children;
