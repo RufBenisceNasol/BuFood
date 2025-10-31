@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { auth, warmup } from '../api';
+import http from '../api/http';
 import { supabase } from '../supabaseClient';
 import { useNavigate } from 'react-router-dom';
 import { FiUser, FiMail, FiPhone, FiLock, FiBriefcase, FiEye, FiEyeOff, FiKey } from 'react-icons/fi';
@@ -201,16 +202,7 @@ const RegisterPage = () => {
             dataToSend.supabaseId = supabaseUserId;
             dataToSend.isVerified = true; // Already verified via OTP
             
-            const apiBase = (import.meta.env && import.meta.env.VITE_API_BASE_URL) ? import.meta.env.VITE_API_BASE_URL : '/api';
-            const res = await fetch(`${apiBase.replace(/\/$/, '')}/auth/register-with-supabase`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(dataToSend),
-            });
-            const backendResponse = await res.json();
-            if (!res.ok) {
-                throw new Error(backendResponse?.message || 'Failed to create user in database');
-            }
+            const { data: backendResponse } = await http.post('/auth/register-with-supabase', dataToSend);
 
             setSuccess(backendResponse?.message || 'Your email has been verified. Redirecting to login...');
             setTimeout(() => navigate('/login'), 2500);
@@ -249,13 +241,7 @@ const RegisterPage = () => {
         setError('');
         setSuccess('');
         try {
-            const res = await fetch('/api/auth/mark-verified', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email: formData.email }),
-            });
-            const body = await res.json();
-            if (!res.ok) throw new Error(body?.message || 'Failed to mark verified');
+            const { data: body } = await http.post('/auth/mark-verified', { email: formData.email });
             setSuccess('Your account has been marked verified. You can now log in.');
             setTimeout(() => navigate('/login'), 3000);
         } catch (e) {

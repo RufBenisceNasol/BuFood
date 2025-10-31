@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { product as productAPI, cart as cartAPI } from '../api';
+import http from '../api/http';
 import { MdArrowBack, MdFavorite, MdFavoriteBorder, MdShoppingCart, MdAdd, MdRemove, MdCheck } from 'react-icons/md';
 
 const SingleProductPageWithVariants = () => {
@@ -41,18 +42,10 @@ const SingleProductPageWithVariants = () => {
 
   const checkFavoriteStatus = async () => {
     try {
-      const token = localStorage.getItem('token');
-      if (!token) return;
-
-      const response = await fetch(`/api/favorites/check/${productId}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-      const data = await response.json();
-      setIsFavorite(data.isFavorite);
+      const { data } = await http.get(`/favorites/check/${productId}`);
+      setIsFavorite(!!data?.isFavorite);
     } catch (err) {
-      console.error('Failed to check favorite status:', err);
+      // ignore if unauthorized; user can still toggle and will be prompted by route guard
     }
   };
 
@@ -110,34 +103,16 @@ const SingleProductPageWithVariants = () => {
 
   const handleToggleFavorite = async () => {
     try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        navigate('/login');
-        return;
-      }
-
       if (isFavorite) {
-        // Remove from favorites
-        await fetch(`/api/favorites/product/${productId}${selectedVariant ? `?variantId=${selectedVariant.id}` : ''}`, {
-          method: 'DELETE',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
+        await http.delete(`/favorites/product/${productId}`, {
+          params: selectedVariant ? { variantId: selectedVariant.id } : undefined,
         });
         setIsFavorite(false);
       } else {
-        // Add to favorites
-        await fetch('/api/favorites', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            productId: product._id,
-            variantId: selectedVariant?.id,
-            variantName: selectedVariant?.name,
-          }),
+        await http.post('/favorites', {
+          productId: product._id,
+          variantId: selectedVariant?.id,
+          variantName: selectedVariant?.name,
         });
         setIsFavorite(true);
       }

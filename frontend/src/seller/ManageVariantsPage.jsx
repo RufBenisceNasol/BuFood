@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { product as productAPI } from '../api';
+import http from '../api/http';
 import { MdArrowBack, MdAdd, MdDelete, MdEdit, MdSave, MdClose, MdImage } from 'react-icons/md';
 
 const ManageVariantsPage = () => {
@@ -78,16 +79,10 @@ const ManageVariantsPage = () => {
       const formData = new FormData();
       formData.append('image', file);
 
-      // Upload to Cloudinary via your backend
-      const response = await fetch('/api/upload/image', {
-        method: 'POST',
-        body: formData,
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        },
+      // Upload to Cloudinary via your backend using axios http (auth auto-attached)
+      const { data } = await http.post('/upload/image', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
       });
-
-      const data = await response.json();
       
       if (data.success) {
         updateVariant(index, 'image', data.imageUrl);

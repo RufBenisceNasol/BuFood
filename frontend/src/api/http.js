@@ -27,16 +27,13 @@ http.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Global 401/403 handler
+// Global 401/403 handler (soft): don't redirect here; let route guards decide
 http.interceptors.response.use(
   (response) => response,
   (error) => {
     const status = error?.response?.status;
     if (status === 401 || status === 403) {
-      console.warn('[Axios] Unauthorized — redirecting to /login');
-      if (typeof window !== 'undefined' && !window.location.pathname.includes('/login')) {
-        window.location.replace('/login');
-      }
+      console.warn('[Axios] Unauthorized response received for', error?.config?.url);
     }
     return Promise.reject(error);
   }

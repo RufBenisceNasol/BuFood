@@ -16,7 +16,6 @@ import {
 import { FiRefreshCw } from 'react-icons/fi';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
 import { SkeletonCard } from '../components/Skeletons';
-import { useChat } from '../contexts/ChatContext';
 
 const DashboardCard = ({ title, value, icon: Icon, to, onClick }) => (
   <Link to={to} className="grid-item" onClick={onClick}>
@@ -44,7 +43,6 @@ const DashboardPage = () => {
   const navigate = useNavigate();
   const [ordersForChart, setOrdersForChart] = useState([]);
   const [cacheBuster, setCacheBuster] = useState('');
-  const { unreadCount } = useChat();
 
   const appendCacheBuster = (url) => {
     if (!url) return url;
@@ -545,54 +543,7 @@ const DashboardPage = () => {
         <Link to="/seller/profile" className="profile-button">
           PROFILE
         </Link>
-        {/* Floating Message Button -> navigates to /seller/chat */}
-        <Link
-          to="/seller/chat"
-          aria-label="Messages"
-          style={{
-            position: 'fixed',
-            right: 24,
-            bottom: 24,
-            zIndex: 1000,
-            width: 56,
-            height: 56,
-            borderRadius: '50%',
-            backgroundColor: '#ff9800',
-            color: '#fff',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            textDecoration: 'none',
-            
-          }}
-        >
-          <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <MdMessage size={24} />
-            {unreadCount > 0 && (
-              <span
-                style={{
-                  position: 'absolute',
-                  top: -6,
-                  right: -6,
-                  minWidth: 18,
-                  height: 18,
-                  padding: '0 4px',
-                  borderRadius: 9,
-                  backgroundColor: '#e53935',
-                  color: '#fff',
-                  fontSize: 11,
-                  lineHeight: '18px',
-                  textAlign: 'center',
-                  fontWeight: 700,
-                  boxShadow: '0 0 0 2px #fff'
-                }}
-              >
-                {unreadCount}
-              </span>
-            )}
-          </div>
-        </Link>
+        {/* Messages button removed (chat feature disabled) */}
       </div>
     </div>
   );

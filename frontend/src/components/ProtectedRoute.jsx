@@ -10,6 +10,7 @@ const ProtectedRoute = ({ children, requiredRole = null }) => {
 
   useEffect(() => {
     let isMounted = true;
+    let graceTimer = null;
 
     const init = async () => {
       try {
@@ -17,7 +18,14 @@ const ProtectedRoute = ({ children, requiredRole = null }) => {
         if (!isMounted) return;
         const currentUser = data?.session?.user || null;
         setUser(currentUser);
-        setReady(true);
+        if (currentUser) {
+          setReady(true);
+        } else {
+          // Give Supabase a brief moment to emit SIGNED_IN after redirects
+          graceTimer = setTimeout(() => {
+            if (isMounted) setReady(true);
+          }, 250);
+        }
       } catch (error) {
         console.error('[ProtectedRoute] Session load error:', error);
         if (isMounted) {
@@ -32,11 +40,13 @@ const ProtectedRoute = ({ children, requiredRole = null }) => {
     const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
       if (!isMounted) return;
       setUser(session?.user || null);
+      if (graceTimer) { clearTimeout(graceTimer); graceTimer = null; }
       setReady(true);
     });
 
     return () => {
       isMounted = false;
+      if (graceTimer) clearTimeout(graceTimer);
       sub?.subscription?.unsubscribe?.();
     };
   }, []);
@@ -63,9 +73,17 @@ const ProtectedRoute = ({ children, requiredRole = null }) => {
   // Optional role restriction
   if (requiredRole) {
     const role = user.user_metadata?.role || null;
-    if (!role || role !== requiredRole) {
-      console.warn(`[ProtectedRoute] Role mismatch (${role}) → redirecting to /unauthorized`);
-      return <Navigate to="/unauthorized" replace />;
+    if (requiredRole === 'Seller') {
+      if (role !== 'Seller') {
+        console.warn(`[ProtectedRoute] Seller required but role is (${role}) → redirecting to /unauthorized`);
+        return <Navigate to="/unauthorized" replace />;
+      }
+    } else if (requiredRole === 'Customer') {
+      // Allow missing role as Customer
+      if (role && role !== 'Customer') {
+        console.warn(`[ProtectedRoute] Customer required but role is (${role}) → redirecting to /unauthorized`);
+        return <Navigate to="/unauthorized" replace />;
+      }
     }
   }
 

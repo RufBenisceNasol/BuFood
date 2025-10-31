@@ -126,17 +126,7 @@ function App() {
             <Route path="/supabase-reset" element={<SupabaseResetPasswordPage />} />
             <Route path="/verified" element={<SupabaseVerifyPage />} />
 
-            {/* Redirects for root-level customer routes to /customer/* */}
-            <Route path="/home" element={<CustomerLayout><HomePage /></CustomerLayout>} />
-            <Route path="/profile" element={<CustomerLayout><CustomerProfilePage /></CustomerLayout>} />
-            <Route path="/settings" element={<CustomerLayout><SettingsPage /></CustomerLayout>} />
-            <Route path="/stores" element={<CustomerLayout><StoresPage /></CustomerLayout>} />
-            <Route path="/store/:storeId" element={<CustomerLayout><StoreDetailPage /></CustomerLayout>} />
-            <Route path="/cart" element={<CustomerLayout><CartPage /></CustomerLayout>} />
-            <Route path="/orders" element={<CustomerLayout><CustomerOrdersPage /></CustomerLayout>} />
-            <Route path="/product/:productId" element={<CustomerLayout><SingleProductPage /></CustomerLayout>} />
-            <Route path="/products" element={<CustomerLayout><ProductPage /></CustomerLayout>} />
-            <Route path="/favorites" element={<CustomerLayout><FavoritesPage /></CustomerLayout>} />
+            {/* Removed unprotected root-level customer routes to prevent unintended access/redirects */}
             
             {/* Chat routes removed */}
           </Routes>

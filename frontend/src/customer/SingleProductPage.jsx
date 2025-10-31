@@ -30,6 +30,7 @@ import { toggleFavorite, isInFavorites } from '../utils/favoriteUtils';
 import styled from 'styled-components';
 import { getUser } from '../utils/tokenUtils';
 import { apiRequest } from '../utils/api';
+import http from '../api/http';
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 // Styled Components
@@ -690,8 +691,7 @@ const SingleProductPage = () => {
         let isMounted = true;
         (async () => {
             try {
-                const res = await fetch('/api/products');
-                const all = await res.json();
+                const { data: all } = await http.get('/products');
                 if (Array.isArray(all) && productData?.category) {
                     const rel = all.filter(p => p._id !== productId && p.category === productData.category).slice(0, 6);
                     if (isMounted) setRelatedProducts(rel);

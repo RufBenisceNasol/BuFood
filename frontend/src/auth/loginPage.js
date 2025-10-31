@@ -25,22 +25,10 @@ const LoginPage = () => {
     const resendTimerRef = React.useRef(null);
     const navigate = useNavigate();
 
-    // Redirect if already logged in (Supabase session)
+    // Redirect to role home ONLY on explicit SIGNED_IN events
     React.useEffect(() => {
-        let mounted = true;
-        (async () => {
-            try {
-                const { data } = await supabase.auth.getSession();
-                if (!mounted) return;
-                const user = data?.session?.user;
-                if (user) {
-                    const role = user.user_metadata?.role || user.role;
-                    if (role === 'Seller') navigate('/seller/dashboard');
-                    else navigate('/customer/home');
-                }
-            } catch (_) {}
-        })();
-        const { data: sub } = supabase.auth.onAuthStateChange((_evt, session) => {
+        const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
+            if (event !== 'SIGNED_IN') return;
             const user = session?.user;
             if (user) {
                 const role = user.user_metadata?.role || user.role;
@@ -48,7 +36,7 @@ const LoginPage = () => {
                 else navigate('/customer/home');
             }
         });
-        return () => { mounted = false; sub?.subscription?.unsubscribe?.(); };
+        return () => { sub?.subscription?.unsubscribe?.(); };
     }, [navigate]);
 
     // Non-blocking warmup ping on mount to help wake sleeping servers

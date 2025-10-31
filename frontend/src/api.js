@@ -78,69 +78,31 @@ async function refreshAccessTokenIfNeeded() {
     return refreshInFlight;
 }
 
-// Add auth token to requests and proactively refresh if near expiry
+// Attach Supabase token to requests (authoritative source)
 api.interceptors.request.use(async (config) => {
     // If sending FormData, let axios/browser set proper multipart boundary
     if (typeof FormData !== 'undefined' && config.data instanceof FormData) {
         if (config.headers && config.headers['Content-Type']) delete config.headers['Content-Type'];
     }
 
-    // Proactive refresh if close to expiry
-    try { await refreshAccessTokenIfNeeded(); } catch (_) {
-        // ignore; response interceptor will handle 401
-    }
-
-    const token = getToken();
-    if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
+    try {
+        const { data } = await supabase.auth.getSession();
+        const token = data?.session?.access_token;
+        if (token) {
+            config.headers = config.headers || {};
+            config.headers.Authorization = `Bearer ${token}`;
+        }
+    } catch (_) {
+        // leave request without Authorization; backend will respond 401 if required
     }
     return config;
 });
 
-// Add response interceptor for token refresh
+// Simplified response interceptor: do not auto-refresh or redirect here.
+// Global auth handling is centralized in src/api/http.js
 api.interceptors.response.use(
     (response) => response,
-    async (error) => {
-        const originalRequest = error.config || {};
-        const status = error.response?.status;
-        const code = error.response?.data?.code;
-
-        const isRefreshCall = originalRequest.url?.includes('/auth/refresh-token');
-        if (status !== 401 || isRefreshCall) {
-            return Promise.reject(error);
-        }
-
-        try {
-            if (!refreshInFlight) {
-                const rt = getRefreshToken();
-                if (!rt) throw new Error('No refresh token');
-                refreshInFlight = axios.post(`${API_BASE_URL}/auth/refresh-token`, { refreshToken: rt })
-                    .then((resp) => {
-                        const newAccess = resp.data?.accessToken || resp.data?.token;
-                        const newRefresh = resp.data?.refreshToken;
-                        if (!newAccess) throw new Error('Refresh failed: no token');
-                        setToken(newAccess, true);
-                        if (newRefresh) setRefreshToken(newRefresh, true);
-                        return newAccess;
-                    })
-                    .finally(() => { refreshInFlight = null; });
-            }
-            const newAccess = await refreshInFlight;
-            // retry original request with new token
-            originalRequest.headers = originalRequest.headers || {};
-            originalRequest.headers['Authorization'] = `Bearer ${newAccess}`;
-            return api(originalRequest);
-        } catch (err) {
-            // Optionally: attempt silent Supabase login here if you store supabase session
-            if (code === 'TOKEN_EXPIRED' || status === 401) {
-                removeToken();
-                removeRefreshToken();
-                removeUser();
-                window.location.href = '/login';
-            }
-            return Promise.reject(err);
-        }
-    }
+    (error) => Promise.reject(error)
 );
 
 // Auth API endpoints
@@ -181,9 +143,25 @@ export const auth = {
             // Swallow errors/timeouts – client logout should proceed regardless
         } finally {
             try { await supabase.auth.signOut(); } catch (_) {}
+            // Ensure Supabase session is really cleared before redirecting
+            try {
+                const deadline = Date.now() + 1500;
+                while (Date.now() < deadline) {
+                    const { data } = await supabase.auth.getSession();
+                    if (!data?.session) break;
+                    await new Promise(r => setTimeout(r, 100));
+                }
+            } catch (_) {}
+            // Hard clear any locally stored auth artifacts
+            try { localStorage.removeItem('access_token'); } catch (_) {}
+            try { localStorage.removeItem('user_role'); } catch (_) {}
+            try { localStorage.removeItem('user_id'); } catch (_) {}
+            try { sessionStorage.removeItem('access_token'); } catch (_) {}
             removeToken();
             removeRefreshToken();
             removeUser();
+            // Also clear axios default Authorization in case any code cached it
+            try { delete api.defaults.headers.common.Authorization; } catch (_) {}
             if (typeof window !== 'undefined') {
                 window.location.replace('/login');
             }

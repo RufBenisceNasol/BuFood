@@ -32,7 +32,7 @@ import '../styles/HomePage.css';
 import { getUser } from '../utils/tokenUtils';
 import useDebouncedRefresh from '../hooks/useDebouncedRefresh';
 import { SkeletonCard } from '../components/Skeletons';
-import { useChat } from '../contexts/ChatContext';
+ 
 
 const styles = {
   bannerContainer: {
@@ -104,7 +104,7 @@ const styles = {
 
 const HomePage = () => {
   const navigate = useNavigate();
-  const { unreadCount } = useChat();
+  
   const [stores, setStores] = useState([]);
   const [allProducts, setAllProducts] = useState([]);
   const [filteredProducts, setFilteredProducts] = useState([]);
@@ -168,14 +168,7 @@ const HomePage = () => {
   useEffect(() => {
     if (didInitRef.current) return; // StrictMode guard
     didInitRef.current = true;
-    // Session guard: if no Supabase session, go to login
     (async () => {
-      const { data } = await supabase.auth.getSession();
-      const hasSession = !!data?.session?.access_token;
-      if (!hasSession) {
-        navigate('/login', { replace: true });
-        return;
-      }
       // Ensure greeting uses up-to-date Mongo profile
       try {
         const profile = await customer.getProfile();
@@ -211,10 +204,13 @@ const HomePage = () => {
         }
       } catch (_) {}
 
-      // Always fetch fresh data; show loader only if no cache
-      fetchData({ showLoader: !hadCache });
-      // Fetch initial cart count
-      fetchCartCount();
+      // Debounce initial data fetch to allow Supabase token/session to settle
+      setTimeout(() => {
+        // Always fetch fresh data; show loader only if no cache
+        fetchData({ showLoader: !hadCache });
+        // Fetch initial cart count
+        fetchCartCount();
+      }, 300);
     })();
   }, []);
 
@@ -301,9 +297,9 @@ const HomePage = () => {
     setError(null);
 
     try {
-      // Try aggregated bootstrap first
+      // Try aggregated bootstrap first (no conversation params; chat removed)
       try {
-        const boot = await fetchBootstrap({ productLimit: 24, conversationLimit: 50, orderLimit: 50, storeLimit: 50 });
+        const boot = await fetchBootstrap({ productLimit: 24, orderLimit: 50, storeLimit: 50 });
         if (boot) {
           const s = Array.isArray(boot.stores) ? boot.stores : [];
           const p = Array.isArray(boot.products) ? boot.products : [];
