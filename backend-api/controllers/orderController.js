@@ -10,7 +10,13 @@ const uploadToCloudinary = require('../utils/uploadToCloudinary');
 const fs = require('fs').promises;
 const Conversation = require('../models/Conversation');
 const Message = require('../models/Message');
-const { emitToUser } = require('../utils/socket');
+// Socket is optional: if not present in the environment, fall back to no-op
+let emitToUser = () => {};
+try {
+  ({ emitToUser } = require('../utils/socket'));
+} catch (_) {
+  // no-op in environments without socket module
+}
 const { randomUUID } = require('crypto');
 const { mapToSupabaseId } = require('../helpers/idMapper');
 
