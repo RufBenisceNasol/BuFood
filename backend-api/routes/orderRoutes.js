@@ -12,8 +12,6 @@ const {
   cancelOrder,
   createDirectOrder,
   getCustomerOrders,
-  checkoutWithGCash,
-  paymongoWebhook,
   uploadManualGcashProof,
   approveManualGcash,
   rejectManualGcash
@@ -504,11 +502,7 @@ router.post('/:orderId/accept', validateAcceptOrder, acceptOrder);
  */
 router.post('/:orderId/cancel', validateCancelOrder, cancelOrder);
 
-// GCash checkout route
-router.post('/gcash/checkout', checkoutWithGCash);
-
-// GCash webhook route
-router.post('/gcash/webhook', paymongoWebhook);
+// PayMongo disabled: removed /gcash/checkout and /gcash/webhook routes
 
 // Manual GCash routes
 const multer = require('multer');

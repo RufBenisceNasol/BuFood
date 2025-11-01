@@ -5,7 +5,7 @@ const Product = require('../models/productModel');
 const Store = require('../models/storeModel');
 const { validationResult } = require('express-validator');
 const ApiError = require('../utils/ApiError');
-const { createGCashSource } = require('../utils/paymongo');
+// PayMongo removed
 const uploadToCloudinary = require('../utils/uploadToCloudinary');
 const fs = require('fs').promises;
 const Conversation = require('../models/Conversation');
@@ -1230,8 +1230,9 @@ const checkoutWithGCash = async (req, res) => {
     if (!amount || !orderId || !redirectUrl) {
       return res.status(400).json(createResponse(false, 'Missing required fields', null, 'amount, orderId, and redirectUrl are required'));
     }
-    const checkoutUrl = await createGCashSource({ amount, redirectUrl, orderId });
-    res.json(createResponse(true, 'GCash checkout URL created', { checkoutUrl }));
+    // PayMongo disabled: directly return provided redirect URL for manual/off-platform flow
+    const checkoutUrl = redirectUrl;
+    res.json(createResponse(true, 'GCash checkout URL created (manual redirect)', { checkoutUrl }));
   } catch (err) {
     console.error('PayMongo GCash error:', err.response?.data || err.message);
     res.status(500).json(createResponse(false, 'Failed to create GCash payment source', null, err.response?.data || err.message));
