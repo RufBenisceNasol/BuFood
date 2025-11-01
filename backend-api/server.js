@@ -40,7 +40,13 @@ const uploadRoutes = require('./routes/uploadRoutes');
 
 const app = express();
 const http = require('http');
-const { setupSocket } = require('./utils/socket');
+let setupSocket = null;
+try {
+    ({ setupSocket } = require('./utils/socket'));
+} catch (_) {
+    // Socket module not available in this environment; continue without websockets
+    setupSocket = null;
+}
 // Trust the reverse proxy (e.g., Render, Nginx) so req.ip reflects the real client IP
 // and express-rate-limit can safely use X-Forwarded-For
 app.set('trust proxy', 1);
@@ -249,9 +255,11 @@ const gracefulShutdown = async () => {
 process.on('SIGTERM', gracefulShutdown);
 process.on('SIGINT', gracefulShutdown);
 
-// Start server with Socket.IO
+// Start server (attach Socket.IO only if available)
 const server = http.createServer(app);
-setupSocket(server, { /* socket options can go here */ });
+if (typeof setupSocket === 'function') {
+    try { setupSocket(server, { /* socket options can go here */ }); } catch (_) {}
+}
 server.listen(port, '0.0.0.0', () => {
     logger.info(`🚀 Server + Socket started on port ${port}`);
     logger.info(`📚 API Documentation available at http://[YOUR_IP]:${port}/api-docs`);
