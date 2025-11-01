@@ -10,17 +10,19 @@ const http = axios.create({
 // Attach Supabase token automatically on every request
 http.interceptors.request.use(
   async (config) => {
+    // If an Authorization header is already set (by useSupabaseAxiosSync), don't fetch session again
+    if (config?.headers?.Authorization) {
+      return config;
+    }
     try {
       const { data } = await supabase.auth.getSession();
       const token = data?.session?.access_token;
       if (token) {
         config.headers = config.headers || {};
         config.headers.Authorization = `Bearer ${token}`;
-      } else {
-        console.warn('[Axios] No token found for request:', config?.url);
       }
-    } catch (err) {
-      console.error('[Axios] Failed to read Supabase session:', err);
+    } catch (_) {
+      // Silent: callers will handle 401s; avoid noisy logs during token refresh races
     }
     return config;
   },
@@ -30,13 +32,7 @@ http.interceptors.request.use(
 // Global 401/403 handler (soft): don't redirect here; let route guards decide
 http.interceptors.response.use(
   (response) => response,
-  (error) => {
-    const status = error?.response?.status;
-    if (status === 401 || status === 403) {
-      console.warn('[Axios] Unauthorized response received for', error?.config?.url);
-    }
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
 
 export default http;

@@ -20,7 +20,7 @@
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MdSearch, MdHome, MdFavoriteBorder, MdShoppingCart, MdReceipt, MdPerson, MdFilterList, MdClose, MdMenuOpen, MdSettings, MdLogout, MdStore, MdAddShoppingCart, MdCheckCircle, MdMessage } from 'react-icons/md';
+import { MdSearch, MdHome, MdFavoriteBorder, MdShoppingCart, MdReceipt, MdPerson, MdFilterList, MdClose, MdMenuOpen, MdSettings, MdLogout, MdStore, MdAddShoppingCart, MdCheckCircle } from 'react-icons/md';
 import Slider from 'react-slick';
 // Removed react-toastify to avoid popups on the homepage
 import 'slick-carousel/slick/slick.css';
@@ -287,6 +287,8 @@ const HomePage = () => {
     setFilteredProducts(result);
   }, [searchQuery, filters, allProducts]);
 
+  const USE_BOOTSTRAP = (import.meta.env?.VITE_USE_BOOTSTRAP === 'true');
+
   const fetchData = async ({ showLoader = true } = {}) => {
     if (fetchingRef.current) return;
     fetchingRef.current = true;
@@ -297,9 +299,13 @@ const HomePage = () => {
     setError(null);
 
     try {
-      // Try aggregated bootstrap first (no conversation params; chat removed)
+      // Try aggregated bootstrap first (only if explicitly enabled and authenticated)
       try {
-        const boot = await fetchBootstrap({ productLimit: 24, orderLimit: 50, storeLimit: 50 });
+        const { data: sess } = await supabase.auth.getSession();
+        const hasToken = !!sess?.session?.access_token;
+        const boot = (USE_BOOTSTRAP && hasToken)
+          ? await fetchBootstrap({ productLimit: 24, orderLimit: 50, storeLimit: 50 })
+          : null;
         if (boot) {
           const s = Array.isArray(boot.stores) ? boot.stores : [];
           const p = Array.isArray(boot.products) ? boot.products : [];
@@ -948,52 +954,7 @@ const HomePage = () => {
             )}
           </div>
         </div>
-      {/* Floating Chat Button */}
-      <button
-        onClick={() => navigate('/customer/chat')}
-        aria-label="Messages"
-        style={{
-          position: 'fixed',
-          right: 20,
-          bottom: 75,
-          zIndex: 1100,
-          width: 50,
-          height: 50,
-          borderRadius: '50%',
-          border: 'none',
-          backgroundColor: '#FF7A00',
-          color: '#fff',
-          boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          cursor: 'pointer'
-        }}
-      >
-        <MdMessage size={24} />
-        {unreadCount > 0 && (
-          <span
-            style={{
-              position: 'absolute',
-              top: -2,
-              right: -2,
-              minWidth: 18,
-              height: 18,
-              padding: '0 4px',
-              borderRadius: 9,
-              backgroundColor: '#e53935',
-              color: '#fff',
-              fontSize: 11,
-              lineHeight: '18px',
-              textAlign: 'center',
-              fontWeight: 700,
-              boxShadow: '0 0 0 2px #fff'
-            }}
-          >
-            {unreadCount}
-          </span>
-        )}
-      </button>
+      {/* Floating chat removed */}
 
       </div>      {/* Bottom Navigation */}
       <div className="bottomNav" style={styles.bottomNav}>

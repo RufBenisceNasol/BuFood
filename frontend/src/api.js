@@ -752,7 +752,8 @@ export const customer = {
     // Profile management
     updateProfile: async (profileData) => {
         try {
-            const response = await api.put('/auth/me', profileData);
+            // Supabase-authenticated profile update
+            const response = await http.put('/auth/supabase/profile', profileData);
             return response.data;
         } catch (error) {
             throw error.response?.data || error.message;
@@ -763,7 +764,8 @@ export const customer = {
         const formData = new FormData();
         formData.append('image', file);
         try {
-            const response = await api.post('/auth/profile-image', formData, {
+            // Supabase-authenticated profile image upload
+            const response = await http.post('/auth/supabase/profile/image', formData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
             return response.data;

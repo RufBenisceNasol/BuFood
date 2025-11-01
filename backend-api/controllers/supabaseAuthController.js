@@ -413,18 +413,23 @@ const uploadProfileImage = async (req, res) => {
     if (!req.file || !req.file.path) {
       return res.status(400).json({ success: false, message: 'No image uploaded' });
     }
-    
-    req.user.profileImage = req.file.path;
-    await req.user.save();
-    
-    res.status(200).json({ 
-      success: true, 
-      message: 'Profile image uploaded', 
-      imageUrl: req.file.path 
-    });
+    const userId = req.user?._id;
+    if (!userId) {
+      return res.status(401).json({ success: false, message: 'Unauthorized' });
+    }
+    const imageUrl = req.file.path;
+    const updated = await User.findByIdAndUpdate(
+      userId,
+      { profileImage: imageUrl },
+      { new: true }
+    ).select('-password -refreshToken -verificationToken -passwordResetToken -passwordResetExpires');
+    if (!updated) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+    return res.status(200).json({ success: true, message: 'Profile image uploaded', imageUrl });
   } catch (error) {
     console.error('Error uploading profile image:', error);
-    res.status(500).json({ success: false, message: 'Failed to upload profile image' });
+    return res.status(500).json({ success: false, message: 'Failed to upload profile image' });
   }
 };
 
