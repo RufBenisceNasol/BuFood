@@ -88,7 +88,7 @@ router.get('/', getAllProducts);  // Fetch all products
  */
 router.get(
   '/seller/products',
-  authenticate,  // Ensure the user is authenticated
+  authenticateWithSupabase,  // Ensure the user is authenticated
   checkRole('Seller'),  // Ensure the user is a Seller
   getSellerProducts  // Controller to fetch seller's products
 );
@@ -192,7 +192,7 @@ router.post(
  *       200:
  *         description: Product image updated successfully
  */
-router.patch('/:id/image', authenticate, uploadProductImage.single('image'), updateProductImage);
+router.patch('/:id/image', authenticateWithSupabase, uploadProductImage.single('image'), updateProductImage);
 
 
 /**
@@ -244,7 +244,7 @@ router.patch('/:id/image', authenticate, uploadProductImage.single('image'), upd
  *         description: Product not found
  */
 router.patch('/:id',
-  authenticate,
+  authenticateWithSupabase,
   checkRole('Seller'),
   checkProductOwnership,
   updateProductValidation,
@@ -276,7 +276,7 @@ router.patch('/:id',
  */
 router.delete(
   '/:id',
-  authenticate,
+  authenticateWithSupabase,
   checkRole('Seller'),
   deleteProduct
 );
@@ -305,7 +305,7 @@ router.delete(
  */
 router.delete(
   '/store/:storeId/products',
-  authenticate,
+  authenticateWithSupabase,
   checkRole('Seller'),
   deleteAllProductsInStore
 );
@@ -326,7 +326,7 @@ router.delete(
  */
 router.get(
   '/seller/analytics',
-  authenticate,
+  authenticateWithSupabase,
   checkRole('Seller'),
   getSellerAnalytics
 );
