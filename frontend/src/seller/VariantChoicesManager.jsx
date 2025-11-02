@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { MdAdd, MdDelete, MdEdit, MdSave, MdClose, MdImage, MdExpandMore, MdExpandLess } from 'react-icons/md';
 import api, { API_BASE_URL } from '../api';
+import http from '../api/http';
 
 /**
  * DEEP LOGIC: Variant Choices Manager Component
@@ -151,7 +152,7 @@ const VariantChoicesManager = ({ variants = [], onChange }) => {
     try {
       const formData = new FormData();
       formData.append('image', file);
-      const { data } = await api.post('/upload/image', formData);
+      const { data } = await http.post('/upload/image', formData);
       if (data?.success && data.imageUrl) {
         updateChoice(variantId, choiceId, 'image', data.imageUrl);
       } else {

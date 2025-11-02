@@ -3,7 +3,6 @@ import { supabase } from '../supabaseClient';
 
 const http = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || 'https://capstonedelibup-o7sl.onrender.com/api',
-  headers: { 'Content-Type': 'application/json' },
   timeout: 30000,
 });
 
@@ -23,6 +22,18 @@ http.interceptors.request.use(
       }
     } catch (_) {
       // Silent: callers will handle 401s; avoid noisy logs during token refresh races
+    }
+    // If sending FormData, ensure we let the browser set the multipart boundary
+    if (config?.data instanceof FormData) {
+      config.headers = config.headers || {};
+      // Delete any preset Content-Type so axios/browser can inject the correct boundary
+      delete config.headers['Content-Type'];
+    } else {
+      // For non-FormData requests, default to JSON if not explicitly set
+      config.headers = config.headers || {};
+      if (!config.headers['Content-Type']) {
+        config.headers['Content-Type'] = 'application/json';
+      }
     }
     return config;
   },
