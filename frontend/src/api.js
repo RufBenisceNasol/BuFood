@@ -271,7 +271,7 @@ export const store = {
     // Get seller's own store
     getMyStore: async () => {
         try {
-            const response = await api.get('/store/my-store', {
+            const response = await http.get('/store/my-store', {
                 params: { _t: Date.now() }
             });
             return response.data;
@@ -283,7 +283,7 @@ export const store = {
     // Update store
     updateStore: async (storeId, formData) => {
         try {
-            const response = await api.put(`/store/${storeId}`, formData, {
+            const response = await http.put(`/store/${storeId}`, formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
                 },
@@ -297,7 +297,7 @@ export const store = {
     // Delete store
     deleteStore: async (storeId) => {
         try {
-            const response = await api.delete(`/store/${storeId}`);
+            const response = await http.delete(`/store/${storeId}`);
             return response.data;
         } catch (error) {
             throw error.response?.data || error.message;

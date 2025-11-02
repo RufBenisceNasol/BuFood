@@ -15,6 +15,17 @@ const storeSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Product',
     }],
+    // Basic store details
+    description: {
+        type: String,
+        trim: true,
+        default: ''
+    },
+    openTime: {
+        type: String,
+        trim: true,
+        default: ''
+    },
     image: {
         type: String,
         default: 'https://res.cloudinary.com/dflcnd7z3/image/upload/v1743873916/store-images/defaultStore.png'

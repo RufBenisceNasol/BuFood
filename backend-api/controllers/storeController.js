@@ -44,6 +44,12 @@ const updateStore = async (req, res) => {
   if (req.body.storeName) {
     updates.storeName = req.body.storeName;
   }
+  if (typeof req.body.description === 'string') {
+    updates.description = req.body.description;
+  }
+  if (typeof req.body.openTime === 'string') {
+    updates.openTime = req.body.openTime;
+  }
 
   // Optional manual GCash fields
   if (typeof req.body.gcashName === 'string') {
