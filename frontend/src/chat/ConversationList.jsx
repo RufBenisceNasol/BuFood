@@ -1,5 +1,5 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { chat } from '../api';
 
 const ConversationList = ({ title = 'Messages' }) => {
@@ -7,7 +7,12 @@ const ConversationList = ({ title = 'Messages' }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const pollRef = useRef(null);
+  const location = useLocation();
   const navigate = useNavigate();
+
+  const baseRoute = useMemo(() => (
+    location.pathname.startsWith('/seller') ? '/seller/messages' : '/customer/messages'
+  ), [location.pathname]);
 
   const loadConversations = async (silent = false) => {
     try {
@@ -56,7 +61,7 @@ const ConversationList = ({ title = 'Messages' }) => {
             {conversations.map((c) => (
               <button
                 key={c.id}
-                onClick={() => navigate(`/customer/messages/${c.id}`, { state: { title: c.otherParticipantName || 'Chat' } })}
+                onClick={() => navigate(`${baseRoute}/${c.id}`, { state: { title: c.otherParticipantName || 'Chat', avatar: c.otherParticipantAvatar || null } })}
                 style={{
                   width: '100%',
                   textAlign: 'left',
@@ -67,11 +72,20 @@ const ConversationList = ({ title = 'Messages' }) => {
                   cursor: 'pointer'
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <div>
-                    <div style={{ fontWeight: 700, fontSize: 15 }}>{c.otherParticipantName || 'Conversation'}</div>
-                    <div style={{ fontSize: 13, color: '#666', marginTop: 4 }}>
-                      {c.lastMessage?.text || 'No messages yet'}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    {c.otherParticipantAvatar ? (
+                      <img src={c.otherParticipantAvatar} alt={c.otherParticipantName || 'User'} style={{ width: 36, height: 36, borderRadius: '50%', objectFit: 'cover', border: '1px solid #eee' }} />
+                    ) : (
+                      <div style={{ width: 36, height: 36, borderRadius: '50%', background: '#e5e7eb', color: '#374151', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700 }}>
+                        {(c.otherParticipantName || 'U').charAt(0).toUpperCase()}
+                      </div>
+                    )}
+                    <div>
+                      <div style={{ fontWeight: 700, fontSize: 15 }}>{c.otherParticipantName || 'Conversation'}</div>
+                      <div style={{ fontSize: 13, color: '#666', marginTop: 4 }}>
+                        {c.lastMessage?.text || 'No messages yet'}
+                      </div>
                     </div>
                   </div>
                   <div style={{ textAlign: 'right' }}>

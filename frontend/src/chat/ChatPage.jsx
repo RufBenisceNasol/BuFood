@@ -13,8 +13,12 @@ const ChatPage = ({ conversationId: propConversationId, recipientId: propRecipie
   const [draft, setDraft] = useState('');
   const [loading, setLoading] = useState(false);
   const [sending, setSending] = useState(false);
+  const [meta, setMeta] = useState(null);
   const pollRef = useRef(null);
   const scrollRef = useRef(null);
+
+  const headerTitle = (location.state && location.state.title) || title;
+  const headerAvatar = (location.state && location.state.avatar) || null;
 
   const scrollToBottom = () => {
     const el = scrollRef.current;
@@ -26,8 +30,16 @@ const ChatPage = ({ conversationId: propConversationId, recipientId: propRecipie
     try {
       if (!silent) setLoading(true);
       const res = await chat.getMessages(conversationId);
-      const arr = res.data || res;
+      let arr = res.data || res;
+      let metaPayload = null;
+      if (arr && typeof arr === 'object' && Array.isArray(arr.data)) {
+        metaPayload = arr.meta || null;
+        arr = arr.data;
+      }
       setMessages(Array.isArray(arr) ? arr : (arr?.data || []));
+      if (metaPayload) {
+        setMeta(metaPayload);
+      }
       if (!silent) setTimeout(scrollToBottom, 0);
     } catch (_) {
       // ignore
@@ -76,8 +88,48 @@ const ChatPage = ({ conversationId: propConversationId, recipientId: propRecipie
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: '#fafafa' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 12px', background: '#ff7a00', color: '#fff', position: 'sticky', top: 0 }}>
         <button onClick={() => navigate(-1)} style={{ background: 'transparent', border: 'none', color: '#fff', fontWeight: 700, cursor: 'pointer' }}>&larr;</button>
-        <div style={{ fontWeight: 700 }}>{title}</div>
+        {(meta?.counterpart?.avatar || headerAvatar) ? (
+          <img src={meta?.counterpart?.avatar || headerAvatar} alt={meta?.counterpart?.name || headerTitle || 'User'} style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover', border: '1px solid rgba(255,255,255,0.6)' }} />
+        ) : (
+          <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700 }}>
+            {(meta?.counterpart?.name || headerTitle || 'U').charAt(0).toUpperCase()}
+          </div>
+        )}
+        <div style={{ display: 'flex', flexDirection: 'column' }}>
+          <div style={{ fontWeight: 700 }}>{meta?.counterpart?.name || headerTitle}</div>
+          {(meta?.customer || meta?.seller) && (
+            <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.85)' }}>
+              {meta?.customer?.name && meta?.seller?.name
+                ? `${meta.customer.name} • ${meta.seller.name}`
+                : meta?.customer?.name || meta?.seller?.name}
+            </div>
+          )}
+        </div>
       </div>
+
+      {meta?.orderSummary?.items?.length > 0 && (
+        <div style={{ padding: '8px 12px', borderBottom: '1px solid #eee', background: '#fff' }}>
+          <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 6 }}>Ordered Items</div>
+          <div style={{ display: 'flex', overflowX: 'auto', gap: 10 }}>
+            {meta.orderSummary.items.map((item) => (
+              <div key={`${item.productId}-${item.optionName}`} style={{ minWidth: 96, border: '1px solid #eee', borderRadius: 10, padding: 8, background: '#fafafa' }}>
+                <div style={{ width: 80, height: 80, borderRadius: 8, overflow: 'hidden', background: '#e5e7eb', marginBottom: 6 }}>
+                  {item.image ? (
+                    <img src={item.image} alt={item.productName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  ) : (
+                    <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6b7280', fontSize: 12 }}>No Image</div>
+                  )}
+                </div>
+                <div style={{ fontWeight: 600, fontSize: 12 }}>{item.productName}</div>
+                {(item.variantName || item.optionName) && (
+                  <div style={{ fontSize: 11, color: '#6b7280' }}>{[item.variantName, item.optionName].filter(Boolean).join(' • ')}</div>
+                )}
+                <div style={{ fontSize: 11, marginTop: 4 }}>Qty: {item.quantity}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div ref={scrollRef} style={{ flex: 1, overflowY: 'auto', padding: 12 }}>
         {loading && <div style={{ color: '#777', padding: '8px 0' }}>Loading messages...</div>}

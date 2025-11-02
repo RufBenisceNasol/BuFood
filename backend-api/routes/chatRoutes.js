@@ -5,6 +5,7 @@ const { authenticateWithSupabase } = require('../middlewares/supabaseAuthMiddlew
 const Conversation = require('../models/Conversation');
 const Message = require('../models/Message');
 const User = require('../models/User');
+const Order = require('../models/orderModel');
 
 // Helper: build stable participants key for 1:1 chats
 function buildParticipantsKey(a, b) {
@@ -29,7 +30,7 @@ router.get('/conversations', authenticateWithSupabase, async (req, res) => {
       const other = (c.participants || []).find(p => String(p) !== String(userId));
       if (other) counterpartIds.add(String(other));
     });
-    const users = await User.find({ _id: { $in: Array.from(counterpartIds) } }).select('_id name role').lean();
+    const users = await User.find({ _id: { $in: Array.from(counterpartIds) } }).select('_id name role avatar').lean();
     const userMap = new Map(users.map(u => [String(u._id), u]));
 
     const data = conversations.map((c) => {
@@ -45,9 +46,17 @@ router.get('/conversations', authenticateWithSupabase, async (req, res) => {
         createdAt: c.createdAt,
         otherParticipantId: otherId || null,
         otherParticipantName: otherUser?.name || 'User',
+        otherParticipantAvatar: otherUser?.avatar || null,
         participantsInfo: (c.participants || []).map(pid => {
-          const u = userMap.get(String(pid));
-          return { id: pid, name: u?.name || undefined, role: u?.role || undefined };
+          const pidStr = String(pid);
+          const u = userMap.get(pidStr);
+          const isSelf = pidStr === String(userId);
+          return {
+            id: pid,
+            name: u?.name || (isSelf ? (req.user?.name || 'You') : undefined),
+            role: u?.role || (isSelf ? req.user?.role : undefined),
+            avatar: u?.avatar || (isSelf ? req.user?.avatar : undefined)
+          };
         })
       };
     });
@@ -103,7 +112,109 @@ router.get('/messages/:conversationId', authenticateWithSupabase, async (req, re
       await convo.save();
     }
 
-    res.json({ success: true, data: messages.reverse() }); // return ascending for UI
+    const participantIds = (convo.participants || []).map((p) => String(p));
+    const participants = await User.find({ _id: { $in: participantIds } }).select('_id name role avatar').lean();
+    const participantMap = new Map(participants.map((u) => [String(u._id), u]));
+    const currentUserId = String(userId);
+    if (!participantMap.has(currentUserId) && req.user) {
+      participantMap.set(currentUserId, {
+        _id: req.user._id,
+        name: req.user.name,
+        role: req.user.role,
+        avatar: req.user.avatar,
+      });
+    }
+
+    let orderSummary = null;
+    let customerInfo = null;
+    let sellerInfo = null;
+
+    if (convo.orderId) {
+      const order = await Order.findById(convo.orderId)
+        .populate('customer', 'name role avatar')
+        .populate('seller', 'name role avatar')
+        .populate('items.product', 'name image images')
+        .lean();
+      if (order) {
+        const summaryItems = (order.items || []).map((item) => {
+          const productDoc = item.product || {};
+          const baseImage = item.selectedVariant?.image
+            || productDoc?.image
+            || (Array.isArray(productDoc?.images) ? productDoc.images[0] : null);
+          return {
+            productId: String(productDoc?._id || item.product || ''),
+            productName: productDoc?.name || item.selectedVariant?.optionName || 'Product',
+            variantName: item.selectedVariant?.variantName || null,
+            optionName: item.selectedVariant?.optionName || null,
+            image: baseImage || null,
+            quantity: item.quantity,
+            price: item.price,
+            subtotal: item.subtotal,
+          };
+        });
+
+        orderSummary = {
+          orderId: String(order._id),
+          total: order.totalAmount,
+          orderType: order.orderType,
+          createdAt: order.createdAt,
+          items: summaryItems,
+        };
+
+        const customerId = String(order.customer?._id || order.customer || '');
+        const sellerId = String(order.seller?._id || order.seller || '');
+        customerInfo = customerId
+          ? {
+              id: customerId,
+              name: order.customer?.name,
+              role: order.customer?.role,
+              avatar: order.customer?.avatar,
+            }
+          : null;
+        sellerInfo = sellerId
+          ? {
+              id: sellerId,
+              name: order.seller?.name,
+              role: order.seller?.role,
+              avatar: order.seller?.avatar,
+            }
+          : null;
+      }
+    }
+
+    const participantsInfo = participantIds.map((pid) => {
+      const data = participantMap.get(pid);
+      const isSelf = pid === currentUserId;
+      return {
+        id: pid,
+        name: data?.name || (isSelf ? (req.user?.name || 'You') : 'User'),
+        role: data?.role || (isSelf ? req.user?.role : undefined),
+        avatar: data?.avatar || (isSelf ? req.user?.avatar : undefined),
+      };
+    });
+
+    if (!customerInfo) {
+      customerInfo = participantsInfo.find((p) => (p.role || '').toLowerCase() === 'customer') || null;
+    }
+    if (!sellerInfo) {
+      sellerInfo = participantsInfo.find((p) => (p.role || '').toLowerCase() === 'seller') || null;
+    }
+
+    const counterpartInfo = participantsInfo.find((p) => p.id !== currentUserId) || null;
+
+    res.json({
+      success: true,
+      data: messages.reverse(),
+      meta: {
+        conversationId: String(convo._id),
+        orderId: convo.orderId || null,
+        participants: participantsInfo,
+        counterpart: counterpartInfo,
+        customer: customerInfo,
+        seller: sellerInfo,
+        orderSummary,
+      },
+    });
   } catch (err) {
     res.status(500).json({ success: false, message: 'Server error' });
   }
