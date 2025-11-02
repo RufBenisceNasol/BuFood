@@ -41,9 +41,9 @@ const ConversationList = ({ title = 'Messages' }) => {
   }, []);
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', background: '#0c0f1a', color: '#e5e7eb' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 14px', background: '#111827', color: '#e5e7eb', position: 'sticky', top: 0, zIndex: 3, boxShadow: '0 2px 6px rgba(0,0,0,0.35)' }}>
-        <button onClick={() => navigate(-1)} style={{ background: 'transparent', border: 'none', color: '#9ca3af', fontWeight: 700, cursor: 'pointer', fontSize: 20 }}>&larr;</button>
+    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', background: '#f5f5f5', color: '#e5e7eb' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '1px 1px', background: '#ff8c00', color: '#e5e7eb', position: 'sticky', top: 0, zIndex: 3, boxShadow: '0 2px 6px rgba(0,0,0,0.35)' }}>
+        <button onClick={() => navigate(-1)} style={{ background: 'transparent', border: 'none', color: '#00060fff', fontWeight: 700, cursor: 'pointer', fontSize: 20 }}>&larr;</button>
         <div style={{ fontWeight: 700, fontSize: 16 }}>{title}</div>
       </div>
       <div style={{ flex: 1 }}>

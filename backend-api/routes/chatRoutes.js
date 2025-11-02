@@ -381,6 +381,13 @@ router.post('/messages', authenticateWithSupabase, async (req, res) => {
     }
 
     const message = await Message.create(messagePayload);
+    const messageData = message.toObject();
+    if (Array.isArray(messageData.attachments)) {
+      messageData.attachments = messageData.attachments.map((att) => ({
+        url: att.url,
+        type: att.type || 'image',
+      }));
+    }
 
     convo.lastMessage = {
       id: message._id,
@@ -408,7 +415,8 @@ router.post('/messages', authenticateWithSupabase, async (req, res) => {
 
     await convo.save();
 
-    res.status(201).json({ success: true, data: { message, conversation: convo } });
+    const convoData = convo.toObject();
+    res.status(201).json({ success: true, data: { message: messageData, conversation: convoData } });
   } catch (err) {
     res.status(500).json({ success: false, message: 'Server error' });
   }
