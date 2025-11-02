@@ -200,6 +200,7 @@ router.get('/messages/:conversationId', authenticateWithSupabase, async (req, re
       sellerInfo = participantsInfo.find((p) => (p.role || '').toLowerCase() === 'seller') || null;
     }
 
+    const selfInfo = participantsInfo.find((p) => p.id === currentUserId) || null;
     const counterpartInfo = participantsInfo.find((p) => p.id !== currentUserId) || null;
 
     res.json({
@@ -209,6 +210,7 @@ router.get('/messages/:conversationId', authenticateWithSupabase, async (req, re
         conversationId: String(convo._id),
         orderId: convo.orderId || null,
         participants: participantsInfo,
+        self: selfInfo,
         counterpart: counterpartInfo,
         customer: customerInfo,
         seller: sellerInfo,

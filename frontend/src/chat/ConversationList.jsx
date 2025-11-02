@@ -41,22 +41,22 @@ const ConversationList = ({ title = 'Messages' }) => {
   }, []);
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', background: '#fafafa' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 12px', background: '#ff7a00', color: '#fff', position: 'sticky', top: 0 }}>
-        <button onClick={() => navigate(-1)} style={{ background: 'transparent', border: 'none', color: '#fff', fontWeight: 700, cursor: 'pointer' }}>&larr;</button>
-        <div style={{ fontWeight: 700 }}>{title}</div>
+    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', background: '#0c0f1a', color: '#e5e7eb' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 14px', background: '#111827', color: '#e5e7eb', position: 'sticky', top: 0, zIndex: 3, boxShadow: '0 2px 6px rgba(0,0,0,0.35)' }}>
+        <button onClick={() => navigate(-1)} style={{ background: 'transparent', border: 'none', color: '#9ca3af', fontWeight: 700, cursor: 'pointer', fontSize: 20 }}>&larr;</button>
+        <div style={{ fontWeight: 700, fontSize: 16 }}>{title}</div>
       </div>
       <div style={{ flex: 1 }}>
         {loading && (
-          <div style={{ padding: 16, color: '#777' }}>Loading conversations...</div>
+          <div style={{ padding: 16, color: '#94a3b8' }}>Loading conversations...</div>
         )}
         {error && !loading && (
-          <div style={{ padding: 16, color: '#d32f2f' }}>{error}</div>
+          <div style={{ padding: 16, color: '#f87171' }}>{error}</div>
         )}
         {!loading && !error && (
           <div>
             {conversations.length === 0 && (
-              <div style={{ padding: 16, color: '#777' }}>No conversations yet.</div>
+              <div style={{ padding: 16, color: '#64748b' }}>No conversations yet.</div>
             )}
             {conversations.map((c) => (
               <button
@@ -65,25 +65,25 @@ const ConversationList = ({ title = 'Messages' }) => {
                 style={{
                   width: '100%',
                   textAlign: 'left',
-                  background: '#fff',
+                  background: 'transparent',
                   border: 'none',
-                  borderBottom: '1px solid #eee',
-                  padding: '12px 14px',
+                  borderBottom: '1px solid rgba(148,163,184,0.12)',
+                  padding: '14px 16px',
                   cursor: 'pointer'
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                     {c.otherParticipantAvatar ? (
-                      <img src={c.otherParticipantAvatar} alt={c.otherParticipantName || 'User'} style={{ width: 36, height: 36, borderRadius: '50%', objectFit: 'cover', border: '1px solid #eee' }} />
+                      <img src={c.otherParticipantAvatar} alt={c.otherParticipantName || 'User'} style={{ width: 40, height: 40, borderRadius: '50%', objectFit: 'cover', border: '2px solid rgba(59,130,246,0.4)' }} />
                     ) : (
-                      <div style={{ width: 36, height: 36, borderRadius: '50%', background: '#e5e7eb', color: '#374151', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700 }}>
+                      <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'rgba(148,163,184,0.2)', color: '#e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700 }}>
                         {(c.otherParticipantName || 'U').charAt(0).toUpperCase()}
                       </div>
                     )}
                     <div>
-                      <div style={{ fontWeight: 700, fontSize: 15 }}>{c.otherParticipantName || 'Conversation'}</div>
-                      <div style={{ fontSize: 13, color: '#666', marginTop: 4 }}>
+                      <div style={{ fontWeight: 700, fontSize: 15, color: '#e2e8f0' }}>{c.otherParticipantName || 'Conversation'}</div>
+                      <div style={{ fontSize: 13, color: '#94a3b8', marginTop: 4 }}>
                         {c.lastMessage?.text || 'No messages yet'}
                       </div>
                     </div>
@@ -91,19 +91,18 @@ const ConversationList = ({ title = 'Messages' }) => {
                   <div style={{ textAlign: 'right' }}>
                     {c.unread > 0 && (
                       <span style={{
-                        background: '#ff3b30',
-                        color: '#fff',
-                        borderRadius: 10,
+                        background: '#2563eb',
+                        color: '#e0f2fe',
+                        borderRadius: 12,
                         padding: '2px 8px',
                         fontSize: 12,
-                        fontWeight: 700
+                        fontWeight: 700,
+                        boxShadow: '0 4px 10px rgba(59,130,246,0.35)'
                       }}>
                         {c.unread}
                       </span>
                     )}
-                    <div style={{ fontSize: 12, color: '#999', marginTop: 6 }}>
-                      {c.updatedAt ? new Date(c.updatedAt).toLocaleString() : ''}
-                    </div>
+                    <div style={{ fontSize: 12, color: '#64748b', marginTop: 6 }}></div>
                   </div>
                 </div>
               </button>
