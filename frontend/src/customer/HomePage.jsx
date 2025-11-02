@@ -20,7 +20,7 @@
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MdSearch, MdHome, MdFavoriteBorder, MdShoppingCart, MdReceipt, MdPerson, MdFilterList, MdClose, MdMenuOpen, MdSettings, MdLogout, MdStore, MdAddShoppingCart, MdCheckCircle } from 'react-icons/md';
+import { MdSearch, MdHome, MdFavoriteBorder, MdShoppingCart, MdReceipt, MdPerson, MdFilterList, MdClose, MdMenuOpen, MdSettings, MdLogout, MdStore, MdCheckCircle } from 'react-icons/md';
 import Slider from 'react-slick';
 // Removed react-toastify to avoid popups on the homepage
 import 'slick-carousel/slick/slick.css';
@@ -825,38 +825,11 @@ const HomePage = () => {
                       {Number.isFinite(product.soldCount) && (
                         <div style={{ fontSize: '12px', color: '#777', marginTop: 2 }}>Sold: {product.soldCount}</div>
                       )}
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 2 }}>
-                        <span style={{ fontSize: 12, color: product.availability === 'Out of Stock' ? '#9e9e9e' : '#2e7d32', background: '#f2f2f2', borderRadius: 10, padding: '2px 8px' }}>
+                      <div className="productPriceRow" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                        <p className="productPrice" style={{ margin: 0 }}>₱{product.price || '49'}</p>
+                        <span style={{ fontSize: 12, color: product.availability === 'Out of Stock' ? '#9e9e9e' : '#2e7d32', background: '#f2f2f2', borderRadius: 10, padding: '2px 8px', whiteSpace: 'nowrap' }}>
                           {product.availability === 'Out of Stock' ? 'Out of Stock' : 'Available'}
                         </span>
-                      </div>
-                      <div className="productPriceRow">
-                        <p className="productPrice">₱{product.price || '49'}</p>
-                        <button 
-                          className="addButton"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleAddToCart(product);
-                          }}
-                          disabled={product.availability === 'Out of Stock'}
-                          style={{
-                            backgroundColor: product.availability === 'Out of Stock' ? '#ccc' : undefined,
-                            cursor: product.availability === 'Out of Stock' ? 'not-allowed' : 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            width: '35px',
-                            height: '35px',
-                            borderRadius: '50%',
-                            padding: '0'
-                          }}
-                        >
-                          {product.availability === 'Out of Stock' ? (
-                            <MdClose size={18} />
-                          ) : (
-                            <MdAddShoppingCart size={18} />
-                          )}
-                        </button>
                       </div>
                     </div>
                   </div>
@@ -910,38 +883,11 @@ const HomePage = () => {
                       {Number.isFinite(product.soldCount) && (
                         <div style={{ fontSize: '12px', color: '#777', marginTop: 2 }}>Sold: {product.soldCount}</div>
                       )}
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 2 }}>
-                        <span style={{ fontSize: 12, color: product.availability === 'Out of Stock' ? '#9e9e9e' : '#2e7d32', background: '#f2f2f2', borderRadius: 10, padding: '2px 8px' }}>
+                      <div className="productPriceRow" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                        <p className="productPrice" style={{ margin: 0 }}>₱{product.price || '0'}</p>
+                        <span style={{ fontSize: 12, color: product.availability === 'Out of Stock' ? '#9e9e9e' : '#2e7d32', background: '#f2f2f2', borderRadius: 10, padding: '2px 8px', whiteSpace: 'nowrap' }}>
                           {product.availability === 'Out of Stock' ? 'Out of Stock' : 'Available'}
                         </span>
-                      </div>
-                      <div className="productPriceRow">
-                        <p className="productPrice">₱{product.price || '0'}</p>
-                        <button 
-                          className="addButton"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleAddToCart(product);
-                          }}
-                          disabled={product.availability === 'Out of Stock'}
-                          style={{
-                            backgroundColor: product.availability === 'Out of Stock' ? '#ccc' : undefined,
-                            cursor: product.availability === 'Out of Stock' ? 'not-allowed' : 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            width: '35px',
-                            height: '35px',
-                            borderRadius: '50%',
-                            padding: '0'
-                          }}
-                        >
-                          {product.availability === 'Out of Stock' ? (
-                            <MdClose size={18} />
-                          ) : (
-                            <MdAddShoppingCart size={18} />
-                          )}
-                        </button>
                       </div>
                     </div>
                   </div>

@@ -24,6 +24,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { product as productApi, cart, store as storeApi } from '../api';
+import http from '../api/http';
 import styled, { keyframes } from 'styled-components';
 import {
   CircularProgress,
@@ -143,6 +144,36 @@ const FavoritesPage = () => {
     loadFavoriteStores();
   };
 
+  const loadFavoriteStores = async ({ showLoader = true } = {}) => {
+    try {
+      // Read favorite store IDs from localStorage
+      const favIds = getAllStoreFavorites();
+      if (!Array.isArray(favIds) || favIds.length === 0) {
+        setFavoriteStores([]);
+        return;
+      }
+      // Resolve against cached stores list for names/images
+      let cachedStores = [];
+      try { cachedStores = JSON.parse(localStorage.getItem(STORES_CACHE_KEY) || '[]'); } catch (_) {}
+      const byId = new Map((cachedStores || []).map(s => [s._id || s.id, s]));
+      const mapped = favIds
+        .map(id => {
+          const s = byId.get(id) || {};
+          return {
+            id,
+            name: s.name || 'Store',
+            image: s.image || 'https://via.placeholder.com/300x200/f0f0f0/cccccc?text=Store',
+            description: s.description || '',
+          };
+        });
+      setFavoriteStores(mapped);
+      try { localStorage.setItem(FAVORITE_STORES_CACHE_KEY, JSON.stringify(mapped)); } catch (_) {}
+    } catch (err) {
+      // Fallback to empty if anything goes wrong
+      setFavoriteStores([]);
+    }
+  };
+
   useEffect(() => {
     // Cache-first render for favorites lists; then fetch fresh in background
     let hadCache = false;
@@ -236,121 +267,35 @@ const FavoritesPage = () => {
     );
   }, [searchQuery, favorites, favoriteStores]);
 
-  const loadFavorites = ({ showLoader = true } = {}) => {
-    // Read favorite product IDs and resolve them against cached/all products
+  const loadFavorites = async ({ showLoader = true } = {}) => {
+    // Fetch server-side favorites so variant selections are reflected
     try {
       if (showLoader) setLoading(true);
-      const favoriteIds = getAllFavorites();
-      if (favoriteIds.length > 0) {
-        fetchFavoriteProducts(favoriteIds, { showLoader });
-      } else {
-        setFavorites([]);
-        if (showLoader) setLoading(false);
-      }
+      const { data } = await http.get('/favorites');
+      const items = Array.isArray(data?.data?.items) ? data.data.items : [];
+      const mapped = items.map((it) => {
+        const p = it.product || {};
+        const sv = it.selectedVariant || null;
+        const name = sv && (sv.variantName || sv.optionName)
+          ? `${p.name || 'Product'}${sv.variantName ? ` - ${sv.variantName}` : ''}${sv.optionName ? `: ${sv.optionName}` : ''}`
+          : (p.name || 'Product');
+        const image = (sv && sv.image) || p.image || 'https://placehold.co/600x400/orange/white?text=Product';
+        const price = (typeof sv?.price === 'number') ? sv.price : (p.price || p.basePrice || 0);
+        return {
+          _id: p._id,
+          name,
+          image,
+          price,
+        };
+      });
+      setFavorites(mapped);
+      try { localStorage.setItem(FAVORITES_CACHE_KEY, JSON.stringify(mapped)); } catch (_) {}
     } catch (err) {
       console.error('Error loading favorites:', err);
       setError('Failed to load favorites');
-      if (showLoader) setLoading(false);
-    }
-  };
-
-  const fetchFavoriteProducts = async (favoriteIds, { showLoader = true } = {}) => {
-    // Prioritize cached product list from Home to minimize API calls
-    try {
-      // Prefer cached products from Home if available to avoid extra API calls
-      let allProducts = null;
-      try {
-        const cached = JSON.parse(localStorage.getItem(PRODUCTS_CACHE_KEY) || 'null');
-        if (Array.isArray(cached)) allProducts = cached;
-      } catch (_) {}
-      if (!Array.isArray(allProducts)) {
-        allProducts = await productApi.getAllProducts();
-      }
-      if (allProducts && allProducts.length > 0) {
-        const favoriteProducts = allProducts.filter(product => 
-          favoriteIds.includes(product._id)
-        );
-        setFavorites(favoriteProducts);
-        try { localStorage.setItem(FAVORITES_CACHE_KEY, JSON.stringify(favoriteProducts)); } catch (_) {}
-      } else {
-        setFavorites([]);
-      }
-    } catch (err) {
-      console.error('Error fetching favorite products:', err);
-      setError('Failed to load favorite products');
+      setFavorites([]);
     } finally {
       if (showLoader) setLoading(false);
-    }
-  };
-
-  const loadFavoriteStores = async ({ showLoader = true } = {}) => {
-    // Resolve favorite store IDs to minimal store cards; reuse cached stores if possible
-    try {
-      const storeIds = getAllStoreFavorites();
-      if (!storeIds || storeIds.length === 0) {
-        setFavoriteStores([]);
-        return;
-      }
-      // Try to reuse cached stores from Home to avoid per-ID calls
-      let cachedStores = null;
-      try {
-        const raw = JSON.parse(localStorage.getItem(STORES_CACHE_KEY) || 'null');
-        if (Array.isArray(raw)) cachedStores = raw;
-      } catch (_) {}
-
-      let results = [];
-      if (Array.isArray(cachedStores) && cachedStores.length > 0) {
-        const setIds = new Set(storeIds);
-        results = cachedStores
-          .filter(s => setIds.has(s._id))
-          .map(s => ({
-            id: s._id,
-            name: s.storeName || s.name || 'Store',
-            image: s.image || s.logo || s.bannerImage || 'https://via.placeholder.com/300x200/f0f0f0/cccccc?text=Store',
-            description: s.description || ''
-          }));
-        // For any remaining IDs not in cache, fetch individually
-        const missing = storeIds.filter(id => !results.find(r => r.id === id));
-        if (missing.length > 0) {
-          const fetched = await Promise.all(missing.map(async (sid) => {
-            try {
-              const data = await storeApi.getStoreById(sid);
-              return {
-                id: data._id || sid,
-                name: data.storeName || data.name || 'Store',
-                image: data.image || data.logo || 'https://via.placeholder.com/300x200/f0f0f0/cccccc?text=Store',
-                description: data.description || ''
-              };
-            } catch (e) {
-              return { id: sid, name: 'Store', image: 'https://via.placeholder.com/300x200/f0f0f0/cccccc?text=Store', description: '' };
-            }
-          }));
-          results = [...results, ...fetched];
-        }
-      } else {
-        // Fallback: Fetch details for each store ID
-        results = await Promise.all(
-          storeIds.map(async (sid) => {
-            try {
-              const data = await storeApi.getStoreById(sid);
-              return {
-                id: data._id || sid,
-                name: data.storeName || data.name || 'Store',
-                image: data.image || data.logo || 'https://via.placeholder.com/300x200/f0f0f0/cccccc?text=Store',
-                description: data.description || ''
-              };
-            } catch (e) {
-              // If a store fetch fails, still return an entry so UI remains consistent
-              return { id: sid, name: 'Store', image: 'https://via.placeholder.com/300x200/f0f0f0/cccccc?text=Store', description: '' };
-            }
-          })
-        );
-      }
-      setFavoriteStores(results);
-      try { localStorage.setItem(FAVORITE_STORES_CACHE_KEY, JSON.stringify(results)); } catch (_) {}
-    } catch (err) {
-      console.error('Error loading favorite stores:', err);
-      setFavoriteStores([]);
     }
   };
 
@@ -381,12 +326,17 @@ const FavoritesPage = () => {
     }
   };
 
-  const handleRemoveFavorite = (productId) => {
-    // Toggle off product favorite and update local list
-    toggleFavorite(productId);
-    setFavorites(prev => prev.filter(product => product._id !== productId));
-    setSuccessModal({ open: true, message: 'Product removed from favorites' });
-    setTimeout(() => setSuccessModal({ open: false, message: '' }), 1200);
+  const handleRemoveFavorite = async (productId) => {
+    // Remove from server favorites (product-wide) and refresh the list
+    try {
+      await http.delete(`/favorites/product/${productId}`);
+      setFavorites(prev => prev.filter(product => product._id !== productId));
+      try { localStorage.setItem(FAVORITES_CACHE_KEY, JSON.stringify(favorites.filter(p => p._id !== productId))); } catch (_) {}
+      setSuccessModal({ open: true, message: 'Product removed from favorites' });
+      setTimeout(() => setSuccessModal({ open: false, message: '' }), 1200);
+    } catch (e) {
+      console.error('Failed to remove favorite:', e);
+    }
   };
 
   const handleRemoveStoreFavorite = async (storeId) => {
@@ -522,7 +472,7 @@ const FavoritesPage = () => {
               )}
               {filteredProducts.length === 0 ? (
                 <EmptyState>
-                  <InfoIcon />
+                  <Info />
                   <EmptyText>
                     You don't have any favorite products yet.
                   </EmptyText>
@@ -575,7 +525,7 @@ const FavoritesPage = () => {
               )}
               {filteredStores.length === 0 ? (
                 <EmptyState>
-                  <InfoIcon />
+                  <Info />
                   <EmptyText>
                     You don't have any favorite stores yet.
                   </EmptyText>

@@ -109,11 +109,19 @@ const SingleProductPageWithVariants = () => {
         });
         setIsFavorite(false);
       } else {
-        await http.post('/favorites', {
+        const payload = {
           productId: product._id,
-          variantId: selectedVariant?.id,
-          variantName: selectedVariant?.name,
-        });
+          // Provide multiple identifiers; backend will use variantId if present, otherwise selectedVariant
+          variantId: selectedVariant?.id || null,
+          variantName: selectedVariant?.name || null,
+          selectedVariant: selectedVariant ? {
+            variantName: selectedVariant.name || '',
+            optionName: '',
+            price: typeof selectedVariant.price === 'number' ? selectedVariant.price : undefined,
+            image: selectedVariant.image || product.image || ''
+          } : undefined,
+        };
+        await http.post('/favorites', payload);
         setIsFavorite(true);
       }
     } catch (err) {

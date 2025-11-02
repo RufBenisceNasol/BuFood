@@ -707,6 +707,17 @@ const SingleProductPage = () => {
 
     // Compute effective stock from selected choices
     const getEffectiveStock = () => {
+        // New variantChoices path
+        const hasVariantChoices = Array.isArray(productData?.variantChoices) && productData.variantChoices.length > 0;
+        if (hasVariantChoices) {
+            if (!selectedVariantChoice) return 0;
+            const group = productData.variantChoices.find(v => v.variantName === selectedVariantChoice.variantName);
+            const opt = group?.options?.find(o => o.optionName === selectedVariantChoice.optionName);
+            const st = Number(opt?.stock);
+            return Number.isFinite(st) ? st : 0;
+        }
+
+        // Legacy variants array path
         const hasVariants = Array.isArray(productData?.variants) && productData.variants.length > 0;
         if (!hasVariants) {
             return typeof productData?.stock === 'number' ? productData.stock : Infinity;
@@ -742,7 +753,6 @@ const SingleProductPage = () => {
                 return;
             }
 
-            const token = getAuthToken();
             const hasChoice = hasVariantChoices && selectedVariantChoice;
             const selectedVarSnapshot = hasChoice ? {
                 variantName: selectedVariantChoice.variantName,
@@ -763,19 +773,9 @@ const SingleProductPage = () => {
                 } : undefined,
             };
 
-            if (!token) {
-                setLoginPrompt(true);
-                return;
-            } else {
-                const res = await apiRequest('/favorites', {
-                    method: 'POST',
-                    body: JSON.stringify(body),
-                });
-                const data = await res.json();
-                if (res.status === 401 || data?.code === 'TOKEN_EXPIRED') { setLoginPrompt(true); return; }
-                if (!res.ok || data?.error) throw new Error(data?.message || 'Failed to add to favorites');
-                toast.success('Added to favorites');
-            }
+            const { data } = await http.post('/favorites', body);
+            if (!data?.success) throw new Error(data?.message || 'Failed to add to favorites');
+            toast.success('Added to favorites');
         } catch (err) {
             toast.error(err.message || 'Failed to add to favorites');
         }
@@ -811,7 +811,6 @@ const SingleProductPage = () => {
                     quantity: Number(modalQuantity) || 1,
                 });
             } else if (modalAction === 'fav') {
-                const token = getAuthToken();
                 const body = {
                     productId,
                     selectedVariant: {
@@ -821,15 +820,14 @@ const SingleProductPage = () => {
                         image: choice.image || productData?.image || ''
                     },
                 };
-                if (!token) {
-                    setLoginPrompt(true);
-                    return;
-                } else {
-                    const res = await apiRequest('/favorites', { method: 'POST', body: JSON.stringify(body) });
-                    const data = await res.json();
-                    if (res.status === 401 || data?.code === 'TOKEN_EXPIRED') { setLoginPrompt(true); return; }
-                    if (!res.ok || data?.error) throw new Error(data?.message || 'Failed to add to favorites');
+                try {
+                    const { data } = await http.post('/favorites', body);
+                    if (!data?.success) throw new Error(data?.message || 'Failed to add to favorites');
                     toast.success('Added to favorites');
+                } catch (err) {
+                    const status = err?.response?.status || err?.status;
+                    if (status === 401) { setLoginPrompt(true); return; }
+                    throw err;
                 }
             }
             setIsVariantModalOpen(false);
@@ -868,6 +866,7 @@ const SingleProductPage = () => {
             if (hasVariantChoices && selectedVariantChoice) {
                 body = {
                     productId,
+                    quantity: Number(quantity) || 1,
                     variant: {
                         variantName: selectedVariantChoice.variantName,
                         optionName: selectedVariantChoice.optionName,
@@ -878,11 +877,13 @@ const SingleProductPage = () => {
                 const sel = variantSelections[0];
                 body = {
                     productId,
-                    variant: sel.variant,
-                    option: sel.choice,
-                    variantId: sel.choiceId,
-                    price: calculatedPrice || sel.price || productData.price,
-                    image: sel.image || productData.image,
+                    quantity: Number(quantity) || 1,
+                    variant: {
+                        variantName: sel.variant,
+                        optionName: sel.choice,
+                        price: calculatedPrice || sel.price || productData.price,
+                        image: sel.image || productData.image,
+                    },
                 };
             } else {
                 body = {
