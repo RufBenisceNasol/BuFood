@@ -91,7 +91,9 @@ router.get('/conversations', authenticateWithSupabase, async (req, res) => {
 
     res.json({ success: true, data });
   } catch (err) {
-    res.status(500).json({ success: false, message: 'Server error' });
+    console.error('[Chat] send message error:', err);
+    const errorMessage = err?.message || 'Server error';
+    res.status(500).json({ success: false, message: errorMessage });
   }
 });
 
@@ -280,7 +282,8 @@ router.get('/messages/:conversationId', authenticateWithSupabase, async (req, re
       },
     });
   } catch (err) {
-    res.status(500).json({ success: false, message: 'Server error' });
+    console.error('[Chat] get messages error:', err);
+    res.status(500).json({ success: false, message: err?.message || 'Server error' });
   }
 });
 
@@ -352,16 +355,28 @@ router.post('/messages', authenticateWithSupabase, async (req, res) => {
         return res.status(400).json({ success: false, message: 'Invalid recipient id' });
       }
       const key = buildParticipantsKey(senderId, recipientId);
-      convo = await Conversation.findOne({ participantsKey: key, orderId: orderId || null });
+      const convoFilter = { participantsKey: key };
+      if (orderId) {
+        convoFilter.orderId = orderId;
+      }
+      convo = await Conversation.findOne(convoFilter);
       if (!convo) {
-        convo = await Conversation.create({
-          participants: [senderId, recipientId],
-          participantsKey: key,
-          orderId: orderId || null,
-          lastMessage: null,
-          unreadCounts: {},
-          createdBy: 'system'
-        });
+        try {
+          convo = await Conversation.create({
+            participants: [senderId, recipientId],
+            participantsKey: key,
+            orderId: orderId || null,
+            lastMessage: null,
+            unreadCounts: {},
+            createdBy: 'system'
+          });
+        } catch (createErr) {
+          if (createErr?.code === 11000) {
+            convo = await Conversation.findOne(convoFilter) || await Conversation.findOne({ participantsKey: key });
+          } else {
+            throw createErr;
+          }
+        }
       }
     }
 
@@ -418,7 +433,8 @@ router.post('/messages', authenticateWithSupabase, async (req, res) => {
     const convoData = convo.toObject();
     res.status(201).json({ success: true, data: { message: messageData, conversation: convoData } });
   } catch (err) {
-    res.status(500).json({ success: false, message: 'Server error' });
+    console.error('[Chat] send message error:', err);
+    res.status(500).json({ success: false, message: err?.message || 'Server error' });
   }
 });
 

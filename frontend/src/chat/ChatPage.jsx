@@ -134,7 +134,7 @@ const ChatPage = ({ conversationId: propConversationId, recipientId: propRecipie
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '4px 1px', background: '#ff8c00', color: '#111827', position: 'sticky', top: 0, zIndex: 5, boxShadow: '0 2px 6px rgba(15, 23, 42, 0.08)' }}>
         <button onClick={() => navigate(-1)} style={{ background: 'transparent', border: 'none', color: '#000f2dff', fontWeight: 700, cursor: 'pointer', fontSize: 18 }}>&larr;</button>
         {(meta?.counterpart?.avatar || headerAvatar) ? (
-          <img src={meta?.counterpart?.avatar || headerAvatar} alt={meta?.counterpart?.name || headerTitle || 'User'} style={{ width: 38, height: 38, borderRadius: '50%', objectFit: 'cover', border: '2px solid rgba(59,130,246,0.25)' }} />
+          <img src={meta?.counterpart?.avatar || headerAvatar} alt={meta?.counterpart?.name || headerTitle || 'User'} style={{ width: 38, height: 38, borderRadius: '50%', objectFit: 'cover', border: '2px solid #ff8c00' }} />
         ) : (
           <div style={{ width: 38, height: 38, borderRadius: '50%', background: '#e5e7eb', display: 'flex', alignItems: 'left', justifyContent: 'center', fontWeight: 700 }}>
             {(meta?.counterpart?.name || headerTitle || 'U').charAt(0).toUpperCase()}
@@ -182,7 +182,7 @@ const ChatPage = ({ conversationId: propConversationId, recipientId: propRecipie
           const senderIdStr = String(m.senderId || '');
           const mine = meta?.self?.id && senderIdStr === String(meta.self.id);
           const senderInfo = participantMap.get(senderIdStr) || (mine ? meta?.self : meta?.counterpart);
-          const bubbleBg = mine ? '#4f8ef7' : '#e5e5ea';
+          const bubbleBg = mine ? '#ff8c00' : '#e5e5ea';
           const bubbleColor = mine ? '#ffffff' : '#000000';
           const attachmentsList = Array.isArray(m.attachments) ? m.attachments : [];
           const showUnreadDivider = m.type === 'system-divider-unread';
@@ -224,12 +224,12 @@ const ChatPage = ({ conversationId: propConversationId, recipientId: propRecipie
                   padding: attachmentsList.length ? 0 : '10px 14px',
                   maxWidth: '75%',
                   boxShadow: attachmentsList.length ? 'none' : '0 6px 14px rgba(15, 23, 42, 0.12)',
-                  border: attachmentsList.length ? 'none' : `1px solid ${mine ? 'rgba(37, 99, 235, 0.35)' : 'rgba(229, 231, 235, 1)'}`,
+                  border: attachmentsList.length ? 'none' : `1px solid ${mine ? '#ff8c00' : 'rgba(229, 231, 235, 1)'}`,
                   overflow: 'hidden'
                 }}
               >
                 {attachmentsList.length > 0 && (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8, background: mine ? '#4f8ef7' : '#f8fafc', padding: 10, borderRadius: mine ? '20px 20px 6px 20px' : '20px 20px 20px 6px' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8, background: mine ? '#ff8c00' : '#f8fafc', padding: 10, borderRadius: mine ? '20px 20px 6px 20px' : '20px 20px 20px 6px' }}>
                     {attachmentsList.map((att, idx) => (
                       <div key={`${att.url || idx}`} style={{ borderRadius: 12, overflow: 'hidden', background: '#e2e8f0' }}>
                         <img src={att.url} alt="Attachment" style={{ width: '100%', maxWidth: 220, display: 'block', objectFit: 'cover' }} />
@@ -320,7 +320,7 @@ const ChatPage = ({ conversationId: propConversationId, recipientId: propRecipie
             onClick={handleSend}
             disabled={(!draft.trim() && attachments.length === 0) || sending}
             style={{
-              background: '#1d4ed8',
+              background: '#ff8c00',
               color: '#ffffff',
               border: 'none',
               padding: '11px 20px',
