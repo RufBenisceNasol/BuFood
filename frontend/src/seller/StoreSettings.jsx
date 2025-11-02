@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { auth, store } from '../api';
+import { supabase } from '../supabaseClient';
 import { useNavigate } from 'react-router-dom';
 
 const StoreSettings = () => {
@@ -40,8 +41,19 @@ const StoreSettings = () => {
       const data = await store.getMyStore();
       setStoreData(data);
 
-      // Fetch seller profile
-      const profile = await auth.getMe();
+      // Fetch seller profile from Supabase session (avoid legacy /auth/me JWT route)
+      let profile = { name: '', email: '', contactNumber: '' };
+      try {
+        const { data: udata, error } = await supabase.auth.getUser();
+        const u = udata?.user;
+        if (u && !error) {
+          profile = {
+            name: u.user_metadata?.name || u.user_metadata?.full_name || '',
+            email: u.email || '',
+            contactNumber: u.user_metadata?.contactNumber || '',
+          };
+        }
+      } catch (_) {}
       // Use profile for email, name, contact number
       setFormData({
         storeName: data.storeName || '',

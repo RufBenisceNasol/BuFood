@@ -23,8 +23,8 @@ const router = express.Router();
  *               type: string
  */
 
-// Middleware
-const { authenticate, checkRole } = require('../middlewares/authMiddleware');
+// Middleware (Supabase-based)
+const { authenticateWithSupabase, checkRole } = require('../middlewares/supabaseAuthMiddleware');
 const upload = require('../utils/multerStorage');
 
 // Controllers
@@ -61,7 +61,7 @@ const {
  *       403:
  *         description: Forbidden - Not a seller
  */
-router.get('/profile', authenticate, checkRole('Seller'), getSellerProfile);
+router.get('/profile', authenticateWithSupabase, checkRole('Seller'), getSellerProfile);
 
 /**
  * @swagger
@@ -83,7 +83,7 @@ router.get('/profile', authenticate, checkRole('Seller'), getSellerProfile);
  *       403:
  *         description: Forbidden - Not a seller
  */
-router.get('/store', authenticate, checkRole('Seller'), getStoreByOwner);
+router.get('/store', authenticateWithSupabase, checkRole('Seller'), getStoreByOwner);
 
 /**
  * @swagger
@@ -112,7 +112,7 @@ router.get('/store', authenticate, checkRole('Seller'), getStoreByOwner);
  *       403:
  *         description: Forbidden - Not store owner
  */
-router.put('/store/:id', authenticate, checkRole('Seller'), updateStore);
+router.put('/store/:id', authenticateWithSupabase, checkRole('Seller'), updateStore);
 
 /**
  * @swagger
@@ -136,7 +136,7 @@ router.put('/store/:id', authenticate, checkRole('Seller'), updateStore);
  *       403:
  *         description: Forbidden - Not store owner
  */
-router.delete('/store/:id', authenticate, checkRole('Seller'), deleteStore);
+router.delete('/store/:id', authenticateWithSupabase, checkRole('Seller'), deleteStore);
 
 /**
  * @swagger
@@ -161,7 +161,7 @@ router.delete('/store/:id', authenticate, checkRole('Seller'), deleteStore);
  */
 router.post(
   '/products',
-  authenticate,
+  authenticateWithSupabase,
   checkRole('Seller'),
   upload.single('image'),
   createProduct
@@ -189,7 +189,7 @@ router.post(
  *       403:
  *         description: Forbidden - Not a seller
  */
-router.get('/products', authenticate, checkRole('Seller'), getSellerProducts);
+router.get('/products', authenticateWithSupabase, checkRole('Seller'), getSellerProducts);
 
 /**
  * @swagger
@@ -220,7 +220,7 @@ router.get('/products', authenticate, checkRole('Seller'), getSellerProducts);
  */
 router.patch(
   '/products/:id',
-  authenticate,
+  authenticateWithSupabase,
   checkRole('Seller'),
   upload.single('image'),
   updateProduct
@@ -248,6 +248,6 @@ router.patch(
  *       403:
  *         description: Forbidden - Not product owner
  */
-router.delete('/products/:id', authenticate, checkRole('Seller'), deleteProduct);
+router.delete('/products/:id', authenticateWithSupabase, checkRole('Seller'), deleteProduct);
 
 module.exports = router;

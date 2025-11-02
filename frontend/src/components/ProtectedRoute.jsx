@@ -14,9 +14,16 @@ const ProtectedRoute = ({ children, requiredRole = null }) => {
 
     const init = async () => {
       try {
-        const { data } = await supabase.auth.getSession();
+        let { data } = await supabase.auth.getSession();
         if (!isMounted) return;
-        const currentUser = data?.session?.user || null;
+        let currentUser = data?.session?.user || null;
+        // If no session yet, try a single refresh to avoid cold-start races
+        if (!currentUser) {
+          try {
+            const { data: refreshed } = await supabase.auth.refreshSession();
+            currentUser = refreshed?.session?.user || null;
+          } catch (_) {}
+        }
         setUser(currentUser);
         if (currentUser) {
           setReady(true);

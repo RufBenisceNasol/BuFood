@@ -89,9 +89,10 @@ export const useSupabaseAuth = () => {
     try {
       setLoading(true);
       setError(null);
-      const result = await loginUser({ email, password });
-      setUser(result.user);
-      return result;
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) throw error;
+      setUser(data?.user || null);
+      return { user: data?.user, session: data?.session };
     } catch (err) {
       setError(err.message || 'Login failed');
       throw err;

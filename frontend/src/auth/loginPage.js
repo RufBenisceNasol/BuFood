@@ -25,19 +25,7 @@ const LoginPage = () => {
     const resendTimerRef = React.useRef(null);
     const navigate = useNavigate();
 
-    // Redirect to role home ONLY on explicit SIGNED_IN events
-    React.useEffect(() => {
-        const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
-            if (event !== 'SIGNED_IN') return;
-            const user = session?.user;
-            if (user) {
-                const role = user.user_metadata?.role || user.role;
-                if (role === 'Seller') navigate('/seller/dashboard');
-                else navigate('/customer/home');
-            }
-        });
-        return () => { sub?.subscription?.unsubscribe?.(); };
-    }, [navigate]);
+    // Removed global onAuthStateChange auto-redirect to avoid delayed redirects
 
     // Non-blocking warmup ping on mount to help wake sleeping servers
     React.useEffect(() => {
@@ -76,6 +64,8 @@ const LoginPage = () => {
 
         console.log('Remember me value on submit:', rememberMe);
         try {
+            // Clear any stale session before a new login attempt
+            try { await supabase.auth.signOut(); } catch (_) {}
             const { data, error } = await supabase.auth.signInWithPassword({ email, password });
             if (error) throw error;
 
@@ -92,6 +82,19 @@ const LoginPage = () => {
             const role = (user?.user_metadata?.role ?? 'Customer');
             try { if (role) localStorage.setItem('user_role', role); } catch (_) {}
             try { if (user?.id) localStorage.setItem('user_id', user.id); } catch (_) {}
+            // Ensure Supabase session/user is readable by other parts before navigating
+            try {
+                let attempts = 0;
+                while (attempts < 10) {
+                    const { data: udata, error: uerr } = await supabase.auth.getUser();
+                    if (udata?.user && !uerr) break;
+                    await new Promise(r => setTimeout(r, 300));
+                    attempts++;
+                }
+                // small grace delay for interceptors/guards
+                await new Promise(r => setTimeout(r, 300));
+            } catch (_) {}
+
             if (role === 'Seller') navigate('/seller/dashboard');
             else navigate('/customer/home');
         } catch (err) {
