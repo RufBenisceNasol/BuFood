@@ -22,7 +22,6 @@ const AddProductPage = () => {
     estimatedTime: '',
     shippingFee: '0',
     stock: '0',
-    discount: '0',
   });
   const [selectedImage, setSelectedImage] = useState(null);
   const [previewUrl, setPreviewUrl] = useState('');
@@ -188,7 +187,6 @@ const AddProductPage = () => {
       submitData.append('estimatedTime', formData.estimatedTime);
       submitData.append('shippingFee', formData.shippingFee);
       submitData.append('stock', formData.stock);
-      submitData.append('discount', formData.discount);
       if (images.length > 0) {
         submitData.append('images', JSON.stringify(images));
       }
@@ -235,7 +233,6 @@ const AddProductPage = () => {
         estimatedTime: '',
         shippingFee: '0',
         stock: '0',
-        discount: '0',
       });
       setVariants([]);
       setSelectedImage(null);
@@ -478,7 +475,7 @@ const AddProductPage = () => {
                     {(variant.options || []).map((opt, oIdx) => {
                       const loadingKey = `${vIdx}-${oIdx}`;
                       return (
-                        <div key={oIdx} style={styles.choiceRow}>
+                        <div key={oIdx} style={styles.choiceRow} className="choice-row">
                           {/* Option image preview & uploader */}
                           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
                             {opt.image ? (
@@ -488,7 +485,7 @@ const AddProductPage = () => {
                                 <MdImage />
                               </div>
                             )}
-                            <label style={{ fontSize: 11, fontWeight: 600, color: '#374151', cursor: 'pointer' }}>
+                            <label style={{ fontSize: 11, fontWeight: 700, color: '#2563eb', cursor: 'pointer', background: '#eef2ff', border: '1px solid #c7d2fe', borderRadius: 6, padding: '4px 8px' }}>
                               {uploadingOption[loadingKey] ? 'Uploading...' : 'Upload'}
                               <input
                                 type="file"
@@ -933,27 +930,32 @@ const styles = {
   },
   optionGroupContainer: {
     backgroundColor: '#ffffff',
-    borderRadius: '8px',
-    padding: '12px',
-    marginBottom: '12px',
+    borderRadius: '12px',
+    padding: '14px',
+    marginBottom: '14px',
     border: '1px solid #e5e7eb',
+    boxShadow: '0 4px 10px rgba(0,0,0,0.05)'
   },
   optionGroupHeader: {
     display: 'flex',
-    gap: '8px',
-    marginBottom: '10px',
+    gap: '10px',
+    marginBottom: '12px',
     alignItems: 'stretch',
-    flexWrap: 'wrap',
+    flexWrap: 'wrap'
   },
   choicesContainer: {
-    paddingLeft: '12px',
-    borderLeft: '2px solid #e5e7eb',
+    paddingLeft: '10px'
   },
   choiceRow: {
     display: 'flex',
-    gap: '6px',
-    marginBottom: '6px',
+    gap: '8px',
+    marginBottom: '8px',
     alignItems: 'stretch',
+    flexWrap: 'wrap',
+    background: '#fafafa',
+    border: '1px solid #e5e7eb',
+    borderRadius: 10,
+    padding: '10px'
   },
   addChoiceButton: {
     display: 'flex',
@@ -1107,8 +1109,21 @@ const ResponsiveStyle = () => (
       .add-button {
         width: 100%;
       }
+      
+      .choice-row {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .choice-row input {
+        width: 100% !important;
+      }
+
+      .delete-button-small {
+        width: 100%;
+      }
     }
-    
+  
     @media (min-width: 641px) {
       .variantRow input:first-child {
         flex: 2;
@@ -1119,6 +1134,10 @@ const ResponsiveStyle = () => (
       }
       
       .optionGroupHeader input {
+        flex: 1;
+      }
+
+      .choice-row input {
         flex: 1;
       }
     }

@@ -56,7 +56,7 @@ const ConversationList = ({ title = 'Messages' }) => {
             {conversations.map((c) => (
               <button
                 key={c.id}
-                onClick={() => navigate(`/customer/messages/${c.id}`)}
+                onClick={() => navigate(`/customer/messages/${c.id}`, { state: { title: c.otherParticipantName || 'Chat' } })}
                 style={{
                   width: '100%',
                   textAlign: 'left',
@@ -69,7 +69,7 @@ const ConversationList = ({ title = 'Messages' }) => {
               >
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <div>
-                    <div style={{ fontWeight: 700, fontSize: 15 }}>Conversation</div>
+                    <div style={{ fontWeight: 700, fontSize: 15 }}>{c.otherParticipantName || 'Conversation'}</div>
                     <div style={{ fontSize: 13, color: '#666', marginTop: 4 }}>
                       {c.lastMessage?.text || 'No messages yet'}
                     </div>

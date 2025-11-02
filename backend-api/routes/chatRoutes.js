@@ -4,6 +4,7 @@ const mongoose = require('mongoose');
 const { authenticateWithSupabase } = require('../middlewares/supabaseAuthMiddleware');
 const Conversation = require('../models/Conversation');
 const Message = require('../models/Message');
+const User = require('../models/User');
 
 // Helper: build stable participants key for 1:1 chats
 function buildParticipantsKey(a, b) {
@@ -22,15 +23,34 @@ router.get('/conversations', authenticateWithSupabase, async (req, res) => {
       .limit(100)
       .lean();
 
-    const data = conversations.map((c) => ({
-      id: c._id,
-      participants: c.participants,
-      orderId: c.orderId || null,
-      lastMessage: c.lastMessage || null,
-      unread: Number(c.unreadCounts?.get?.(String(userId)) || c.unreadCounts?.[String(userId)] || 0),
-      updatedAt: c.updatedAt,
-      createdAt: c.createdAt,
-    }));
+    // Collect counterpart user IDs for name lookup
+    const counterpartIds = new Set();
+    conversations.forEach(c => {
+      const other = (c.participants || []).find(p => String(p) !== String(userId));
+      if (other) counterpartIds.add(String(other));
+    });
+    const users = await User.find({ _id: { $in: Array.from(counterpartIds) } }).select('_id name role').lean();
+    const userMap = new Map(users.map(u => [String(u._id), u]));
+
+    const data = conversations.map((c) => {
+      const otherId = (c.participants || []).find(p => String(p) !== String(userId));
+      const otherUser = otherId ? userMap.get(String(otherId)) : null;
+      return {
+        id: c._id,
+        participants: c.participants,
+        orderId: c.orderId || null,
+        lastMessage: c.lastMessage || null,
+        unread: Number(c.unreadCounts?.get?.(String(userId)) || c.unreadCounts?.[String(userId)] || 0),
+        updatedAt: c.updatedAt,
+        createdAt: c.createdAt,
+        otherParticipantId: otherId || null,
+        otherParticipantName: otherUser?.name || 'User',
+        participantsInfo: (c.participants || []).map(pid => {
+          const u = userMap.get(String(pid));
+          return { id: pid, name: u?.name || undefined, role: u?.role || undefined };
+        })
+      };
+    });
 
     res.json({ success: true, data });
   } catch (err) {
