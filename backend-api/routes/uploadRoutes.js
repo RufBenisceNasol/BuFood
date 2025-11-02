@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const multer = require('multer');
-const { authenticate, checkRole } = require('../middlewares/authMiddleware');
+const { authenticateWithSupabase, checkRole } = require('../middlewares/supabaseAuthMiddleware');
 const upload = require('../utils/multerStorage');
 const { uploadImage } = require('../controllers/uploadController');
 
@@ -10,7 +10,7 @@ const { uploadImage } = require('../controllers/uploadController');
 // Attach multer with inline error handling to avoid generic 500s
 router.post(
   '/image',
-  authenticate,
+  authenticateWithSupabase,
   checkRole('Seller'),
   (req, res, next) => {
     upload.single('image')(req, res, (err) => {

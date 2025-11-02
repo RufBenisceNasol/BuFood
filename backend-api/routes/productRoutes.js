@@ -43,7 +43,7 @@ const {
   getSellerAnalytics
 } = require('../controllers/productController');
 
-const { authenticate, checkRole } = require('../middlewares/authMiddleware');
+const { authenticateWithSupabase, checkRole } = require('../middlewares/supabaseAuthMiddleware');
 const uploadProductImage = require('../middlewares/uploadProductImage'); 
 const handleValidation = require('../middlewares/validators/handleValidation');
 const checkProductOwnership = require('../utils/checkProductOwnership');
@@ -137,7 +137,7 @@ router.get('/:id', getProductById);  // Fetch a product by ID
  */
 router.post(
   '/',
-  authenticate,
+  authenticateWithSupabase,
   checkRole('Seller'),
   // Wrap multer to handle file errors gracefully
   (req, res, next) => {
@@ -159,7 +159,7 @@ router.post(
 // Bulk create products: expects JSON array body (items)
 router.post(
   '/bulk',
-  authenticate,
+  authenticateWithSupabase,
   checkRole('Seller'),
   bulkCreateProducts
 );

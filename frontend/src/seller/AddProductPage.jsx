@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api, { product, API_BASE_URL } from '../api';
+import http from '../api/http';
 import { MdArrowBack, MdAdd, MdDelete, MdImage } from 'react-icons/md';
 import { getToken } from '../utils/tokenUtils';
 
@@ -94,11 +95,11 @@ const AddProductPage = () => {
     }
   };
 
-  // Upload a single file to backend /api/upload/image (JWT protected)
+  // Upload a single file to backend /api/upload/image (Supabase-protected)
   const uploadOneImage = async (file) => {
     const form = new FormData();
     form.append('image', file);
-    const res = await api.post('/upload/image', form);
+    const res = await http.post('/upload/image', form);
     return res.data; // expect { success, imageUrl }
   };
 
@@ -154,10 +155,10 @@ const AddProductPage = () => {
         return;
       }
 
-      // Fallback to server upload
+      // Fallback to server upload (Supabase-protected)
       const form = new FormData();
       form.append('image', file);
-      const res = await api.post('/upload/image', form);
+      const res = await http.post('/upload/image', form);
       if (res.data?.success && res.data.imageUrl) {
         updateOptionField(variantIdx, optionIdx, 'image', res.data.imageUrl);
       } else {
