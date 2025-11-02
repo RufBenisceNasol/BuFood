@@ -29,7 +29,7 @@ const conversationSchema = new Schema(
   { timestamps: true }
 );
 
-conversationSchema.index({ participantsKey: 1, orderId: 1 }, { unique: true });
+conversationSchema.index({ participantsKey: 1 });
 conversationSchema.index({ updatedAt: -1 });
 
 module.exports = mongoose.models.Conversation || mongoose.model('Conversation', conversationSchema);
