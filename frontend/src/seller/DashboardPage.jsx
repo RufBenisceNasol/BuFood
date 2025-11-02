@@ -543,7 +543,30 @@ const DashboardPage = () => {
         <Link to="/seller/profile" className="profile-button">
           PROFILE
         </Link>
-        {/* Messages button removed (chat feature disabled) */}
+        {/* Clean floating message button (no action) */}
+        <div
+          aria-label="Message"
+          title="Message"
+          style={{
+            position: 'fixed',
+            right: 16,
+            bottom: 85,
+            width: 52,
+            height: 52,
+            borderRadius: '50%',
+            background: '#FF7A00',
+            color: '#fff',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: '0 8px 18px rgba(0,0,0,0.18)',
+            zIndex: 1200,
+            cursor: 'default',
+            userSelect: 'none'
+          }}
+        >
+          <MdMessage size={22} />
+        </div>
       </div>
     </div>
   );

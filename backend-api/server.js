@@ -37,6 +37,7 @@ const storeMemberRoutes = require('./routes/storeMemberRoutes');
 const reviewRoutes = require('./routes/reviewRoutes');
 const favoriteRoutes = require('./routes/favorites');
 const uploadRoutes = require('./routes/uploadRoutes');
+const chatRoutes = require('./routes/chatRoutes');
 
 const app = express();
 const http = require('http');
@@ -200,6 +201,7 @@ app.use('/api/orders', orderRoutes);
 app.use('/api', reviewRoutes);
 app.use('/api/favorites', favoriteRoutes);
 app.use('/api/upload', uploadRoutes);
+app.use('/api/chat', chatRoutes);
 app.use('/api', authenticateWithSupabase, require('./routes/bootstrap'));
 
 // JSON 404 fallback for API routes

@@ -816,22 +816,13 @@ export const customer = {
 export const chat = {
   // Get all conversations for the current user
   getConversations: () => http.get('/chat/conversations'),
-  
-  // Create or fetch a conversation
-  createOrFetchConversation: (participantIds, orderId = null) => 
-    http.post('/chat/conversations', { participantIds, orderId }),
-  
+
   // Get messages for a conversation
-  getMessages: (conversationId) => 
-    http.get(`/chat/messages/${conversationId}`),
-  
-  // Send a message
-  sendMessage: (conversationId, text, orderRef = null) => 
-    http.post('/chat/messages', { conversationId, text, orderRef }),
-  
-  // Mark conversation as read
-  markAsRead: (conversationId) => 
-    http.post(`/chat/conversations/${conversationId}/read`)
+  getMessages: (conversationId) => http.get(`/chat/messages/${conversationId}`),
+
+  // Send a message (auto-creates conversation if only recipientId provided)
+  // Usage: chat.sendMessage({ conversationId, recipientId, text })
+  sendMessage: (payload) => http.post('/chat/messages', payload)
 };
 
 // Review API endpoints

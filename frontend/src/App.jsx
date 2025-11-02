@@ -27,7 +27,8 @@ const SellerProductDetailPage = lazy(() => import('./seller/SellerProductDetailP
 const EditProductPage = lazy(() => import('./seller/EditProductPage'))
 const AnalyticsPage = lazy(() => import('./seller/AnalyticsPage'))
 const SellerSettingsPage = lazy(() => import('./seller/SellerSettingsPage'))
-// Chat pages removed
+const ConversationList = lazy(() => import('./chat/ConversationList'))
+const ChatPage = lazy(() => import('./chat/ChatPage'))
 
 // Customer
 const HomePage = lazy(() => import('./customer/HomePage'))
@@ -128,7 +129,10 @@ function App() {
 
             {/* Removed unprotected root-level customer routes to prevent unintended access/redirects */}
             
-            {/* Chat routes removed */}
+            <Route path="/customer/messages" element={<CustomerRoute><CustomerLayout><ConversationList /></CustomerLayout></CustomerRoute>} />
+            <Route path="/customer/messages/:conversationId" element={<CustomerRoute><CustomerLayout><ChatPage /></CustomerLayout></CustomerRoute>} />
+            <Route path="/seller/messages" element={<SellerRoute><SellerLayout><ConversationList /></SellerLayout></SellerRoute>} />
+            <Route path="/seller/messages/:conversationId" element={<SellerRoute><SellerLayout><ChatPage /></SellerLayout></SellerRoute>} />
           </Routes>
         </Suspense>
       </Router>

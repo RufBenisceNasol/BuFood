@@ -20,7 +20,7 @@
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MdSearch, MdHome, MdFavoriteBorder, MdShoppingCart, MdReceipt, MdPerson, MdFilterList, MdClose, MdMenuOpen, MdSettings, MdLogout, MdStore, MdCheckCircle } from 'react-icons/md';
+import { MdSearch, MdHome, MdFavoriteBorder, MdShoppingCart, MdReceipt, MdPerson, MdFilterList, MdClose, MdMenuOpen, MdSettings, MdLogout, MdStore, MdCheckCircle, MdMessage } from 'react-icons/md';
 import Slider from 'react-slick';
 // Removed react-toastify to avoid popups on the homepage
 import 'slick-carousel/slick/slick.css';
@@ -901,6 +901,31 @@ const HomePage = () => {
           </div>
         </div>
       {/* Floating chat removed */}
+
+      {/* Clean floating message button (no action) */}
+      <div
+        aria-label="Message"
+        title="Message"
+        style={{
+          position: 'fixed',
+          right: 16,
+          bottom: 96, // keep above bottom nav
+          width: 52,
+          height: 52,
+          borderRadius: '50%',
+          background: '#FF7A00',
+          color: '#fff',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          boxShadow: '0 8px 18px rgba(0,0,0,0.18)',
+          zIndex: 1200,
+          cursor: 'default',
+          userSelect: 'none'
+        }}
+      >
+        <MdMessage size={22} />
+      </div>
 
       </div>      {/* Bottom Navigation */}
       <div className="bottomNav" style={styles.bottomNav}>
