@@ -902,10 +902,14 @@ const HomePage = () => {
         </div>
       {/* Floating chat removed */}
 
-      {/* Clean floating message button (no action) */}
+      {/* Clean floating message button (navigates to messages) */}
       <div
         aria-label="Message"
         title="Message"
+        role="button"
+        tabIndex={0}
+        onClick={() => navigate('/customer/messages')}
+        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') navigate('/customer/messages') }}
         style={{
           position: 'fixed',
           right: 16,
@@ -920,7 +924,7 @@ const HomePage = () => {
           justifyContent: 'center',
           boxShadow: '0 8px 18px rgba(0,0,0,0.18)',
           zIndex: 1200,
-          cursor: 'default',
+          cursor: 'pointer',
           userSelect: 'none'
         }}
       >

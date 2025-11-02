@@ -38,6 +38,7 @@ const ConversationList = ({ title = 'Messages' }) => {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', background: '#fafafa' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 12px', background: '#ff7a00', color: '#fff', position: 'sticky', top: 0 }}>
+        <button onClick={() => navigate(-1)} style={{ background: 'transparent', border: 'none', color: '#fff', fontWeight: 700, cursor: 'pointer' }}>&larr;</button>
         <div style={{ fontWeight: 700 }}>{title}</div>
       </div>
       <div style={{ flex: 1 }}>

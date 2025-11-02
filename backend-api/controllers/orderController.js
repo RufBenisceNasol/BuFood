@@ -20,6 +20,12 @@ try {
 const { randomUUID } = require('crypto');
 const { mapToSupabaseId } = require('../helpers/idMapper');
 
+// Build a stable participants key for 1:1 chats (customer-seller)
+function buildParticipantsKey(a, b) {
+  const [x, y] = [String(a), String(b)].sort();
+  return `${x}_${y}`;
+}
+
 // Helper function for consistent response structure
 const createResponse = (success, message, data = null, error = null) => ({
   success,
@@ -186,6 +192,68 @@ const createOrderFromCart = async (req, res) => {
 
       await order.save({ session });
       orders.push(order);
+
+      // Auto-create chat conversation and seed initial order summary message
+      try {
+        const key = buildParticipantsKey(req.user._id, store.owner);
+        // Scope conversation to this orderId (unique pair-key + orderId)
+        let convo = await Conversation.findOne({ participantsKey: key, orderId: String(order._id) }).session(session);
+        if (!convo) {
+          convo = await Conversation.create([
+            {
+              participants: [req.user._id, store.owner],
+              participantsKey: key,
+              orderId: String(order._id),
+              unreadCounts: {},
+              createdBy: 'system'
+            }
+          ], { session });
+          // create() with array returns array
+          convo = Array.isArray(convo) ? convo[0] : convo;
+        }
+
+        const summaryText = `New order placed. Total: ₱${(order.totalAmount || 0).toFixed(2)} | Items: ${order.items?.length || 0} | Type: ${order.orderType}`;
+        const msg = await Message.create([
+          {
+            conversationId: convo._id,
+            senderId: req.user._id,
+            receiverId: store.owner,
+            type: 'order',
+            text: summaryText,
+            orderRef: { orderId: String(order._id), summary: summaryText },
+            orderSnapshot: {
+              orderId: String(order._id),
+              items: (order.items || []).map(it => ({ productId: String(it.product), name: undefined, qty: it.quantity, price: it.price })),
+              total: order.totalAmount
+            },
+            senderName: req.user?.name || req.user?.fullName || req.user?.username || 'Customer'
+          }
+        ], { session });
+        const createdMsg = Array.isArray(msg) ? msg[0] : msg;
+
+        // Update conversation lastMessage and unread count for seller
+        convo.lastMessage = {
+          id: createdMsg._id,
+          text: createdMsg.text,
+          type: createdMsg.type,
+          senderId: req.user._id,
+          senderName: req.user?.name || req.user?.fullName || req.user?.username || 'Customer',
+          createdAt: createdMsg.createdAt,
+          orderRef: { orderId: String(order._id), summary: summaryText }
+        };
+        const sellerKey = String(store.owner);
+        if (convo.unreadCounts instanceof Map) {
+          const curr = Number(convo.unreadCounts.get(sellerKey) || 0);
+          convo.unreadCounts.set(sellerKey, curr + 1);
+        } else {
+          convo.unreadCounts = convo.unreadCounts || {};
+          const curr = Number(convo.unreadCounts[sellerKey] || 0);
+          convo.unreadCounts[sellerKey] = curr + 1;
+        }
+        await convo.save({ session });
+      } catch (e) {
+        // Do not fail order creation if chat seeding fails
+      }
 
       // Remove ordered items from cart
       cart.items = cart.items.filter(item => 
@@ -1158,6 +1226,65 @@ const createDirectOrder = async (req, res) => {
             update: { $inc: { stock: -item.quantity } }
           }
         });
+      }
+
+      // Auto-create chat conversation and seed initial order summary message (direct order)
+      try {
+        const key = buildParticipantsKey(req.user._id, store.owner);
+        let convo = await Conversation.findOne({ participantsKey: key, orderId: String(order._id) }).session(session);
+        if (!convo) {
+          convo = await Conversation.create([
+            {
+              participants: [req.user._id, store.owner],
+              participantsKey: key,
+              orderId: String(order._id),
+              unreadCounts: {},
+              createdBy: 'system'
+            }
+          ], { session });
+          convo = Array.isArray(convo) ? convo[0] : convo;
+        }
+
+        const summaryText = `New order placed. Total: ₱${(order.totalAmount || 0).toFixed(2)} | Items: ${order.items?.length || 0} | Type: ${order.orderType}`;
+        const msg = await Message.create([
+          {
+            conversationId: convo._id,
+            senderId: req.user._id,
+            receiverId: store.owner,
+            type: 'order',
+            text: summaryText,
+            orderRef: { orderId: String(order._id), summary: summaryText },
+            orderSnapshot: {
+              orderId: String(order._id),
+              items: (order.items || []).map(it => ({ productId: String(it.product), name: undefined, qty: it.quantity, price: it.price })),
+              total: order.totalAmount
+            },
+            senderName: req.user?.name || req.user?.fullName || req.user?.username || 'Customer'
+          }
+        ], { session });
+        const createdMsg = Array.isArray(msg) ? msg[0] : msg;
+
+        convo.lastMessage = {
+          id: createdMsg._id,
+          text: createdMsg.text,
+          type: createdMsg.type,
+          senderId: req.user._id,
+          senderName: req.user?.name || req.user?.fullName || req.user?.username || 'Customer',
+          createdAt: createdMsg.createdAt,
+          orderRef: { orderId: String(order._id), summary: summaryText }
+        };
+        const sellerKey = String(store.owner);
+        if (convo.unreadCounts instanceof Map) {
+          const curr = Number(convo.unreadCounts.get(sellerKey) || 0);
+          convo.unreadCounts.set(sellerKey, curr + 1);
+        } else {
+          convo.unreadCounts = convo.unreadCounts || {};
+          const curr = Number(convo.unreadCounts[sellerKey] || 0);
+          convo.unreadCounts[sellerKey] = curr + 1;
+        }
+        await convo.save({ session });
+      } catch (_) {
+        // ignore chat seeding errors
       }
     }
 

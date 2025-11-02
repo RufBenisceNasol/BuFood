@@ -547,6 +547,10 @@ const DashboardPage = () => {
         <div
           aria-label="Message"
           title="Message"
+          role="button"
+          tabIndex={0}
+          onClick={() => navigate('/seller/messages')}
+          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') navigate('/seller/messages') }}
           style={{
             position: 'fixed',
             right: 16,
@@ -561,7 +565,7 @@ const DashboardPage = () => {
             justifyContent: 'center',
             boxShadow: '0 8px 18px rgba(0,0,0,0.18)',
             zIndex: 1200,
-            cursor: 'default',
+            cursor: 'pointer',
             userSelect: 'none'
           }}
         >
