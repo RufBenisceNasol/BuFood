@@ -1,6 +1,14 @@
 const mongoose = require('mongoose');
 const { Schema } = mongoose;
 
+const attachmentSchema = new Schema(
+  {
+    url: { type: String, required: true, trim: true },
+    type: { type: String, enum: ['image', 'file', 'text'], default: 'image' }
+  },
+  { _id: false }
+);
+
 const messageSchema = new Schema(
   {
     conversationId: { type: Schema.Types.ObjectId, ref: 'Conversation', index: true, required: true },
@@ -9,7 +17,7 @@ const messageSchema = new Schema(
     receiverId: { type: Schema.Types.ObjectId, ref: 'User', required: false, default: null },
     type: { type: String, enum: ['system', 'text', 'order', 'image'], default: 'text', index: true },
     text: { type: String, default: '' },
-    attachments: [{ url: String, type: String }],
+    attachments: { type: [attachmentSchema], default: [] },
     orderRef: { orderId: String, summary: String },
     // Rich snapshot for order-related system messages
     orderSnapshot: {

@@ -131,16 +131,16 @@ const ChatPage = ({ conversationId: propConversationId, recipientId: propRecipie
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: '#f6f6f6', color: '#1f2937' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '4px 1px', background: '#ff8c00', color: '#111827', position: 'sticky', top: 0, zIndex: 5, boxShadow: '0 2px 6px rgba(15, 23, 42, 0.08)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: 8, padding: '8px 12px', background: '#ff8c00', color: '#111827', position: 'sticky', top: 0, zIndex: 5, boxShadow: '0 2px 6px rgba(15, 23, 42, 0.08)' }}>
         <button onClick={() => navigate(-1)} style={{ background: 'transparent', border: 'none', color: '#000f2dff', fontWeight: 700, cursor: 'pointer', fontSize: 18 }}>&larr;</button>
         {(meta?.counterpart?.avatar || headerAvatar) ? (
           <img src={meta?.counterpart?.avatar || headerAvatar} alt={meta?.counterpart?.name || headerTitle || 'User'} style={{ width: 38, height: 38, borderRadius: '50%', objectFit: 'cover', border: '2px solid #ff8c00' }} />
         ) : (
-          <div style={{ width: 38, height: 38, borderRadius: '50%', background: '#e5e7eb', display: 'flex', alignItems: 'left', justifyContent: 'center', fontWeight: 700 }}>
+          <div style={{ width: 38, height: 38, borderRadius: '50%', background: '#e5e7eb', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700 }}>
             {(meta?.counterpart?.name || headerTitle || 'U').charAt(0).toUpperCase()}
           </div>
         )}
-        <div style={{ display: 'flex', flexDirection: 'column' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', textAlign: 'left' }}>
           <div style={{ fontWeight: 700, fontSize: 15 }}>{meta?.counterpart?.name || headerTitle}</div>
           {(meta?.customer || meta?.seller) && (
             <div style={{ fontSize: 12, color: '#22252aff' }}>
