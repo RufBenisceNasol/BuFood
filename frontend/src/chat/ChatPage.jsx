@@ -130,7 +130,7 @@ const ChatPage = ({ conversationId: propConversationId, recipientId: propRecipie
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: '#f3f4f6', color: '#1f2937' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: '#f6f6f6', color: '#1f2937' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', background: '#ffffff', color: '#111827', position: 'sticky', top: 0, zIndex: 5, boxShadow: '0 2px 6px rgba(15, 23, 42, 0.08)' }}>
         <button onClick={() => navigate(-1)} style={{ background: 'transparent', border: 'none', color: '#6b7280', fontWeight: 700, cursor: 'pointer', fontSize: 18 }}>&larr;</button>
         {(meta?.counterpart?.avatar || headerAvatar) ? (
@@ -176,15 +176,25 @@ const ChatPage = ({ conversationId: propConversationId, recipientId: propRecipie
         </div>
       )}
 
-      <div ref={scrollRef} style={{ flex: 1, overflowY: 'auto', padding: '16px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <div ref={scrollRef} style={{ flex: 1, overflowY: 'auto', padding: '16px', display: 'flex', flexDirection: 'column', gap: 8 }}>
         {loading && <div style={{ color: '#6b7280', padding: '8px 0' }}>Loading messages...</div>}
-        {!loading && messages.map((m) => {
+        {!loading && messages.map((m, idx) => {
           const senderIdStr = String(m.senderId || '');
           const mine = meta?.self?.id && senderIdStr === String(meta.self.id);
           const senderInfo = participantMap.get(senderIdStr) || (mine ? meta?.self : meta?.counterpart);
-          const bubbleBg = mine ? '#1d4ed8' : '#e5e7eb';
-          const bubbleColor = mine ? '#ffffff' : '#111827';
+          const bubbleBg = mine ? '#4f8ef7' : '#e5e5ea';
+          const bubbleColor = mine ? '#ffffff' : '#000000';
           const attachmentsList = Array.isArray(m.attachments) ? m.attachments : [];
+          const showUnreadDivider = m.type === 'system-divider-unread';
+          if (showUnreadDivider) {
+            return (
+              <div key={`divider-${idx}`} style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#6b7280', fontSize: 12 }}>
+                <span style={{ flex: 1, height: 1, background: '#d1d5db' }} />
+                <span>Unread messages</span>
+                <span style={{ flex: 1, height: 1, background: '#d1d5db' }} />
+              </div>
+            );
+          }
           return (
             <div
               key={m._id || m.createdAt || Math.random()}
@@ -196,7 +206,7 @@ const ChatPage = ({ conversationId: propConversationId, recipientId: propRecipie
               }}
             >
               {!mine && (
-                <div style={{ width: 32, height: 32, borderRadius: '50%', overflow: 'hidden', background: '#e5e7eb' }}>
+                <div style={{ width: 32, height: 32, borderRadius: '50%', overflow: 'hidden', background: '#e5e5ea' }}>
                   {senderInfo?.avatar ? (
                     <img src={senderInfo.avatar} alt={senderInfo?.name || 'User'} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   ) : (
@@ -210,7 +220,7 @@ const ChatPage = ({ conversationId: propConversationId, recipientId: propRecipie
                 style={{
                   background: attachmentsList.length ? 'transparent' : bubbleBg,
                   color: attachmentsList.length ? '#111827' : bubbleColor,
-                  borderRadius: mine ? '18px 18px 6px 18px' : '18px 18px 18px 6px',
+                  borderRadius: mine ? '20px 20px 6px 20px' : '20px 20px 20px 6px',
                   padding: attachmentsList.length ? 0 : '10px 14px',
                   maxWidth: '75%',
                   boxShadow: attachmentsList.length ? 'none' : '0 6px 14px rgba(15, 23, 42, 0.12)',
@@ -219,16 +229,16 @@ const ChatPage = ({ conversationId: propConversationId, recipientId: propRecipie
                 }}
               >
                 {attachmentsList.length > 0 && (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8, background: mine ? '#1d4ed8' : '#f8fafc', padding: 10, borderRadius: mine ? '18px 18px 6px 18px' : '18px 18px 18px 6px' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8, background: mine ? '#4f8ef7' : '#f8fafc', padding: 10, borderRadius: mine ? '20px 20px 6px 20px' : '20px 20px 20px 6px' }}>
                     {attachmentsList.map((att, idx) => (
                       <div key={`${att.url || idx}`} style={{ borderRadius: 12, overflow: 'hidden', background: '#e2e8f0' }}>
                         <img src={att.url} alt="Attachment" style={{ width: '100%', maxWidth: 220, display: 'block', objectFit: 'cover' }} />
                       </div>
                     ))}
                     {m.text && (
-                      <div style={{ fontSize: 14, color: mine ? '#dbeafe' : '#0f172a' }}>{m.text}</div>
+                      <div style={{ fontSize: 14, color: mine ? '#ffffff' : '#0f172a' }}>{m.text}</div>
                     )}
-                    <div style={{ fontSize: 11, color: mine ? 'rgba(219,234,254,0.8)' : '#475569', textAlign: 'right' }}>
+                    <div style={{ fontSize: 11, color: mine ? 'rgba(255,255,255,0.7)' : '#6b7280', textAlign: 'right' }}>
                       {new Date(m.createdAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}
                     </div>
                   </div>
@@ -236,14 +246,14 @@ const ChatPage = ({ conversationId: propConversationId, recipientId: propRecipie
                 {!attachmentsList.length && (
                   <>
                     <div style={{ fontSize: 14, lineHeight: 1.5 }}>{m.text}</div>
-                    <div style={{ fontSize: 11, color: mine ? 'rgba(226,232,240,0.85)' : '#6b7280', marginTop: 6, textAlign: 'right' }}>
+                    <div style={{ fontSize: 11, color: mine ? 'rgba(255,255,255,0.7)' : '#6b7280', marginTop: 4, textAlign: 'right' }}>
                       {new Date(m.createdAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}
                     </div>
                   </>
                 )}
               </div>
               {mine && (
-                <div style={{ width: 32, height: 32, borderRadius: '50%', overflow: 'hidden', background: '#bfdbfe' }}>
+                <div style={{ width: 32, height: 32, borderRadius: '50%', overflow: 'hidden', background: '#cbd5f5' }}>
                   {meta?.self?.avatar ? (
                     <img src={meta.self.avatar} alt={meta?.self?.name || 'You'} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   ) : (

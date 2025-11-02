@@ -58,7 +58,7 @@ router.get('/conversations', authenticateWithSupabase, async (req, res) => {
       const other = (c.participants || []).find(p => String(p) !== String(userId));
       if (other) counterpartIds.add(String(other));
     });
-    const users = await User.find({ _id: { $in: Array.from(counterpartIds) } }).select('_id name role avatar').lean();
+    const users = await User.find({ _id: { $in: Array.from(counterpartIds) } }).select('_id name role avatar profileImage').lean();
     const userMap = new Map(users.map(u => [String(u._id), u]));
 
     const data = conversations.map((c) => {
@@ -74,7 +74,7 @@ router.get('/conversations', authenticateWithSupabase, async (req, res) => {
         createdAt: c.createdAt,
         otherParticipantId: otherId || null,
         otherParticipantName: otherUser?.name || 'User',
-        otherParticipantAvatar: otherUser?.avatar || null,
+        otherParticipantAvatar: otherUser?.avatar || otherUser?.profileImage || null,
         participantsInfo: (c.participants || []).map(pid => {
           const pidStr = String(pid);
           const u = userMap.get(pidStr);
@@ -83,7 +83,7 @@ router.get('/conversations', authenticateWithSupabase, async (req, res) => {
             id: pid,
             name: u?.name || (isSelf ? (req.user?.name || 'You') : undefined),
             role: u?.role || (isSelf ? req.user?.role : undefined),
-            avatar: u?.avatar || (isSelf ? req.user?.avatar : undefined)
+            avatar: u?.avatar || u?.profileImage || (isSelf ? (req.user?.avatar || req.user?.profileImage) : undefined)
           };
         })
       };
@@ -175,7 +175,7 @@ router.get('/messages/:conversationId', authenticateWithSupabase, async (req, re
     }
 
     const participantIds = (convo.participants || []).map((p) => String(p));
-    const participants = await User.find({ _id: { $in: participantIds } }).select('_id name role avatar').lean();
+    const participants = await User.find({ _id: { $in: participantIds } }).select('_id name role avatar profileImage').lean();
     const participantMap = new Map(participants.map((u) => [String(u._id), u]));
     const currentUserId = String(userId);
     if (!participantMap.has(currentUserId) && req.user) {
@@ -251,7 +251,7 @@ router.get('/messages/:conversationId', authenticateWithSupabase, async (req, re
         id: pid,
         name: data?.name || (isSelf ? (req.user?.name || 'You') : 'User'),
         role: data?.role || (isSelf ? req.user?.role : undefined),
-        avatar: data?.avatar || (isSelf ? req.user?.avatar : undefined),
+        avatar: data?.avatar || data?.profileImage || (isSelf ? (req.user?.avatar || req.user?.profileImage) : undefined),
       };
     });
 
@@ -373,7 +373,7 @@ router.post('/messages', authenticateWithSupabase, async (req, res) => {
       text: trimmedText,
       seen: false,
       senderName: req.user?.name || 'User',
-      senderAvatar: req.user?.avatar || null,
+      senderAvatar: req.user?.avatar || req.user?.profileImage || null,
     };
 
     if (normalizedAttachments.length) {

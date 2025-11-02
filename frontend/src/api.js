@@ -822,7 +822,12 @@ export const chat = {
 
   // Send a message (auto-creates conversation if only recipientId provided)
   // Usage: chat.sendMessage({ conversationId, recipientId, text })
-  sendMessage: (payload) => http.post('/chat/messages', payload)
+  sendMessage: (payload) => http.post('/chat/messages', payload),
+
+  // Upload image attachments for chat messages
+  uploadImage: (formData) => http.post('/chat/messages/upload', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  })
 };
 
 // Review API endpoints
