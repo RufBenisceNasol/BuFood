@@ -6,6 +6,34 @@ const Conversation = require('../models/Conversation');
 const Message = require('../models/Message');
 const User = require('../models/User');
 const Order = require('../models/orderModel');
+const multer = require('multer');
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
+const cloudinary = require('../utils/cloudinary');
+
+const allowedImageFormats = ['jpg', 'jpeg', 'png', 'webp', 'gif', 'heic', 'heif'];
+
+const chatImageStorage = new CloudinaryStorage({
+  cloudinary,
+  params: {
+    folder: 'chat-attachments',
+    allowed_formats: allowedImageFormats,
+    transformation: [{ width: 1600, height: 1600, crop: 'limit' }],
+    resource_type: 'image',
+  },
+});
+
+const chatImageUpload = multer({
+  storage: chatImageStorage,
+  fileFilter: (_req, file, cb) => {
+    const isImage = /^image\//.test(file.mimetype || '');
+    if (!isImage) return cb(new multer.MulterError('LIMIT_UNEXPECTED_FILE', 'image'));
+    cb(null, true);
+  },
+  limits: {
+    fileSize: 5 * 1024 * 1024, // 5MB
+    files: 1,
+  },
+});
 
 // Helper: build stable participants key for 1:1 chats
 function buildParticipantsKey(a, b) {
@@ -65,6 +93,40 @@ router.get('/conversations', authenticateWithSupabase, async (req, res) => {
   } catch (err) {
     res.status(500).json({ success: false, message: 'Server error' });
   }
+});
+
+// POST /chat/messages/upload — upload a chat attachment image
+router.post('/messages/upload', authenticateWithSupabase, async (req, res) => {
+  chatImageUpload.single('image')(req, res, (err) => {
+    if (err) {
+      if (err instanceof multer.MulterError) {
+        let message = 'Upload failed';
+        if (err.code === 'LIMIT_FILE_SIZE') message = 'Image too large (max 5MB)';
+        if (err.code === 'LIMIT_UNEXPECTED_FILE') message = 'Invalid image type';
+        return res.status(400).json({ success: false, message });
+      }
+      return res.status(400).json({ success: false, message: err?.message || 'Invalid image' });
+    }
+    const file = req.file;
+    if (!file) {
+      return res.status(400).json({ success: false, message: 'No image uploaded' });
+    }
+
+    const url = file.path || file.secure_url || file.url;
+    if (!url) {
+      return res.status(500).json({ success: false, message: 'Failed to obtain uploaded image URL' });
+    }
+
+    res.json({
+      success: true,
+      data: {
+        url,
+        publicId: file.filename || file.public_id || null,
+        width: file.width,
+        height: file.height,
+      },
+    });
+  });
 });
 
 // GET /chat/messages/:conversationId — fetch messages (latest first)
@@ -228,9 +290,43 @@ router.post('/messages', authenticateWithSupabase, async (req, res) => {
   try {
     const senderId = req.user?._id;
     const { conversationId, recipientId, text, orderId } = req.body || {};
+    const rawType = req.body?.type;
+    let rawAttachments = req.body?.attachments;
 
     if (!senderId) return res.status(401).json({ success: false, message: 'Unauthorized' });
-    if (!text || String(text).trim().length === 0) {
+
+    if (typeof rawAttachments === 'string') {
+      try {
+        rawAttachments = JSON.parse(rawAttachments);
+      } catch (_) {
+        rawAttachments = [];
+      }
+    }
+
+    const attachmentsArray = Array.isArray(rawAttachments) ? rawAttachments : [];
+    const normalizedAttachments = attachmentsArray
+      .map((att) => {
+        if (!att) return null;
+        if (typeof att === 'string') return { url: att, type: 'image' };
+        if (typeof att === 'object' && att.url) {
+          return { url: att.url, type: att.type || 'image' };
+        }
+        return null;
+      })
+      .filter(Boolean);
+
+    const trimmedText = typeof text === 'string' ? text.trim() : '';
+
+    let messageType = rawType || (normalizedAttachments.length ? 'image' : 'text');
+    if (normalizedAttachments.length && messageType !== 'image') {
+      messageType = 'image';
+    }
+
+    if (messageType === 'image' && normalizedAttachments.length === 0) {
+      return res.status(400).json({ success: false, message: 'Image attachment required for image messages' });
+    }
+
+    if (messageType === 'text' && !trimmedText) {
       return res.status(400).json({ success: false, message: 'Message text required' });
     }
 
@@ -269,19 +365,29 @@ router.post('/messages', authenticateWithSupabase, async (req, res) => {
       }
     }
 
-    const message = await Message.create({
+    const messagePayload = {
       conversationId: convo._id,
       senderId,
       receiverId: receiverId || null,
-      type: 'text',
-      text: String(text).trim(),
+      type: messageType,
+      text: trimmedText,
       seen: false,
-    });
+      senderName: req.user?.name || 'User',
+      senderAvatar: req.user?.avatar || null,
+    };
+
+    if (normalizedAttachments.length) {
+      messagePayload.attachments = normalizedAttachments;
+    }
+
+    const message = await Message.create(messagePayload);
 
     convo.lastMessage = {
       id: message._id,
-      text: message.text,
-      type: 'text',
+      text: message.type === 'image'
+        ? (message.text ? message.text : 'Sent an image')
+        : message.text,
+      type: message.type,
       senderId: senderId,
       senderName: req.user?.name || 'User',
       createdAt: message.createdAt,
