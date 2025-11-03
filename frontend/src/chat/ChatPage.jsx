@@ -294,14 +294,22 @@ const ChatPage = ({ conversationId: propConversationId, recipientId: propRecipie
               background: '#e5e7eb',
               color: '#1f2937',
               border: 'none',
-              padding: '2px 2px',
-              borderRadius: 10,
-              fontWeight: 400,
+              width: 36,
+              height: 36,
+              padding: 0,
+              borderRadius: '50%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: 22,
+              fontWeight: 600,
               cursor: uploadingAttachment ? 'not-allowed' : 'pointer',
-              opacity: uploadingAttachment ? 0.6 : 1
+              opacity: uploadingAttachment ? 0.6 : 1,
+              transition: 'transform 0.15s ease'
             }}
+            aria-label="Add image"
           >
-            {uploadingAttachment ? 'Uploading…' : 'Add Image'}
+            {uploadingAttachment ? '…' : '+'}
           </button>
           <input ref={fileInputRef} type="file" accept="image/*" onChange={handleAttachmentChange} style={{ display: 'none' }} />
           <input

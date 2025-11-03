@@ -18,14 +18,14 @@
   *  - Styled primarily via external CSS + inline styles
   */
 
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MdSearch, MdHome, MdFavoriteBorder, MdShoppingCart, MdReceipt, MdPerson, MdFilterList, MdClose, MdMenuOpen, MdSettings, MdLogout, MdStore, MdCheckCircle, MdMessage } from 'react-icons/md';
 import Slider from 'react-slick';
 // Removed react-toastify to avoid popups on the homepage
 import 'slick-carousel/slick/slick.css';
 import 'slick-carousel/slick/slick-theme.css';
-import { store as storeApi, product as productApi, auth, cart, customer } from '../api';
+import { store as storeApi, product as productApi, auth, cart, customer, chat } from '../api';
 import { fetchBootstrap } from '../api/bootstrap';
 import { supabase } from '../supabaseClient';
 import '../styles/HomePage.css';
@@ -114,6 +114,27 @@ const HomePage = () => {
   const [userName, setUserName] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   
+  const refreshUnreadMessages = useCallback(async () => {
+    try {
+      const res = await chat.getConversations();
+      const payload = res.data || res;
+      const list = Array.isArray(payload) ? payload : (payload?.data || []);
+      const count = list.reduce((sum, convo) => sum + (Number(convo.unread) || 0), 0);
+      setUnreadMessages(count);
+    } catch (_) {
+      setUnreadMessages(0);
+    }
+  }, []);
+
+  useEffect(() => {
+    refreshUnreadMessages();
+    const onFocus = () => refreshUnreadMessages();
+    window.addEventListener('focus', onFocus);
+    return () => {
+      window.removeEventListener('focus', onFocus);
+    };
+  }, [refreshUnreadMessages]);
+
   useEffect(() => {
     // Set responsive grid columns based on viewport width
     const updateGrid = () => {
@@ -129,6 +150,7 @@ const HomePage = () => {
         setGridGap(12);
       }
     };
+
     updateGrid();
     window.addEventListener('resize', updateGrid);
     return () => window.removeEventListener('resize', updateGrid);
@@ -155,6 +177,7 @@ const HomePage = () => {
   const [successModal, setSuccessModal] = useState({ open: false, message: '' });
   const [gridCols, setGridCols] = useState(2);
   const [gridGap, setGridGap] = useState(12);
+  const [unreadMessages, setUnreadMessages] = useState(0);
   const STORES_CACHE_KEY = 'bufood:stores';
   const PRODUCTS_CACHE_KEY = 'bufood:products';
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -908,8 +931,16 @@ const HomePage = () => {
         title="Message"
         role="button"
         tabIndex={0}
-        onClick={() => navigate('/customer/messages')}
-        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') navigate('/customer/messages') }}
+        onClick={() => {
+          navigate('/customer/messages');
+          setUnreadMessages(0);
+        }}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            navigate('/customer/messages');
+            setUnreadMessages(0);
+          }
+        }}
         style={{
           position: 'fixed',
           right: 16,
@@ -929,6 +960,30 @@ const HomePage = () => {
         }}
       >
         <MdMessage size={22} />
+        {unreadMessages > 0 && (
+          <span
+            style={{
+              position: 'absolute',
+              top: -4,
+              right: -4,
+              minWidth: 22,
+              minHeight: 22,
+              padding: '2px 6px',
+              borderRadius: 999,
+              background: '#ef4444',
+              color: '#fff',
+              fontSize: 12,
+              fontWeight: 700,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: '0 4px 10px rgba(239,68,68,0.4)'
+            }}
+            aria-label={`${unreadMessages} unread messages`}
+          >
+            {unreadMessages > 99 ? '99+' : unreadMessages}
+          </span>
+        )}
       </div>
 
       </div>      {/* Bottom Navigation */}

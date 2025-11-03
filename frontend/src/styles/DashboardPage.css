@@ -219,43 +219,55 @@ body {
 /* Menu Toggle and Popup */
 .menu-toggle {
   position: absolute;
-  top: -10px;
-  right: -10px;
-  background: #f4f4f49f;
+  top: 14px;
+  right: 16px;
+  background: rgba(255, 255, 255, 0.85);
   border: none;
-  width: 60px;
-  height: 60px;
+  padding: 10px;
   display: flex;
-  border-radius: 25%;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   z-index: 10;
-  transition: all 0.3s ease;
-  box-shadow: 0 2px 20px rgba(0, 0, 0, 0.7);
+  border-radius: 999px;
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.18);
+  transition: background-color 0.18s ease;
+  touch-action: manipulation;
 }
 
-.menu-toggle:hover {
-  background: none;
-  transform: scale(1.1);
+.menu-toggle:active {
+  background-color: rgba(255, 255, 255, 0.65);
 }
 
 .menu-icon {
-  font-size: 30px;
+  font-size: 26px;
   color: #333;
   margin: 0;
 }
 
 .popup-menu {
   position: absolute;
-  top: 40px;
-  right: 40px;
+  top: 62px;
+  right: 16px;
   background: white;
   border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.429);
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.18);
   z-index: 100;
   min-width: 200px;
   overflow: hidden;
+  will-change: transform, opacity;
+  animation: menuPop 0.16s ease-out;
+}
+
+@keyframes menuPop {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 .menu-item {

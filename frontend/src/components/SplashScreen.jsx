@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from '../supabaseClient';
 import '../styles/SplashScreen.css';
 import logod from '../assets/logod.png';
 import delibup from '../assets/delibup.png';
@@ -16,6 +17,20 @@ const SplashScreen = () => {
   const [logoPosition, setLogoPosition] = useState('bottom');
 
   useEffect(() => {
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const { data } = await supabase.auth.getSession();
+        const user = data?.session?.user;
+        if (user && !cancelled) {
+          setIsVisible(false);
+          const role = user.user_metadata?.role || 'Customer';
+          navigate(role === 'Seller' ? '/seller/dashboard' : '/customer/home', { replace: true });
+        }
+      } catch (_) {}
+    })();
+
     // First stage: logo stays at bottom for 2s
     setTimeout(() => {
       setLogoPosition('center');
@@ -38,9 +53,10 @@ const SplashScreen = () => {
     }, 6300);
 
     return () => {
+      cancelled = true;
       // Cleanup timers if component unmounts
     };
-  }, []);
+  }, [navigate]);
 
   // Handle slide show
   useEffect(() => {
@@ -53,8 +69,17 @@ const SplashScreen = () => {
     }
   }, [showFinalContent]);
 
-  const handleGetStarted = () => {
+  const handleGetStarted = async () => {
     setIsVisible(false);
+    try {
+      const { data } = await supabase.auth.getSession();
+      const user = data?.session?.user;
+      if (user) {
+        const role = user.user_metadata?.role || 'Customer';
+        navigate(role === 'Seller' ? '/seller/dashboard' : '/customer/home', { replace: true });
+        return;
+      }
+    } catch (_) {}
     navigate('/login');
   };
 

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { store, order, auth } from '../api';
+import { store, order, auth, chat } from '../api';
 import { supabase } from '../supabaseClient';
 import '../styles/DashboardPage.css';
 import { 
@@ -43,11 +43,24 @@ const DashboardPage = () => {
   const navigate = useNavigate();
   const [ordersForChart, setOrdersForChart] = useState([]);
   const [cacheBuster, setCacheBuster] = useState('');
+  const [unreadMessages, setUnreadMessages] = useState(0);
 
   const appendCacheBuster = (url) => {
     if (!url) return url;
     if (!cacheBuster) return url;
     return url.includes('?') ? `${url}&_=${cacheBuster}` : `${url}?_=${cacheBuster}`;
+  };
+
+  const refreshUnreadMessages = async () => {
+    try {
+      const res = await chat.getConversations();
+      const payload = res.data || res;
+      const list = Array.isArray(payload) ? payload : (payload?.data || []);
+      const count = list.reduce((sum, convo) => sum + (Number(convo.unread) || 0), 0);
+      setUnreadMessages(count);
+    } catch (_) {
+      setUnreadMessages(0);
+    }
   };
 
   useEffect(() => {
@@ -69,6 +82,7 @@ const DashboardPage = () => {
     // Debounce initial call slightly to allow token/session to settle
     const initialTimer = setTimeout(() => {
       fetchStoreData({ showLoader: !hadCache });
+      refreshUnreadMessages();
     }, 300);
 
     // Defer orders fetching until after first paint/idle
@@ -132,6 +146,7 @@ const DashboardPage = () => {
     };
 
     const onFocus = () => smoothRefresh();
+    const onFocusUnread = () => refreshUnreadMessages();
     const onVisibility = () => {
       if (document.visibilityState === 'visible') {
         // Debounce to avoid double-calls on some browsers
@@ -155,12 +170,14 @@ const DashboardPage = () => {
     };
 
     window.addEventListener('focus', onFocus);
+    window.addEventListener('focus', onFocusUnread);
     document.addEventListener('visibilitychange', onVisibility);
     window.addEventListener('store-updated', onStoreUpdated);
     window.addEventListener('storage', onStorage);
     return () => {
       if (visibilityTimer) clearTimeout(visibilityTimer);
       window.removeEventListener('focus', onFocus);
+      window.removeEventListener('focus', onFocusUnread);
       document.removeEventListener('visibilitychange', onVisibility);
       window.removeEventListener('store-updated', onStoreUpdated);
       window.removeEventListener('storage', onStorage);
@@ -570,6 +587,30 @@ const DashboardPage = () => {
           }}
         >
           <MdMessage size={22} />
+          {unreadMessages > 0 && (
+            <span
+              style={{
+                position: 'absolute',
+                top: -4,
+                right: -4,
+                minWidth: 22,
+                minHeight: 22,
+                padding: '2px 6px',
+                borderRadius: 999,
+                background: '#ef4444',
+                color: '#fff',
+                fontSize: 12,
+                fontWeight: 700,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 4px 10px rgba(239,68,68,0.4)'
+              }}
+              aria-label={`${unreadMessages} unread messages`}
+            >
+              {unreadMessages > 99 ? '99+' : unreadMessages}
+            </span>
+          )}
         </div>
       </div>
     </div>

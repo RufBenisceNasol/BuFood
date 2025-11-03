@@ -21,7 +21,7 @@ const AddProductPage = () => {
     availability: 'Available',
     estimatedTime: '',
     shippingFee: '0',
-    stock: '0',
+    stock: '0'
   });
   const [selectedImage, setSelectedImage] = useState(null);
   const [previewUrl, setPreviewUrl] = useState('');
@@ -232,7 +232,7 @@ const AddProductPage = () => {
         availability: 'Available',
         estimatedTime: '',
         shippingFee: '0',
-        stock: '0',
+        stock: '0'
       });
       setVariants([]);
       setSelectedImage(null);
@@ -396,23 +396,6 @@ const AddProductPage = () => {
                 style={styles.input}
                 className="product-input"
                 placeholder="Enter stock quantity"
-              />
-            </div>
-
-            <div style={styles.inputGroup}>
-              <label htmlFor="discount" style={styles.label}>Discount (%):</label>
-              <input
-                type="number"
-                id="discount"
-                name="discount"
-                value={formData.discount}
-                onChange={handleInputChange}
-                min="0"
-                max="100"
-                step="1"
-                style={styles.input}
-                className="product-input"
-                placeholder="Enter discount percentage (0-100)"
               />
             </div>
 

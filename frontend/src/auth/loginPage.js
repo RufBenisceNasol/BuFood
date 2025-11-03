@@ -27,9 +27,19 @@ const LoginPage = () => {
 
     // Removed global onAuthStateChange auto-redirect to avoid delayed redirects
 
-    // Non-blocking warmup ping on mount to help wake sleeping servers
+    // On mount, hydrate remembered email preference and warm the API
     React.useEffect(() => {
         warmup();
+        try {
+            const remembered = localStorage.getItem('bufood:rememberMeEmail');
+            if (remembered) {
+                const parsed = JSON.parse(remembered);
+                if (parsed?.email) {
+                    setEmail(parsed.email);
+                    setRememberMe(true);
+                }
+            }
+        } catch (_) {}
     }, []);
 
     const handleSubmit = async (e) => {
@@ -62,7 +72,6 @@ const LoginPage = () => {
             return;
         }
 
-        console.log('Remember me value on submit:', rememberMe);
         try {
             // Clear any stale session before a new login attempt
             try { await supabase.auth.signOut(); } catch (_) {}
@@ -94,6 +103,14 @@ const LoginPage = () => {
                 // small grace delay for interceptors/guards
                 await new Promise(r => setTimeout(r, 300));
             } catch (_) {}
+
+            if (rememberMe) {
+                try {
+                    localStorage.setItem('bufood:rememberMeEmail', JSON.stringify({ email }));
+                } catch (_) {}
+            } else {
+                try { localStorage.removeItem('bufood:rememberMeEmail'); } catch (_) {}
+            }
 
             if (role === 'Seller') navigate('/seller/dashboard');
             else navigate('/customer/home');
