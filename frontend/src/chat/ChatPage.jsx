@@ -34,6 +34,18 @@ const ChatPage = ({ conversationId: propConversationId, recipientId: propRecipie
     return map;
   }, [meta]);
 
+  const lastSeenMessageId = useMemo(() => {
+    if (!Array.isArray(messages) || !meta?.self?.id) return null;
+    const selfId = String(meta.self.id);
+    let latestSeenId = null;
+    messages.forEach((msg) => {
+      if (msg && String(msg.senderId || '') === selfId && msg.seen && msg._id) {
+        latestSeenId = String(msg._id);
+      }
+    });
+    return latestSeenId;
+  }, [messages, meta?.self?.id]);
+
   const scrollToBottom = () => {
     const el = scrollRef.current;
     if (el) el.scrollTop = el.scrollHeight;
@@ -186,6 +198,8 @@ const ChatPage = ({ conversationId: propConversationId, recipientId: propRecipie
           const bubbleColor = mine ? '#ffffff' : '#000000';
           const attachmentsList = Array.isArray(m.attachments) ? m.attachments : [];
           const showUnreadDivider = m.type === 'system-divider-unread';
+          const isLastSeen = mine && m.seen && lastSeenMessageId && String(m._id || '') === lastSeenMessageId;
+          const timeLabel = m.createdAt ? new Date(m.createdAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) : '';
           if (showUnreadDivider) {
             return (
               <div key={`divider-${idx}`} style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#6b7280', fontSize: 12 }}>
@@ -238,16 +252,22 @@ const ChatPage = ({ conversationId: propConversationId, recipientId: propRecipie
                     {m.text && (
                       <div style={{ fontSize: 14, color: mine ? '#ffffff' : '#0f172a' }}>{m.text}</div>
                     )}
-                    <div style={{ fontSize: 11, color: mine ? 'rgba(255,255,255,0.7)' : '#6b7280', textAlign: 'right' }}>
-                      {new Date(m.createdAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}
+                    <div style={{ fontSize: 11, color: mine ? 'rgba(255,255,255,0.7)' : '#6b7280', textAlign: 'right', display: 'flex', justifyContent: 'flex-end', gap: 6 }}>
+                      <span>{timeLabel}</span>
+                      {isLastSeen && (
+                        <span style={{ fontWeight: 600 }}>{'Seen'}</span>
+                      )}
                     </div>
                   </div>
                 )}
                 {!attachmentsList.length && (
                   <>
                     <div style={{ fontSize: 14, lineHeight: 1.5 }}>{m.text}</div>
-                    <div style={{ fontSize: 11, color: mine ? 'rgba(255,255,255,0.7)' : '#6b7280', marginTop: 4, textAlign: 'right' }}>
-                      {new Date(m.createdAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}
+                    <div style={{ fontSize: 11, color: mine ? 'rgba(255,255,255,0.7)' : '#6b7280', marginTop: 4, textAlign: 'right', display: 'flex', justifyContent: 'flex-end', gap: 6 }}>
+                      <span>{timeLabel}</span>
+                      {isLastSeen && (
+                        <span style={{ fontWeight: 600 }}>{'Seen'}</span>
+                      )}
                     </div>
                   </>
                 )}

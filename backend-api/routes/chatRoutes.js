@@ -9,6 +9,7 @@ const Order = require('../models/orderModel');
 const multer = require('multer');
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
 const cloudinary = require('../utils/cloudinary');
+const { getOrCreatePairConversation } = require('../utils/chatConversation');
 
 const allowedImageFormats = ['jpg', 'jpeg', 'png', 'webp', 'gif', 'heic', 'heif'];
 
@@ -34,12 +35,6 @@ const chatImageUpload = multer({
     files: 1,
   },
 });
-
-// Helper: build stable participants key for 1:1 chats
-function buildParticipantsKey(a, b) {
-  const [x, y] = [String(a), String(b)].sort();
-  return `${x}_${y}`;
-}
 
 // GET /chat/conversations — fetch user's conversations
 router.get('/conversations', authenticateWithSupabase, async (req, res) => {
@@ -354,29 +349,17 @@ router.post('/messages', authenticateWithSupabase, async (req, res) => {
       if (!mongoose.Types.ObjectId.isValid(recipientId)) {
         return res.status(400).json({ success: false, message: 'Invalid recipient id' });
       }
-      const key = buildParticipantsKey(senderId, recipientId);
-      const convoFilter = { participantsKey: key };
-      if (orderId) {
-        convoFilter.orderId = orderId;
+
+      const { conversation: pairConversation } = await getOrCreatePairConversation(senderId, recipientId);
+      convo = pairConversation;
+
+      if (orderId && String(convo.orderId || '') !== String(orderId)) {
+        convo.orderId = String(orderId);
       }
-      convo = await Conversation.findOne(convoFilter);
-      if (!convo) {
-        try {
-          convo = await Conversation.create({
-            participants: [senderId, recipientId],
-            participantsKey: key,
-            orderId: orderId || null,
-            lastMessage: null,
-            unreadCounts: {},
-            createdBy: 'system'
-          });
-        } catch (createErr) {
-          if (createErr?.code === 11000) {
-            convo = await Conversation.findOne(convoFilter) || await Conversation.findOne({ participantsKey: key });
-          } else {
-            throw createErr;
-          }
-        }
+
+      if (!receiverId) {
+        const other = (convo.participants || []).find((p) => String(p) !== String(senderId));
+        receiverId = other || recipientId;
       }
     }
 
