@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "645876796047",
+    "project_id": "delinup-338e2",
+    "storage_bucket": "delinup-338e2.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:645876796047:android:14fe5d2e932d87d31afefa",
+        "android_client_info": {
+          "package_name": "com.bufoods.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAeCBvRAbZJdJbIJXpTBNkbrwbK7hJiaCc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
