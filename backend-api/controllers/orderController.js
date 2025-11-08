@@ -26,6 +26,76 @@ function buildParticipantsKey(a, b) {
   return `${x}_${y}`;
 }
 
+function normalizeObjectId(value) {
+  if (!value) {
+    throw new Error('normalizeObjectId expected a value');
+  }
+  if (value instanceof mongoose.Types.ObjectId) {
+    return value;
+  }
+  if (typeof value === 'string' && mongoose.Types.ObjectId.isValid(value)) {
+    return new mongoose.Types.ObjectId(value);
+  }
+  if (value._id) {
+    return normalizeObjectId(value._id);
+  }
+  const strValue = String(value);
+  if (mongoose.Types.ObjectId.isValid(strValue)) {
+    return new mongoose.Types.ObjectId(strValue);
+  }
+  throw new Error(`Invalid ObjectId value: ${value}`);
+}
+
+async function getOrCreateConversation(customerId, sellerId, session) {
+  const customerObjectId = normalizeObjectId(customerId);
+  const sellerObjectId = normalizeObjectId(sellerId);
+  const [a, b] = [String(customerObjectId), String(sellerObjectId)].sort();
+  const key = `${a}_${b}`;
+  const legacyKey = `${a}|${b}`;
+
+  let query = Conversation.findOne({ participantsKey: { $in: [key, legacyKey] } }).sort({ updatedAt: -1 });
+  if (session) query = query.session(session);
+  let conversation = await query;
+
+  if (!conversation) {
+    const payload = {
+      participants: [customerObjectId, sellerObjectId],
+      participantsKey: key,
+      unreadCounts: {},
+      createdBy: 'system'
+    };
+    if (session) {
+      const created = await Conversation.create([payload], { session });
+      conversation = Array.isArray(created) ? created[0] : created;
+    } else {
+      conversation = await Conversation.create(payload);
+    }
+    return { conversation, participantsKey: key };
+  }
+
+  let needsSave = false;
+  if (conversation.participantsKey !== key) {
+    conversation.participantsKey = key;
+    needsSave = true;
+  }
+
+  const participantIds = new Set((conversation.participants || []).map((p) => String(p)));
+  if (!participantIds.has(a) || !participantIds.has(b) || (conversation.participants || []).length !== 2) {
+    conversation.participants = [customerObjectId, sellerObjectId];
+    needsSave = true;
+  }
+
+  if (needsSave) {
+    if (session) {
+      await conversation.save({ session });
+    } else {
+      await conversation.save();
+    }
+  }
+
+  return { conversation, participantsKey: key };
+}
+
 // Helper function for consistent response structure
 const createResponse = (success, message, data = null, error = null) => ({
   success,
@@ -195,29 +265,17 @@ const createOrderFromCart = async (req, res) => {
 
       // Auto-create chat conversation and seed initial order summary message
       try {
-        const key = buildParticipantsKey(req.user._id, store.owner);
-        // Scope conversation to this orderId (unique pair-key + orderId)
-        let convo = await Conversation.findOne({ participantsKey: key, orderId: String(order._id) }).session(session);
-        if (!convo) {
-          convo = await Conversation.create([
-            {
-              participants: [req.user._id, store.owner],
-              participantsKey: key,
-              orderId: String(order._id),
-              unreadCounts: {},
-              createdBy: 'system'
-            }
-          ], { session });
-          // create() with array returns array
-          convo = Array.isArray(convo) ? convo[0] : convo;
-        }
+        const sellerObjectId = normalizeObjectId(store.owner);
+        const customerObjectId = normalizeObjectId(req.user._id);
+        const { conversation: convo } = await getOrCreateConversation(customerObjectId, sellerObjectId, session);
+        convo.orderId = String(order._id);
 
         const summaryText = `New order placed. Total: ₱${(order.totalAmount || 0).toFixed(2)} | Items: ${order.items?.length || 0} | Type: ${order.orderType}`;
         const msg = await Message.create([
           {
             conversationId: convo._id,
             senderId: req.user._id,
-            receiverId: store.owner,
+            receiverId: sellerObjectId,
             type: 'order',
             text: summaryText,
             orderRef: { orderId: String(order._id), summary: summaryText },
@@ -241,7 +299,7 @@ const createOrderFromCart = async (req, res) => {
           createdAt: createdMsg.createdAt,
           orderRef: { orderId: String(order._id), summary: summaryText }
         };
-        const sellerKey = String(store.owner);
+        const sellerKey = String(sellerObjectId);
         if (convo.unreadCounts instanceof Map) {
           const curr = Number(convo.unreadCounts.get(sellerKey) || 0);
           convo.unreadCounts.set(sellerKey, curr + 1);
@@ -646,24 +704,24 @@ const getOrderDetails = async (req, res) => {
 
 // Accept order (Seller only)
 const acceptOrder = async (req, res) => {
-const session = await mongoose.startSession();
-session.startTransaction();
+  const session = await mongoose.startSession();
+  session.startTransaction();
 
-try {
-  const { orderId } = req.params;
-  const { estimatedPreparationTime, note } = req.body;
-  const idempotencyKey = req.get('Idempotency-Key') || `order:${orderId}:accept`;
-  const requestId = randomUUID();
+  try {
+    const { orderId } = req.params;
+    const { estimatedPreparationTime, note } = req.body;
+    const idempotencyKey = req.get('Idempotency-Key') || `order:${orderId}:accept`;
+    const requestId = randomUUID();
 
-  // Check if user is authenticated and is a seller
-  if (!req.user || !req.user._id) {
-    return res.status(401).json(createResponse(
-      false,
-      'Authentication required',
-      null,
-      'User must be logged in to perform this action'
-    ));
-  }
+    // Check if user is authenticated and is a seller
+    if (!req.user || !req.user._id) {
+      return res.status(401).json(createResponse(
+        false,
+        'Authentication required',
+        null,
+        'User must be logged in to perform this action'
+      ));
+    }
 
     // Get the order
     const order = await Order.findById(orderId)
@@ -747,21 +805,8 @@ try {
     // Upsert conversation for this order between customer and seller
     const customerId = order.customer._id || order.customer; // populated or ObjectId
     const sellerId = order.seller; // ObjectId
-    const participants = [String(customerId), String(sellerId)].sort();
-    const participantsKey = participants.join('|');
-
-    let conversation = await Conversation.findOneAndUpdate(
-      { participantsKey, orderId: String(order._id) },
-      {
-        $setOnInsert: {
-          participants: [customerId, sellerId],
-          participantsKey,
-          orderId: String(order._id),
-          createdBy: 'system'
-        }
-      },
-      { new: true, upsert: true, session }
-    );
+    const { conversation } = await getOrCreateConversation(customerId, sellerId, session);
+    conversation.orderId = String(order._id);
 
     // Create idempotent system message summarizing the acceptance
     const orderSnapshot = {
@@ -803,24 +848,24 @@ try {
 
     // Update conversation lastMessage and unread count for customer
     const recipientKey = String(customerId);
-    const lastMessage = {
+    conversation.lastMessage = {
       id: systemMessage._id,
       text: systemMessage.text,
       type: 'system',
       senderId: null,
-      senderName: null,
+      senderName: order.store?.name || 'System',
       createdAt: systemMessage.createdAt,
-      orderRef: systemMessage.orderRef || null
+      orderRef: { orderId: String(order._id), summary: `Accepted • ₱${orderSnapshot.total}` }
     };
-    conversation = await Conversation.findOneAndUpdate(
-      { _id: conversation._id },
-      {
-        $set: { lastMessage },
-        $inc: { [`unreadCounts.${recipientKey}`]: 1 },
-        $currentDate: { updatedAt: true }
-      },
-      { new: true, session }
-    );
+    if (conversation.unreadCounts instanceof Map) {
+      const current = Number(conversation.unreadCounts.get(recipientKey) || 0);
+      conversation.unreadCounts.set(recipientKey, current + 1);
+    } else {
+      conversation.unreadCounts = conversation.unreadCounts || {};
+      const current = Number(conversation.unreadCounts[recipientKey] || 0);
+      conversation.unreadCounts[recipientKey] = current + 1;
+    }
+    await conversation.save({ session });
 
     // Commit the transaction
     await session.commitTransaction();
@@ -1230,27 +1275,17 @@ const createDirectOrder = async (req, res) => {
 
       // Auto-create chat conversation and seed initial order summary message (direct order)
       try {
-        const key = buildParticipantsKey(req.user._id, store.owner);
-        let convo = await Conversation.findOne({ participantsKey: key, orderId: String(order._id) }).session(session);
-        if (!convo) {
-          convo = await Conversation.create([
-            {
-              participants: [req.user._id, store.owner],
-              participantsKey: key,
-              orderId: String(order._id),
-              unreadCounts: {},
-              createdBy: 'system'
-            }
-          ], { session });
-          convo = Array.isArray(convo) ? convo[0] : convo;
-        }
+        const sellerObjectId = normalizeObjectId(store.owner);
+        const customerObjectId = normalizeObjectId(req.user._id);
+        const { conversation: convo } = await getOrCreateConversation(customerObjectId, sellerObjectId, session);
+        convo.orderId = String(order._id);
 
         const summaryText = `New order placed. Total: ₱${(order.totalAmount || 0).toFixed(2)} | Items: ${order.items?.length || 0} | Type: ${order.orderType}`;
         const msg = await Message.create([
           {
             conversationId: convo._id,
             senderId: req.user._id,
-            receiverId: store.owner,
+            receiverId: sellerObjectId,
             type: 'order',
             text: summaryText,
             orderRef: { orderId: String(order._id), summary: summaryText },
@@ -1273,7 +1308,7 @@ const createDirectOrder = async (req, res) => {
           createdAt: createdMsg.createdAt,
           orderRef: { orderId: String(order._id), summary: summaryText }
         };
-        const sellerKey = String(store.owner);
+        const sellerKey = String(sellerObjectId);
         if (convo.unreadCounts instanceof Map) {
           const curr = Number(convo.unreadCounts.get(sellerKey) || 0);
           convo.unreadCounts.set(sellerKey, curr + 1);
@@ -1283,8 +1318,8 @@ const createDirectOrder = async (req, res) => {
           convo.unreadCounts[sellerKey] = curr + 1;
         }
         await convo.save({ session });
-      } catch (_) {
-        // ignore chat seeding errors
+      } catch (e) {
+        console.error('Failed to seed chat conversation for direct order:', e);
       }
     }
 
