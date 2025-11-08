@@ -23,6 +23,8 @@ import {
 import { ArrowBack, DeleteForever, Logout, Notifications, DarkMode, Visibility, VisibilityOff } from '@mui/icons-material';
 import { auth } from '../api';
 import { getToken, getUser } from '../utils/tokenUtils';
+import { supabase } from '../supabaseClient';
+import { initPushNotifications } from '../utils/pushNotifications';
 
 const SellerSettingsPage = () => {
   const navigate = useNavigate();
@@ -34,6 +36,7 @@ const SellerSettingsPage = () => {
   const [deleting, setDeleting] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
+  const [supabaseUser, setSupabaseUser] = useState(null);
   const confirmInputRef = useRef(null);
   const CONFIRM_KEYWORD = 'DELETE';
   const isKeywordValid = (text) => (text || '').trim().toUpperCase() === CONFIRM_KEYWORD.toUpperCase();
@@ -44,8 +47,12 @@ const SellerSettingsPage = () => {
   useEffect(() => {
     const init = async () => {
       try {
-        const token = getToken();
-        if (!token) {
+        const { data } = await supabase.auth.getSession();
+        const session = data?.session || null;
+        setSupabaseUser(session?.user || null);
+        const supabaseToken = session?.access_token || null;
+        const legacyToken = getToken();
+        if (!supabaseToken && !legacyToken) {
           navigate('/login');
           return;
         }
@@ -164,10 +171,23 @@ const SellerSettingsPage = () => {
             <Switch
               edge="end"
               checked={notificationsEnabled}
-              onChange={() => {
+              onChange={async () => {
                 const next = !notificationsEnabled;
                 setNotificationsEnabled(next);
                 localStorage.setItem('notifications', next.toString());
+
+                if (next) {
+                  try {
+                    const targetId = supabaseUser?.id || user?.supabaseId || user?.supabase_id || user?.id;
+                    if (!targetId) throw new Error('Missing user information for push notifications');
+                    await initPushNotifications(targetId);
+                  } catch (err) {
+                    console.error('Notification permission request failed:', err);
+                    setNotificationsEnabled(false);
+                    localStorage.setItem('notifications', 'false');
+                    setError(err?.message || 'Unable to enable notifications on this device.');
+                  }
+                }
               }}
               sx={{
                 '& .MuiSwitch-switchBase.Mui-checked': { color: '#FF8C00', '&:hover': { backgroundColor: 'rgba(255, 140, 0, 0.08)' } },

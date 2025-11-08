@@ -183,9 +183,10 @@ const RegisterPage = () => {
                 throw new Error('Failed to get Supabase user ID after verification');
             }
 
-            // Ensure role and profile metadata are set on the Supabase user
+            // Ensure password + role/profile metadata are set on the Supabase user
             try {
               await supabase.auth.updateUser({
+                password: formData.password,
                 data: {
                   role: formData.role,
                   name: formData.name,
@@ -193,7 +194,8 @@ const RegisterPage = () => {
                 }
               });
             } catch (metaErr) {
-              console.warn('Failed to set user metadata (role/name/contact):', metaErr);
+              console.warn('Failed to set password/metadata:', metaErr);
+              throw metaErr;
             }
 
             // Create the user in our backend with Supabase ID

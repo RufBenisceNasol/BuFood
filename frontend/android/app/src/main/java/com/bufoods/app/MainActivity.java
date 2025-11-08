@@ -1,11 +1,34 @@
 package com.bufoods.app;
 
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.os.Build;
+import android.os.Bundle;
 import android.os.Handler;
 import android.widget.Toast;
 import com.getcapacitor.BridgeActivity;
 
 public class MainActivity extends BridgeActivity {
     private boolean doubleBackToExitPressedOnce = false;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        // ...existing code...
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationChannel channel = new NotificationChannel(
+                "messages",
+                "Chat Messages",
+                NotificationManager.IMPORTANCE_HIGH
+            );
+            channel.enableVibration(true);
+            NotificationManager manager = getSystemService(NotificationManager.class);
+            if (manager != null) {
+                manager.createNotificationChannel(channel);
+            }
+        }
+    }
 
     @Override
     public void onBackPressed() {

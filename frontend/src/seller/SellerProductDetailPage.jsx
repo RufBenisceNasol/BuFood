@@ -10,6 +10,7 @@ import styled from 'styled-components';
 
 const ScrollableContent = styled.div`
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
@@ -360,9 +361,12 @@ const SellerProductDetailPage = () => {
 const styles = {
     mainContainer: {
         backgroundColor: '#f7f7f7',
+        height: '100vh',
         minHeight: '100vh',
         width: '100%',
         position: 'relative',
+        display: 'flex',
+        flexDirection: 'column',
     },
     header: {
         backgroundColor: '#ff8c00e0',

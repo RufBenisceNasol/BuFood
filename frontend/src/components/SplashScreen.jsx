@@ -15,6 +15,7 @@ const SplashScreen = () => {
   const [showFinalContent, setShowFinalContent] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [logoPosition, setLogoPosition] = useState('bottom');
+  const [pendingRedirect, setPendingRedirect] = useState(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -24,9 +25,8 @@ const SplashScreen = () => {
         const { data } = await supabase.auth.getSession();
         const user = data?.session?.user;
         if (user && !cancelled) {
-          setIsVisible(false);
           const role = user.user_metadata?.role || 'Customer';
-          navigate(role === 'Seller' ? '/seller/dashboard' : '/customer/home', { replace: true });
+          setPendingRedirect(role === 'Seller' ? '/seller/dashboard' : '/customer/home');
         }
       } catch (_) {}
     })();
@@ -69,17 +69,28 @@ const SplashScreen = () => {
     }
   }, [showFinalContent]);
 
+  useEffect(() => {
+    if (showFinalContent && pendingRedirect) {
+      const timer = setTimeout(() => {
+        setIsVisible(false);
+        navigate(pendingRedirect, { replace: true });
+      }, 1200);
+      return () => clearTimeout(timer);
+    }
+  }, [showFinalContent, pendingRedirect, navigate]);
+
   const handleGetStarted = async () => {
-    setIsVisible(false);
     try {
       const { data } = await supabase.auth.getSession();
       const user = data?.session?.user;
       if (user) {
         const role = user.user_metadata?.role || 'Customer';
+        setIsVisible(false);
         navigate(role === 'Seller' ? '/seller/dashboard' : '/customer/home', { replace: true });
         return;
       }
     } catch (_) {}
+    setIsVisible(false);
     navigate('/login');
   };
 

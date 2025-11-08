@@ -6,6 +6,7 @@ import './App.css'
 import { supabase } from './supabaseClient'
 import ProtectedRoute, { SellerRoute, CustomerRoute } from './components/ProtectedRoute'
 import useSupabaseAxiosSync from './hooks/useSupabaseAxiosSync'
+import { initPushNotifications } from './utils/pushNotifications'
 
 // Lazy-loaded routes (code splitting)
 const LoginPage = lazy(() => import('./auth/loginPage'))
@@ -61,27 +62,44 @@ const SellerLayout = ({ children }) => (
 
 function App() {
   useSupabaseAxiosSync();
+  const pushInitRef = React.useRef(null);
+
+  const maybeInitPush = React.useCallback((session) => {
+    const userId = session?.user?.id;
+    if (!userId) return;
+    if (pushInitRef.current === userId) return;
+    pushInitRef.current = userId;
+    initPushNotifications(userId).catch((err) => {
+      console.warn('Push notification init failed:', err);
+    });
+  }, []);
   // Keep token updated automatically
   React.useEffect(() => {
     // Seed current token on first load
     (async () => {
       try {
         const { data } = await supabase.auth.getSession();
-        const tok = data?.session?.access_token;
+        const session = data?.session;
+        const tok = session?.access_token;
         if (tok) localStorage.setItem('access_token', tok);
+        if (session) {
+          maybeInitPush(session);
+        }
       } catch {}
     })();
     const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
       if (session?.access_token) {
         localStorage.setItem('access_token', session.access_token)
+        maybeInitPush(session)
       } else {
         localStorage.removeItem('access_token')
+        pushInitRef.current = null
       }
     })
     return () => {
       sub?.subscription?.unsubscribe?.()
     }
-  }, [])
+  }, [maybeInitPush])
   return (
     <div className="app-container">
       <Router>
