@@ -1,7 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { auth } from '../api';
 import { getToken, getUser } from '../utils/tokenUtils';
+import { supabase } from '../supabaseClient';
+
 import {
   Container,
   Box,
@@ -20,26 +22,46 @@ import {
   CircularProgress,
   Alert
 } from '@mui/material';
-import {
-  ArrowBack,
-  Person,
-  Lock,
-  Notifications,
-  Help,
-  ExitToApp,
-  Edit,
-  LocationOn,
-  Phone,
-  ChevronRight,
-  DarkMode
-} from '@mui/icons-material';
+import { ArrowBack, Notifications, ExitToApp, Edit } from '@mui/icons-material';
+
+const deriveUserFromSession = (sessionUser, defaultRole = 'Customer') => {
+  if (!sessionUser) {
+    return { role: defaultRole };
+  }
+  const metadata = sessionUser.user_metadata || {};
+  const email = sessionUser.email || metadata.email || '';
+  const nameFromMetadata = metadata.name || metadata.fullName || metadata.username;
+  const fallbackName = email ? email.split('@')[0] : defaultRole;
+  return {
+    supabaseId: sessionUser.id,
+    role: metadata.role || defaultRole,
+    email,
+    name: nameFromMetadata || fallbackName || defaultRole,
+    profileImage: metadata.profileImage || metadata.avatar_url || metadata.picture || null,
+    contactNumber: metadata.contactNumber || metadata.phone || metadata.phoneNumber || ''
+  };
+};
+
+const mergeUserProfile = (primary = {}, sessionUser, defaultRole = 'Customer') => {
+  const sessionDerived = deriveUserFromSession(sessionUser, defaultRole);
+  const merged = { ...sessionDerived, ...primary };
+  merged.supabaseId = primary.supabaseId || primary.supabase_id || sessionDerived.supabaseId || null;
+  merged.email = primary.email || sessionDerived.email || '';
+  merged.name = primary.name || sessionDerived.name || (merged.email ? merged.email.split('@')[0] : defaultRole);
+  merged.profileImage = primary.profileImage || primary.image || sessionDerived.profileImage || null;
+  merged.contactNumber = primary.contactNumber || primary.phone || primary.phoneNumber || sessionDerived.contactNumber || '';
+  merged.role = primary.role || sessionDerived.role || defaultRole;
+  return merged;
+};
 
 const SettingsPage = () => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [darkMode, setDarkMode] = useState(false);
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
+  const [notificationsBusy, setNotificationsBusy] = useState(false);
+  const [supabaseUser, setSupabaseUser] = useState(null);
+
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -47,31 +69,35 @@ const SettingsPage = () => {
       try {
         setLoading(true);
         
-        // Check if user is logged in by looking at localStorage token
+        // Check Supabase session and legacy token
+        const { data } = await supabase.auth.getSession();
+        const session = data?.session || null;
+        const sessionUser = session?.user || null;
+        setSupabaseUser(sessionUser);
+        const supabaseToken = session?.access_token || null;
         const token = getToken();
         
-        if (!token) {
-          // If no token, redirect to login
+        if (!supabaseToken && !token) {
           navigate('/login');
           return;
         }
         
         // Get user preferences from localStorage or set defaults
-        const savedDarkMode = localStorage.getItem('darkMode') === 'true';
         const savedNotifications = localStorage.getItem('notifications') !== 'false';
         
-        setDarkMode(savedDarkMode);
         setNotificationsEnabled(savedNotifications);
         
         // Get user data from API using auth.getMe instead of userApi
         try {
           const userData = await auth.getMe();
-          setUser(userData.user || userData);
+          const backendUser = userData?.user || userData || {};
+          setUser(mergeUserProfile(backendUser, sessionUser, 'Customer'));
         } catch (err) {
           console.error('Failed to fetch user data:', err);
           // Fallback to localStorage user
           const localUser = getUser() || {};
-          setUser(localUser);
+          const resolved = mergeUserProfile(localUser, sessionUser, 'Customer');
+          setUser(Object.keys(resolved).length ? resolved : null);
         }
         
       } catch (err) {
@@ -110,27 +136,28 @@ const SettingsPage = () => {
     navigate('/customer/change-password');
   };
 
-  const handleToggleDarkMode = () => {
-    const newValue = !darkMode;
-    setDarkMode(newValue);
-    localStorage.setItem('darkMode', newValue.toString());
-    // Apply dark mode to the app (implementation depends on your app's theme system)
-  };
-
   const handleToggleNotifications = async () => {
     const newValue = !notificationsEnabled;
-    if (newValue) {
-      // Attempt to enable: request permission first
-      const result = await requestNotificationPermission();
-      if (!result.ok) {
-        setError(result.reason || 'Notifications permission was not granted.');
-        setNotificationsEnabled(false);
-        localStorage.setItem('notifications', 'false');
-        return;
+    setNotificationsBusy(true);
+    setError('');
+    try {
+      if (newValue) {
+        // Attempt to enable: request permission first
+        const result = await requestNotificationPermission();
+        if (!result.ok) {
+          throw new Error(result.reason || 'Notifications permission was not granted.');
+        }
       }
+      setNotificationsEnabled(newValue);
+      localStorage.setItem('notifications', newValue.toString());
+    } catch (err) {
+      console.error('Notification toggle failed:', err);
+      setNotificationsEnabled(false);
+      localStorage.setItem('notifications', 'false');
+      setError(err?.message || 'Unable to update notification settings.');
+    } finally {
+      setNotificationsBusy(false);
     }
-    setNotificationsEnabled(newValue);
-    localStorage.setItem('notifications', newValue.toString());
   };
 
   const handleGetHelp = () => {
@@ -142,6 +169,11 @@ const SettingsPage = () => {
     await auth.logout();
     navigate('/login');
   };
+
+  const avatarProps = useMemo(() => {
+    const profileImage = user?.profileImage || null;
+    return profileImage ? { src: profileImage } : {};
+  }, [user]);
 
   if (loading) {
     return (
@@ -185,6 +217,7 @@ const SettingsPage = () => {
         }}
       >
         <Avatar 
+          {...avatarProps}
           sx={{ 
             width: 64, 
             height: 64, 
@@ -193,7 +226,7 @@ const SettingsPage = () => {
             mr: 2
           }}
         >
-          {user?.name?.charAt(0) || 'U'}
+          {(!avatarProps.src && user?.name?.charAt(0)) || 'U'}
         </Avatar>
         <Box sx={{ flexGrow: 1 }}>
           <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
@@ -210,7 +243,6 @@ const SettingsPage = () => {
           <Edit />
         </IconButton>
       </Paper>
-
 
       <Typography 
         variant="h6" 
@@ -241,6 +273,7 @@ const SettingsPage = () => {
               <Switch
                 edge="end"
                 checked={notificationsEnabled}
+                disabled={notificationsBusy || (!supabaseUser && !getToken())}
                 onChange={handleToggleNotifications}
                 sx={{
                   '& .MuiSwitch-switchBase.Mui-checked': {

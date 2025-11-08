@@ -20,11 +20,41 @@ import {
   ListItemText,
   Switch
 } from '@mui/material';
-import { ArrowBack, DeleteForever, Logout, Notifications, DarkMode, Visibility, VisibilityOff } from '@mui/icons-material';
+import { ArrowBack, DeleteForever, Logout, Notifications, Visibility, VisibilityOff } from '@mui/icons-material';
 import { auth } from '../api';
 import { getToken, getUser } from '../utils/tokenUtils';
 import { supabase } from '../supabaseClient';
 import { initPushNotifications } from '../utils/pushNotifications';
+
+const deriveUserFromSession = (sessionUser, defaultRole = 'Seller') => {
+  if (!sessionUser) {
+    return { role: defaultRole };
+  }
+  const metadata = sessionUser.user_metadata || {};
+  const email = sessionUser.email || metadata.email || '';
+  const nameFromMetadata = metadata.name || metadata.fullName || metadata.username;
+  const fallbackName = email ? email.split('@')[0] : defaultRole;
+  return {
+    supabaseId: sessionUser.id,
+    role: metadata.role || defaultRole,
+    email,
+    name: nameFromMetadata || fallbackName || defaultRole,
+    profileImage: metadata.profileImage || metadata.avatar_url || metadata.picture || null,
+    contactNumber: metadata.contactNumber || metadata.phone || metadata.phoneNumber || ''
+  };
+};
+
+const mergeUserProfile = (primary = {}, sessionUser, defaultRole = 'Seller') => {
+  const sessionDerived = deriveUserFromSession(sessionUser, defaultRole);
+  const merged = { ...sessionDerived, ...primary };
+  merged.supabaseId = primary.supabaseId || primary.supabase_id || sessionDerived.supabaseId || null;
+  merged.email = primary.email || sessionDerived.email || '';
+  merged.name = primary.name || sessionDerived.name || (merged.email ? merged.email.split('@')[0] : defaultRole);
+  merged.profileImage = primary.profileImage || primary.image || sessionDerived.profileImage || null;
+  merged.contactNumber = primary.contactNumber || primary.phone || primary.phoneNumber || sessionDerived.contactNumber || '';
+  merged.role = primary.role || sessionDerived.role || defaultRole;
+  return merged;
+};
 
 const SellerSettingsPage = () => {
   const navigate = useNavigate();
@@ -34,8 +64,8 @@ const SellerSettingsPage = () => {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [confirmText, setConfirmText] = useState('');
   const [deleting, setDeleting] = useState(false);
-  const [darkMode, setDarkMode] = useState(false);
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
+  const [notificationsBusy, setNotificationsBusy] = useState(false);
   const [supabaseUser, setSupabaseUser] = useState(null);
   const confirmInputRef = useRef(null);
   const CONFIRM_KEYWORD = 'DELETE';
@@ -44,12 +74,25 @@ const SellerSettingsPage = () => {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
 
+  const requestNotificationPermission = async () => {
+    try {
+      if (typeof window === 'undefined' || !('Notification' in window)) {
+        return { ok: false, reason: 'Notifications are not supported in this environment.' };
+      }
+      const permission = await Notification.requestPermission();
+      return { ok: permission === 'granted', permission };
+    } catch (e) {
+      return { ok: false, reason: 'Failed to request notification permission.' };
+    }
+  };
+
   useEffect(() => {
     const init = async () => {
       try {
         const { data } = await supabase.auth.getSession();
         const session = data?.session || null;
-        setSupabaseUser(session?.user || null);
+        const sessionUser = session?.user || null;
+        setSupabaseUser(sessionUser);
         const supabaseToken = session?.access_token || null;
         const legacyToken = getToken();
         if (!supabaseToken && !legacyToken) {
@@ -58,13 +101,14 @@ const SellerSettingsPage = () => {
         }
         try {
           const me = await auth.getMe();
-          setUser(me.user || me);
+          const backendUser = me?.user || me || {};
+          setUser(mergeUserProfile(backendUser, sessionUser, 'Seller'));
         } catch (e) {
-          setUser(getUser() || null);
+          const fallbackUser = getUser() || {};
+          const resolved = mergeUserProfile(fallbackUser, sessionUser, 'Seller');
+          setUser(Object.keys(resolved).length ? resolved : null);
         }
-        const savedDarkMode = localStorage.getItem('darkMode') === 'true';
         const savedNotifications = localStorage.getItem('notifications') !== 'false';
-        setDarkMode(savedDarkMode);
         setNotificationsEnabled(savedNotifications);
       } catch (e) {
         setError('Failed to load account');
@@ -171,40 +215,36 @@ const SellerSettingsPage = () => {
             <Switch
               edge="end"
               checked={notificationsEnabled}
+              disabled={notificationsBusy || (!supabaseUser && !(user?.supabaseId || user?.supabase_id))}
               onChange={async () => {
                 const next = !notificationsEnabled;
-                setNotificationsEnabled(next);
-                localStorage.setItem('notifications', next.toString());
+                setNotificationsBusy(true);
+                setError('');
+                try {
+                  if (next) {
+                    const supportsBrowserNotifications = typeof window !== 'undefined' && 'Notification' in window;
+                    if (supportsBrowserNotifications) {
+                      const permission = await requestNotificationPermission();
+                      if (!permission.ok) {
+                        throw new Error(permission.reason || 'Notifications permission was not granted.');
+                      }
+                    }
 
-                if (next) {
-                  try {
                     const targetId = supabaseUser?.id || user?.supabaseId || user?.supabase_id || user?.id;
                     if (!targetId) throw new Error('Missing user information for push notifications');
                     await initPushNotifications(targetId);
-                  } catch (err) {
-                    console.error('Notification permission request failed:', err);
-                    setNotificationsEnabled(false);
-                    localStorage.setItem('notifications', 'false');
-                    setError(err?.message || 'Unable to enable notifications on this device.');
                   }
+
+                  setNotificationsEnabled(next);
+                  localStorage.setItem('notifications', next.toString());
+                } catch (err) {
+                  console.error('Notification permission request failed:', err);
+                  setNotificationsEnabled(false);
+                  localStorage.setItem('notifications', 'false');
+                  setError(err?.message || 'Unable to enable notifications on this device.');
+                } finally {
+                  setNotificationsBusy(false);
                 }
-              }}
-              sx={{
-                '& .MuiSwitch-switchBase.Mui-checked': { color: '#FF8C00', '&:hover': { backgroundColor: 'rgba(255, 140, 0, 0.08)' } },
-                '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': { backgroundColor: '#FF8C00' },
-              }}
-            />
-          </ListItem>
-          <ListItem>
-            <ListItemIcon><DarkMode sx={{ color: '#FF8C00' }} /></ListItemIcon>
-            <ListItemText primary="Dark Mode" />
-            <Switch
-              edge="end"
-              checked={darkMode}
-              onChange={() => {
-                const next = !darkMode;
-                setDarkMode(next);
-                localStorage.setItem('darkMode', next.toString());
               }}
               sx={{
                 '& .MuiSwitch-switchBase.Mui-checked': { color: '#FF8C00', '&:hover': { backgroundColor: 'rgba(255, 140, 0, 0.08)' } },

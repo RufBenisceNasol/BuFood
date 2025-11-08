@@ -67,6 +67,11 @@ const userSchema = new mongoose.Schema({
         type: String,
         default: ''
     },
+    pushTokens: [{
+        token: { type: String, required: true },
+        platform: { type: String, enum: ['android', 'ios', 'web', 'unknown'], default: 'unknown' },
+        lastRegisteredAt: { type: Date, default: Date.now }
+    }],
     // Authentication method tracking
     authMethod: {
         type: String,
