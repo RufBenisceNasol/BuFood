@@ -17,15 +17,22 @@ public class MainActivity extends BridgeActivity {
         // ...existing code...
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            NotificationChannel channel = new NotificationChannel(
-                "messages",
-                "Chat Messages",
-                NotificationManager.IMPORTANCE_HIGH
-            );
-            channel.enableVibration(true);
-            NotificationManager manager = getSystemService(NotificationManager.class);
-            if (manager != null) {
-                manager.createNotificationChannel(channel);
+            try {
+                NotificationManager manager = getSystemService(NotificationManager.class);
+                if (manager != null) {
+                    NotificationChannel channel = new NotificationChannel(
+                        "messages",
+                        "Chat Messages",
+                        NotificationManager.IMPORTANCE_HIGH
+                    );
+                    channel.enableVibration(true);
+                    manager.createNotificationChannel(channel);
+                } else {
+                    // Log or handle the case where NotificationManager is null
+                    System.err.println("NotificationManager is null");
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
             }
         }
     }

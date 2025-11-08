@@ -19,6 +19,7 @@ try {
 }
 const { randomUUID } = require('crypto');
 const { mapToSupabaseId } = require('../helpers/idMapper');
+const { sendPushToUser } = require('../utils/pushService');
 
 // Build a stable participants key for 1:1 chats (customer-seller)
 function buildParticipantsKey(a, b) {
@@ -188,6 +189,7 @@ const createOrderFromCart = async (req, res) => {
     }, {});
 
     const orders = [];
+    const pushNotifications = [];
 
     // Create an order for each store
     for (const [storeId, items] of Object.entries(itemsByStore)) {
@@ -309,6 +311,20 @@ const createOrderFromCart = async (req, res) => {
           convo.unreadCounts[sellerKey] = curr + 1;
         }
         await convo.save({ session });
+
+        const notificationBody = summaryText.slice(0, 200);
+        pushNotifications.push({
+          userId: sellerObjectId,
+          notification: {
+            title: 'New order received',
+            body: notificationBody || 'You have a new order.',
+          },
+          data: {
+            type: 'order_created',
+            orderId: String(order._id),
+            conversationId: String(convo._id),
+          },
+        });
       } catch (e) {
         // Do not fail order creation if chat seeding fails
       }
@@ -329,6 +345,17 @@ const createOrderFromCart = async (req, res) => {
 
     // Commit the transaction
     await session.commitTransaction();
+
+    if (pushNotifications.length) {
+      await Promise.allSettled(pushNotifications.map((job) =>
+        sendPushToUser(String(job.userId), {
+          notification: job.notification,
+          data: job.data,
+        }).catch((err) => {
+          console.error('[Order] push to seller failed:', err);
+        })
+      ));
+    }
 
     res.status(201).json(createResponse(
       true,
@@ -901,6 +928,21 @@ const acceptOrder = async (req, res) => {
     // Legacy alias
     emitToUser(customerRoom, 'new_message', autoMessage);
     emitToUser(sellerRoom, 'new_message', autoMessage);
+
+    // Send push notification to customer after acceptance
+    sendPushToUser(String(customerId), {
+      notification: {
+        title: `${order.store?.name || 'Seller'} accepted your order`,
+        body: sysText.slice(0, 200) || 'Your order status has been updated.',
+      },
+      data: {
+        type: 'order_accepted',
+        orderId: String(order._id),
+        conversationId: String(conversation._id),
+      },
+    }).catch((err) => {
+      console.error('[Order] push to customer failed:', err);
+    });
 
     // Prepare success response with enriched details
     return res.status(200).json({

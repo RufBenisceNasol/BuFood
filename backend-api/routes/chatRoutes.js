@@ -10,6 +10,7 @@ const multer = require('multer');
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
 const cloudinary = require('../utils/cloudinary');
 const { getOrCreatePairConversation } = require('../utils/chatConversation');
+const { sendPushToUser } = require('../utils/pushService');
 
 const allowedImageFormats = ['jpg', 'jpeg', 'png', 'webp', 'gif', 'heic', 'heif'];
 
@@ -412,6 +413,34 @@ router.post('/messages', authenticateWithSupabase, async (req, res) => {
     }
 
     await convo.save();
+
+    if (receiverId && String(receiverId) !== String(senderId)) {
+      const notificationTitle = `${req.user?.name || 'New message'}`;
+      let preview = '';
+      if (message.type === 'image') {
+        preview = message.text ? message.text : 'Sent an image';
+      } else if (message.type === 'system') {
+        preview = message.text || 'You have a new update';
+      } else {
+        preview = message.text || 'You have a new message';
+      }
+      const notificationBody = preview.slice(0, 200) || 'You have a new message';
+
+      sendPushToUser(receiverId, {
+        notification: {
+          title: notificationTitle,
+          body: notificationBody,
+        },
+        data: {
+          conversationId: String(convo._id),
+          messageId: String(message._id),
+          type: message.type,
+          senderId: String(senderId),
+        },
+      }).catch((err) => {
+        console.error('[Chat] push notification failed:', err);
+      });
+    }
 
     const convoData = convo.toObject();
     res.status(201).json({ success: true, data: { message: messageData, conversation: convoData } });
