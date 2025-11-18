@@ -310,6 +310,8 @@ const HomePage = () => {
     setFilteredProducts(result);
   }, [searchQuery, filters, allProducts]);
 
+  const isSearching = searchQuery.trim() !== '';
+
   const USE_BOOTSTRAP = (import.meta.env?.VITE_USE_BOOTSTRAP === 'true');
 
   const fetchData = async ({ showLoader = true } = {}) => {
@@ -752,120 +754,124 @@ const HomePage = () => {
             </div>
           )}
 
-          {/* Banner/Promotional Slider */}
-          <div style={{ ...styles.bannerContainer }}>
-            {dedupedStores.length > 0 ? (
-              <Slider {...sliderSettings}>
-                {dedupedStores.map(store => (
-                  <div key={store._id} style={styles.slide}>
-                    <div 
-                      style={{
-                        ...styles.banner,
-                        height: '28vw',
-                        minHeight: 140,
-                        maxHeight: 240
-                      }}
-                      onClick={() => handleStoreClick(store._id)}
-                    >
-                      <img 
-                        src={store.bannerImage || 'https://i.ibb.co/qkGWKQX/pizza-promotion.jpg'} 
-                        alt={store.storeName} 
-                        style={styles.bannerImage}
-                        loading="lazy"
-                      />
-                      <div style={styles.bannerGradient}></div>
-                      <div style={styles.bannerContent}>
-                        <div>
-                          <h2 style={styles.storeName}>{store.storeName}</h2>
-                          {store.description && (
-                            <p style={styles.storeDescription}>{store.description}</p>
+          {!isSearching && (
+            <>
+              {/* Banner/Promotional Slider */}
+              <div style={{ ...styles.bannerContainer }}>
+                {dedupedStores.length > 0 ? (
+                  <Slider {...sliderSettings}>
+                    {dedupedStores.map(store => (
+                      <div key={store._id} style={styles.slide}>
+                        <div 
+                          style={{
+                            ...styles.banner,
+                            height: '28vw',
+                            minHeight: 140,
+                            maxHeight: 240
+                          }}
+                          onClick={() => handleStoreClick(store._id)}
+                        >
+                          <img 
+                            src={store.bannerImage || 'https://i.ibb.co/qkGWKQX/pizza-promotion.jpg'} 
+                            alt={store.storeName} 
+                            style={styles.bannerImage}
+                            loading="lazy"
+                          />
+                          <div style={styles.bannerGradient}></div>
+                          <div style={styles.bannerContent}>
+                            <div>
+                              <h2 style={styles.storeName}>{store.storeName}</h2>
+                              {store.description && (
+                                <p style={styles.storeDescription}>{store.description}</p>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </Slider>
+                ) : (
+                  <div style={{ ...styles.placeholderBanner, height: '28vw', minHeight: 140, maxHeight: 240 }}>
+                    <img 
+                      src="https://i.ibb.co/qkGWKQX/pizza-promotion.jpg" 
+                      alt="Welcome to BuFood" 
+                      style={styles.bannerImage}
+                      loading="lazy"
+                    />
+                    <div style={styles.bannerGradient}></div>
+                    <div style={styles.bannerContent}>
+                      <div>
+                        <h2 style={styles.storeName}>Welcome to BuFood</h2>
+                        <p style={styles.storeDescription}>No stores available at the moment.</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Popular Section */}
+              <div className="sectionContainer">
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <h2 className="sectionTitle" style={{ margin: 0 }}>Popular</h2>
+                  <button onClick={() => {
+                    const el = document.getElementById('all-products');
+                    if (el) el.scrollIntoView({ behavior: 'smooth' });
+                  }} style={{ background: 'transparent', border: 'none', color: '#FF7A00', fontWeight: 600, cursor: 'pointer' }}>See All</button>
+                </div>
+                
+                <div className="productsGrid" style={{ display: 'grid', gridTemplateColumns: `repeat(${gridCols}, 1fr)`, gap: gridGap }}>
+                  {isRefreshing && popularProducts.length > 0 && (
+                    Array.from({ length: Math.min(4, popularProducts.length) }).map((_, i) => (
+                      <SkeletonCard key={`skeleton-pop-${i}`} height={260} />
+                    ))
+                  )}
+                  {popularProducts.length > 0 ? (
+                    popularProducts.slice(0, 4).map(product => (
+                      <div 
+                        key={product._id || Math.random()} 
+                        className="productCard"
+                        onClick={() => handleProductClick(product._id)}
+                        style={{ cursor: 'pointer' }}
+                      >
+                        <div className="productImageContainer" style={{ position: 'relative' }}>
+                          <img 
+                            src={product.image || 'https://i.ibb.co/YZDGnfr/chicken-rice.jpg'} 
+                            alt={product.name || 'Chicken With Rice'} 
+                            className="productImage"
+                            style={{ filter: product.availability === 'Out of Stock' ? 'blur(1.5px) grayscale(60%) brightness(0.85)' : 'none', transition: 'filter 0.2s ease' }}
+                            loading="lazy"
+                          />
+                          {product.availability === 'Out of Stock' && (
+                            <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700, fontSize: '1.05rem', pointerEvents: 'none' }}>
+                              Out of Stock
+                            </div>
                           )}
                         </div>
+                        <div className="productInfo">
+                          <h3 className="productName">{product.name || 'Chicken With Rice'}</h3>
+                          {Number.isFinite(product.soldCount) && (
+                            <div style={{ fontSize: '12px', color: '#777', marginTop: 2 }}>Sold: {product.soldCount}</div>
+                          )}
+                          <div className="productPriceRow" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                            <p className="productPrice" style={{ margin: 0 }}>₱{product.price || '49'}</p>
+                            <span style={{ fontSize: 12, color: product.availability === 'Out of Stock' ? '#9e9e9e' : '#2e7d32', background: '#f2f2f2', borderRadius: 10, padding: '2px 8px', whiteSpace: 'nowrap' }}>
+                              {product.availability === 'Out of Stock' ? 'Out of Stock' : 'Available'}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="emptyState" style={{ gridColumn: `span ${gridCols}` }}>
+                      <div style={{ textAlign: 'center', color: '#777', padding: '16px 0' }}>
+                        No popular items yet.
                       </div>
                     </div>
-                  </div>
-                ))}
-              </Slider>
-            ) : (
-              <div style={{ ...styles.placeholderBanner, height: '28vw', minHeight: 140, maxHeight: 240 }}>
-                <img 
-                  src="https://i.ibb.co/qkGWKQX/pizza-promotion.jpg" 
-                  alt="Welcome to BuFood" 
-                  style={styles.bannerImage}
-                  loading="lazy"
-                />
-                <div style={styles.bannerGradient}></div>
-                <div style={styles.bannerContent}>
-                  <div>
-                    <h2 style={styles.storeName}>Welcome to BuFood</h2>
-                    <p style={styles.storeDescription}>No stores available at the moment.</p>
-                  </div>
+                  )}
                 </div>
               </div>
-            )}
-          </div>
-
-          {/* Popular Section */}
-          <div className="sectionContainer">
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <h2 className="sectionTitle" style={{ margin: 0 }}>Popular</h2>
-              <button onClick={() => {
-                const el = document.getElementById('all-products');
-                if (el) el.scrollIntoView({ behavior: 'smooth' });
-              }} style={{ background: 'transparent', border: 'none', color: '#FF7A00', fontWeight: 600, cursor: 'pointer' }}>See All</button>
-            </div>
-            
-            <div className="productsGrid" style={{ display: 'grid', gridTemplateColumns: `repeat(${gridCols}, 1fr)`, gap: gridGap }}>
-              {isRefreshing && popularProducts.length > 0 && (
-                Array.from({ length: Math.min(4, popularProducts.length) }).map((_, i) => (
-                  <SkeletonCard key={`skeleton-pop-${i}`} height={260} />
-                ))
-              )}
-              {popularProducts.length > 0 ? (
-                popularProducts.slice(0, 4).map(product => (
-                  <div 
-                    key={product._id || Math.random()} 
-                    className="productCard"
-                    onClick={() => handleProductClick(product._id)}
-                    style={{ cursor: 'pointer' }}
-                  >
-                    <div className="productImageContainer" style={{ position: 'relative' }}>
-                      <img 
-                        src={product.image || 'https://i.ibb.co/YZDGnfr/chicken-rice.jpg'} 
-                        alt={product.name || 'Chicken With Rice'} 
-                        className="productImage"
-                        style={{ filter: product.availability === 'Out of Stock' ? 'blur(1.5px) grayscale(60%) brightness(0.85)' : 'none', transition: 'filter 0.2s ease' }}
-                        loading="lazy"
-                      />
-                      {product.availability === 'Out of Stock' && (
-                        <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700, fontSize: '1.05rem', pointerEvents: 'none' }}>
-                          Out of Stock
-                        </div>
-                      )}
-                    </div>
-                    <div className="productInfo">
-                      <h3 className="productName">{product.name || 'Chicken With Rice'}</h3>
-                      {Number.isFinite(product.soldCount) && (
-                        <div style={{ fontSize: '12px', color: '#777', marginTop: 2 }}>Sold: {product.soldCount}</div>
-                      )}
-                      <div className="productPriceRow" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-                        <p className="productPrice" style={{ margin: 0 }}>₱{product.price || '49'}</p>
-                        <span style={{ fontSize: 12, color: product.availability === 'Out of Stock' ? '#9e9e9e' : '#2e7d32', background: '#f2f2f2', borderRadius: 10, padding: '2px 8px', whiteSpace: 'nowrap' }}>
-                          {product.availability === 'Out of Stock' ? 'Out of Stock' : 'Available'}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div className="emptyState" style={{ gridColumn: `span ${gridCols}` }}>
-                  <div style={{ textAlign: 'center', color: '#777', padding: '16px 0' }}>
-                    No popular items yet.
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
+            </>
+          )}
 
           {/* All Products Section */}
           <div className="sectionContainer" id="all-products">

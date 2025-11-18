@@ -580,6 +580,7 @@ const SingleProductPage = () => {
     const [selectedVariant, setSelectedVariant] = useState(null);
     const [isVariantModalOpen, setIsVariantModalOpen] = useState(false);
     const [showVariantModal, setShowVariantModal] = useState(false);
+    const [showVariantSections, setShowVariantSections] = useState(false);
     const [modalAction, setModalAction] = useState(null); // 'cart' | 'fav'
     const [modalQuantity, setModalQuantity] = useState(1);
     const [modalSelectedChoice, setModalSelectedChoice] = useState(null);
@@ -739,6 +740,9 @@ const SingleProductPage = () => {
         try {
             const hasVariantChoices = Array.isArray(productData?.variantChoices) && productData.variantChoices.length > 0;
             const hasLegacyVariants = Array.isArray(productData?.variants) && productData.variants.length > 0;
+            if ((hasVariantChoices || hasLegacyVariants) && !showVariantSections) {
+                setShowVariantSections(true);
+            }
             if (hasVariantChoices && !selectedVariantChoice) {
                 // Trigger modal UX instead
                 setModalAction('fav');
@@ -842,6 +846,9 @@ const SingleProductPage = () => {
         try {
             const hasVariantChoices = Array.isArray(productData?.variantChoices) && productData.variantChoices.length > 0;
             const hasLegacyVariants = Array.isArray(productData?.variants) && productData.variants.length > 0;
+            if ((hasVariantChoices || hasLegacyVariants) && !showVariantSections) {
+                setShowVariantSections(true);
+            }
             if (hasVariantChoices && !selectedVariantChoice) {
                 // Open modal for selection
                 setModalAction('cart');
@@ -1041,7 +1048,7 @@ const SingleProductPage = () => {
                             </Section>
 
                             {/* Variant Choices (new schema) */}
-                            {Array.isArray(productData.variantChoices) && productData.variantChoices.length > 0 && (
+                            {showVariantSections && Array.isArray(productData.variantChoices) && productData.variantChoices.length > 0 && (
                                 <Section>
                                     <SectionTitle>Choose a Variant</SectionTitle>
                                     {productData.variantChoices.map((variant) => (
@@ -1107,7 +1114,7 @@ const SingleProductPage = () => {
                             )}
 
                             {/* Variant Selector (legacy mapping) */}
-                            {Array.isArray(productData.variants) && productData.variants.length > 0 && (
+                            {showVariantSections && Array.isArray(productData.variants) && productData.variants.length > 0 && (
                                 <Section>
                                     <SectionTitle>Options</SectionTitle>
                                     <VariantSelector
@@ -1198,19 +1205,35 @@ const SingleProductPage = () => {
                                             }
                                         }}
                                         disabled={(() => {
-                                            const hasVariants = Array.isArray(productData?.variants) && productData.variants.length > 0;
+                                            const hasVariantChoices = Array.isArray(productData?.variantChoices) && productData.variantChoices.length > 0;
+                                            const hasLegacyVariants = Array.isArray(productData?.variants) && productData.variants.length > 0;
                                             const eff = getEffectiveStock();
-                                            if (hasVariants && !isSelectionsValid) return true;
-                                            if (eff === 0) return true;
-                                            if (quantity > eff) return true;
+
+                                            if (!hasVariantChoices && hasLegacyVariants && !isSelectionsValid) {
+                                                return true;
+                                            }
+
+                                            const hasSelection = hasVariantChoices ? !!selectedVariantChoice : (!hasVariantChoices && hasLegacyVariants ? isSelectionsValid : true);
+
+                                            if (hasSelection && eff === 0) {
+                                                return true;
+                                            }
+
+                                            if (hasSelection && eff > 0 && quantity > eff) {
+                                                return true;
+                                            }
+
                                             return false;
                                         })()}
                                         style={{ opacity: (() => {
-                                            const hasVariants = Array.isArray(productData?.variants) && productData.variants.length > 0;
+                                            const hasVariantChoices = Array.isArray(productData?.variantChoices) && productData.variantChoices.length > 0;
+                                            const hasLegacyVariants = Array.isArray(productData?.variants) && productData.variants.length > 0;
                                             const eff = getEffectiveStock();
-                                            if (hasVariants && !isSelectionsValid) return 0.6;
-                                            if (eff === 0) return 0.6;
-                                            if (quantity > eff) return 0.6;
+                                            const hasSelection = hasVariantChoices ? !!selectedVariantChoice : (!hasVariantChoices && hasLegacyVariants ? isSelectionsValid : true);
+
+                                            if (!hasVariantChoices && hasLegacyVariants && !isSelectionsValid) return 0.6;
+                                            if (hasSelection && eff === 0) return 0.6;
+                                            if (hasSelection && eff > 0 && quantity > eff) return 0.6;
                                             return 1;
                                         })() }}
                                     >
