@@ -225,53 +225,75 @@ const SellerProductDetailPage = () => {
                                     </div>
                                 </div>
                                 
-                                {Array.isArray(productData.variants) && productData.variants.length > 0 && (
+                                {(Array.isArray(productData.variants) && productData.variants.length > 0) || (Array.isArray(productData.variantChoices) && productData.variantChoices.length > 0) ? (
                                   <div style={styles.section}>
                                     <h3 style={styles.sectionTitle}>Variants</h3>
-                                    <div style={styles.variantList}>
-                                      {productData.variants.map((v, idx) => (
-                                        <div key={v.id || idx} style={styles.variantItem}>
-                                          {v.image ? (
-                                            <img src={v.image} alt={v.name || 'Variant'} style={styles.variantImage} />
-                                          ) : (
-                                            <div style={styles.variantImagePlaceholder}>No image</div>
-                                          )}
-                                          <div style={styles.variantMeta}>
-                                            <div style={styles.variantName}>{v.name || 'Unnamed'}</div>
-                                            <div style={styles.variantSub}>₱{Number(v.price || 0).toFixed(2)} · Stock: {Number(v.stock || 0)}</div>
+                                    <div style={styles.variantSection}>
+                                      {Array.isArray(productData.variants) && productData.variants.length > 0 && (
+                                        <div style={styles.variantGroup}>
+                                          <div style={styles.variantGroupHeader}>
+                                            <div style={styles.variantGroupTitle}>Simple Variants</div>
+                                            <span style={styles.variantChip}>{productData.variants.length} option{productData.variants.length > 1 ? 's' : ''}</span>
                                           </div>
-                                        </div>
-                                      ))}
-                                    </div>
-                                  </div>
-                                )}
-
-                                {Array.isArray(productData.variantChoices) && productData.variantChoices.length > 0 && (
-                                  <div style={styles.section}>
-                                    <h3 style={styles.sectionTitle}>Variant Choices</h3>
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                                      {productData.variantChoices.map((vc, vci) => (
-                                        <div key={vci}>
-                                          <div style={{ fontSize: '14px', fontWeight: 600, marginBottom: 6 }}>{vc.variantName}</div>
-                                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 8 }}>
-                                            {(vc.options || []).map((opt, oi) => (
-                                              <div key={oi} style={{ border: '1px solid #e5e7eb', borderRadius: 8, padding: 8, background: '#f9fafb' }}>
-                                                {opt.image ? (
-                                                  <img src={opt.image} alt={opt.optionName || 'option'} style={{ width: '100%', height: 80, objectFit: 'cover', borderRadius: 6, marginBottom: 6 }} />
+                                          <div style={styles.legacyVariantGrid}>
+                                            {productData.variants.map((v, idx) => (
+                                              <div key={v.id || idx} style={styles.variantItem}>
+                                                {v.image ? (
+                                                  <img src={v.image} alt={v.name || 'Variant'} style={styles.variantImage} />
                                                 ) : (
-                                                  <div style={{ width: '100%', height: 80, background: '#fff', border: '1px dashed #d1d5db', borderRadius: 6, marginBottom: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9ca3af', fontSize: 12 }}>No image</div>
+                                                  <div style={styles.variantImagePlaceholder}>No image</div>
                                                 )}
-                                                <div style={{ fontSize: 13, fontWeight: 600, color: '#374151' }}>{opt.optionName || 'Option'}</div>
-                                                <div style={{ fontSize: 13, fontWeight: 700, color: '#f97316' }}>₱{Number(opt.price || 0).toFixed(2)}</div>
-                                                <div style={{ fontSize: 12, color: '#6b7280' }}>Stock: {Number(opt.stock || 0)}</div>
+                                                <div style={styles.variantMeta}>
+                                                  <div style={styles.variantName}>{v.name || 'Unnamed'}</div>
+                                                  <div style={styles.variantSub}>₱{Number(v.price || 0).toFixed(2)} · Stock: {Number(v.stock || 0)}</div>
+                                                </div>
                                               </div>
                                             ))}
                                           </div>
                                         </div>
-                                      ))}
+                                      )}
+
+                                      {Array.isArray(productData.variantChoices) && productData.variantChoices.length > 0 && (
+                                        <div style={styles.variantGroup}>
+                                          <div style={styles.variantGroupHeader}>
+                                            <div style={styles.variantGroupTitle}>Variant Choices</div>
+                                            <span style={styles.variantChip}>{productData.variantChoices.length} set{productData.variantChoices.length > 1 ? 's' : ''}</span>
+                                          </div>
+                                          <div style={styles.choiceGroupList}>
+                                            {productData.variantChoices.map((vc, vci) => (
+                                              <div key={vci} style={styles.choiceGroup}>
+                                                <div style={styles.choiceGroupHeader}>
+                                                  <span style={styles.choiceTitle}>{vc.variantName}</span>
+                                                  <span style={styles.choiceMeta}>{(vc.options || []).length} option{(vc.options || []).length !== 1 ? 's' : ''}</span>
+                                                </div>
+                                                <div style={styles.choiceGrid}>
+                                                  {(vc.options || []).map((opt, oi) => (
+                                                    <div key={oi} style={styles.choiceCard}>
+                                                      {opt.image ? (
+                                                        <img
+                                                          src={opt.image}
+                                                          alt={opt.optionName || 'option'}
+                                                          style={styles.choiceImage}
+                                                        />
+                                                      ) : (
+                                                        <div style={styles.choiceImagePlaceholder}>No image</div>
+                                                      )}
+                                                      <div style={styles.choiceBody}>
+                                                        <div style={styles.choiceName}>{opt.optionName || 'Option'}</div>
+                                                        <div style={styles.choicePrice}>₱{Number(opt.price || 0).toFixed(2)}</div>
+                                                        <div style={styles.choiceStock}>Stock: {Number(opt.stock || 0)}</div>
+                                                      </div>
+                                                    </div>
+                                                  ))}
+                                                </div>
+                                              </div>
+                                            ))}
+                                          </div>
+                                        </div>
+                                      )}
                                     </div>
                                   </div>
-                                )}
+                                ) : null}
                                 
                                 <p style={styles.price}>₱{parseFloat(productData.price).toFixed(2)}</p>
                                 

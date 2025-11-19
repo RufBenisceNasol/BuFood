@@ -403,30 +403,133 @@ const updateProduct = async (req, res) => {
 
     // Only allow updating specific fields
     const updates = {};
-    const allowedUpdates = ['name', 'description', 'price', 'category', 'availability', 'estimatedTime', 'shippingFee', 'stock', 'discount', 'variants', 'options', 'variantChoices'];
-    
+    const allowedUpdates = ['name', 'description', 'price', 'category', 'availability', 'estimatedTime', 'shippingFee', 'stock', 'discount', 'variants', 'options', 'variantChoices', 'images'];
+
     allowedUpdates.forEach(field => {
       if (req.body[field] !== undefined) {
-        // Parse JSON for variants/options if needed
-        if ((field === 'variants' || field === 'options' || field === 'variantChoices') && typeof req.body[field] === 'string') {
+        const value = req.body[field];
+        const shouldParseJson = ['variants', 'options', 'variantChoices', 'images'].includes(field) && typeof value === 'string';
+
+        if (shouldParseJson) {
           try {
-            const parsed = JSON.parse(req.body[field]);
-            updates[field] = parsed;
-          } catch (_) {
-            // ignore malformed, skip update for this field
+            updates[field] = JSON.parse(value);
+          } catch (err) {
+            console.warn(`updateProduct: failed to parse field ${field}`, err.message);
           }
         } else {
-          updates[field] = req.body[field];
+          updates[field] = value;
         }
       }
     });
 
-    // Handle image upload if file is present
-    if (req.file) {
-      updates.image = req.file.path;
+    // Sanitize numeric fields
+    const numericFields = ['price', 'estimatedTime', 'shippingFee', 'stock', 'discount'];
+    numericFields.forEach(field => {
+      if (updates[field] !== undefined) {
+        const num = Number(updates[field]);
+        if (!Number.isNaN(num)) {
+          updates[field] = num;
+        } else {
+          delete updates[field];
+        }
+      }
+    });
+
+    // Sanitize images array
+    if (updates.images !== undefined) {
+      const images = Array.isArray(updates.images) ? updates.images : [];
+      updates.images = images
+        .map(img => (typeof img === 'string' ? img.trim() : ''))
+        .filter(Boolean);
     }
 
-    // Update the product with the allowed fields
+    // Sanitize legacy variants
+    if (updates.variants !== undefined) {
+      const rawVariants = Array.isArray(updates.variants) ? updates.variants : [];
+      updates.variants = rawVariants.map(variant => {
+        const obj = {};
+        if (variant.id) obj.id = String(variant.id);
+        if (variant.name) obj.name = String(variant.name);
+        if (variant.image) obj.image = String(variant.image);
+        if (variant.sku) obj.sku = String(variant.sku);
+
+        if (variant.price !== undefined) {
+          const price = Number(variant.price);
+          if (!Number.isNaN(price)) obj.price = price;
+        }
+        if (variant.stock !== undefined) {
+          const stock = Number(variant.stock);
+          if (!Number.isNaN(stock)) obj.stock = stock;
+        }
+        if (variant.isAvailable !== undefined) {
+          obj.isAvailable = Boolean(variant.isAvailable);
+        }
+
+        return obj;
+      }).filter(v => Object.keys(v).length > 0);
+    }
+
+    // Sanitize variant choices
+    if (updates.variantChoices !== undefined) {
+      const rawVariantChoices = Array.isArray(updates.variantChoices) ? updates.variantChoices : [];
+      updates.variantChoices = rawVariantChoices.map(vc => {
+        const out = {};
+        if (vc.variantName) {
+          out.variantName = String(vc.variantName);
+        }
+        const options = Array.isArray(vc.options) ? vc.options : [];
+        const safeOptions = options.map(opt => {
+          const optOut = {};
+          if (opt.optionName) optOut.optionName = String(opt.optionName);
+          if (opt.image) optOut.image = String(opt.image);
+          if (opt.price !== undefined) {
+            const price = Number(opt.price);
+            if (!Number.isNaN(price)) optOut.price = price;
+          }
+          if (opt.stock !== undefined) {
+            const stock = Number(opt.stock);
+            if (!Number.isNaN(stock)) optOut.stock = stock;
+          }
+          return optOut;
+        }).filter(opt => opt.optionName);
+
+        if (safeOptions.length > 0) {
+          out.options = safeOptions;
+        }
+
+        return out;
+      }).filter(vc => vc.variantName && Array.isArray(vc.options));
+    }
+
+    // Handle options map (ensure plain object)
+    if (updates.options !== undefined) {
+      const options = updates.options;
+      if (options && typeof options === 'object' && !Array.isArray(options)) {
+        updates.options = options;
+      } else {
+        delete updates.options;
+      }
+    }
+
+    // Handle image upload if file is present
+    if (req.file) {
+      try {
+        const result = await uploadToCloudinary(req.file.path, 'product-images');
+        updates.image = result.secure_url;
+      } catch (uploadErr) {
+        console.error('updateProduct: image upload failed', uploadErr);
+        return res.status(502).json({ message: 'Image upload failed', error: uploadErr.message });
+      } finally {
+        try {
+          if (req.file?.path) {
+            await deleteFile(req.file.path);
+          }
+        } catch (cleanupErr) {
+          console.warn('updateProduct: cleanup file error', cleanupErr.message);
+        }
+      }
+    }
+
     const updatedProduct = await Product.findByIdAndUpdate(
       req.params.id,
       updates,
