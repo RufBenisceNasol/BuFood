@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api, { product, API_BASE_URL } from '../api';
 import http from '../api/http';
-import { MdArrowBack, MdAdd, MdDelete, MdImage } from 'react-icons/md';
+import { MdArrowBack, MdAdd, MdDelete, MdImage, MdErrorOutline } from 'react-icons/md';
 import { getToken } from '../utils/tokenUtils';
 
 const AddProductPage = () => {
@@ -11,6 +11,7 @@ const AddProductPage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [validationModal, setValidationModal] = useState({ open: false, message: '' });
   // Derive origin from axios base; if base is '/api' in dev, origin becomes '' so fetch uses Vite proxy
   const API_ORIGIN = (API_BASE_URL || '').replace(/\/api$/, '');
   const [formData, setFormData] = useState({
@@ -177,26 +178,16 @@ const AddProductPage = () => {
     setSuccess('');
 
     try {
-      const submitData = new FormData();
-      // Map fields: basePrice -> price (backend expects price)
-      submitData.append('name', formData.name);
-      submitData.append('description', formData.description);
-      submitData.append('price', formData.basePrice);
-      submitData.append('category', formData.category);
-      submitData.append('availability', formData.availability);
-      submitData.append('estimatedTime', formData.estimatedTime);
-      submitData.append('shippingFee', formData.shippingFee);
-      submitData.append('stock', formData.stock);
-      if (images.length > 0) {
-        submitData.append('images', JSON.stringify(images));
-      }
-      
-      // Validate main fields
+      const showValidationError = (message) => {
+        setValidationModal({ open: true, message });
+        setLoading(false);
+      };
+
       if (!formData.name || !formData.description || !formData.basePrice || !formData.category) {
-        throw new Error('Please complete all required fields.');
+        showValidationError('Please complete all required fields.');
+        return;
       }
 
-      // Validate variants/options and format to desired schema (variantChoices)
       const formattedVariants = (variants || [])
         .filter(v => v.variantName && (v.options || []).length > 0)
         .map(v => ({
@@ -212,9 +203,25 @@ const AddProductPage = () => {
         }))
         .filter(v => v.options.length > 0);
 
-      if (formattedVariants.length > 0) {
-        submitData.append('variantChoices', JSON.stringify(formattedVariants));
+      if (formattedVariants.length === 0) {
+        showValidationError('Please add at least one variant with options before saving the product.');
+        return;
       }
+
+      const submitData = new FormData();
+      submitData.append('name', formData.name);
+      submitData.append('description', formData.description);
+      submitData.append('price', formData.basePrice);
+      submitData.append('category', formData.category);
+      submitData.append('availability', formData.availability);
+      submitData.append('estimatedTime', formData.estimatedTime);
+      submitData.append('shippingFee', formData.shippingFee);
+      submitData.append('stock', formData.stock);
+      if (images.length > 0) {
+        submitData.append('images', JSON.stringify(images));
+      }
+
+      submitData.append('variantChoices', JSON.stringify(formattedVariants));
       
       if (selectedImage) {
         submitData.append('image', selectedImage);
@@ -247,7 +254,9 @@ const AddProductPage = () => {
         navigate('/seller/product-list');
       }, 2000);
     } catch (err) {
-      setError(err.message || 'Failed to create product');
+      const message = err.message || 'Failed to create product';
+      setError(message);
+      setValidationModal({ open: true, message });
     } finally {
       setLoading(false);
     }
@@ -255,6 +264,33 @@ const AddProductPage = () => {
 
   return (
     <div style={styles.mainContainer}>
+      {validationModal.open && (
+        <div
+          style={styles.modalOverlay}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="validation-modal-title"
+          onClick={() => setValidationModal({ open: false, message: '' })}
+        >
+          <div
+            style={styles.modalBox}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={styles.modalIconWrapper}>
+              <MdErrorOutline size={36} color="#d32f2f" />
+            </div>
+            <h3 id="validation-modal-title" style={styles.modalTitle}>Action Required</h3>
+            <p style={styles.modalMessage}>{validationModal.message}</p>
+            <button
+              type="button"
+              onClick={() => setValidationModal({ open: false, message: '' })}
+              style={styles.modalButton}
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
       <div style={styles.header}>
         <div style={styles.backButton} onClick={() => navigate(-1)}>
           <span style={styles.backArrow}>←</span>
@@ -827,6 +863,61 @@ const styles = {
     borderTop: '2px solid white',
     borderRadius: '50%',
     animation: 'spin 0.8s linear infinite',
+  },
+  modalOverlay: {
+    position: 'fixed',
+    inset: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.45)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 3000,
+    padding: '24px',
+    backdropFilter: 'blur(2px)'
+  },
+  modalBox: {
+    backgroundColor: '#ffffff',
+    borderRadius: '12px',
+    padding: '28px 32px',
+    maxWidth: '400px',
+    width: '100%',
+    boxShadow: '0 24px 48px rgba(0,0,0,0.22)',
+    textAlign: 'center',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '16px'
+  },
+  modalIconWrapper: {
+    width: '64px',
+    height: '64px',
+    borderRadius: '50%',
+    background: 'rgba(211, 47, 47, 0.1)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    alignSelf: 'center'
+  },
+  modalTitle: {
+    margin: 0,
+    fontSize: '1.25rem',
+    color: '#1f2933',
+    fontWeight: 700
+  },
+  modalMessage: {
+    margin: 0,
+    color: '#4b5563',
+    lineHeight: 1.6
+  },
+  modalButton: {
+    background: 'linear-gradient(135deg, #ff7043, #f44336)',
+    color: '#fff',
+    border: 'none',
+    borderRadius: '8px',
+    padding: '12px 22px',
+    fontWeight: 600,
+    cursor: 'pointer',
+    boxShadow: '0 8px 20px rgba(244, 67, 54, 0.35)',
+    transition: 'transform 0.15s ease, box-shadow 0.15s ease'
   },
   // Variants and Options Sections
   sectionContainer: {
