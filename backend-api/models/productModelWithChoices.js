@@ -19,7 +19,7 @@ const variantChoiceSchema = new mongoose.Schema({
     type: String,
     required: true,
     trim: true,
-    // e.g., "3in1 Mascara", "Silver Tube", "Large", "Small"
+    // e.g., "Large", "Small"
   },
   image: {
     type: String,
@@ -119,8 +119,8 @@ const productSchema = new mongoose.Schema({
    *     isRequired: true,
    *     allowMultiple: false,
    *     choices: [
-   *       { name: "3in1 Mascara", image: "url1", price: 119, stock: 20 },
-   *       { name: "Silver Tube", image: "url2", price: 119, stock: 15 }
+   *       { name: "Small", image: "url1", price: 119, stock: 20 },
+   *       { name: "Large", image: "url2", price: 119, stock: 15 }
    *     ]
    *   },
    *   {

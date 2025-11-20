@@ -4,7 +4,6 @@ import { product } from '../api';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { MdArrowBack, MdEdit, MdDelete, MdMoreVert } from 'react-icons/md';
-import { Modal, Button } from '@mui/material';
 
 import styled from 'styled-components';
 
@@ -45,6 +44,8 @@ const SellerProductDetailPage = () => {
     const [error, setError] = useState('');
     const [showDropdown, setShowDropdown] = useState(false);
     const [timestamp, setTimestamp] = useState(Date.now());
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [isDeletingProduct, setIsDeletingProduct] = useState(false);
 
     const fetchProductDetails = useCallback(async (isRefresh = false) => {
         if (isRefresh) {
@@ -119,15 +120,28 @@ const SellerProductDetailPage = () => {
         }
     }, [location.pathname, location.state, fetchProductDetails, navigate]);
 
-    const handleDelete = async () => {
-        if (window.confirm('Are you sure you want to delete this product? This action cannot be undone.')) {
-            try {
-                await product.deleteProduct(productId);
-                toast.success('Product deleted successfully');
-                navigate('/seller/product-list');
-            } catch (err) {
-                toast.error(err.message || 'Failed to delete product');
-            }
+    const openDeleteModal = () => {
+        setShowDropdown(false);
+        setIsDeleteModalOpen(true);
+    };
+
+    const closeDeleteModal = () => {
+        if (isDeletingProduct) return;
+        setIsDeleteModalOpen(false);
+    };
+
+    const confirmDelete = async () => {
+        if (isDeletingProduct) return;
+        try {
+            setIsDeletingProduct(true);
+            await product.deleteProduct(productId);
+            toast.success('Product deleted successfully');
+            setIsDeleteModalOpen(false);
+            navigate('/seller/product-list');
+        } catch (err) {
+            toast.error(err.message || 'Failed to delete product');
+        } finally {
+            setIsDeletingProduct(false);
         }
     };
 
@@ -215,7 +229,7 @@ const SellerProductDetailPage = () => {
                                                 </button>
                                                 <button 
                                                     style={{...styles.dropdownItem, color: '#dc3545'}}
-                                                    onClick={handleDelete}
+                                                    onClick={openDeleteModal}
                                                 >
                                                     <MdDelete size={20} />
                                                     Delete
@@ -225,75 +239,48 @@ const SellerProductDetailPage = () => {
                                     </div>
                                 </div>
                                 
-                                {(Array.isArray(productData.variants) && productData.variants.length > 0) || (Array.isArray(productData.variantChoices) && productData.variantChoices.length > 0) ? (
+                                {Array.isArray(productData.variantChoices) && productData.variantChoices.length > 0 ? (
                                   <div style={styles.section}>
-                                    <h3 style={styles.sectionTitle}>Variants</h3>
-                                    <div style={styles.variantSection}>
-                                      {Array.isArray(productData.variants) && productData.variants.length > 0 && (
-                                        <div style={styles.variantGroup}>
-                                          <div style={styles.variantGroupHeader}>
-                                            <div style={styles.variantGroupTitle}>Simple Variants</div>
-                                            <span style={styles.variantChip}>{productData.variants.length} option{productData.variants.length > 1 ? 's' : ''}</span>
+                                    <h3 style={styles.sectionTitle}>Variant Choices</h3>
+                                    <div style={styles.variantChoicesContainer}>
+                                      {productData.variantChoices.map((vc, vci) => (
+                                        <div key={vci} style={styles.variantCategoryCard}>
+                                          <div style={styles.variantCategoryHeader}>
+                                            <span style={styles.variantCategoryName}>{vc.variantName || 'Variant'}</span>
+                                            <span style={styles.variantCategoryMeta}>
+                                              {(vc.options || []).length} option{(vc.options || []).length === 1 ? '' : 's'}
+                                            </span>
                                           </div>
-                                          <div style={styles.legacyVariantGrid}>
-                                            {productData.variants.map((v, idx) => (
-                                              <div key={v.id || idx} style={styles.variantItem}>
-                                                {v.image ? (
-                                                  <img src={v.image} alt={v.name || 'Variant'} style={styles.variantImage} />
+                                          <div style={styles.variantOptionGrid}>
+                                            {(vc.options || []).map((opt, oi) => (
+                                              <div key={oi} style={styles.variantOptionCard}>
+                                                {opt.image ? (
+                                                  <img
+                                                    src={opt.image}
+                                                    alt={opt.optionName || 'Option'}
+                                                    style={styles.variantOptionImage}
+                                                  />
                                                 ) : (
-                                                  <div style={styles.variantImagePlaceholder}>No image</div>
+                                                  <div style={styles.variantOptionPlaceholder}>No image</div>
                                                 )}
-                                                <div style={styles.variantMeta}>
-                                                  <div style={styles.variantName}>{v.name || 'Unnamed'}</div>
-                                                  <div style={styles.variantSub}>₱{Number(v.price || 0).toFixed(2)} · Stock: {Number(v.stock || 0)}</div>
+                                                <div style={styles.variantOptionBody}>
+                                                  <div style={styles.variantOptionName}>{opt.optionName || 'Option'}</div>
+                                                  <div style={styles.variantOptionPrice}>₱{Number(opt.price || 0).toFixed(2)}</div>
+                                                  <div style={styles.variantOptionStock}>Stock: {Number(opt.stock || 0)}</div>
                                                 </div>
                                               </div>
                                             ))}
                                           </div>
                                         </div>
-                                      )}
-
-                                      {Array.isArray(productData.variantChoices) && productData.variantChoices.length > 0 && (
-                                        <div style={styles.variantGroup}>
-                                          <div style={styles.variantGroupHeader}>
-                                            <div style={styles.variantGroupTitle}>Variant Choices</div>
-                                            <span style={styles.variantChip}>{productData.variantChoices.length} set{productData.variantChoices.length > 1 ? 's' : ''}</span>
-                                          </div>
-                                          <div style={styles.choiceGroupList}>
-                                            {productData.variantChoices.map((vc, vci) => (
-                                              <div key={vci} style={styles.choiceGroup}>
-                                                <div style={styles.choiceGroupHeader}>
-                                                  <span style={styles.choiceTitle}>{vc.variantName}</span>
-                                                  <span style={styles.choiceMeta}>{(vc.options || []).length} option{(vc.options || []).length !== 1 ? 's' : ''}</span>
-                                                </div>
-                                                <div style={styles.choiceGrid}>
-                                                  {(vc.options || []).map((opt, oi) => (
-                                                    <div key={oi} style={styles.choiceCard}>
-                                                      {opt.image ? (
-                                                        <img
-                                                          src={opt.image}
-                                                          alt={opt.optionName || 'option'}
-                                                          style={styles.choiceImage}
-                                                        />
-                                                      ) : (
-                                                        <div style={styles.choiceImagePlaceholder}>No image</div>
-                                                      )}
-                                                      <div style={styles.choiceBody}>
-                                                        <div style={styles.choiceName}>{opt.optionName || 'Option'}</div>
-                                                        <div style={styles.choicePrice}>₱{Number(opt.price || 0).toFixed(2)}</div>
-                                                        <div style={styles.choiceStock}>Stock: {Number(opt.stock || 0)}</div>
-                                                      </div>
-                                                    </div>
-                                                  ))}
-                                                </div>
-                                              </div>
-                                            ))}
-                                          </div>
-                                        </div>
-                                      )}
+                                      ))}
                                     </div>
                                   </div>
-                                ) : null}
+                                ) : (
+                                  <div style={styles.section}>
+                                    <h3 style={styles.sectionTitle}>Variant Choices</h3>
+                                    <div style={styles.noChoices}>No variant choices configured for this product.</div>
+                                  </div>
+                                )}
                                 
                                 <p style={styles.price}>₱{parseFloat(productData.price).toFixed(2)}</p>
                                 
@@ -324,6 +311,35 @@ const SellerProductDetailPage = () => {
                     )}
                 </div>
             </ScrollableContent>
+
+            {isDeleteModalOpen && (
+                <div style={styles.modalOverlay}>
+                    <div style={styles.modalContent}>
+                        <h3 style={styles.modalTitle}>Delete Product</h3>
+                        <p style={styles.modalMessage}>
+                            Are you sure you want to delete this product? This action cannot be undone.
+                        </p>
+                        <div style={styles.modalActions}>
+                            <button
+                                type="button"
+                                onClick={closeDeleteModal}
+                                style={styles.modalCancelButton}
+                                disabled={isDeletingProduct}
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="button"
+                                onClick={confirmDelete}
+                                style={styles.modalDeleteButton}
+                                disabled={isDeletingProduct}
+                            >
+                                {isDeletingProduct ? 'Deleting…' : 'Delete'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             <style>{`
                 .switch {
@@ -371,10 +387,6 @@ const SellerProductDetailPage = () => {
                     transform: translateX(20px);
                 }
 
-                .editButton:hover, .deleteButton:hover {
-                    transform: translateY(-2px);
-                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-                }
             `}</style>
         </div>
     );
@@ -593,7 +605,7 @@ const styles = {
         textAlign: 'center',
     },
     section: {
-        marginBottom: '2px',
+        marginBottom: '20px',
     },
     deliveryInfo: {
         backgroundColor: '#f8f8f8',
@@ -620,6 +632,158 @@ const styles = {
         color: '#333',
         fontSize: '13px',
         fontWeight: '500',
+    },
+    variantChoicesContainer: {
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '16px',
+    },
+    variantCategoryCard: {
+        backgroundColor: '#ffffff',
+        borderRadius: '16px',
+        border: '1px solid #e2e8f0',
+        padding: '18px',
+        boxShadow: '0 10px 24px rgba(15, 23, 42, 0.06)',
+    },
+    variantCategoryHeader: {
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        flexWrap: 'wrap',
+        gap: '10px',
+        marginBottom: '14px',
+    },
+    variantCategoryName: {
+        fontSize: '16px',
+        fontWeight: '700',
+        color: '#0f172a',
+    },
+    variantCategoryMeta: {
+        fontSize: '12px',
+        fontWeight: '600',
+        color: '#475569',
+        backgroundColor: '#f1f5f9',
+        padding: '4px 12px',
+        borderRadius: '999px',
+    },
+    variantOptionGrid: {
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))',
+        gap: '12px',
+    },
+    variantOptionCard: {
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '10px',
+        backgroundColor: '#f8fafc',
+        borderRadius: '12px',
+        border: '1px solid #e2e8f0',
+        padding: '12px',
+        height: '100%',
+    },
+    variantOptionImage: {
+        width: '100%',
+        height: '110px',
+        objectFit: 'cover',
+        borderRadius: '10px',
+        border: '1px solid #dbeafe',
+    },
+    variantOptionPlaceholder: {
+        width: '100%',
+        height: '110px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderRadius: '10px',
+        border: '1px dashed #cbd5f5',
+        color: '#94a3b8',
+        fontSize: '12px',
+        backgroundColor: '#fff',
+    },
+    variantOptionBody: {
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '6px',
+    },
+    variantOptionName: {
+        fontSize: '14px',
+        fontWeight: '600',
+        color: '#0f172a',
+    },
+    variantOptionPrice: {
+        fontSize: '13px',
+        fontWeight: '700',
+        color: '#f97316',
+    },
+    variantOptionStock: {
+        fontSize: '12px',
+        color: '#475569',
+    },
+    noChoices: {
+        textAlign: 'center',
+        padding: '18px',
+        color: '#94a3b8',
+        fontSize: '14px',
+        fontStyle: 'italic',
+        border: '1px dashed #cbd5f5',
+        borderRadius: '12px',
+        backgroundColor: '#f8fafc',
+    },
+    modalOverlay: {
+        position: 'fixed',
+        inset: 0,
+        backgroundColor: 'rgba(15, 23, 42, 0.65)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '16px',
+        zIndex: 1000,
+    },
+    modalContent: {
+        backgroundColor: '#ffffff',
+        borderRadius: '16px',
+        padding: '28px',
+        maxWidth: '420px',
+        width: '100%',
+        boxShadow: '0 24px 48px rgba(15, 23, 42, 0.18)',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '18px',
+    },
+    modalTitle: {
+        margin: 0,
+        fontSize: '20px',
+        fontWeight: '700',
+        color: '#0f172a',
+    },
+    modalMessage: {
+        margin: 0,
+        fontSize: '15px',
+        lineHeight: 1.6,
+        color: '#334155',
+    },
+    modalActions: {
+        display: 'flex',
+        justifyContent: 'flex-end',
+        gap: '12px',
+    },
+    modalCancelButton: {
+        padding: '10px 18px',
+        borderRadius: '10px',
+        border: '1px solid #cbd5f5',
+        backgroundColor: '#fff',
+        color: '#1e293b',
+        fontWeight: 600,
+        cursor: 'pointer',
+    },
+    modalDeleteButton: {
+        padding: '10px 18px',
+        borderRadius: '10px',
+        border: 'none',
+        backgroundColor: '#dc2626',
+        color: '#fff',
+        fontWeight: 600,
+        cursor: 'pointer',
     },
 };
 

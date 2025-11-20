@@ -979,7 +979,7 @@ const SingleProductPage = () => {
                         </ConfirmInfo>
                         <ConfirmActions>
                             <ConfirmButtonSecondary onClick={() => setSuccessModal(prev => ({ ...prev, open: false }))}>
-                                Continue Shopping
+                                Continue Ordering
                             </ConfirmButtonSecondary>
                             <ConfirmButtonPrimary onClick={() => navigate('/customer/cart')}>
                                 Go to Cart
@@ -1048,68 +1048,77 @@ const SingleProductPage = () => {
                             </Section>
 
                             {/* Variant Choices (new schema) */}
-                            {showVariantSections && Array.isArray(productData.variantChoices) && productData.variantChoices.length > 0 && (
+                            {showVariantSections && (Array.isArray(productData.variantChoices) && productData.variantChoices.length > 0) && (
                                 <Section>
                                     <SectionTitle>Choose a Variant</SectionTitle>
-                                    {productData.variantChoices.map((variant) => (
-                                        <div key={variant.variantName} style={{ marginBottom: 10 }}>
-                                            <p style={{ margin: '0 0 8px', color: '#333' }}><strong>{variant.variantName}</strong></p>
-                                            <div className="variant-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: 12 }}>
-                                                {(variant.options || []).map((opt) => {
-                                                    const active = selectedVariantChoice && selectedVariantChoice.optionName === opt.optionName && selectedVariantChoice.variantName === variant.variantName;
-                                                    return (
-                                                        <div
-                                                            key={opt.optionName}
-                                                            className={`variant-card${active ? ' active' : ''}`}
-                                                            style={{
-                                                                border: active ? '2px solid #007bff' : '1px solid #ccc',
-                                                                borderRadius: 8,
-                                                                textAlign: 'center',
-                                                                padding: 10,
-                                                                cursor: 'pointer',
-                                                                transition: '0.3s',
-                                                                background: active ? '#f0f8ff' : '#fff',
-                                                                boxShadow: active ? '0 2px 5px rgba(0,0,0,0.1)' : 'none'
-                                                            }}
-                                                            onClick={() => {
-                                                                const sel = {
-                                                                    variantName: variant.variantName,
-                                                                    optionName: opt.optionName,
-                                                                    price: Number(opt.price || 0),
-                                                                    image: opt.image || '',
-                                                                    stock: Number(opt.stock || 0),
-                                                                };
-                                                                setSelectedVariantChoice(sel);
-                                                                setSelectedVariant(sel);
-                                                            }}
-                                                        >
-                                                            {opt.image ? (
-                                                                <img
-                                                                    src={opt.image}
-                                                                    alt={opt.optionName}
-                                                                    style={{ width: '100%', height: 80, objectFit: 'cover', borderRadius: 6 }}
-                                                                    onError={(e) => {
-                                                                        e.currentTarget.onerror = null;
-                                                                        e.currentTarget.src = 'data:image/svg+xml;utf8,<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"200\" height=\"120\"><rect width=\"100%\" height=\"100%\" fill=\"%23eeeeee\"/><text x=\"50%\" y=\"50%\" dominant-baseline=\"middle\" text-anchor=\"middle\" fill=\"%23999\" font-size=\"12\">No image</text></svg>';
-                                                                    }}
-                                                                />
-                                                            ) : (
-                                                                <div style={{ width: '100%', height: 80, background: '#f5f5f5', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#999' }}>No image</div>
-                                                            )}
-                                                            <p style={{ margin: '8px 0 0', fontSize: 13, color: '#333' }}>{opt.optionName}</p>
-                                                            <p style={{ margin: '4px 0 0', fontSize: 13, fontWeight: 600, color: '#f97316' }}>₱{Number(opt.price || 0).toFixed(2)}</p>
-                                                        </div>
-                                                    );
-                                                })}
+                                    <div style={variantStyles.groupColumn}>
+                                        {productData.variantChoices.map((variant) => (
+                                            <div key={variant.variantName} style={variantStyles.groupCard}>
+                                                <div style={variantStyles.groupHeader}>
+                                                    <span style={variantStyles.groupTitle}>{variant.variantName}</span>
+                                                    <span style={variantStyles.groupMeta}>{(variant.options || []).length} option{(variant.options || []).length !== 1 ? 's' : ''}</span>
+                                                </div>
+                                                <VariantChoiceCards $isMobileLayout={isMobileLayout}>
+                                                    {(variant.options || []).map((opt) => {
+                                                        const active = selectedVariantChoice && selectedVariantChoice.optionName === opt.optionName && selectedVariantChoice.variantName === variant.variantName;
+
+                                                        return (
+                                                            <button
+                                                                key={opt.optionName}
+                                                                type="button"
+                                                                onClick={() => {
+                                                                    const sel = {
+                                                                        variantName: variant.variantName,
+                                                                        optionName: opt.optionName,
+                                                                        price: Number(opt.price || 0),
+                                                                        image: opt.image || '',
+                                                                        stock: Number(opt.stock || 0),
+                                                                    };
+                                                                    setSelectedVariantChoice(sel);
+                                                                    setSelectedVariant(sel);
+                                                                }}
+                                                                style={{
+                                                                    ...variantStyles.optionCard,
+                                                                    ...(active ? variantStyles.optionCardActive : {}),
+                                                                    ...(Number(opt.stock || 0) <= 0 ? variantStyles.optionCardDisabled : {}),
+                                                                }}
+                                                                disabled={Number(opt.stock || 0) <= 0}
+                                                            >
+                                                                <div style={variantStyles.optionMedia}>
+                                                                    {opt.image ? (
+                                                                        <img
+                                                                            src={opt.image}
+                                                                            alt={opt.optionName}
+                                                                            style={variantStyles.optionImage}
+                                                                            onError={(e) => {
+                                                                                e.currentTarget.onerror = null;
+                                                                                e.currentTarget.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="200" height="120"><rect width="100%" height="100%" fill="%23eeeeee"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="%23999" font-size="12">No image</text></svg>';
+                                                                            }}
+                                                                        />
+                                                                    ) : (
+                                                                        <div style={variantStyles.optionImagePlaceholder}>No image</div>
+                                                                    )}
+                                                                    {active && (
+                                                                        <div style={variantStyles.optionBadge}>Selected</div>
+                                                                    )}
+                                                                </div>
+                                                                <div style={variantStyles.optionBody}>
+                                                                    <span style={variantStyles.optionName}>{opt.optionName}</span>
+                                                                    <span style={variantStyles.optionPrice}>₱{Number(opt.price || 0).toFixed(2)}</span>
+                                                                    <span style={{
+                                                                        ...variantStyles.optionStock,
+                                                                        color: Number(opt.stock || 0) <= 5 ? '#f97316' : '#6b7280'
+                                                                    }}>
+                                                                        {Number(opt.stock || 0) > 0 ? `Stock: ${Number(opt.stock || 0)}` : 'Out of stock'}
+                                                                    </span>
+                                                                </div>
+                                                            </button>
+                                                        );
+                                                    })}
+                                                </VariantChoiceCards>
                                             </div>
-                                        </div>
-                                    ))}
-                                    <style>{`
-                                        .variant-card:hover { border-color: #007bff; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-                                        @media (max-width: 600px) {
-                                            .variant-grid { grid-template-columns: repeat(2, 1fr) !important; }
-                                        }
-                                    `}</style>
+                                        ))}
+                                    </div>
                                 </Section>
                             )}
 
@@ -1121,29 +1130,53 @@ const SingleProductPage = () => {
                                         product={{
                                             ...productData,
                                             basePrice: productData.price,
-                                            variants: (productData.variants || []).map(v => ({
-                                                name: v.variantName || v.name,
-                                                isRequired: true,
-                                                allowMultiple: false,
-                                                choices: (v.options || v.choices || []).map(o => ({
-                                                    _id: o._id,
-                                                    name: o.optionName || o.name,
-                                                    image: o.image || '',
-                                                    price: Number(o.price || 0),
-                                                    stock: Number(o.stock || 0),
-                                                    isAvailable: (o.stock || 0) > 0,
-                                                }))
-                                            }))
+                                            variants: (productData.variants || []).map((v, idx) => {
+                                                const optionList = Array.isArray(v.options)
+                                                    ? v.options
+                                                    : Array.isArray(v.choices)
+                                                        ? v.choices
+                                                        : [];
+
+                                                const resolvedOptions = optionList.length > 0
+                                                    ? optionList.map((o, optionIdx) => ({
+                                                        _id: o._id || o.id || `${idx}-${optionIdx}`,
+                                                        name: o.optionName || o.name || `Option ${optionIdx + 1}`,
+                                                        image: o.image || '',
+                                                        price: Number.isFinite(Number(o.price)) ? Number(o.price) : Number(productData.price || 0),
+                                                        stock: Number.isFinite(Number(o.stock)) ? Number(o.stock) : 0,
+                                                        isAvailable: o.isAvailable !== undefined
+                                                            ? Boolean(o.isAvailable)
+                                                            : (Number(o.stock || 0) > 0),
+                                                    }))
+                                                    : [{
+                                                        _id: v.id || v._id || `${idx}`,
+                                                        name: v.name || v.variantName || `Variant ${idx + 1}`,
+                                                        image: v.image || '',
+                                                        price: Number.isFinite(Number(v.price)) ? Number(v.price) : Number(productData.price || 0),
+                                                        stock: Number.isFinite(Number(v.stock)) ? Number(v.stock) : 0,
+                                                        isAvailable: v.isAvailable !== undefined
+                                                            ? Boolean(v.isAvailable)
+                                                            : (Number(v.stock || 0) > 0),
+                                                    }];
+
+                                                return {
+                                                    name: v.variantName || v.name || `Variant ${idx + 1}`,
+                                                    isRequired: v.isRequired !== undefined ? Boolean(v.isRequired) : true,
+                                                    allowMultiple: Boolean(v.allowMultiple),
+                                                    choices: resolvedOptions,
+                                                };
+                                            })
                                         }}
                                         onSelectionChange={(selections, isValid, price) => {
                                             setVariantSelections(selections);
                                             setIsSelectionsValid(isValid);
-                                            setCalculatedPrice(price);
+                                            if (isValid && price) {
+                                                setCalculatedPrice(price);
+                                            }
                                         }}
                                     />
                                 </Section>
                             )}
-
                             <Section>
                                 <SectionTitle>Store</SectionTitle>
                                 <StoreText>{productData?.storeId?.storeName || productData?.storeName || 'Unknown store'}</StoreText>

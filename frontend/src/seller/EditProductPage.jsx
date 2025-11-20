@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api, { product } from '../api';
 
@@ -6,6 +6,117 @@ import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { MdArrowBack, MdEdit } from 'react-icons/md';
 import { Modal } from '@mui/material';
+import VariantChoicesManager from './VariantChoicesManager';
+
+const mapServerVariantChoicesToManager = (variantChoices = []) => {
+    return variantChoices.map((variant, idx) => {
+        const choices = Array.isArray(variant.options) ? variant.options : [];
+        return {
+            _id: variant._id || `variant-${idx}`,
+            name: variant.variantName || '',
+            isRequired: variant.isRequired !== undefined ? Boolean(variant.isRequired) : true,
+            allowMultiple: Boolean(variant.allowMultiple),
+            choices: choices.map((choice, choiceIdx) => ({
+                _id: choice._id || `choice-${idx}-${choiceIdx}`,
+                name: choice.optionName || '',
+                image: choice.image || '',
+                price: Number.isFinite(Number(choice.price)) ? Number(choice.price) : 0,
+                priceAdjustment: Number.isFinite(Number(choice.priceAdjustment)) ? Number(choice.priceAdjustment) : 0,
+                stock: Number.isFinite(Number(choice.stock)) ? Number(choice.stock) : 0,
+                sku: choice.sku || '',
+                isAvailable: choice.isAvailable !== undefined ? Boolean(choice.isAvailable) : (Number(choice.stock || 0) > 0),
+            })),
+        };
+    });
+};
+
+const mapManagerVariantChoicesToServer = (variantChoices = []) => {
+    return variantChoices
+        .map((variant) => {
+            const variantName = (variant.name || '').trim();
+            const options = (variant.choices || [])
+                .map((choice) => {
+                    const optionName = (choice.name || '').trim();
+                    if (!optionName) return null;
+                    return {
+                        optionName,
+                        price: Number.isFinite(Number(choice.price)) ? Number(choice.price) : 0,
+                        stock: Number.isFinite(Number(choice.stock)) ? Number(choice.stock) : 0,
+                        image: choice.image || '',
+                        sku: choice.sku || '',
+                        isAvailable: choice.isAvailable !== undefined ? Boolean(choice.isAvailable) : true,
+                        priceAdjustment: Number.isFinite(Number(choice.priceAdjustment)) ? Number(choice.priceAdjustment) : 0,
+                    };
+                })
+                .filter(Boolean);
+
+            if (!variantName || options.length === 0) {
+                return null;
+            }
+
+            return {
+                variantName,
+                isRequired: variant.isRequired !== undefined ? Boolean(variant.isRequired) : true,
+                allowMultiple: Boolean(variant.allowMultiple),
+                options,
+            };
+        })
+        .filter(Boolean);
+};
+
+const buildSnapshot = (form, legacyVariants = [], managerVariantChoices = []) => {
+    const normalizedForm = {
+        name: (form?.name || '').trim(),
+        description: (form?.description || '').trim(),
+        price: String(form?.price ?? ''),
+        category: (form?.category || '').trim(),
+        availability: form?.availability || '',
+        estimatedTime: String(form?.estimatedTime ?? ''),
+        shippingFee: String(form?.shippingFee ?? ''),
+    };
+
+    const normalizedLegacyVariants = (legacyVariants || []).map((variant, idx) => ({
+        id: variant?.id || variant?._id || `variant-${idx}`,
+        name: (variant?.name || variant?.variantName || '').trim(),
+        price: Number.isFinite(Number(variant?.price)) ? Number(variant.price) : 0,
+        stock: Number.isFinite(Number(variant?.stock)) ? Number(variant.stock) : 0,
+        image: variant?.image || '',
+        isAvailable: variant?.isAvailable !== undefined ? Boolean(variant.isAvailable) : undefined,
+        allowMultiple: variant?.allowMultiple ? true : false,
+        options: Array.isArray(variant?.options)
+            ? variant.options.map((opt, optIdx) => ({
+                id: opt?.id || opt?._id || `opt-${idx}-${optIdx}`,
+                name: (opt?.name || opt?.optionName || '').trim(),
+                price: Number.isFinite(Number(opt?.price)) ? Number(opt.price) : 0,
+                stock: Number.isFinite(Number(opt?.stock)) ? Number(opt.stock) : 0,
+                image: opt?.image || '',
+            }))
+            : undefined,
+    }));
+
+    const normalizedManagerVariantChoices = (managerVariantChoices || []).map((variant, idx) => ({
+        id: variant?._id || `manager-variant-${idx}`,
+        name: (variant?.name || '').trim(),
+        isRequired: variant?.isRequired !== undefined ? Boolean(variant.isRequired) : true,
+        allowMultiple: Boolean(variant?.allowMultiple),
+        choices: (variant?.choices || []).map((choice, choiceIdx) => ({
+            id: choice?._id || `manager-choice-${idx}-${choiceIdx}`,
+            name: (choice?.name || '').trim(),
+            image: choice?.image || '',
+            price: Number.isFinite(Number(choice?.price)) ? Number(choice.price) : 0,
+            priceAdjustment: Number.isFinite(Number(choice?.priceAdjustment)) ? Number(choice.priceAdjustment) : 0,
+            stock: Number.isFinite(Number(choice?.stock)) ? Number(choice.stock) : 0,
+            sku: (choice?.sku || '').trim(),
+            isAvailable: choice?.isAvailable !== undefined ? Boolean(choice.isAvailable) : true,
+        })),
+    }));
+
+    return JSON.stringify({
+        form: normalizedForm,
+        variants: normalizedLegacyVariants,
+        variantChoices: normalizedManagerVariantChoices,
+    });
+};
 
 const EditProductPage = () => {
     const { productId } = useParams();
@@ -31,6 +142,7 @@ const EditProductPage = () => {
     const [selectedImage, setSelectedImage] = useState(null);
     const [previewUrl, setPreviewUrl] = useState('');
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const initialSnapshotRef = useRef(null);
 
     useEffect(() => {
         const fetchProduct = async () => {
@@ -46,8 +158,19 @@ const EditProductPage = () => {
                     shippingFee: data.shippingFee || '0', // Set from product data
                 });
                 setPreviewUrl(data.image);
-                setVariants(Array.isArray(data.variants) ? data.variants : []);
-                setVariantChoices(Array.isArray(data.variantChoices) ? data.variantChoices : []);
+                const initialVariants = Array.isArray(data.variants) ? data.variants : [];
+                const initialVariantChoices = mapServerVariantChoicesToManager(Array.isArray(data.variantChoices) ? data.variantChoices : []);
+                setVariants(initialVariants);
+                setVariantChoices(initialVariantChoices);
+                initialSnapshotRef.current = buildSnapshot({
+                    name: data.name,
+                    description: data.description,
+                    price: data.price,
+                    category: data.category,
+                    availability: data.availability,
+                    estimatedTime: data.estimatedTime || '',
+                    shippingFee: data.shippingFee || '0',
+                }, initialVariants, initialVariantChoices);
                 setLoading(false);
 
             } catch (err) {
@@ -76,11 +199,21 @@ const EditProductPage = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setSaving(true);
-        setError('');
-        setSuccess('');
-
         try {
+            const normalizedVariantChoices = mapManagerVariantChoicesToServer(variantChoices || []);
+            const currentSnapshot = buildSnapshot(formData, variants, variantChoices);
+            const hasImageChange = Boolean(selectedImage);
+            const hasChanges = initialSnapshotRef.current !== currentSnapshot || hasImageChange;
+
+            if (!hasChanges) {
+                toast.info('No changes to save');
+                return;
+            }
+
+            setSaving(true);
+            setError('');
+            setSuccess('');
+
             const submitData = new FormData();
             Object.keys(formData).forEach(key => {
                 submitData.append(key, formData[key]);
@@ -90,8 +223,8 @@ const EditProductPage = () => {
             }
             // Include variants as JSON string
             submitData.append('variants', JSON.stringify(variants || []));
-            // Include variantChoices to preserve/edit nested options
-            submitData.append('variantChoices', JSON.stringify(variantChoices || []));
+            // Include variantChoices using normalized structure
+            submitData.append('variantChoices', JSON.stringify(normalizedVariantChoices));
 
             // Update the product
             await product.updateProduct(productId, submitData);
@@ -144,7 +277,7 @@ const EditProductPage = () => {
 
             // Update local form data with the fetched data
             if (updatedProduct) {
-                setFormData({
+                const refreshedForm = {
                     name: updatedProduct.name,
                     description: updatedProduct.description,
                     price: updatedProduct.price,
@@ -152,9 +285,14 @@ const EditProductPage = () => {
                     availability: updatedProduct.availability,
                     estimatedTime: updatedProduct.estimatedTime || '',
                     shippingFee: updatedProduct.shippingFee || '0',
-                });
-                setVariants(Array.isArray(updatedProduct.variants) ? updatedProduct.variants : []);
-                setVariantChoices(Array.isArray(updatedProduct.variantChoices) ? updatedProduct.variantChoices : []);
+                };
+                const refreshedVariants = Array.isArray(updatedProduct.variants) ? updatedProduct.variants : [];
+                const refreshedVariantChoices = mapServerVariantChoicesToManager(Array.isArray(updatedProduct.variantChoices) ? updatedProduct.variantChoices : []);
+
+                setFormData(refreshedForm);
+                setVariants(refreshedVariants);
+                setVariantChoices(refreshedVariantChoices);
+                initialSnapshotRef.current = buildSnapshot(refreshedForm, refreshedVariants, refreshedVariantChoices);
 
                 // Add timestamp to image URL to prevent browser caching
                 const imageWithTimestamp = `${updatedProduct.image}${updatedProduct.image.includes('?') ? '&' : '?'}_t=${Date.now()}`;
@@ -164,17 +302,13 @@ const EditProductPage = () => {
             setSuccess('Product updated successfully!');
             toast.success('Product updated successfully!');
 
-            // Increase timeout to ensure server processes the update
             setTimeout(() => {
-                // Navigate with state to inform detail page of the update
                 navigate(`/seller/product/${productId}`, {
-                    state: {
-                        fromEdit: true,
-                        timestamp: Date.now(),
-                        imageUpdated: selectedImage ? true : false
-                    }
+                    replace: true,
+                    state: { fromEdit: true, timestamp: Date.now() },
                 });
-            }, 3000); // Increase timeout to 3 seconds
+            }, 1200);
+
         } catch (err) {
             setError(err.message || 'Failed to update product');
             toast.error(err.message || 'Failed to update product');
@@ -185,6 +319,11 @@ const EditProductPage = () => {
 
     const handleModalOpen = () => setIsModalOpen(true);
     const handleModalClose = () => setIsModalOpen(false);
+
+    const variantChoicesPreview = useMemo(
+        () => mapManagerVariantChoicesToServer(variantChoices || []),
+        [variantChoices]
+    );
 
     if (loading) {
         return <div style={styles.loadingContainer}>Loading...</div>;
@@ -346,129 +485,43 @@ const EditProductPage = () => {
                             </select>
                         </div>
 
-                        {/* Variants management */}
                         <div style={{ ...styles.inputGroup, marginTop: '8px' }}>
-                            <label style={styles.label}>Variants</label>
-                            {variants.length === 0 && (
-                              <div style={styles.variantEmpty}>No variants yet.</div>
-                            )}
-                            <div className="variants-grid" style={styles.variantsGrid}> 
-                              {variants.map((v, idx) => {
-                                const key = v.id || idx;
-                                return (
-                                  <div key={key} style={styles.variantCard}>
-                                    {v.image ? (
-                                      <img
-                                        src={v.image}
-                                        alt={v.name || 'Variant'}
-                                        style={styles.variantSmallImage}
-                                        onError={(e) => {
-                                          e.currentTarget.onerror = null;
-                                          e.currentTarget.src = 'data:image/svg+xml;utf8,<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"96\" height=\"96\"><rect width=\"100%\" height=\"100%\" fill=\"%23f3f4f6\"/><text x=\"50%\" y=\"50%\" dominant-baseline=\"middle\" text-anchor=\"middle\" fill=\"%239ca3af\" font-size=\"10\">No image</text></svg>';
-                                        }}
-                                      />
-                                    ) : (
-                                      <div style={styles.variantSmallPlaceholder}>No image</div>
-                                    )}
-                                    <input
-                                      type="file"
-                                      accept="image/*"
-                                      style={styles.variantFileInput}
-                                      onChange={async (e) => {
-                                        const file = e.target.files?.[0];
-                                        if (!file) return;
-                                        const k = v.id || idx;
-                                        setVariantUploading(prev => ({ ...prev, [k]: true }));
-                                        try {
-                                          const fd = new FormData();
-                                          fd.append('image', file);
-                                          const { data } = await api.post('/upload/image', fd);
-                                          if (data?.success && data.imageUrl) {
-                                            setVariants(prev => prev.map((it, i) => i === idx ? { ...it, image: data.imageUrl } : it));
-                                          }
-                                        } catch (_) {
-                                          toast.error('Failed to upload variant image');
-                                        } finally {
-                                          setVariantUploading(prev => ({ ...prev, [k]: false }));
-                                        }
-                                      }}
-                                    />
-                                    {variantUploading[key] && <div style={styles.variantUploading}>Uploading...</div>}
-                                    <input
-                                      type="text"
-                                      placeholder="Variant name"
-                                      value={v.name || ''}
-                                      onChange={(e) => setVariants(prev => prev.map((it, i) => i === idx ? { ...it, name: e.target.value } : it))}
-                                      style={{ ...styles.variantInput, marginTop: '6px' }}
-                                    />
-                                    <div className="variants-grid-inline" style={styles.variantInlineGrid}>
-                                      <input
-                                        type="number"
-                                        placeholder="Price"
-                                        value={v.price ?? ''}
-                                        onChange={(e) => setVariants(prev => prev.map((it, i) => i === idx ? { ...it, price: e.target.value } : it))}
-                                        style={{ ...styles.variantInput }}
-                                        min="0"
-                                        step="0.01"
-                                      />
-                                      <input
-                                        type="number"
-                                        placeholder="Stock"
-                                        value={v.stock ?? ''}
-                                        onChange={(e) => setVariants(prev => prev.map((it, i) => i === idx ? { ...it, stock: e.target.value } : it))}
-                                        style={{ ...styles.variantInput }}
-                                        min="0"
-                                      />
-                                    </div>
-                                    <button
-                                      type="button"
-                                      onClick={() => setVariants(prev => prev.filter((_, i) => i !== idx))}
-                                      style={{ ...styles.variantDeleteBtn, marginTop: '6px' }}
-                                    >Delete</button>
-                                  </div>
-                                );
-                              })}
-                            </div>
-                            <button
-                              type="button"
-                              onClick={() => setVariants(prev => [...prev, { id: crypto.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2, 6)}`, name: '', price: 0, stock: 0, image: '' }])}
-                              style={{ ...styles.addVariantBtn, marginTop: '10px' }}
-                            >+ Add Variant</button>
+                            <label style={styles.label}>Product Variants & Options</label>
+                            <VariantChoicesManager variants={variantChoices} onChange={setVariantChoices} />
                         </div>
 
-                        {/* Variant Choices (read-only preview) */}
-                        {Array.isArray(variantChoices) && variantChoices.length > 0 && (
-                          <div style={{ ...styles.inputGroup, marginTop: '8px' }}>
-                            <label style={styles.label}>Variant Choices</label>
-                            <div style={styles.variantChoicesBox}>
-                              {variantChoices.map((vc, vci) => (
-                                <div key={vci} style={styles.vcGroup}>
-                                  <div style={styles.vcTitle}>{vc.variantName}</div>
-                                  <div className="vc-grid" style={styles.vcOptionsGrid}>
-                                    {(vc.options || []).map((opt, oi) => (
-                                      <div key={oi} style={styles.vcOptionCard}>
-                                        {opt.image ? (
-                                          <img
-                                            src={opt.image}
-                                            alt={opt.optionName || 'option'}
-                                            style={styles.vcImage}
-                                            onError={(e) => {
-                                              e.currentTarget.onerror = null;
-                                              e.currentTarget.src = 'data:image/svg+xml;utf8,<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"96\" height=\"96\"><rect width=\"100%\" height=\"100%\" fill=\"%23f3f4f6\"/><text x=\"50%\" y=\"50%\" dominant-baseline=\"middle\" text-anchor=\"middle\" fill=\"%239ca3af\" font-size=\"10\">No image</text></svg>';
-                                            }}
-                                          />
-                                        ) : (
-                                          <div style={styles.vcImagePlaceholder}>No image</div>
-                                        )}
-                                        <div style={styles.vcOptName}>{opt.optionName || 'Option'}</div>
-                                        <div style={styles.vcOptMeta}>₱{Number(opt.price || 0).toFixed(2)} · Stock: {Number(opt.stock || 0)}</div>
-                                      </div>
+                        {variantChoicesPreview.length > 0 && (
+                            <div style={{ ...styles.inputGroup, marginTop: '8px' }}>
+                                <label style={styles.label}>Variant Options Preview</label>
+                                <div style={styles.variantChoicesBox}>
+                                    {variantChoicesPreview.map((vc, vci) => (
+                                        <div key={vci} style={styles.vcGroup}>
+                                            <div style={styles.vcTitle}>{vc.variantName}</div>
+                                            <div className="vc-grid" style={styles.vcOptionsGrid}>
+                                                {(vc.options || []).map((opt, oi) => (
+                                                    <div key={oi} style={styles.vcOptionCard}>
+                                                        {opt.image ? (
+                                                            <img
+                                                                src={opt.image}
+                                                                alt={opt.optionName || 'option'}
+                                                                style={styles.vcImage}
+                                                                onError={(e) => {
+                                                                    e.currentTarget.onerror = null;
+                                                                    e.currentTarget.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96"><rect width="100%" height="100%" fill="%23f3f4f6"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="%239ca3af" font-size="10">No image</text></svg>';
+                                                                }}
+                                                            />
+                                                        ) : (
+                                                            <div style={styles.vcImagePlaceholder}>No image</div>
+                                                        )}
+                                                        <div style={styles.vcOptName}>{opt.optionName || 'Option'}</div>
+                                                        <div style={styles.vcOptMeta}>₱{Number(opt.price || 0).toFixed(2)} · Stock: {Number(opt.stock || 0)}</div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
                                     ))}
-                                  </div>
                                 </div>
-                              ))}
                             </div>
-                          </div>
                         )}
 
                         <div style={styles.buttonRow}>

@@ -174,7 +174,7 @@ const SuccessOrderMessagePage = () => {
                             View My Orders
                         </PrimaryButton>
                         <SecondaryButton onClick={handleContinueShopping}>
-                            Continue Shopping
+                            Continue Ordering
                         </SecondaryButton>
                     </ButtonContainer>
                 </SuccessCard>

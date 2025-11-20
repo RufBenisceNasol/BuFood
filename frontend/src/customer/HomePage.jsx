@@ -139,10 +139,17 @@ const HomePage = () => {
     // Set responsive grid columns based on viewport width
     const updateGrid = () => {
       const w = window.innerWidth;
-      if (w >= 800) {
+
+      if (w >= 1600) {
+        setGridCols(6);
+        setGridGap(28);
+      } else if (w >= 1360) {
+        setGridCols(5);
+        setGridGap(24);
+      } else if (w >= 1100) {
         setGridCols(4);
         setGridGap(20);
-      } else if (w >= 600) {
+      } else if (w >= 768) {
         setGridCols(3);
         setGridGap(16);
       } else {
@@ -629,81 +636,78 @@ const HomePage = () => {
         </div>
       )}
       <div className="mainContainer">
-        {/* Header */}
-        <div className="header">
-          <div>
-            <h1 style={{ margin: 0, fontSize: 18, fontWeight: 600 }} className="greeting">
-              <span style={{ color: '#666' }}>Hello, </span>
-              <span style={{ color: '#FF7A00' }}>{userName}</span>
-            </h1>
-            <p style={{ margin: '4px 0 0 0', color: '#777', fontSize: 13 }} className="subGreeting">What do you want to eat today?</p>
-          </div>
-          <button 
-            className="menuToggle" 
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-          >
-            <MdMenuOpen size={24} />
-          </button>
-          
-          {isMenuOpen && (
-            <div className="popupMenu">
-              <div className="menuItem" onClick={() => navigate('/customer/profile')}>
-                <MdPerson className="menuIcon" />
-                Profile
-              </div>
-              <div className="menuItem" onClick={() => navigate('/customer/view-my-order')}>
-                <MdStore className="menuIcon" />
-                My Orders
-              </div>
-              <div className="menuItem" onClick={() => navigate('/customer/settings')}>
-                <MdSettings className="menuIcon" />
-                Settings
-              </div>
-              <div className="menuItem" onClick={handleLogout}>
-                <MdLogout className="menuIcon" />
-                Logout
-              </div>
+        <div className="homeRail">
+          <div className="header">
+            <div>
+              <h1 className="greeting">
+                <span>Hello, </span>
+                <span>{userName}</span>
+              </h1>
+              <p className="subGreeting">What do you want to eat today?</p>
             </div>
-          )}
-        </div>
-
-        {/* Search Bar - Fixed at the top */}
-        <div className="searchContainer" style={{ position: 'sticky', right: '10px', top: 0, zIndex: 10, backgroundColor: '#ffffff', padding: '8px 6px' }}>
-          <div className="searchBar" style={{ flex: 1, display: 'flex', gap: 8, alignItems: 'center', background: '#f5f5f5', borderRadius: 12, padding: '10px 12px' }}>
-            <MdSearch size={20} color="#999999" />
-            <input 
-              type="text" 
-              placeholder="Search" 
-              className="searchInput"
-              value={searchQuery}
-              onChange={handleSearch}
-            />
-            {searchQuery && (
-              <MdClose 
-                size={18} 
-                color="#999999" 
-                onClick={clearSearch}
-                className="clearSearchIcon"
-              />
+            <button 
+              className="menuToggle" 
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+            >
+              <MdMenuOpen size={24} />
+            </button>
+            
+            {isMenuOpen && (
+              <div className="popupMenu">
+                <div className="menuItem" onClick={() => navigate('/customer/profile')}>
+                  <MdPerson className="menuIcon" />
+                  Profile
+                </div>
+                <div className="menuItem" onClick={() => navigate('/customer/view-my-order')}>
+                  <MdStore className="menuIcon" />
+                  My Orders
+                </div>
+                <div className="menuItem" onClick={() => navigate('/customer/settings')}>
+                  <MdSettings className="menuIcon" />
+                  Settings
+                </div>
+                <div className="menuItem" onClick={handleLogout}>
+                  <MdLogout className="menuIcon" />
+                  Logout
+                </div>
+              </div>
             )}
           </div>
-          <div className="filterButton" onClick={toggleFilters} style={{ width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#FF7A00', borderRadius: '50%' }}>
-            <MdFilterList size={22} color="#fff" />
-          </div>
-          {/* Auto-refresh enabled; manual refresh button removed */}
         </div>
 
-        {/* Main Scrollable Content */}
-        <div className="scrollableContent" style={{
-          flex: 1,
-          overflowY: 'auto',
-          WebkitOverflowScrolling: 'touch',
-          paddingBottom: '80px', // Space for bottom navigation
-          marginTop: '10px'
-        }}>
-          {/* Filter Panel */}
-          {showFilters && (
-            <div className="filterPanel">
+        <div className="searchSection">
+          <div className="homeRail">
+            <div className="searchContainer">
+              <div className="searchBar">
+                <MdSearch size={20} color="#999999" />
+                <input 
+                  type="text" 
+                  placeholder="Search" 
+                  className="searchInput"
+                  value={searchQuery}
+                  onChange={handleSearch}
+                />
+                {searchQuery && (
+                  <MdClose 
+                    size={18} 
+                    color="#999999" 
+                    onClick={clearSearch}
+                    className="clearSearchIcon"
+                  />
+                )}
+              </div>
+              <div className="filterButton" onClick={toggleFilters}>
+                <MdFilterList size={22} color="#fff" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="scrollableContent">
+          <div className="homeRail">
+            {/* Filter Panel */}
+            {showFilters && (
+              <div className="filterPanel">
               <div className="filterSection">
                 <h3 className="filterTitle">Category</h3>
                 <div className="categoryFilters">
@@ -751,10 +755,10 @@ const HomePage = () => {
                   <option value="Out of Stock">Out of Stock</option>
                 </select>
               </div>
-            </div>
-          )}
+              </div>
+            )}
 
-          {!isSearching && (
+            {!isSearching && (
             <>
               {/* Banner/Promotional Slider */}
               <div style={{ ...styles.bannerContainer }}>
@@ -873,8 +877,8 @@ const HomePage = () => {
             </>
           )}
 
-          {/* All Products Section */}
-          <div className="sectionContainer" id="all-products">
+            {/* All Products Section */}
+            <div className="sectionContainer" id="all-products">
             <h2 className="sectionTitle">
               {searchQuery ? `Results for "${searchQuery}"` : "All Foods"}
             </h2>
@@ -927,6 +931,7 @@ const HomePage = () => {
                 <p>No products found. Try a different search or filter.</p>
               </div>
             )}
+          </div>
           </div>
         </div>
       {/* Floating chat removed */}

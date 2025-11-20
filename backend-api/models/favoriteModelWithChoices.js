@@ -38,7 +38,7 @@ const favoriteItemSchema = new mongoose.Schema({
   // Quick display info (snapshot)
   displayName: {
     type: String,
-    // e.g., "JMCY Mascara - Silver Tube"
+    // e.g., "Small, large"
   },
   
   displayImage: {

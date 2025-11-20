@@ -568,28 +568,7 @@ const AddProductPage = () => {
               ))}
             </div>
 
-            {/* Product Images (Multiple uploads) */}
-            <div style={{ ...styles.sectionContainer, background: '#fff' }}>
-              <div style={styles.sectionHeader}>
-                <label style={styles.sectionLabel}>Product Images</label>
-                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                  <input type="file" accept="image/*" multiple onChange={handleMultipleImagesSelect} />
-                  {uploadingImages && <span style={{ fontSize: 12, color: '#6b7280' }}>Uploading...</span>}
-                </div>
-              </div>
-              {images.length === 0 ? (
-                <div style={styles.emptyState}>No images yet. Upload one or more images.</div>
-              ) : (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: 10 }}>
-                  {images.map((url, idx) => (
-                    <div key={idx} style={{ position: 'relative', border: '1px solid #e5e7eb', borderRadius: 8, overflow: 'hidden', background: '#fff' }}>
-                      <img src={url} alt={`product-${idx}`} style={{ width: '100%', height: 120, objectFit: 'cover' }} />
-                      <button type="button" onClick={() => removeImageAt(idx)} style={{ position: 'absolute', top: 6, right: 6, background: '#ef4444', color: '#fff', border: 'none', borderRadius: 4, padding: '4px 6px', cursor: 'pointer', fontSize: 12 }}>Delete</button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+            {/* Product Images section intentionally hidden per request */}
 
             {/* Real-time Preview */}
             <div style={{ ...styles.sectionContainer, background: '#fff' }}>

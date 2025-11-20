@@ -651,7 +651,7 @@ const CartPage = () => {
                                     Your cart is empty
                                 </EmptyCartText>
                                 <PrimaryButton onClick={() => navigate('/customer/home')}>
-                                    Continue Shopping
+                                    Continue Ordering
                                 </PrimaryButton>
                             </EmptyCartBox>
                         )}
