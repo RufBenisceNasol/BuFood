@@ -295,7 +295,7 @@ body {
 }
 
 /* Profile Button */
-.profile-button {
+.analytics1-button {
   position: fixed;
   bottom: 30px;
   left: 50%;
@@ -314,7 +314,7 @@ body {
   max-width: 400px;
 }
 
-.profile-button:hover {
+.analytics1-button:hover {
   transform: translateX(-50%) translateY(-2px);
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
 }
@@ -381,7 +381,7 @@ body {
     padding: 15px;
   }
   
-  .profile-button {
+  .analytics1-button {
     width: 95%;
     padding: 12px 20px;
   }

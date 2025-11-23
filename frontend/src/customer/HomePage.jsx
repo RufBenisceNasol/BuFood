@@ -195,6 +195,23 @@ const HomePage = () => {
   const cartBackoffRef = useRef(null);
   const bootstrapBackoffRef = useRef(null);
 
+  const waitForSupabaseSession = useCallback(async (timeoutMs = 4000, pollIntervalMs = 250) => {
+    const deadline = Date.now() + timeoutMs;
+    while (Date.now() < deadline) {
+      try {
+        const { data } = await supabase.auth.getSession();
+        const session = data?.session;
+        if (session?.access_token) {
+          return session;
+        }
+      } catch (_) {
+        // ignore and retry until timeout
+      }
+      await new Promise((resolve) => setTimeout(resolve, pollIntervalMs));
+    }
+    return null;
+  }, []);
+
   useEffect(() => {
     if (didInitRef.current) return; // StrictMode guard
     didInitRef.current = true;
@@ -234,12 +251,17 @@ const HomePage = () => {
         }
       } catch (_) {}
 
+      const runInitialFetch = async () => {
+        if (USE_BOOTSTRAP) {
+          await waitForSupabaseSession();
+        }
+        fetchData({ showLoader: !hadCache });
+        fetchCartCount();
+      };
+
       // Debounce initial data fetch to allow Supabase token/session to settle
       setTimeout(() => {
-        // Always fetch fresh data; show loader only if no cache
-        fetchData({ showLoader: !hadCache });
-        // Fetch initial cart count
-        fetchCartCount();
+        runInitialFetch();
       }, 300);
     })();
   }, []);
@@ -330,33 +352,36 @@ const HomePage = () => {
     }
     setError(null);
 
+    const hydrateFromBootstrap = (bootPayload) => {
+      if (!bootPayload) return false;
+      const s = Array.isArray(bootPayload.stores) ? bootPayload.stores : [];
+      const p = Array.isArray(bootPayload.products) ? bootPayload.products : [];
+      const c = bootPayload.cart?.items || [];
+      setStores(s);
+      setAllProducts(p);
+      setFilteredProducts(p);
+      setPopularProducts(p.slice(0, 4));
+      setCartCount(c.reduce((sum, it) => sum + (it.quantity || 0), 0));
+      const uniqueCategories = ['All', ...new Set(
+        p.filter(prod => prod && prod.category).map(prod => prod.category)
+      )];
+      setCategories(uniqueCategories);
+      try {
+        localStorage.setItem(STORES_CACHE_KEY, JSON.stringify(s));
+        localStorage.setItem(PRODUCTS_CACHE_KEY, JSON.stringify(p));
+      } catch (_) {}
+      return true;
+    };
+
     try {
       // Try aggregated bootstrap first (only if explicitly enabled and authenticated)
       try {
-        const { data: sess } = await supabase.auth.getSession();
-        const hasToken = !!sess?.session?.access_token;
+        const session = USE_BOOTSTRAP ? await waitForSupabaseSession() : null;
+        const hasToken = !!session?.access_token;
         const boot = (USE_BOOTSTRAP && hasToken)
           ? await fetchBootstrap({ productLimit: 24, orderLimit: 50, storeLimit: 50 })
           : null;
-        if (boot) {
-          const s = Array.isArray(boot.stores) ? boot.stores : [];
-          const p = Array.isArray(boot.products) ? boot.products : [];
-          const c = boot.cart?.items || [];
-          setStores(s);
-          setAllProducts(p);
-          setFilteredProducts(p);
-          setPopularProducts(p.slice(0, 4));
-          setCartCount(c.reduce((sum, it) => sum + (it.quantity || 0), 0));
-          const uniqueCategories = ['All', ...new Set(
-            p.filter(prod => prod && prod.category).map(prod => prod.category)
-          )];
-          setCategories(uniqueCategories);
-          try {
-            localStorage.setItem(STORES_CACHE_KEY, JSON.stringify(s));
-            localStorage.setItem(PRODUCTS_CACHE_KEY, JSON.stringify(p));
-          } catch (_) {}
-          return; // hydrated successfully
-        }
+        if (hydrateFromBootstrap(boot)) return; // hydrated successfully
       } catch (bootErr) {
         const status = bootErr?.response?.status;
         if (status === 429) {
@@ -366,6 +391,26 @@ const HomePage = () => {
             fetchData({ showLoader: false });
           }, 15000);
           return; // don't fall through immediately on 429
+        }
+        if (status === 401) {
+          const retrySession = await waitForSupabaseSession(4000);
+          if (retrySession?.access_token) {
+            try {
+              const retryBoot = await fetchBootstrap({ productLimit: 24, orderLimit: 50, storeLimit: 50 });
+              if (hydrateFromBootstrap(retryBoot)) return;
+            } catch (retryErr) {
+              const retryStatus = retryErr?.response?.status;
+              if (retryStatus === 429) {
+                if (bootstrapBackoffRef.current) clearTimeout(bootstrapBackoffRef.current);
+                bootstrapBackoffRef.current = setTimeout(() => {
+                  fetchingRef.current = false;
+                  fetchData({ showLoader: false });
+                }, 15000);
+                return;
+              }
+              // fall through on other errors
+            }
+          }
         }
         // else fall back to separate endpoints below
       }

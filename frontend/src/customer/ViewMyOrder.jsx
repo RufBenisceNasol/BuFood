@@ -471,7 +471,17 @@ const ViewMyOrder = () => {
               <OrderCard key={order._id || order.id}>
                 <OrderHeader>
                   <div>
-                    <div style={{ fontSize: 15, fontWeight: 700 }}> {shortId(order.orderNumber || order._id || order.id)} </div>
+                    {(() => {
+                      const storeName = (order.store && (order.store.storeName || order.store.name)) || order.storeName;
+                      const headerLabel = storeName && storeName.trim().length > 0
+                        ? storeName.trim()
+                        : shortId(order.orderNumber || order._id || order.id);
+                      return (
+                        <div style={{ fontSize: 15, fontWeight: 700, textTransform: 'capitalize' }}>
+                          {headerLabel}
+                        </div>
+                      );
+                    })()}
                     <div style={{ fontSize: 12, color: '#888', marginTop: 2 }}>{new Date(order.createdAt).toLocaleString()}</div>
                   </div>
                   {(() => { const { bg, fg } = statusStyles(order.status); return (

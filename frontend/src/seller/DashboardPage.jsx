@@ -549,16 +549,25 @@ const DashboardPage = () => {
               </div>
             </section>
 
-            <div style={{ display: 'flex', justifyContent: 'center', margin: '32px 0 0 0' }}>
-              <Link to="/seller/analytics" className="analytics-link-btn">
-                View Analytics
-              </Link>
+            {/* Analytics placeholder for layout balance */}
+            <div style={{ 
+              height: '80px',
+              backgroundColor: '#ffffff',
+              borderRadius: '12px',
+              margin: '32px 0 0 0',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#ffffffff',
+              fontSize: '14px'
+            }}>
+              .
             </div>
           </div>
         </div>
 
-        <Link to="/seller/profile" className="profile-button">
-          PROFILE
+        <Link to="/seller/analytics" className="analytics1-button">
+          Analytics
         </Link>
         {/* Clean floating message button (no action) */}
         <div

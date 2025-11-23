@@ -41,6 +41,53 @@ const VariantChoicesManager = ({ variants = [], onChange }) => {
       width: 100%;
     }
 
+    .variant-choices-manager .variant-header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .variant-choices-manager .variant-header .expand-toggle {
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      border: 1px solid #e2e8f0;
+      background: #ffffff;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08);
+      transition: box-shadow 0.2s ease, transform 0.2s ease;
+    }
+
+    .variant-choices-manager .variant-header .expand-toggle:hover {
+      box-shadow: 0 10px 24px rgba(15, 23, 42, 0.12);
+    }
+
+    .variant-choices-manager .variant-header .expand-toggle:active {
+      transform: scale(0.95);
+    }
+
+    .variant-choices-manager .variant-header .variant-name-input {
+      flex: 1 1 0;
+      width: 100%;
+      max-width: 100%;
+      min-width: 0;
+      box-sizing: border-box;
+    }
+
+    .variant-choices-manager .variant-header .variant-name-input::placeholder {
+      color: #6b7280;
+      font-weight: 500;
+      opacity: 0.85;
+      white-space: normal;
+    }
+
+    .variant-choices-manager .variant-header .variant-delete-btn {
+      margin-left: auto;
+    }
+
     @media (max-width: 768px) {
       .variant-choices-manager {
         padding-inline: 4px;
@@ -54,11 +101,16 @@ const VariantChoicesManager = ({ variants = [], onChange }) => {
       .variant-choices-manager .variant-header {
         flex-direction: column;
         align-items: stretch;
-        gap: 12px;
+        gap: 14px;
       }
 
-      .variant-choices-manager .variant-header input {
-        width: 100%;
+      .variant-choices-manager .variant-header .variant-name-input {
+        padding: 10px 12px;
+        font-size: 14px;
+      }
+
+      .variant-choices-manager .variant-header .variant-delete-btn {
+        align-self: flex-end;
       }
 
       .variant-choices-manager .variant-options {
@@ -103,6 +155,22 @@ const VariantChoicesManager = ({ variants = [], onChange }) => {
         position: static;
         align-self: flex-end;
         margin-top: 12px;
+      }
+    }
+
+    @media (max-width: 420px) {
+      .variant-choices-manager .variant-header {
+        gap: 12px;
+      }
+
+      .variant-choices-manager .variant-header .expand-toggle {
+        width: 38px;
+        height: 38px;
+      }
+
+      .variant-choices-manager .variant-header .variant-name-input {
+        padding: 9px 11px;
+        font-size: 13.5px;
       }
     }
   `, []);
@@ -305,6 +373,7 @@ const VariantChoicesManager = ({ variants = [], onChange }) => {
                     type="button"
                     onClick={() => toggleVariant(variant._id)}
                     style={styles.expandButton}
+                    className="expand-toggle"
                   >
                     {expandedVariants[variant._id] ? (
                       <MdExpandLess size={24} />
@@ -318,6 +387,7 @@ const VariantChoicesManager = ({ variants = [], onChange }) => {
                     onChange={(e) => updateVariantCategory(variant._id, 'name', e.target.value)}
                     placeholder="Category name (e.g., Color, Size)"
                     style={styles.variantNameInput}
+                    className="variant-name-input"
                   />
                 </div>
 
@@ -325,6 +395,7 @@ const VariantChoicesManager = ({ variants = [], onChange }) => {
                   type="button"
                   onClick={() => removeVariantCategory(variant._id)}
                   style={styles.deleteIconButton}
+                  className="variant-delete-btn"
                   title="Remove category"
                 >
                   <MdDelete size={20} />
@@ -565,6 +636,8 @@ const styles = {
     border: '1px solid #e2e8f0',
     padding: '22px 24px',
     boxShadow: '0 12px 32px rgba(15, 23, 42, 0.06)',
+    position: 'relative',
+    overflow: 'hidden',
   },
   variantHeader: {
     display: 'flex',
@@ -577,8 +650,9 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     gap: '12px',
-    flex: 1,
-    minWidth: '220px',
+    flex: '1 1 0%',
+    minWidth: 0,
+    width: '100%',
   },
   expandButton: {
     padding: '4px',
@@ -596,9 +670,19 @@ const styles = {
     fontSize: '15px',
     fontWeight: '600',
     color: '#111827',
-    flex: 1,
-    minWidth: '220px',
+    flex: '1 1 0%',
+    minWidth: 0,
+    width: '100%',
+    maxWidth: '100%',
     backgroundColor: '#f8fafc',
+    transition: 'border-color 0.2s ease, box-shadow 0.2s ease',
+    boxSizing: 'border-box',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+  },
+  variantNameInputFocus: {
+    borderColor: '#3b82f6',
+    boxShadow: '0 0 0 3px rgba(59, 130, 246, 0.15)',
   },
   deleteIconButton: {
     padding: '8px',
@@ -608,6 +692,10 @@ const styles = {
     cursor: 'pointer',
     borderRadius: '6px',
     transition: 'all 0.2s',
+  },
+  deleteIconButtonHover: {
+    backgroundColor: '#fee2e2',
+    boxShadow: '0 6px 16px rgba(239, 68, 68, 0.18)',
   },
   variantOptions: {
     display: 'flex',
@@ -666,6 +754,7 @@ const styles = {
     border: '1px solid #e2e8f0',
     position: 'relative',
     boxShadow: '0 10px 24px rgba(15, 23, 42, 0.04)',
+    overflow: 'hidden',
   },
   choiceImageSection: {
     display: 'flex',
@@ -748,6 +837,7 @@ const styles = {
     alignItems: 'center',
     justifyContent: 'center',
     transition: 'transform 0.15s ease, box-shadow 0.15s ease',
+    boxShadow: '0 6px 16px rgba(239, 68, 68, 0.18)',
   },
   noChoices: {
     textAlign: 'center',
@@ -818,7 +908,6 @@ const styles = {
     padding: '16px',
     borderRadius: '8px',
     backgroundColor: '#eff6ff',
-    borderRadius: '8px',
     border: '1px solid #bfdbfe',
     fontSize: '13px',
     color: '#1e40af',
